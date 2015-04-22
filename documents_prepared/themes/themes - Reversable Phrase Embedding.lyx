@@ -219,6 +219,53 @@ It is applied Recursively across pairs of inputs (children) to create a
 
 \end_layout
 
+\begin_layout Subparagraph
+Max-Margin
+\end_layout
+
+\begin_layout Standard
+TODO: Workout if explict corrupted words are actually ever involved in training
+ using max margin, or if infact they are only part of the motivating logic.
+ 
+\end_layout
+
+\begin_layout Standard
+If they are involved then certain tweaks can be done to do things like Corrupt
+ replacing 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+basketball player
+\begin_inset Quotes erd
+\end_inset
+
+
+\emph default
+ with 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+basketballer
+\begin_inset Quotes erd
+\end_inset
+
+
+\emph default
+ and use the converse 
+\begin_inset Quotes eld
+\end_inset
+
+Min-Margin
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
 \begin_layout Paragraph
 The Tree
 \end_layout
@@ -418,11 +465,7 @@ Datasets
 \end_layout
 
 \begin_layout Subsection
-Brown Corpus
-\end_layout
-
-\begin_layout Subsection
-PennTreeBank
+Penn TreeBank
 \end_layout
 
 \begin_layout Subsection
@@ -594,6 +637,324 @@ SemEval is a annual workshop.
 
 \begin_layout Subsection
 WordNet
+\end_layout
+
+\begin_layout Section
+Projects
+\end_layout
+
+\begin_layout Subsection
+RvNN on AMR, for a Semantic Phrase Embedding
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:RvNN-on-AMR"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+As the work of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2013:CVG,Socher2011ParsingPhrases,socher2010PhraseEmbedding"
+
+\end_inset
+
+ utilized (a subset of) the Penn Treebank to learn Parts of Speech (POS)
+ tags for a syntactical trained phrase embedding,
+\end_layout
+
+\begin_layout Standard
+It could be replicated using the AMR SemBank
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Banarescu13abstractmeaning"
+
+\end_inset
+
+ for semantically trained phrase embedding.
+\end_layout
+
+\begin_layout Standard
+This would not be reversible, but would be good in and of itself.
+\end_layout
+
+\begin_layout Subsubsection
+Why would this be good
+\end_layout
+
+\begin_layout Subsubsection
+Issues:
+\end_layout
+
+\begin_layout Standard
+The major challenge is that the 
+\end_layout
+
+\begin_layout Standard
+A second issue is that the SemBank is small <20,000 sentences.
+ However, showing a proof of concept that this method works, and indicating
+ that with more training data it would work better is likely a sufficient
+ result.
+\end_layout
+
+\begin_layout Paragraph
+TODO:
+\end_layout
+
+\begin_layout Standard
+I need to examine the work of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Grefenstette2014"
+
+\end_inset
+
+.
+ It does not use RvNN.
+\end_layout
+
+\begin_layout Subsection
+ReSynthesis into a Provided Structure
+\end_layout
+
+\begin_layout Standard
+There are two steps to directly ReSythisising from a phrase embedding of
+ the form created by 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Socher2011ParsingPhrases"
+
+\end_inset
+
+ (Or indeed by something created like 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:RvNN-on-AMR"
+
+\end_inset
+
+).
+ One: the creation of the structure of the resynthesised text: eg 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+Noun do Verb
+\begin_inset Quotes erd
+\end_inset
+
+
+\emph default
+, or 
+\emph on
+The 
+\begin_inset Quotes eld
+\end_inset
+
+Adjective Noun Verb The Nou
+\emph default
+n
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Second is filling said structure will values, eg 
+\begin_inset Quotes eld
+\end_inset
+
+Cats do chase
+\begin_inset Quotes erd
+\end_inset
+
+ or 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+The fast cat chased the mouse.
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+In this project, we could assume the first is given, and solve the second.
+ A not unreasonable, nor un-useful assumption.
+\end_layout
+
+\begin_layout Standard
+For example is attempting to summarize reviews of hotels, it might be desirable
+ to attempt to pull out statements that are only of the form 
+\begin_inset Quotes eld
+\end_inset
+
+Noun Is Adjective
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection
+How
+\end_layout
+
+\begin_layout Standard
+It is possible (I have a working proof of concept) to use linear algebra
+ to reverse the operation of the RvNN.
+ The basic operation on two input words is 
+\begin_inset Formula $p_{1,2}=\tanh\left(W[Le_{1},\,Le_{2}L]\right)$
+\end_inset
+
+, where 
+\begin_inset Formula $c_{i}=Le_{i}$
+\end_inset
+
+ where 
+\begin_inset Formula $e_{i}$
+\end_inset
+
+ is a one-hot word identifier.
+ Using atan, to reverse the nonlinearity.
+ Using the pseudo inverse of 
+\begin_inset Formula $W$
+\end_inset
+
+ to recover a least-squares values for recovering 
+\begin_inset Formula $\hat{c}_{i}$
+\end_inset
+
+.
+ Then using the cosign difference to obtain a similarity measure for each
+ candidate 
+\begin_inset Formula $\hat{e}_{i}$
+\end_inset
+
+.
+ This should be generalisable for 
+\begin_inset Formula $c_{i}=p_{j,k}$
+\end_inset
+
+ where it is a deeper structure.
+\end_layout
+
+\begin_layout Standard
+When testing the basic operation on recovering two words as discussed it
+ seems successful.
+ This was performed using a 
+\begin_inset Formula $L$
+\end_inset
+
+ which is a 50 dimensional matrix of Collobert & Weston word embeddings
+ and a randomly set 
+\begin_inset Formula $W$
+\end_inset
+
+.
+ The input words were normally top ranked, and if not were generally in
+ to top 5, with other highly ranked words similar (Eg President instead
+ of King).
+ This was with the random 
+\begin_inset Formula $W$
+\end_inset
+
+ which does not encode useful information; a trained , 
+\begin_inset Formula $W$
+\end_inset
+
+ should perform better.
+\end_layout
+
+\begin_layout Subsubsection
+Issues 
+\end_layout
+
+\begin_layout Standard
+This being successful and useful, hinges on being able to reconstitute words
+ into a format that they were not in originally, but that comes close to
+ preserving meaning.
+ This relies on the operations of the 
+\begin_inset Formula $W$
+\end_inset
+
+ matrix functioning to project into a space containing semantic (rather
+ than syntactic) information.
+ For example it would be good if 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+The basketball player
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\emph default
+was projected closer to 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+The basketballer
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\emph default
+than to 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+The soccer player
+\begin_inset Quotes erd
+\end_inset
+
+.
+ 
+\emph default
+Solving this kind of issue would require improving the way W is trained.
+ Such as discussed in
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:RvNN-on-AMR"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+That may not be sufficient, results in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "RvNNLogicalSemantics"
+
+\end_inset
+
+ (preprint), showed that for logical semantics, separation of different
+ sentiments was not well preserved for longer expressions by the RvNN.
+ They also considered the recursive neural tensor networks (RvNTN) and found
+ it did much better.
+\end_layout
+
+\begin_layout Subsubsection
+Extension
+\end_layout
+
+\begin_layout Standard
+The naïve way to extend this to work more generally, is to perform a search
+ (making use of dynamic programming potentially) across a space of possible
+ structures.
 \end_layout
 
 \begin_layout Standard
