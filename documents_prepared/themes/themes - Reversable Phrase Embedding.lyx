@@ -82,16 +82,23 @@ Reversable Phrase Embedding
 \end_layout
 
 \begin_layout Standard
-These three themes are broadened and generalized from discussed topics.
-\end_layout
-
-\begin_layout Standard
 featuring: Re-Synthesis of Text from Vector Representations
 \end_layout
 
 \begin_layout Standard
 See also: Natural Language Generation (the opposite of natural language
  understanding.)
+\end_layout
+
+\begin_layout Subsection
+Motivation
+\end_layout
+
+\begin_layout Standard
+High quality phrase embeddings will allow a large number of filtering techniques
+ to be brought to bare on NLP problems.
+ To truly see many of the benefits it is required to be able to resynthesise
+ from the semantic vector space back to the English sentence space.
 \end_layout
 
 \begin_layout Section
@@ -104,7 +111,7 @@ Summarization of a paragraph into a sentence
 
 \begin_deeper
 \begin_layout Itemize
-Abstraction summarization
+abstractive summarization
 \end_layout
 
 \end_deeper
@@ -115,7 +122,7 @@ Production of a Short Title, via trade-off function between length and capture
 
 \begin_deeper
 \begin_layout Itemize
-Again Abstractive summarization
+Again abstractive summarization
 \end_layout
 
 \end_deeper
@@ -125,8 +132,15 @@ Translation
 
 \begin_deeper
 \begin_layout Itemize
-Using two stocatically reversible mappings from different language spaces
- into the same Meaning space
+Using two stochastically reversible mappings from different language spaces
+ into the same semantic space
+\end_layout
+
+\begin_layout Itemize
+People have been doing this with nonreversible mappings, for word embeddings,
+ where it works fine because it is possible to project the whole vocabulary
+ into the space, and then use the nearest neightbour to workout which word
+ to translate to.
 \end_layout
 
 \end_deeper
@@ -138,6 +152,7 @@ Robustness/Flow/Re-Synthesis cross over: Finding corrupted sentences/paragraphs
 \begin_layout Itemize
 The creation of a generative, rather than a discriminative model for phrase
  embeddings.
+ (Is an ends in and of itself)
 \end_layout
 
 \begin_layout Section
@@ -151,13 +166,20 @@ RvNN: Recursive Neural Networks -- Parser
 \begin_layout Standard
 At Stanford, Socher et al, produced several papers around the development
  of a Recursive Neural Network.
- Abbreviated in throse works as RNN, in other works and here it is abbreviated
- RvNN to distinguish it for Reoccurrent Neural Networks.
+ Abbreviated in those works as RNN, in other works (Eg 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Kagebaeck2014"
+
+\end_inset
+
+) and here it is abbreviated RvNN to distinguish it from Recurrent Neural
+ Networks.
  
 \end_layout
 
 \begin_layout Subsubsection
-In Practice
+Implementation
 \end_layout
 
 \begin_layout Paragraph
@@ -165,8 +187,8 @@ The Neural Network
 \end_layout
 
 \begin_layout Standard
-The general premise of the RvNN is for a neural network with several layers
- as shown in the figure.
+The general premise of the RvNN is for a neural network with as shown in
+ the figure, which is applied to every node in a parse tree.
  Note the multiple output layers.
  Note also the tied weights on the two 
 \begin_inset Formula $L$
@@ -193,23 +215,19 @@ as input and produced a merged parent with
 \end_layout
 
 \begin_layout Standard
-Which is given to a scoring matrix to score how good the merge is,
+the parent representation is then processed by a scoring matrix to score
+ how good the merge is, and also labeling matrix which assigns it a Part
+ of Speech (POS) label.
+ The correct POS label is provided as training data.
 \end_layout
 
 \begin_layout Standard
-and to a labeling matrix which assigns it a Part of Speech (POS) label.
-\end_layout
+\begin_inset Float figure
+wide false
+sideways false
+status open
 
-\begin_layout Standard
-The correct POS label is provided as training data.
-\end_layout
-
-\begin_layout Standard
-It is applied Recursively across pairs of inputs (children) to create a
- total merged output.
-\end_layout
-
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Graphics
 	filename figs/RvNN_single.png
 	width 50page%
@@ -219,79 +237,59 @@ It is applied Recursively across pairs of inputs (children) to create a
 
 \end_layout
 
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:The-Neural-Net"
+
+\end_inset
+
+The Neural Net applied recurssively generating the tree for the RvNN
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This neural network is applied across each pair of adjacent child word-embedding
+s (
+\begin_inset Formula $c_{i}$
+\end_inset
+
+, 
+\begin_inset Formula $c_{j}$
+\end_inset
+
+) , and the highest scoring merge is done.
+ When the mere is done this best parent embeddings replaces both of the
+ child embeddings (sharing adjacencies of the children).
+ So so through this greedy search a high scory tree structure is found for
+ the input phrase.
+\end_layout
+
 \begin_layout Subparagraph
-Max-Margin
+Training Max-Margin
 \end_layout
 
 \begin_layout Standard
-TODO: Workout if explict corrupted words are actually ever involved in training
- using max margin, or if infact they are only part of the motivating logic.
- 
+Max Margin training is done, to find a subgraident for ensuring correct
+ trees score better than their incorrect counterparts.
 \end_layout
 
 \begin_layout Standard
-If they are involved then certain tweaks can be done to do things like Corrupt
- replacing 
-\emph on
-
-\begin_inset Quotes eld
-\end_inset
-
-basketball player
-\begin_inset Quotes erd
-\end_inset
-
-
-\emph default
- with 
-\emph on
-
-\begin_inset Quotes eld
-\end_inset
-
-basketballer
-\begin_inset Quotes erd
-\end_inset
-
-
-\emph default
- and use the converse 
-\begin_inset Quotes eld
-\end_inset
-
-Min-Margin
-\begin_inset Quotes erd
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Paragraph
-The Tree
-\end_layout
-
-\begin_layout Subsubsection
-Variations
-\end_layout
-
-\begin_layout Standard
-The variation in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SocherEtAl2013:CVG"
-
-\end_inset
-
- added a Context Grammar, to change between several 
-\begin_inset Formula $W$
-\end_inset
-
- matrices depending on the POS.
-\end_layout
-
-\begin_layout Standard
-This Compositional Vector Grammar is now used in the Stanford Parser, a
- gold standard for parsing.
+An incorrect tree can be created from a correct example by corrupting on
+ of the features (and ideally ensuring that in doing so it does not mistakenly
+ create an correct tree.)
 \end_layout
 
 \begin_layout Subsubsection
@@ -313,6 +311,70 @@ key "socher2010PhraseEmbedding"
 
 , after embedding many sentences from the Wall Street Journal corpus, that
  similar phrase embeddings were located near each other.
+\end_layout
+
+\begin_layout Subsubsection
+Variations
+\end_layout
+
+\begin_layout Standard
+The variation in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2013:CVG"
+
+\end_inset
+
+ added a Context Grammar, to change between several 
+\begin_inset Formula $W$
+\end_inset
+
+ matrices depending on the POS.
+ This Compositional Vector Grammar is now used in the Stanford Parser, a
+ gold standard for parsing.
+\end_layout
+
+\begin_layout Standard
+Recursive Tensor Neural Networks are related to RvNN: at every stage, both
+ a vector and a matrix representation are handled.
+ They were used in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Socher2013TensorReasoning"
+
+\end_inset
+
+ (which is a really neat idea).
+ They performed better than RNN in They performed better in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "RvNNLogicalSemantics"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+RAE: Recursive Auto Encoders
+\end_layout
+
+\begin_layout Standard
+Similar to the RvNN, the Recursive Auto Encoder applies an Auto Encoder
+ while generating the tree, in the place of the neural network shown in
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:The-Neural-Net"
+
+\end_inset
+
+.
+ Roughly replacing the Max-Margin derived scoring matrix with a reconstruction
+ error.
+\end_layout
+
+\begin_layout Standard
+The tree selected is selecting much the say way as for the 
 \end_layout
 
 \begin_layout Subsection
@@ -351,8 +413,7 @@ key "gao2014learning"
 
 \end_inset
 
-, seems to be based on bag of words.
- (which has Li Deng as a coauthor)
+, seems to be based on bag of words (which has Li Deng as a coauthor).
 \end_layout
 
 \begin_layout Subsection
@@ -360,7 +421,7 @@ Single Word Embedding
 \end_layout
 
 \begin_layout Standard
-The alot of work on Word Embeddings note the existence of linear substructures
+The a lot of work on Word Embeddings note the existence of linear substructures
  in single-word embeddings for example: 
 \begin_inset Formula $v("king")-v("man")+v("woman")$
 \end_inset
@@ -389,6 +450,31 @@ Word Embedding spaces seem to combine syntax and semantics, when combining
 \end_layout
 
 \begin_layout Subsection
+Sum of Word Embeddings
+\end_layout
+
+\begin_layout Standard
+I don't think anyone actually does this (despite what 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "ExtractiveSummaristation"
+
+\end_inset
+
+ says, see below).
+ It doesn't work well.
+ We expect it not to work well because of the results in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mikolov2013linguisticsubstructures"
+
+\end_inset
+
+ which shows that only 40% of simple relationships are represented in local
+ structure.
+\end_layout
+
+\begin_layout Subsection
 Summarization
 \end_layout
 
@@ -400,7 +486,7 @@ Notably this would be Abstractive Summarization, of building a model then
 \begin_layout Standard
 \begin_inset CommandInset citation
 LatexCommand cite
-key "Kagebaeck2014"
+key "ExtractiveSummaristation"
 
 \end_inset
 
@@ -409,6 +495,42 @@ key "Kagebaeck2014"
 s vector space models for summarization tasks.
  Which is indicative that this area is not well explored, as summarization
  is a very natural use to put any Re-Synthesis system to.
+\end_layout
+
+\begin_layout Standard
+However: 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "ExtractiveSummaristation"
+
+\end_inset
+
+ claims that 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mikolovSkip"
+
+\end_inset
+
+ suggested summing word embeddings to get phrase embeddings, but to my knowledge
+ that is quiet the opposite of what 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mikolovSkip"
+
+\end_inset
+
+ was saying.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mikolovSkip"
+
+\end_inset
+
+'s dicsussion on phrases focuses on treating short phrases eg "Austrian
+ Airlines", "New York Times" as separate tokens from the words that make
+ them up in training word embeddings.
 \end_layout
 
 \begin_layout Subsection
@@ -427,7 +549,7 @@ key "MemoryNN"
 \end_layout
 
 \begin_layout Standard
-It has several componants, notable for this section is the R (Response).
+It has several components, notable for this section is the R (Response).
  In most of there examples the response is set up to just returns a single
  word response, but some example are shown where they used a RNN.
  Details are not given, but I believe they used a RNN language model similar
@@ -482,8 +604,8 @@ Penn TreeBank
 
 \begin_layout Standard
 Consisting of POS annotated: Wall Street Journal, Brown, and Switchboard
- datasets.
- Is also documented in seemingly only in postscript.
+ Datasets.
+ Is documented in seemingly only in postscript.
 \end_layout
 
 \begin_layout Subsection
@@ -1302,6 +1424,73 @@ Extension
 The naïve way to extend this to work more generally, is to perform a search
  (making use of dynamic programming potentially) across a space of possible
  structures.
+\end_layout
+
+\begin_layout Subsection
+Structural ReSynthesis (The Core Problem)
+\end_layout
+
+\begin_layout Standard
+The general issue of above, that training these models piece by piece then
+ using a nongenerative method to combine them (As in done in the node merging
+ in RvNN etc), does not allow the tree structure itself to be regenerated.
+ The Reconstruction needs to be in the structure, not (just) in the nodes.
+\end_layout
+
+\begin_layout Standard
+Otherwise the RAE of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:PoolRAE,SocherEtAl2011:RAE"
+
+\end_inset
+
+ would have solved this long ago.
+\end_layout
+
+\begin_layout Standard
+Doing this with something from a purely generative model like the boltzmann
+ machine would be pleasing.
+ A Generative model for strucure.
+ But may not be possible.
+\end_layout
+
+\begin_layout Subsubsection
+Tree Problem Detail 
+\end_layout
+
+\begin_layout Standard
+When decomposing an embedding into a binary parse tree (the reverse of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "socher2014recursive,SocherEtAl2013:CVG"
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+At each step the algorith needs to decide between 4 choices: for both the
+ left and right nodes it can expand either (or both), in to a Word, or into
+ an embedding node (for further decomposition).
+\end_layout
+
+\begin_layout Standard
+When doing this it has an objective of generating a sentence which when
+ converted back into an embedding will be as close as possible to the original
+ embedding.
+\end_layout
+
+\begin_layout Standard
+It also has the constraint that the sentence must be valid English (and
+ ideally be natural sounding english).
+\end_layout
+
+\begin_layout Standard
+When being used for summarization it has a further constraint on the length
+ of the response (either in number of words, or at a more general scale
+ in number of sentences.)
 \end_layout
 
 \begin_layout Standard
