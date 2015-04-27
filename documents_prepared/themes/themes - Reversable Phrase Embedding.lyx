@@ -78,7 +78,7 @@ figs-within-sections
 \begin_body
 
 \begin_layout Title
-Reversable Phrase Embedding
+Reversible Phrase Embedding
 \end_layout
 
 \begin_layout Standard
@@ -106,60 +106,47 @@ Premise
 \end_layout
 
 \begin_layout Standard
-We are good at manipulating vectors, so it is desirable to map language
- into vectors.
+There exists plethora of signal processing techniques, that can be brought
+ to bare upon NLP problems, if natural language is represented as a numerical
+ vector.
+ Several applications of such techniques are of much less relevance if the
+ resulting vector can not be restored back to natural language.
 \end_layout
 
 \begin_layout Standard
-However, if we can not turn vectors back into language then several applications
- are limited.
+Several models for creating word embeddings exists which have proved useful
+ in many applications.
+ All such word embeddings are reversible, either by a generative model,
+ or by embedding the entire vocabulary and finding the nearest word in vector
+ space.
+ The same can not be done when embedding phrases, the phrasal vocabulary
+ is essentially infinite.
 \end_layout
 
 \begin_layout Standard
-We have had good word embeddings for quiet a while.
- There are many models for creating them.
- We know they are good, because similar words are located close together
- in the vector space.
- We know which are good because there are 6ish competing models.
- We can reverse the mapping either by using a model with this as an intrinsic
- feature (Eg an Autoencoder), or by embedding the whole vocabulary and finding
- the nearest word in vector space.
- We know they are useful because people have done cool things with them
+Recently several techniques have come out for creating phrase embeddings
+ 
 \begin_inset CommandInset citation
 LatexCommand cite
-key "zou2013bilingual,gao2014learning"
+key "SocherEtAl2011:RAE,SocherEtAl2013:CVG,Socher2011ParsingPhrases,SocherEtAl2011:PoolRAE"
 
 \end_inset
 
-.
-\end_layout
-
-\begin_layout Standard
-Since 2013, we have had a way to embed phrases.
- We know it is good because similar phrases are mapped near to it
+ (All from the same first author).
+ However none of these are truly reversible; though 
 \begin_inset CommandInset citation
 LatexCommand cite
-key "socher2010PhraseEmbedding"
+key "SocherEtAl2011:PoolRAE"
 
 \end_inset
 
-.
- We don't know if it is very good because it has not been compare directly
- with anything.
- We know it is cool because it has had some neat applications
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-I can't find any right now
-\end_layout
-
-\end_inset
-
-.
- We can not reverse it as the model is not reversible and it is not possible
- to embed every sentence that could be said to find which are near.
- We would like a phrase embedding method that could be reversed.
+ comes close.
+ The reversing is a hard issue as there is no generative model for structure,
+ and as mention above, the of all phrases is too large to embed in its entirety
+ for a nearest neighbor search.
+ The proposed issue to be tackled here is the design of a mechanism for
+ creating an embedding, and for performing the resynthesis back from the
+ embedding to a natural language sentence of similar meaning.
 \end_layout
 
 \begin_layout Section
@@ -216,70 +203,424 @@ The creation of a generative, rather than a discriminative model for phrase
  (Is an ends in and of itself)
 \end_layout
 
+\begin_layout Itemize
+Apply signal processing techniques like particle filters
+\end_layout
+
 \begin_layout Section
-Existing Work
+Approaches
 \end_layout
 
 \begin_layout Subsection
-RvNN: Recursive Neural Networks -- Parser 
+ReSynthesis into a Provided Structure
 \end_layout
 
 \begin_layout Standard
-At Stanford, Socher et al, produced several papers around the development
- of a Recursive Neural Network.
- Abbreviated in those works as RNN, in other works (Eg 
+There are two steps to directly resynthesise from a phrase embedding of
+ the form created by 
 \begin_inset CommandInset citation
 LatexCommand cite
-key "Kagebaeck2014"
+key "Socher2011ParsingPhrases"
 
 \end_inset
 
-) and here it is abbreviated RvNN to distinguish it from Recurrent Neural
- Networks.
- 
-\end_layout
+ (Or indeed by something created like 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:RvNN-on-AMR"
 
-\begin_layout Subsubsection
-Implementation
-\end_layout
-
-\begin_layout Paragraph
-The Neural Network
-\end_layout
-
-\begin_layout Standard
-The general premise of the RvNN is for a neural network with as shown in
- the figure, which is applied to every node in a parse tree.
- Note the multiple output layers.
- Note also the tied weights on the two 
-\begin_inset Formula $L$
 \end_inset
 
-s.
- 
-\begin_inset Formula $W$
+).
+ One: the creation of the structure of the resynthesised text: eg 
+\emph on
+
+\begin_inset Quotes eld
 \end_inset
 
- takes 
-\begin_inset Formula $c_{1}$
+Noun do Verb
+\begin_inset Quotes erd
 \end_inset
 
- concatenated with 
-\begin_inset Formula $c_{2}$
+
+\emph default
+, or 
+\emph on
+The 
+\begin_inset Quotes eld
 \end_inset
 
-as input and produced a merged parent with 
-\begin_inset Formula $p_{1,2}$
+Adjective Noun Verb The Nou
+\emph default
+n
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Second is filling said structure will values, eg 
+\begin_inset Quotes eld
+\end_inset
+
+Cats do chase
+\begin_inset Quotes erd
+\end_inset
+
+ or 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+The fast cat chased the mouse.
+\begin_inset Quotes erd
 \end_inset
 
 .
 \end_layout
 
 \begin_layout Standard
-the parent representation is then processed by a scoring matrix to score
- how good the merge is, and also labeling matrix which assigns it a Part
- of Speech (POS) label.
- The correct POS label is provided as training data.
+In this project, we could assume the first is given, and solve the second.
+ A not unreasonable, nor un-useful assumption.
+\end_layout
+
+\begin_layout Standard
+For example is attempting to summarize reviews of hotels, it might be desirable
+ to attempt to pull out statements that are only of the form 
+\begin_inset Quotes eld
+\end_inset
+
+Noun Is Adjective
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection
+How
+\end_layout
+
+\begin_layout Standard
+It is possible (I have a working proof of concept) to use linear algebra
+ to reverse the operation of the RvNN.
+ The basic operation on two input words is 
+\begin_inset Formula $p_{1,2}=\tanh\left(W[Le_{1},\,Le_{2}L]\right)$
+\end_inset
+
+, where 
+\begin_inset Formula $c_{i}=Le_{i}$
+\end_inset
+
+ where 
+\begin_inset Formula $e_{i}$
+\end_inset
+
+ is a one-hot word identifier.
+ Using atan, to reverse the nonlinearity.
+ Using the pseudo inverse of 
+\begin_inset Formula $W$
+\end_inset
+
+ to recover a least-squares values for recovering 
+\begin_inset Formula $\hat{c}_{i}$
+\end_inset
+
+.
+ Then using the cosign difference to obtain a similarity measure for each
+ candidate 
+\begin_inset Formula $\hat{e}_{i}$
+\end_inset
+
+.
+ This should be generalisable for 
+\begin_inset Formula $c_{i}=p_{j,k}$
+\end_inset
+
+ where it is a deeper structure .
+\end_layout
+
+\begin_layout Standard
+When testing the basic operation on recovering two words as discussed it
+ seems successful.
+ This was performed using a 
+\begin_inset Formula $L$
+\end_inset
+
+ which is a 50 dimensional matrix of Collobert & Weston word embeddings
+ and a randomly set 
+\begin_inset Formula $W$
+\end_inset
+
+.
+ The input words were normally top ranked, and if not were generally in
+ to top 5, with other highly ranked words similar (Eg President instead
+ of King).
+ This was with the random 
+\begin_inset Formula $W$
+\end_inset
+
+ which does not encode useful information; a trained , 
+\begin_inset Formula $W$
+\end_inset
+
+ should perform better.
+ 
+\end_layout
+
+\begin_layout Standard
+A further experiment again with a random matrix showed it couldn't do the
+ deeper structures, but that the math did work and returned a result.
+ It is not unreasonable that it performed poorly with random 
+\begin_inset Formula $W$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+It is expected that the same would hold true, using RAE
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:RAE"
+
+\end_inset
+
+, which already have a reconstruction layer, in the place of taking the
+ pseudo-inverse of 
+\begin_inset Formula $W$
+\end_inset
+
+.
+ Indeed this is very similar to the approach used Unfolding Recursive Auto-encod
+ers
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:PoolRAE"
+
+\end_inset
+
+ -- which are trained to recreate there whole input (matching structure)
+ this way during training.
+\end_layout
+
+\begin_layout Subsubsection
+Issues 
+\end_layout
+
+\begin_layout Standard
+This being successful and useful, hinges on being able to reconstitute words
+ into a format that they were not in originally, but that comes close to
+ preserving meaning.
+ This relies on the operations of the 
+\begin_inset Formula $W$
+\end_inset
+
+ matrix functioning to project into a space containing semantic (rather
+ than syntactic) information.
+ For example it would be good if 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+The basketball player
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\emph default
+was projected closer to 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+The basketballer
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\emph default
+than to 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+The soccer player
+\begin_inset Quotes erd
+\end_inset
+
+.
+ 
+\emph default
+Solving this kind of issue would require improving the way W is trained.
+ Such as discussed in
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:RvNN-on-AMR"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+That may not be sufficient, results in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "RvNNLogicalSemantics"
+
+\end_inset
+
+ (preprint), showed that for logical semantics, separation of different
+ sentiments was not well preserved for longer expressions by the RvNN.
+ They found they need to use the more powerful recursive neural tensor networks
+ (RvNTN).
+\end_layout
+
+\begin_layout Standard
+Further too much information may be lost in the compression.
+\end_layout
+
+\begin_layout Subsubsection
+Extension
+\end_layout
+
+\begin_layout Standard
+The naïve way to extend this to work more generally, is to perform a search
+ (making use of dynamic programming potentially) across a space of possible
+ structures.
+ 
+\end_layout
+
+\begin_layout Subsection
+Structural ReSynthesis (The Core Problem)
+\end_layout
+
+\begin_layout Standard
+The general issue of above, that training these models piece by piece then
+ using a nongenerative method to combine them.
+ The merging in the RvNN can be generative (as in RAE), but the method which
+ decides on the order is not.
+ This does not allow the tree structure itself to be regenerated.
+ The reconstruction needs to be in the structure, not (just) in the nodes.
+\end_layout
+
+\begin_layout Standard
+Otherwise the RAE of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:RAE"
+
+\end_inset
+
+ would have solved this long ago.
+\end_layout
+
+\begin_layout Standard
+The Unfolding RAE
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:PoolRAE"
+
+\end_inset
+
+ does come close to tackling this problem, but is only trying to recreate
+ the same structure it was trained on.
+ Not necessarily the best structure for expressing its meaning.
+ For example the sentence 
+\begin_inset Quotes eld
+\end_inset
+
+I am not un-hungry
+\begin_inset Quotes erd
+\end_inset
+
+ may be better expressed as 
+\begin_inset Quotes eld
+\end_inset
+
+I am hungry
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Here we capture the notion of best as closest to the embedded representation
+ of the input, rather than closeness to the input.
+\end_layout
+
+\begin_layout Subsubsection
+Tree Problem Detail 
+\end_layout
+
+\begin_layout Standard
+When decomposing an embedding into a binary parse tree (the reverse of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "socher2014recursive,SocherEtAl2013:CVG"
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+At each step the algorithm needs to decide between 4 choices: for both the
+ left and right nodes it can expand either each, into a output word, or
+ into an nonterminal node (for further decomposition).
+\end_layout
+
+\begin_layout Standard
+When doing this it has an objective of generating a sentence which when
+ converted back into an embedding will be as close as possible to the original
+ embedding.
+\end_layout
+
+\begin_layout Standard
+It also has the constraint that the sentence must be valid English (and
+ ideally be natural sounding english).
+\end_layout
+
+\begin_layout Standard
+When being used for summarization it has a further constraint on the length
+ of the response (either in number of words, or at a more general scale
+ in number of sentences.)
+\end_layout
+
+\begin_layout Subsubsection
+Training to make the decision
+\end_layout
+
+\begin_layout Standard
+It see
+\end_layout
+
+\begin_layout Section
+Existing Work
+\end_layout
+
+\begin_layout Standard
+The existing models for phrase embeddings by Socher et all share many commonalit
+ies.
+ All are based around applying some form of neural network to pairs of embedding
+s, which outputs a merged embedding, and thusly creating a binary tree where
+ at each stage the best such merge is performed.
+ The major difference is in how the best merge is defined.
+ In all cases this neural network is trained via back propagation through
+ structure (BPTS)
+\begin_inset CommandInset citation
+LatexCommand cite
+key "goller1996BPstructure"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+RvNN 
 \end_layout
 
 \begin_layout Standard
@@ -290,8 +631,8 @@ status open
 
 \begin_layout Plain Layout
 \begin_inset Graphics
-	filename figs/RvNN_single.png
-	width 50page%
+	filename figs/RvNN.PNG
+	width 100text%
 
 \end_inset
 
@@ -304,87 +645,134 @@ status open
 \begin_layout Plain Layout
 \begin_inset CommandInset label
 LatexCommand label
-name "fig:The-Neural-Net"
+name "fig:RvNN"
 
 \end_inset
 
-The Neural Net applied recursively generating the tree for the RvNN
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-This neural network is applied across each pair of adjacent child word-embedding
-s (
-\begin_inset Formula $c_{i}$
-\end_inset
-
-, 
-\begin_inset Formula $c_{j}$
-\end_inset
-
-) , and the highest scoring merge is done.
- When the mere is done this best parent embeddings replaces both of the
- child embeddings (sharing adjacencies of the children).
- So so through this greedy search a high scoring tree structure is found
- for the input phrase.
-\end_layout
-
-\begin_layout Subparagraph
-Training Max-Margin
-\end_layout
-
-\begin_layout Standard
-Max Margin training is done, to find a subgraident for ensuring correct
- trees score better than their incorrect counterparts.
-\end_layout
-
-\begin_layout Standard
-An incorrect tree can be created from a correct example by corrupting on
- of the features (and ideally ensuring that in doing so it does not mistakenly
- create an correct tree.)
-\end_layout
-
-\begin_layout Subparagraph
-Backpropagation through structure (BPTS)
-\end_layout
-
-\begin_layout Standard
-The generalization of backpropagation through time.
- Allows backpropagating on any directed acyclic graph.
- From 
+Left is an example of RvNN (from 
 \begin_inset CommandInset citation
 LatexCommand cite
-key "goller1996BPstructure"
+key "socher2014recursive"
 
 \end_inset
 
- which expands on 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Pollack199077"
+).
+ The blue merge section of the right image is applied at each pair of edges
+ where a semantic representation is merged, with the parent embedding 
+\begin_inset Formula $p_{1,2}$
+\end_inset
+
+ is passed to the next stage as the next child embedding like 
+\begin_inset Formula $c_{1}$
+\end_inset
+
+or 
+\begin_inset Formula $c_{2}$
+\end_inset
+
+.
+ Where an indexed word is added (the section with orange dots in boxes on
+ the right) the section of the image on the left in red is performed.
+ The left hand image in its entirety shows what happens for the merge of
+ Historic and Church to form a NP,
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In the RvNN a neural net is applied at each merge.
+ It is a more complicated than usual network in that it has several separate
+ output layers as shown to the right on 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:RvNN"
 
 \end_inset
 
 .
- It is used to propagate the errors in the RvNN
-\end_layout
+ It its heart though it is normal shallow neural net.
+ Taking an input of 
+\begin_inset Formula $c_{1}$
+\end_inset
 
-\begin_layout Subsubsection
-Assessment
+ concatenated with 
+\begin_inset Formula $c_{2}$
+\end_inset
+
+where 
+\begin_inset Formula $c_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $c_{2}$
+\end_inset
+
+ are child word/(sub)phrase embeddings, and outputting a (sub)phrase embedding
+ 
+\begin_inset Formula $p_{1,2}$
+\end_inset
+
+ of dimensionality equal to that of either of its inputs.
+ This merged parent embedding is passed to the next stage.
 \end_layout
 
 \begin_layout Standard
-The success of the algorithm is measures on how well it is able to parse
- text (assign correct trees with correct POS tags).
+The order in which to do the merge is determined by a trained scoring matrix:
+ 
+\begin_inset Formula $W_{score}$
+\end_inset
+
+.
+ The scoring matrix (and via BPTS, 
+\begin_inset Formula $W$
+\end_inset
+
+ and 
+\begin_inset Formula $L$
+\end_inset
+
+) is trained using the max-margin method.
+ Max Margin finds a subgraident for ensuring the correct tree score better
+ than their incorrect counterparts.
+ An incorrect tree can be created from a correct example by corrupting on
+ of the features.
+ This does require having labeled correct trees to train from.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Socher2011ParsingPhrases,socher2010PhraseEmbedding"
+
+\end_inset
+
+ use the Wall Street Journal section of the Penn TreeBank for this.
+\end_layout
+
+\begin_layout Standard
+The
+\begin_inset Formula $W_{label}$
+\end_inset
+
+(and via BPTS 
+\begin_inset Formula $W$
+\end_inset
+
+and 
+\begin_inset Formula $L$
+\end_inset
+
+) is trained to predict using the parent embedding the correct Part of Speech
+ (POS) annotation for that tree pointion, and it also detailed in the Treebank
+ training data.
+ This is extra discriminative information.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -399,42 +787,346 @@ key "socher2010PhraseEmbedding"
  similar phrase embeddings were located near each other.
 \end_layout
 
-\begin_layout Subsubsection
-Variations
-\end_layout
-
 \begin_layout Standard
-The variation in 
+An variation on the RvNN
 \begin_inset CommandInset citation
 LatexCommand cite
 key "SocherEtAl2013:CVG"
 
 \end_inset
 
- added a Context Grammar, to change between several 
-\begin_inset Formula $W$
-\end_inset
-
- matrices depending on the POS.
- This Compositional Vector Grammar is now used in the Stanford Parser, a
- gold standard for parsing.
+ is used in the gold standard Stanford Parser for POS annotation.
+ 
 \end_layout
 
 \begin_layout Standard
-Recursive Tensor Neural Networks are related to RvNN: at every stage, both
- a vector and a matrix representation are handled.
- They were used in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Socher2013TensorReasoning"
+This RvNN actually learns the correct linguistic structure of the sentence,
+ unlike the Recursive Autoencoder models.
+\end_layout
+
+\begin_layout Subsection
+RAE 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figs/RAE_uRAE.PNG
+	width 100text%
 
 \end_inset
 
- (which is a really neat idea).
- They performed better than RNN in They performed better in 
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:RAE"
+
+\end_inset
+
+Left is an example of RAE.
+ Right is an example of an Unfolding RAE ( both from 
 \begin_inset CommandInset citation
 LatexCommand cite
-key "RvNNLogicalSemantics"
+key "SocherEtAl2011:PoolRAE"
+
+\end_inset
+
+).
+ In this figure 
+\begin_inset Formula $x_{1},x_{2,}x_{3}$
+\end_inset
+
+ are all word embeddings.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The Recursive Autoencoder (RAE)
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:RAE"
+
+\end_inset
+
+ is very similar to the RvNN, with Autoencoder rather than a feedforward
+ neural network at each merge.
+ However in the RAE, the loss function for determining the quality (and
+ thus order) an a merge is how low it's reconstruction error is, and can
+ be seen for the node 
+\begin_inset Formula $y_{2}$
+\end_inset
+
+ in the left of 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:RAE"
+
+\end_inset
+
+.
+ It is trained, again with BPTS, to minimize the sum of all the reconstruction
+ errors in the network.
+\end_layout
+
+\begin_layout Standard
+Structure is chosen inline only with this goal, not to replicated real linguisti
+c structures (unlike in the RvNN above).
+\end_layout
+
+\begin_layout Standard
+It is worth noting that the auto-encoders used are not denoising, and are
+ bottle-necked specifically to have representation width of the same length
+ as the input word embeddings.
+\end_layout
+
+\begin_layout Standard
+It can be extended in a similar way to the RvNN by adding additional trained
+ outputs at each node (allowing it to be 
+\begin_inset Quotes eld
+\end_inset
+
+semi-supervised
+\begin_inset Quotes erd
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Subsection
+Unfolding RAE
+\end_layout
+
+\begin_layout Standard
+The Unfolding Recursive Autoencoder (URAE) is a variation on the RAE, which
+ uses a different loss function
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:PoolRAE"
+
+\end_inset
+
+.
+ In its case it regenerates the whole tree from the top, (as shown to the
+ right of 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:RAE"
+
+\end_inset
+
+) and uses the sum of errors on the regenerated inputs as its loss function.
+ 
+\end_layout
+
+\begin_layout Standard
+However it is not truly reversible to go from the embedding back to a sentence,
+ as it needs the structure provided.
+ In this case it can get the structure as it defined it.
+ Further the form structure provided is determined by the URAE itself --
+ Unlike the structure in
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2013:CVG,Socher2011ParsingPhrases,socher2010PhraseEmbedding"
+
+\end_inset
+
+ this structure is not directly related to any traditional linguistic relations.
+ Thus it can not be used in general to resynthesise sentences from embeddings
+ as it is impossible to intuit the structure without already having the
+ sentence to embed.
+\end_layout
+
+\begin_layout Section
+Datasets
+\end_layout
+
+\begin_layout Subsection
+Penn TreeBank
+\end_layout
+
+\begin_layout Standard
+Consisting of POS annotated: Wall Street Journal, Brown, and Switchboard
+ Datasets.
+ Is documented in seemingly only in postscript.
+\end_layout
+
+\begin_layout Subsection
+AMR SemBank
+\end_layout
+
+\begin_layout Standard
+Abstract Meaning Representation (AMR) is a structured representation of
+ the meaning of a sentence
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Banarescu13abstractmeaning"
+
+\end_inset
+
+.
+ Its currently in spec 1.2.1
+\begin_inset CommandInset citation
+LatexCommand cite
+key "AMRspec"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+the AMR for two sentences with the same meaning is the same.
+\end_layout
+
+\begin_layout Standard
+For example:
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+(d / destroy-01 
+\end_layout
+
+\begin_layout Plain Layout
+
+	:arg0 (b / boy) 
+\end_layout
+
+\begin_layout Plain Layout
+
+	:arg1 (r / room))
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+For all of:
+\end_layout
+
+\begin_layout Plain Layout
+
+the destruction of the room by the boy ...
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+the boy’s destruction of the room ...
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+The boy destroyed the room.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+There is a freely available small dataset of 1,562 sentences from the novel,
+ 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+The Little Prince
+\begin_inset Quotes erd
+\end_inset
+
+
+\emph default
+ available from 
+\begin_inset CommandInset href
+LatexCommand href
+name "http://amr.isi.edu/download.html"
+target "http://amr.isi.edu/download.html"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+LDC publishes a dataset of a further 13,051 sentences at 
+\begin_inset CommandInset href
+LatexCommand href
+name "https://catalog.ldc.upenn.edu/LDC2014T12"
+target "https://catalog.ldc.upenn.edu/LDC2014T12"
+
+\end_inset
+
+.
+ This is available to LDC subscribers (or $300 for nonmember) -- does UWA
+ have a LDC membership?In total 20,434 sentences have been annotated, meaning
+ several thousand are unreleased (According to 
+\begin_inset CommandInset href
+LatexCommand href
+name "http://amr.isi.edu/download.html"
+target "http://amr.isi.edu/download.html"
+
+\end_inset
+
+).
+ According to 
+\begin_inset CommandInset href
+LatexCommand href
+name "https://github.com/jflanigan/jamr"
+target "https://github.com/jflanigan/jamr"
+
+\end_inset
+
+ there exists LDC2014E41, Released: May 30 2014, with 18,779 sentences.
+\end_layout
+
+\begin_layout Standard
+AMR is closely related to OntoNotes and to PropBank.
+\end_layout
+
+\begin_layout Subsection
+OntoNotes
+\end_layout
+
+\begin_layout Subsection
+PropBank
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset citation
+LatexCommand cite
+key "kingsbury2002treebank"
 
 \end_inset
 
@@ -442,66 +1134,60 @@ key "RvNNLogicalSemantics"
 \end_layout
 
 \begin_layout Subsection
-RAE: Recursive Auto Encoders
+FrameNet
+\end_layout
+
+\begin_layout Subsection
+WordNet
 \end_layout
 
 \begin_layout Standard
-Presented in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SocherEtAl2011:RAE"
+It is an lexical database of words and their relationships.
+ It can be accessed via python NLTK.
+\end_layout
 
-\end_inset
-
-
+\begin_layout Subsection
+SemEval
 \end_layout
 
 \begin_layout Standard
-Similar to the RvNN, the Recursive Auto Encoder applies an Auto Encoder
- while generating the tree, in the place of the neural network shown in
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:The-Neural-Net"
+SemEval is a annual workshop.
+ Each year there are several competitive tasks, for which corpia are provided.
+ These corpia tend to have on-going use long after the workshop is over.
+ Some of the corpia come from existing sources.
+\end_layout
+
+\begin_layout Subsection
+Microsoft Research Paraphrase corpus
+\end_layout
+
+\begin_layout Standard
+5800 pairs of sentences with the same meaning.
+ Available from 
+\begin_inset CommandInset href
+LatexCommand href
+name "http://research.microsoft.com/en-us/downloads/607d14d9-20cd-47e3-85bc-a2f65cd28042/"
+target "http://research.microsoft.com/en-us/downloads/607d14d9-20cd-47e3-85bc-a2f65cd28042/"
 
 \end_inset
 
 .
- Roughly replacing the Max-Margin derived scoring matrix with a reconstruction
- error.
-\end_layout
-
-\begin_layout Standard
-The tree selected is selecting much the say way as for the RvNN -- by merge
- resulting in best reconstruction.
-\end_layout
-
-\begin_layout Standard
-It is noted in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SocherEtAl2011:RAE"
-
-\end_inset
-
- that if the left child (for example) is a node made by merging 5 children
- and the right a node by merging only 2, then it is more important to correctly
- reconstruct the left child than the right.
- The weighting function in the RAE in that paper is adjusted as such.
  
 \end_layout
 
 \begin_layout Standard
-It can be extended in a similar way to the RvNN by adding additional trained
- outputs at each node.
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+bibfiles "../../Resources/master_bibliography/master"
+options "IEEEtran"
+
+\end_inset
+
+
 \end_layout
 
-\begin_layout Standard
-It is not purely greedy, on simply training the to minimize the error of
- the merge at each node.
- Like the RvNN, it uses BPTS, and attempt to minimize the sum of all errors
- across the tree.
- Unlike the RvNN, there is no target structure -- it is free to use what
- ever structure minimizes total error.
+\begin_layout Section
+Other Related Works
 \end_layout
 
 \begin_layout Subsection
@@ -736,10 +1422,7 @@ key "zhang2014chinese"
 
 \end_inset
 
-
-\end_layout
-
-\begin_layout Standard
+, 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Grefenstette2014"
@@ -758,212 +1441,7 @@ US DARPA project/lab, has been working on NLG continuously since the 70s.
 \end_layout
 
 \begin_layout Section
-Datasets
-\end_layout
-
-\begin_layout Subsection
-Penn TreeBank
-\end_layout
-
-\begin_layout Standard
-Consisting of POS annotated: Wall Street Journal, Brown, and Switchboard
- Datasets.
- Is documented in seemingly only in postscript.
-\end_layout
-
-\begin_layout Subsection
-AMR SemBank
-\end_layout
-
-\begin_layout Standard
-Abstract Meaning Representation (AMR) is a structured representation of
- the meaning of a sentence
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Banarescu13abstractmeaning"
-
-\end_inset
-
-.
- Its currently in spec 1.2.1
-\begin_inset CommandInset citation
-LatexCommand cite
-key "AMRspec"
-
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-the AMR for two sentences with the same meaning is the same.
-\end_layout
-
-\begin_layout Standard
-For example:
-\end_layout
-
-\begin_layout Standard
-\begin_inset listings
-inline false
-status open
-
-\begin_layout Plain Layout
-
-(d / destroy-01 
-\end_layout
-
-\begin_layout Plain Layout
-
-	:arg0 (b / boy) 
-\end_layout
-
-\begin_layout Plain Layout
-
-	:arg1 (r / room))
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-For all of:
-\end_layout
-
-\begin_layout Plain Layout
-
-the destruction of the room by the boy ...
- 
-\end_layout
-
-\begin_layout Plain Layout
-
-the boy’s destruction of the room ...
- 
-\end_layout
-
-\begin_layout Plain Layout
-
-The boy destroyed the room.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-There is a freely available small dataset of 1,562 sentences from the novel,
- 
-\emph on
-
-\begin_inset Quotes eld
-\end_inset
-
-The Little Prince
-\begin_inset Quotes erd
-\end_inset
-
-
-\emph default
- available from 
-\begin_inset CommandInset href
-LatexCommand href
-name "http://amr.isi.edu/download.html"
-target "http://amr.isi.edu/download.html"
-
-\end_inset
-
-.
- 
-\end_layout
-
-\begin_layout Standard
-LDC publishes a dataset of a further 13,051 sentences at 
-\begin_inset CommandInset href
-LatexCommand href
-name "https://catalog.ldc.upenn.edu/LDC2014T12"
-target "https://catalog.ldc.upenn.edu/LDC2014T12"
-
-\end_inset
-
-.
- This is available to LDC subscribers (or $300 for nonmember) -- does UWA
- have a LDC membership?In total 20,434 sentences have been annotated, meaning
- several thousand are unreleased (According to 
-\begin_inset CommandInset href
-LatexCommand href
-name "http://amr.isi.edu/download.html"
-target "http://amr.isi.edu/download.html"
-
-\end_inset
-
-).
- According to 
-\begin_inset CommandInset href
-LatexCommand href
-name "https://github.com/jflanigan/jamr"
-target "https://github.com/jflanigan/jamr"
-
-\end_inset
-
- there exists LDC2014E41, Released: May 30 2014, with 18,779 sentences.
-\end_layout
-
-\begin_layout Standard
-AMR is closely related to OntoNotes and to PropBank.
-\end_layout
-
-\begin_layout Subsection
-OntoNotes
-\end_layout
-
-\begin_layout Subsection
-PropBank
-\end_layout
-
-\begin_layout Standard
-\begin_inset CommandInset citation
-LatexCommand cite
-key "kingsbury2002treebank"
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Subsection
-FrameNet
-\end_layout
-
-\begin_layout Subsection
-WordNet
-\end_layout
-
-\begin_layout Standard
-It is an lexical database of words and their relationships.
- It can be accessed via python NLTK.
-\end_layout
-
-\begin_layout Subsection
-SemEval
-\end_layout
-
-\begin_layout Standard
-SemEval is a annual workshop.
- Each year there are several competitive tasks, for which corpia are provided.
- These corpia tend to have on going use even in publications not associated
- with the workshop.
-\end_layout
-
-\begin_layout Subsection
-Microsoft Paraphrase Corpus
-\end_layout
-
-\begin_layout Section
-Projects/Subthemes
+Related0 Projects
 \end_layout
 
 \begin_layout Subsection
@@ -1333,395 +1811,6 @@ Both feature scorers much be trained.
  the concept mapping is trained to replicate.
  The Aligner itself is based on fairly simple hand engineered heuristics.
  
-\end_layout
-
-\begin_layout Subsection
-ReSynthesis into a Provided Structure
-\end_layout
-
-\begin_layout Standard
-There are two steps to directly ReSythisising from a phrase embedding of
- the form created by 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Socher2011ParsingPhrases"
-
-\end_inset
-
- (Or indeed by something created like 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "sub:RvNN-on-AMR"
-
-\end_inset
-
-).
- One: the creation of the structure of the resynthesised text: eg 
-\emph on
-
-\begin_inset Quotes eld
-\end_inset
-
-Noun do Verb
-\begin_inset Quotes erd
-\end_inset
-
-
-\emph default
-, or 
-\emph on
-The 
-\begin_inset Quotes eld
-\end_inset
-
-Adjective Noun Verb The Nou
-\emph default
-n
-\begin_inset Quotes erd
-\end_inset
-
-.
- Second is filling said structure will values, eg 
-\begin_inset Quotes eld
-\end_inset
-
-Cats do chase
-\begin_inset Quotes erd
-\end_inset
-
- or 
-\emph on
-
-\begin_inset Quotes eld
-\end_inset
-
-The fast cat chased the mouse.
-\begin_inset Quotes erd
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-In this project, we could assume the first is given, and solve the second.
- A not unreasonable, nor un-useful assumption.
-\end_layout
-
-\begin_layout Standard
-For example is attempting to summarize reviews of hotels, it might be desirable
- to attempt to pull out statements that are only of the form 
-\begin_inset Quotes eld
-\end_inset
-
-Noun Is Adjective
-\begin_inset Quotes erd
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Subsubsection
-How
-\end_layout
-
-\begin_layout Standard
-It is possible (I have a working proof of concept) to use linear algebra
- to reverse the operation of the RvNN.
- The basic operation on two input words is 
-\begin_inset Formula $p_{1,2}=\tanh\left(W[Le_{1},\,Le_{2}L]\right)$
-\end_inset
-
-, where 
-\begin_inset Formula $c_{i}=Le_{i}$
-\end_inset
-
- where 
-\begin_inset Formula $e_{i}$
-\end_inset
-
- is a one-hot word identifier.
- Using atan, to reverse the nonlinearity.
- Using the pseudo inverse of 
-\begin_inset Formula $W$
-\end_inset
-
- to recover a least-squares values for recovering 
-\begin_inset Formula $\hat{c}_{i}$
-\end_inset
-
-.
- Then using the cosign difference to obtain a similarity measure for each
- candidate 
-\begin_inset Formula $\hat{e}_{i}$
-\end_inset
-
-.
- This should be generalisable for 
-\begin_inset Formula $c_{i}=p_{j,k}$
-\end_inset
-
- where it is a deeper structure .
-\end_layout
-
-\begin_layout Standard
-When testing the basic operation on recovering two words as discussed it
- seems successful.
- This was performed using a 
-\begin_inset Formula $L$
-\end_inset
-
- which is a 50 dimensional matrix of Collobert & Weston word embeddings
- and a randomly set 
-\begin_inset Formula $W$
-\end_inset
-
-.
- The input words were normally top ranked, and if not were generally in
- to top 5, with other highly ranked words similar (Eg President instead
- of King).
- This was with the random 
-\begin_inset Formula $W$
-\end_inset
-
- which does not encode useful information; a trained , 
-\begin_inset Formula $W$
-\end_inset
-
- should perform better.
- 
-\end_layout
-
-\begin_layout Standard
-A further experiment again with a random matrix showed it couldn't do the
- deeper structures, but that the math did work and returned a result.
- It is not unreasonable that it performed poorly with random 
-\begin_inset Formula $W$
-\end_inset
-
-.
- 
-\end_layout
-
-\begin_layout Standard
-It is expected that the same would hold true, using RAE
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SocherEtAl2011:RAE"
-
-\end_inset
-
-, which already have a reconstruction layer, in the place of taking the
- pseudo-inverse of 
-\begin_inset Formula $W$
-\end_inset
-
-.
- Indeed this is very similar to the approach in Unfolding Recursive Auto-encoder
-s
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SocherEtAl2011:PoolRAE"
-
-\end_inset
-
- -- which are trained to recreate there whole input (matching structure)
- this way during training.
-\end_layout
-
-\begin_layout Subsubsection
-Issues 
-\end_layout
-
-\begin_layout Standard
-This being successful and useful, hinges on being able to reconstitute words
- into a format that they were not in originally, but that comes close to
- preserving meaning.
- This relies on the operations of the 
-\begin_inset Formula $W$
-\end_inset
-
- matrix functioning to project into a space containing semantic (rather
- than syntactic) information.
- For example it would be good if 
-\emph on
-
-\begin_inset Quotes eld
-\end_inset
-
-The basketball player
-\begin_inset Quotes erd
-\end_inset
-
- 
-\emph default
-was projected closer to 
-\emph on
-
-\begin_inset Quotes eld
-\end_inset
-
-The basketballer
-\begin_inset Quotes erd
-\end_inset
-
- 
-\emph default
-than to 
-\emph on
-
-\begin_inset Quotes eld
-\end_inset
-
-The soccer player
-\begin_inset Quotes erd
-\end_inset
-
-.
- 
-\emph default
-Solving this kind of issue would require improving the way W is trained.
- Such as discussed in
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "sub:RvNN-on-AMR"
-
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-That may not be sufficient, results in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "RvNNLogicalSemantics"
-
-\end_inset
-
- (preprint), showed that for logical semantics, separation of different
- sentiments was not well preserved for longer expressions by the RvNN.
- They found they need to use the more powerful recursive neural tensor networks
- (RvNTN).
-\end_layout
-
-\begin_layout Standard
-Further too much information may be lost in the compression.
-\end_layout
-
-\begin_layout Subsubsection
-Extension
-\end_layout
-
-\begin_layout Standard
-The naïve way to extend this to work more generally, is to perform a search
- (making use of dynamic programming potentially) across a space of possible
- structures.
- 
-\end_layout
-
-\begin_layout Subsection
-Structural ReSynthesis (The Core Problem)
-\end_layout
-
-\begin_layout Standard
-The general issue of above, that training these models piece by piece then
- using a nongenerative method to combine them.
- The merging in the RvNN can be generative (as in RAE), but the method which
- decides on the order is not.
- This does not allow the tree structure itself to be regenerated.
- The reconstruction needs to be in the structure, not (just) in the nodes.
-\end_layout
-
-\begin_layout Standard
-Otherwise the RAE of 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SocherEtAl2011:RAE"
-
-\end_inset
-
- would have solved this long ago.
-\end_layout
-
-\begin_layout Standard
-The Unfolding RAE
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SocherEtAl2011:PoolRAE"
-
-\end_inset
-
- does come close to tackling this problem, but is only trying to recreate
- the same structure it was trained on.
- Not necessarily the best structure for expressing its meaning.
- For example the sentence 
-\begin_inset Quotes eld
-\end_inset
-
-I am not un-hungry
-\begin_inset Quotes erd
-\end_inset
-
- may be better expressed as 
-\begin_inset Quotes eld
-\end_inset
-
-I am hungry
-\begin_inset Quotes erd
-\end_inset
-
-.
- Here we capture the notion of best as closest to the embedded representation
- of the input, rather than closeness to the input.
-\end_layout
-
-\begin_layout Subsubsection
-Tree Problem Detail 
-\end_layout
-
-\begin_layout Standard
-When decomposing an embedding into a binary parse tree (the reverse of 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "socher2014recursive,SocherEtAl2013:CVG"
-
-\end_inset
-
-).
-\end_layout
-
-\begin_layout Standard
-At each step the algorithm needs to decide between 4 choices: for both the
- left and right nodes it can expand either each, into a output word, or
- into an nonterminal node (for further decomposition).
-\end_layout
-
-\begin_layout Standard
-When doing this it has an objective of generating a sentence which when
- converted back into an embedding will be as close as possible to the original
- embedding.
-\end_layout
-
-\begin_layout Standard
-It also has the constraint that the sentence must be valid English (and
- ideally be natural sounding english).
-\end_layout
-
-\begin_layout Standard
-When being used for summarization it has a further constraint on the length
- of the response (either in number of words, or at a more general scale
- in number of sentences.)
-\end_layout
-
-\begin_layout Standard
-\begin_inset CommandInset bibtex
-LatexCommand bibtex
-bibfiles "../../Resources/master_bibliography/master"
-options "IEEEtran"
-
-\end_inset
-
-
 \end_layout
 
 \end_body
