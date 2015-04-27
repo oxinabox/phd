@@ -208,396 +208,6 @@ Apply signal processing techniques like particle filters
 \end_layout
 
 \begin_layout Section
-Approaches
-\end_layout
-
-\begin_layout Subsection
-ReSynthesis into a Provided Structure
-\end_layout
-
-\begin_layout Standard
-There are two steps to directly resynthesise from a phrase embedding of
- the form created by 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Socher2011ParsingPhrases"
-
-\end_inset
-
- (Or indeed by something created like 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "sub:RvNN-on-AMR"
-
-\end_inset
-
-).
- One: the creation of the structure of the resynthesised text: eg 
-\emph on
-
-\begin_inset Quotes eld
-\end_inset
-
-Noun do Verb
-\begin_inset Quotes erd
-\end_inset
-
-
-\emph default
-, or 
-\emph on
-The 
-\begin_inset Quotes eld
-\end_inset
-
-Adjective Noun Verb The Nou
-\emph default
-n
-\begin_inset Quotes erd
-\end_inset
-
-.
- Second is filling said structure will values, eg 
-\begin_inset Quotes eld
-\end_inset
-
-Cats do chase
-\begin_inset Quotes erd
-\end_inset
-
- or 
-\emph on
-
-\begin_inset Quotes eld
-\end_inset
-
-The fast cat chased the mouse.
-\begin_inset Quotes erd
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-In this project, we could assume the first is given, and solve the second.
- A not unreasonable, nor un-useful assumption.
-\end_layout
-
-\begin_layout Standard
-For example is attempting to summarize reviews of hotels, it might be desirable
- to attempt to pull out statements that are only of the form 
-\begin_inset Quotes eld
-\end_inset
-
-Noun Is Adjective
-\begin_inset Quotes erd
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Subsubsection
-How
-\end_layout
-
-\begin_layout Standard
-It is possible (I have a working proof of concept) to use linear algebra
- to reverse the operation of the RvNN.
- The basic operation on two input words is 
-\begin_inset Formula $p_{1,2}=\tanh\left(W[Le_{1},\,Le_{2}L]\right)$
-\end_inset
-
-, where 
-\begin_inset Formula $c_{i}=Le_{i}$
-\end_inset
-
- where 
-\begin_inset Formula $e_{i}$
-\end_inset
-
- is a one-hot word identifier.
- Using atan, to reverse the nonlinearity.
- Using the pseudo inverse of 
-\begin_inset Formula $W$
-\end_inset
-
- to recover a least-squares values for recovering 
-\begin_inset Formula $\hat{c}_{i}$
-\end_inset
-
-.
- Then using the cosign difference to obtain a similarity measure for each
- candidate 
-\begin_inset Formula $\hat{e}_{i}$
-\end_inset
-
-.
- This should be generalisable for 
-\begin_inset Formula $c_{i}=p_{j,k}$
-\end_inset
-
- where it is a deeper structure .
-\end_layout
-
-\begin_layout Standard
-When testing the basic operation on recovering two words as discussed it
- seems successful.
- This was performed using a 
-\begin_inset Formula $L$
-\end_inset
-
- which is a 50 dimensional matrix of Collobert & Weston word embeddings
- and a randomly set 
-\begin_inset Formula $W$
-\end_inset
-
-.
- The input words were normally top ranked, and if not were generally in
- to top 5, with other highly ranked words similar (Eg President instead
- of King).
- This was with the random 
-\begin_inset Formula $W$
-\end_inset
-
- which does not encode useful information; a trained , 
-\begin_inset Formula $W$
-\end_inset
-
- should perform better.
- 
-\end_layout
-
-\begin_layout Standard
-A further experiment again with a random matrix showed it couldn't do the
- deeper structures, but that the math did work and returned a result.
- It is not unreasonable that it performed poorly with random 
-\begin_inset Formula $W$
-\end_inset
-
-.
- 
-\end_layout
-
-\begin_layout Standard
-It is expected that the same would hold true, using RAE
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SocherEtAl2011:RAE"
-
-\end_inset
-
-, which already have a reconstruction layer, in the place of taking the
- pseudo-inverse of 
-\begin_inset Formula $W$
-\end_inset
-
-.
- Indeed this is very similar to the approach used Unfolding Recursive Auto-encod
-ers
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SocherEtAl2011:PoolRAE"
-
-\end_inset
-
- -- which are trained to recreate there whole input (matching structure)
- this way during training.
-\end_layout
-
-\begin_layout Subsubsection
-Issues 
-\end_layout
-
-\begin_layout Standard
-This being successful and useful, hinges on being able to reconstitute words
- into a format that they were not in originally, but that comes close to
- preserving meaning.
- This relies on the operations of the 
-\begin_inset Formula $W$
-\end_inset
-
- matrix functioning to project into a space containing semantic (rather
- than syntactic) information.
- For example it would be good if 
-\emph on
-
-\begin_inset Quotes eld
-\end_inset
-
-The basketball player
-\begin_inset Quotes erd
-\end_inset
-
- 
-\emph default
-was projected closer to 
-\emph on
-
-\begin_inset Quotes eld
-\end_inset
-
-The basketballer
-\begin_inset Quotes erd
-\end_inset
-
- 
-\emph default
-than to 
-\emph on
-
-\begin_inset Quotes eld
-\end_inset
-
-The soccer player
-\begin_inset Quotes erd
-\end_inset
-
-.
- 
-\emph default
-Solving this kind of issue would require improving the way W is trained.
- Such as discussed in
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "sub:RvNN-on-AMR"
-
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-That may not be sufficient, results in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "RvNNLogicalSemantics"
-
-\end_inset
-
- (preprint), showed that for logical semantics, separation of different
- sentiments was not well preserved for longer expressions by the RvNN.
- They found they need to use the more powerful recursive neural tensor networks
- (RvNTN).
-\end_layout
-
-\begin_layout Standard
-Further too much information may be lost in the compression.
-\end_layout
-
-\begin_layout Subsubsection
-Extension
-\end_layout
-
-\begin_layout Standard
-The naïve way to extend this to work more generally, is to perform a search
- (making use of dynamic programming potentially) across a space of possible
- structures.
- 
-\end_layout
-
-\begin_layout Subsection
-Structural ReSynthesis (The Core Problem)
-\end_layout
-
-\begin_layout Standard
-The general issue of above, that training these models piece by piece then
- using a nongenerative method to combine them.
- The merging in the RvNN can be generative (as in RAE), but the method which
- decides on the order is not.
- This does not allow the tree structure itself to be regenerated.
- The reconstruction needs to be in the structure, not (just) in the nodes.
-\end_layout
-
-\begin_layout Standard
-Otherwise the RAE of 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SocherEtAl2011:RAE"
-
-\end_inset
-
- would have solved this long ago.
-\end_layout
-
-\begin_layout Standard
-The Unfolding RAE
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SocherEtAl2011:PoolRAE"
-
-\end_inset
-
- does come close to tackling this problem, but is only trying to recreate
- the same structure it was trained on.
- Not necessarily the best structure for expressing its meaning.
- For example the sentence 
-\begin_inset Quotes eld
-\end_inset
-
-I am not un-hungry
-\begin_inset Quotes erd
-\end_inset
-
- may be better expressed as 
-\begin_inset Quotes eld
-\end_inset
-
-I am hungry
-\begin_inset Quotes erd
-\end_inset
-
-.
- Here we capture the notion of best as closest to the embedded representation
- of the input, rather than closeness to the input.
-\end_layout
-
-\begin_layout Subsubsection
-Tree Problem Detail 
-\end_layout
-
-\begin_layout Standard
-When decomposing an embedding into a binary parse tree (the reverse of 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "socher2014recursive,SocherEtAl2013:CVG"
-
-\end_inset
-
-).
-\end_layout
-
-\begin_layout Standard
-At each step the algorithm needs to decide between 4 choices: for both the
- left and right nodes it can expand either each, into a output word, or
- into an nonterminal node (for further decomposition).
-\end_layout
-
-\begin_layout Standard
-When doing this it has an objective of generating a sentence which when
- converted back into an embedding will be as close as possible to the original
- embedding.
-\end_layout
-
-\begin_layout Standard
-It also has the constraint that the sentence must be valid English (and
- ideally be natural sounding english).
-\end_layout
-
-\begin_layout Standard
-When being used for summarization it has a further constraint on the length
- of the response (either in number of words, or at a more general scale
- in number of sentences.)
-\end_layout
-
-\begin_layout Subsubsection
-Training to make the decision
-\end_layout
-
-\begin_layout Standard
-It see
-\end_layout
-
-\begin_layout Section
 Existing Work
 \end_layout
 
@@ -954,6 +564,408 @@ key "SocherEtAl2013:CVG,Socher2011ParsingPhrases,socher2010PhraseEmbedding"
  Thus it can not be used in general to resynthesise sentences from embeddings
  as it is impossible to intuit the structure without already having the
  sentence to embed.
+\end_layout
+
+\begin_layout Section
+Approaches
+\end_layout
+
+\begin_layout Subsection
+ReSynthesis into a Provided Structure
+\end_layout
+
+\begin_layout Standard
+There are two steps to directly resynthesise from a phrase embedding of
+ the form created by 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Socher2011ParsingPhrases"
+
+\end_inset
+
+ (Or indeed by something created like 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:RvNN-on-AMR"
+
+\end_inset
+
+).
+ One: the creation of the structure of the resynthesised text: eg 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+Noun do Verb
+\begin_inset Quotes erd
+\end_inset
+
+
+\emph default
+, or 
+\emph on
+The 
+\begin_inset Quotes eld
+\end_inset
+
+Adjective Noun Verb The Nou
+\emph default
+n
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Second is filling said structure will values, eg 
+\begin_inset Quotes eld
+\end_inset
+
+Cats do chase
+\begin_inset Quotes erd
+\end_inset
+
+ or 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+The fast cat chased the mouse.
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+In this project, we could assume the first is given, and solve the second.
+ A not unreasonable, nor un-useful assumption.
+\end_layout
+
+\begin_layout Standard
+For example is attempting to summarize reviews of hotels, it might be desirable
+ to attempt to pull out statements that are only of the form 
+\begin_inset Quotes eld
+\end_inset
+
+Noun Is Adjective
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection
+How
+\end_layout
+
+\begin_layout Standard
+It is possible (I have a working proof of concept) to use linear algebra
+ to reverse the operation of the RvNN.
+ The basic operation on two input words is 
+\begin_inset Formula $p_{1,2}=\tanh\left(W[Le_{1},\, Le_{2}L]\right)$
+\end_inset
+
+, where 
+\begin_inset Formula $c_{i}=Le_{i}$
+\end_inset
+
+ where 
+\begin_inset Formula $e_{i}$
+\end_inset
+
+ is a one-hot word identifier.
+ Using atan, to reverse the nonlinearity.
+ Using the pseudo inverse of 
+\begin_inset Formula $W$
+\end_inset
+
+ to recover a least-squares values for recovering 
+\begin_inset Formula $\hat{c}_{i}$
+\end_inset
+
+.
+ Then using the cosign difference to obtain a similarity measure for each
+ candidate 
+\begin_inset Formula $\hat{e}_{i}$
+\end_inset
+
+.
+ This should be generalisable for 
+\begin_inset Formula $c_{i}=p_{j,k}$
+\end_inset
+
+ where it is a deeper structure .
+\end_layout
+
+\begin_layout Standard
+When testing the basic operation on recovering two words as discussed it
+ seems successful.
+ This was performed using a 
+\begin_inset Formula $L$
+\end_inset
+
+ which is a 50 dimensional matrix of Collobert & Weston word embeddings
+ and a randomly set 
+\begin_inset Formula $W$
+\end_inset
+
+.
+ The input words were normally top ranked, and if not were generally in
+ to top 5, with other highly ranked words similar (Eg President instead
+ of King).
+ This was with the random 
+\begin_inset Formula $W$
+\end_inset
+
+ which does not encode useful information; a trained , 
+\begin_inset Formula $W$
+\end_inset
+
+ should perform better.
+ 
+\end_layout
+
+\begin_layout Standard
+A further experiment again with a random matrix showed it couldn't do the
+ deeper structures, but that the math did work and returned a result.
+ It is not unreasonable that it performed poorly with random 
+\begin_inset Formula $W$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+It is expected that the same would hold true, using RAE
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:RAE"
+
+\end_inset
+
+, which already have a reconstruction layer, in the place of taking the
+ pseudo-inverse of 
+\begin_inset Formula $W$
+\end_inset
+
+.
+ This is basically what is done in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:PoolRAE"
+
+\end_inset
+
+.
+ Though it would require training (likely via to a standard linguistic structure
+ rather than one derived from itself.
+\end_layout
+
+\begin_layout Subsubsection
+Issues 
+\end_layout
+
+\begin_layout Standard
+This being successful and useful, hinges on being able to reconstitute words
+ into a format that they were not in originally, but that comes close to
+ preserving meaning.
+ This relies on the operations of the 
+\begin_inset Formula $W$
+\end_inset
+
+ matrix functioning to project into a space containing semantic (rather
+ than syntactic) information.
+ For example it would be good if 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+The basketball player
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\emph default
+was projected closer to 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+The basketballer
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\emph default
+than to 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+The soccer player
+\begin_inset Quotes erd
+\end_inset
+
+.
+ 
+\emph default
+Solving this kind of issue would require improving the way W is trained.
+ Such as discussed in
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:RvNN-on-AMR"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+That may not be sufficient, results in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "RvNNLogicalSemantics"
+
+\end_inset
+
+ (preprint), showed that for logical semantics, separation of different
+ sentiments was not well preserved for longer expressions by the RvNN.
+ They found they need to use the more powerful recursive neural tensor networks
+ (RvNTN).
+ Further too much information may be lost in the compression.
+\end_layout
+
+\begin_layout Subsubsection
+Extension
+\end_layout
+
+\begin_layout Standard
+The naïve way to extend this to work more generally, is to perform a search
+ (making use of dynamic programming potentially) across a space of possible
+ structures.
+ 
+\end_layout
+
+\begin_layout Subsection
+Structural ReSynthesis (The Core Problem)
+\end_layout
+
+\begin_layout Standard
+The general issue of above, that training these models piece by piece then
+ using a nongenerative method to combine them.
+ The merging in the RvNN can be generative (as in RAE), but the method which
+ decides on the order is not.
+ This does not allow the tree structure itself to be regenerated.
+ The reconstruction needs to be in the structure, not (just) in the nodes.
+\end_layout
+
+\begin_layout Standard
+Otherwise the RAE of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:RAE"
+
+\end_inset
+
+ would have solved this long ago.
+\end_layout
+
+\begin_layout Standard
+The Unfolding RAE
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:PoolRAE"
+
+\end_inset
+
+ does come close to tackling this problem, but is only trying to recreate
+ the same structure it was trained on.
+ Not necessarily the best structure for expressing its meaning.
+ For example the sentence 
+\begin_inset Quotes eld
+\end_inset
+
+I am not un-hungry
+\begin_inset Quotes erd
+\end_inset
+
+ may be better expressed as 
+\begin_inset Quotes eld
+\end_inset
+
+I am hungry
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Here we capture the notion of best as closest to the embedded representation
+ of the input, rather than closeness to the input.
+\end_layout
+
+\begin_layout Subsubsection
+Tree Problem Detail 
+\end_layout
+
+\begin_layout Standard
+When decomposing an embedding into a binary parse tree (the reverse of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "socher2014recursive,SocherEtAl2013:CVG"
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+At each step the algorithm needs to decide between 4 choices: for both the
+ left and right nodes it can expand either each, into a output word, or
+ into an nonterminal node (for further decomposition).
+\end_layout
+
+\begin_layout Standard
+When doing this it has an objective of generating a sentence which when
+ converted back into an embedding will be as close as possible to the original
+ embedding.
+\end_layout
+
+\begin_layout Standard
+It also has the constraint that the sentence must be valid English (and
+ ideally be natural sounding english).
+\end_layout
+
+\begin_layout Standard
+When being used for summarization it has a further constraint on the length
+ of the response (either in number of words, or at a more general scale
+ in number of sentences.)
+\end_layout
+
+\begin_layout Subsubsection
+Training to make the decision
+\end_layout
+
+\begin_layout Standard
+It seems the natural way to decide which way to make the discussion will
+ involve training a measure to decide the quality of a split.
+ The opposite of the Scoring matrix used in RvNN.
+\end_layout
+
+\begin_layout Subsubsection
+Search for the optimum structure
+\end_layout
+
+\begin_layout Standard
+There is definably a best sentence and structure for any sentence.
+ This is the one that produces the embedding most similar to that of the
+ original sentence -- subject to the constants.
+ (Also subject to the RAE issue of not training to a embedding of all things
+ the same -- with the same resolution).
+ This could be done with a beam search or similar.
 \end_layout
 
 \begin_layout Section
