@@ -12,9 +12,17 @@ function load_embeddings(embedding_file)
     embeddingsDict
     
     LL = hcat(collect(values(embeddingsDict))...)
-    ee = [key=>setindex!(BitArray(length(embeddingsDict)), true, ii) 
-                for (ii,key) in enumerate(keys(embeddingsDict))]
-    indexed_word = embeddingsDict |> keys |> collect
     
-    LL,ee, indexed_word
+    word_indexes = [word=>ii for (ii,word) in enumerate(keys(embeddingsDict))]  #Dict mapping Word to Index
+    
+    
+    
+    #word_index_vectors::Dict{String,BitVector} = [key=>setindex!(BitArray(length(embeddingsDict)), true, ii) 
+    #            for (ii,key) in enumerate(keys(embeddingsDict))]
+    
+    
+    indexed_words = embeddingsDict |> keys |> collect # Vector mapping index to string
+    
+    
+    LL,word_indexes, indexed_words
 end
