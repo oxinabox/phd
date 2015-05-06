@@ -1,17 +1,26 @@
-module ClusterSoup
-export chunk_data, prechunked_mapreduce
+#Because of macro hygiene this can not be in a seperate namespace.
+#module ClusterSoup
+#export chunk_data, prechunked_mapreduce, set_global
 
 using Pipe
-function chunk_data(data_name::Symbol, data::Vector)
-    function save_chunk(chunk::Vector)
-        ex = :(global $data_name; $data_name=$chunk)
+
+function set_global(name::Symbol, value, pid::Int)
+    function do_set_global(dummy)
+        ex = :(global $name; $name=$value)
         eval(ex)
     end
+    remotecall(pid, do_set_global, nothing) 
+end
 
+function set_global(name::Symbol, value, pids::Vector{Int64}=workers())
+    map(pid->set_global(name,value, pid), workers())
+end
+
+function chunk_data(data_name::Symbol, data::Vector)
     chunks = get_chunks(data, nworkers())
     for (pid,chunk) in zip(workers(),chunks)
         println(pid, ": ", typeof(chunk), ": ", length(chunk))
-        remotecall(pid, save_chunk, chunk) 
+        set_global(data_name, chunk,pid) 
     end
 end
 
@@ -41,4 +50,4 @@ function get_chunks(data::Vector, nchunks::Int)
     Task(_it)
 end
 
-end
+#end
