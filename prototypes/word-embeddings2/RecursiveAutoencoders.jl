@@ -60,7 +60,8 @@ end
 
 
 function eval_merges(rae::RAE, c_ijs::Embeddings)
-    tanh(rae.W_e*c_ijs.+rae.b_e)
+    ps=tanh(rae.W_e*c_ijs.+rae.b_e)
+    ps./sum(ps.^2,1) #Make output always of "length" one
 end
 
 function eval_merges(rae::RAE, c_is::Embeddings, c_js::Embeddings)
