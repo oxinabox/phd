@@ -1,7 +1,7 @@
 module RecursiveAutoencoders
 using Pipe
 
-export Embedding, Embeddings, Words, RAE, get_word_index, eval_word_embedding,eval_word_embeddings, eval_merges, eval_scores, reconstruct, unfold_merges, ActData, eval_to_tree, BPTS, eval_scores_gradient, unfold
+export Embedding, Embeddings, Words, RAE, get_word_index, eval_word_embedding,eval_word_embeddings, eval_merges, eval_scores, reconstruct, unfold_merges, ActData, eval_to_tree, BPTS, eval_scores_gradient, unfold, eval_merge
 
 typealias Embedding Vector{Float64}
 typealias Embeddings Matrix{Float64}
@@ -56,6 +56,12 @@ end
 function eval_word_embeddings(rae::RAE, inputs::Words, show_warn=false)
     ks = @pipe inputs |> map(ii -> get_word_index(rae,ii, show_warn), _)
     rae.L[:,ks]
+end
+
+function eval_merge(rae::RAE, c_i::Embedding, c_j::Embedding)
+    c_ij = [c_i;c_j]
+    ps=tanh(rae.W_e*c_ij.+rae.b_e)[:]
+    ps./sum(ps.^2) #Make output always of "length" one
 end
 
 
@@ -145,7 +151,7 @@ function BPTS(rae::RAE, nontree::Embedding, δ_above::Matrix)
     (0,0,0,0)
 end
 
-function BPTS(rae::RAE, tree::(Any,ActData, Any), δ_above=zero_col(rae.W_e))
+function BPTS(rae::RAE, tree::Tuple{Any,ActData, Any}, δ_above=zero_col(rae.W_e))
     act=tree[2]
     ∇s, δ_input = eval_scores_gradient(rae,act,δ_above)
     δ_left  = δ_input[1:end/2,:]
@@ -169,7 +175,7 @@ function eval_scores_gradient(rae::RAE,
     pps::Embeddings = act.pp''
     ĉ_ijs::Embeddings = act.ĉ_ij''
     
-    #http://neuralnetworksanddeeplearning.com/chap2.h)tml
+    #http://neuralnetworksanddeeplearning.com/chap2.html
     N = size(c_ijs,2)
     
     da = (ĉ_ijs - c_ijs)
@@ -182,7 +188,7 @@ function eval_scores_gradient(rae::RAE,
     
     dz_e = (1-pps.^2)
     δ_e = (rae.W_d'*δ_d).*(dz_e .+ δ_parent) #Hidden layer error
-        
+    
 
     ∇W_e = 1/N*δ_e*c_ijs'
     ∇b_e = 1/N*sum(δ_e,2)[:]
@@ -200,26 +206,26 @@ end
 
 #tree data in tree is not use, other than it's structure.
 #((("the","house"),("destroyed",("the","boy")))  is equivalent to ((("",""),("",("",""))) 
-function unfold(rae::RAE, tree::(String,String), pp::Embedding)
+function unfold(rae::RAE, tree::Tuple{String,String}, pp::Embedding)
     ĉ_is, ĉ_js = reconstruct(rae, pp)
     [ĉ_is ĉ_js]
 end
 
 
-function unfold(rae::RAE, tree::(Any,String), pp::Embedding)
+function unfold(rae::RAE, tree::Tuple{Any,String}, pp::Embedding)
     p̂_is, ĉ_js = reconstruct(rae, pp)
     ĉ_is = unfold(rae, tree[1], p̂_is)
     [ĉ_is ĉ_js]
 end
 
-function unfold(rae::RAE, tree::(String,Any), pp::Embedding)
+function unfold(rae::RAE, tree::Tuple{String,Any}, pp::Embedding)
     ĉ_is, p̂_js = reconstruct(rae, pp)
     ĉ_js = unfold(rae, tree[2], p̂_js)
     [ĉ_is ĉ_js]
     
 end
 
-function unfold(rae::RAE, tree::(Any,Any), pp::Embedding)
+function unfold(rae::RAE, tree::Tuple{Any,Any}, pp::Embedding)
     p̂_is, p̂_js = reconstruct(rae, pp)
     ĉ_is = unfold(rae, tree[1], p̂_is)
     ĉ_js = unfold(rae, tree[2], p̂_js)
