@@ -97,7 +97,7 @@ end
 
 #------------------------------------Tree EVAL
 
-type ActData
+immutable ActData
     c_ij::Embedding
     pp::Embedding
     ĉ_ij::Embedding
