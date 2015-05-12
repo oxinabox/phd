@@ -151,7 +151,7 @@ function BPTS(rae::RAE, nontree::Embedding, δ_above::Matrix)
     (0,0,0,0)
 end
 
-function BPTS(rae::RAE, tree::Tuple{Any,ActData, Any}, δ_above=zero_col(rae.W_e))
+function BPTS(rae::RAE, tree::(Any,ActData, Any), δ_above=zero_col(rae.W_e))
     act=tree[2]
     ∇s, δ_input = eval_scores_gradient(rae,act,δ_above)
     δ_left  = δ_input[1:end/2,:]
@@ -206,26 +206,26 @@ end
 
 #tree data in tree is not use, other than it's structure.
 #((("the","house"),("destroyed",("the","boy")))  is equivalent to ((("",""),("",("",""))) 
-function unfold(rae::RAE, tree::Tuple{String,String}, pp::Embedding)
+function unfold(rae::RAE, tree::(String,String), pp::Embedding)
     ĉ_is, ĉ_js = reconstruct(rae, pp)
     [ĉ_is ĉ_js]
 end
 
 
-function unfold(rae::RAE, tree::Tuple{Any,String}, pp::Embedding)
+function unfold(rae::RAE, tree::(Any,String), pp::Embedding)
     p̂_is, ĉ_js = reconstruct(rae, pp)
     ĉ_is = unfold(rae, tree[1], p̂_is)
     [ĉ_is ĉ_js]
 end
 
-function unfold(rae::RAE, tree::Tuple{String,Any}, pp::Embedding)
+function unfold(rae::RAE, tree::(String,Any), pp::Embedding)
     ĉ_is, p̂_js = reconstruct(rae, pp)
     ĉ_js = unfold(rae, tree[2], p̂_js)
     [ĉ_is ĉ_js]
     
 end
 
-function unfold(rae::RAE, tree::Tuple{Any,Any}, pp::Embedding)
+function unfold(rae::RAE, tree::(Any,Any), pp::Embedding)
     p̂_is, p̂_js = reconstruct(rae, pp)
     ĉ_is = unfold(rae, tree[1], p̂_is)
     ĉ_js = unfold(rae, tree[2], p̂_js)
