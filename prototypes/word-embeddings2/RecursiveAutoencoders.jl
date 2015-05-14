@@ -61,13 +61,13 @@ end
 function eval_merge(rae::RAE, c_i::Embedding, c_j::Embedding)
     c_ij = [c_i;c_j]
     ps=tanh(rae.W_e*c_ij.+rae.b_e)[:]
-    ps./sum(ps.^2) #Make output always of "length" one
+    #ps./norm(ps) #Make output always of "length" one. Does not change gradient
 end
 
 
 function eval_merges(rae::RAE, c_ijs::Embeddings)
     ps=tanh(rae.W_e*c_ijs.+rae.b_e)
-    ps./sum(ps.^2,1) #Make output always of "length" one
+    #ps./sum(ps.^2,1) #Make output always of "length" one
 end
 
 function eval_merges(rae::RAE, c_is::Embeddings, c_js::Embeddings)
