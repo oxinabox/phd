@@ -6,7 +6,7 @@ function load_embeddings(embedding_file)
     for line in eachline(open(embedding_file))
         fields = line |> split
         word = fields[1]
-        vec = map(parsefloat, fields[2:end])
+        vec = map(fs -> parse(Float64,fs), fields[2:end])
         embeddingsDict[word] = vec
     end
     embeddingsDict
