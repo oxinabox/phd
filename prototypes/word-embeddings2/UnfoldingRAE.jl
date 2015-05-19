@@ -1,5 +1,6 @@
 module UnfoldingRAE
 using RecursiveAutoencoders
+using WordEmbeddings
 using Base.Collections
 
 export UnfoldLeaf, FoldData, UnfoldData, fold, unfold, UBPTS, loss,loss_and_loss_grad

@@ -1,6 +1,6 @@
 module StandardRAE
 using RecursiveAutoencoders
-
+using WordEmbeddings
 
 #------------------------------------Tree EVAL
 

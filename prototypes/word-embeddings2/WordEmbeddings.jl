@@ -1,7 +1,15 @@
+module WordEmbeddings
+
+
+export Embedding, Embeddings, load_embeddings
+
+typealias Embedding Vector{Float64}
+typealias Embeddings Matrix{Float64}
+
 #returns `LL` embedding matrix and onehot lookup `ee`,
 #Such that `LL*ee["example"]` returns the word embedding for "example"
 function load_embeddings(embedding_file)
-    embeddingsDict = Dict{String,Vector{Float64}}()
+    embeddingsDict = Dict{String,Embedding}()
     #sizehint!(embeddings, 268810)
     for line in eachline(open(embedding_file))
         fields = line |> split
@@ -16,13 +24,13 @@ function load_embeddings(embedding_file)
     word_indexes = [word=>ii for (ii,word) in enumerate(keys(embeddingsDict))]  #Dict mapping Word to Index
     
     
-    
-    #word_index_vectors::Dict{String,BitVector} = [key=>setindex!(BitArray(length(embeddingsDict)), true, ii) 
-    #            for (ii,key) in enumerate(keys(embeddingsDict))]
-    
-    
     indexed_words = embeddingsDict |> keys |> collect # Vector mapping index to string
     
     
     LL,word_indexes, indexed_words
+end
+
+
+
+
 end

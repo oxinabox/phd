@@ -1,10 +1,10 @@
 module RecursiveAutoencoders
+using WordEmbeddings
 using Pipe
 
-export Embedding, Embeddings, Words, RAE, get_word_index, eval_word_embedding,eval_word_embeddings, eval_merges, eval_scores, reconstruct, unfold_merges, ActData, eval_to_tree, BPTS, eval_scores_gradient, unfold, eval_merge
+export Words, RAE, get_word_index, eval_word_embedding,eval_word_embeddings, eval_merges, eval_scores, reconstruct, unfold_merges, ActData, eval_to_tree, BPTS, eval_scores_gradient, unfold, eval_merge
 
-typealias Embedding Vector{Float64}
-typealias Embeddings Matrix{Float64}
+
 typealias Words Union(AbstractArray{ASCIIString,1},AbstractArray{String,1})
 type RAE
     L::Matrix{Float64}
