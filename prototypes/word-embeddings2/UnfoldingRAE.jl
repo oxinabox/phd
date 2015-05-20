@@ -134,7 +134,7 @@ function UBPTS(rae::RAE, nodes::Vector{UnfoldLeaf} )
         end
     end
     
-    for leaf in nodes
+    @inbounds for leaf in nodes
         δ_node = δ(leaf.ĉ,leaf.c)
         δ_padded = sidepad(δ_node, get_side(leaf))
         add!(leaf.parent, δ_padded)
