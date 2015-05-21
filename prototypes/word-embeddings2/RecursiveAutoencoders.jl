@@ -2,11 +2,11 @@ module RecursiveAutoencoders
 using WordEmbeddings
 using Pipe
 
-export Words, RAE, get_word_index, eval_word_embedding,eval_word_embeddings, eval_merges, eval_scores, reconstruct, unfold_merges, ActData, eval_to_tree, BPTS, eval_scores_gradient, unfold, eval_merge
+export  RAE, get_word_index, eval_word_embedding,eval_word_embeddings, eval_merges, eval_scores, reconstruct, unfold_merges, unfold, eval_merge
 
 
-typealias Words Union(AbstractArray{ASCIIString,1},AbstractArray{String,1})
-type RAE
+
+type RAE<: Embedder
     L::Matrix{Float64}
     word_index::Dict{String,Int}
     indexed_words::Vector{String}
@@ -32,31 +32,6 @@ function RAE(L::Matrix{Float64},word_index::Dict{String,Int}, indexed_words::Vec
 end
 
 #-----Basic methods
-
-function get_word_index(rae::RAE, input::String, show_warn=true)
-    if haskey(rae.word_index, input)
-        ii = rae.word_index[input]
-    elseif haskey(rae.word_index, lowercase(input))
-        ii = rae.word_index[lowercase(input)]
-    else
-        ii = rae.word_index["*UNKNOWN*"]
-        if show_warn
-            println("$input not found. Defaulting.")
-        end
-    end
-    ii
-end
-
-
-function eval_word_embedding(rae::RAE, input::String, show_warn=true)
-    k=get_word_index(rae, input, show_warn)
-    rae.L[:,k]
-end
-
-function eval_word_embeddings(rae::RAE, inputs::Words, show_warn=false)
-    ks = @pipe inputs |> map(ii -> get_word_index(rae,ii, show_warn), _)
-    rae.L[:,ks]
-end
 
 
 function eval_word_embeddings(rae::RAE, tree::(Any,Any))
@@ -105,27 +80,7 @@ function unfold_merges(rae::RAE, pps::Embeddings)
     ĉ_ijs = tanh(rae.W_d*pps .+ rae.b_d)
 end
 
-#----------- Eval nearest tools 
 
-function cosine_dist(a,b)
-    (a⋅b)/(norm(a)*norm(b))
-end
-
-function neighbour_dists(cc::Vector{Float64}, globe::Matrix{Float64})
-    [cosine_dist(cc, globe[:,ii]) for ii in 1:size(globe,2)]
-end
-
-
-function show_best(rae::RAE,ĉ::Embedding, nbest=20)
-    candidates=neighbour_dists(ĉ,rae.L)   
-    best_cands = [ (findfirst(candidates,score), score)
-                    for score in select(candidates,1:nbest, rev=true)[1:nbest]]
-    vcat([[rae.indexed_words[ii] round(score,2)] for (ii,score) in best_cands]...)
-end
-
-function show_bests(rae::RAE,ĉs::Embeddings, nbest=20)
-    hcat([show_best(rae,ĉs[:,ii],nbest) for ii in 1:size(ĉs,2)]...)
-end
 
 
 
