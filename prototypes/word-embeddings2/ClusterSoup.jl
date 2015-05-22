@@ -1,11 +1,11 @@
 
 module ClusterSoup
-#export r_chunk_data, prechunked_mapreduce, Base.put!, update_remote, fetch_reduce
+export r_chunk_data, prechunked_mapreduce, put!, update_remote, fetch_reduce
 
 using Pipe
 
 import Base.put!
-function Base.put!(pids::Vector{Int}, val) 
+function put!(pids::Vector{Int}, val) 
     [put!(RemoteRef(id)::RemoteRef, val) for id in pids] 
 end
 
