@@ -1,37 +1,73 @@
-#Because of macro hygiene this can not be in a seperate namespace.
-#module ClusterSoup
-#export chunk_data, prechunked_mapreduce, set_global
+
+module ClusterSoup
+#export r_chunk_data, prechunked_mapreduce, Base.put!, update_remote, fetch_reduce
 
 using Pipe
 
-function set_global(name::Symbol, value, pid::Int)
-    function do_set_global(dummy)
-        ex = :(global $name; $name=$value)
-        eval(ex)
-    end
-    remotecall(pid, do_set_global, nothing) 
+import Base.put!
+function Base.put!(pids::Vector{Int}, val) 
+    [put!(RemoteRef(id)::RemoteRef, val) for id in pids] 
 end
 
-function set_global(name::Symbol, value, pids::Vector{Int64}=workers())
-    map(pid->set_global(name,value, pid), workers())
+
+
+function update_remote(rr::RemoteRef, updater!::Function)
+    function update!()
+        @pipe rr |> fetch |> updater!(_)
+    end
+    remotecall(rr.where, update!) 
 end
 
-function chunk_data(data_name::Symbol, data::Vector)
-    chunks = get_chunks(data, nworkers())
-    for (pid,chunk) in zip(workers(),chunks)
-        println(pid, ": ", typeof(chunk), ": ", length(chunk))
-        set_global(data_name, chunk,pid) 
-    end
+function r_chunk_data(data::Vector)
+    all_chuncks = get_chunks(data, nworkers()) |> collect;
+    remote_chunks = [put!(RemoteRef(pid)::RemoteRef, all_chuncks[ii]) for (ii,pid) in enumerate(workers())]
+    #Have to add the type annotation sas otherwise it thinks that, RemoteRef(pid) might return a RemoteValue
 end
 
-function prechunked_mapreduce(data_name::Symbol, map_fun::Function, red_acc::Function)
-    function do_mapred(dummy)
-        @pipe data_name |> eval |> map(map_fun,_) |> reduce(red_acc, _)
-        #reduce(red_acc,map(map_fun,eval(data_name)))
+
+
+function fetch_reduce(red_acc::Function, rem_results::Vector{RemoteRef})
+    total = nothing 
+    #TODO: consider strongly wrapping total in a lock, when in 0.4, so that it is garenteed safe 
+    @sync for rr in rem_results
+        function gather(rr)
+            res=fetch(rr)
+            if total===nothing
+                total=res
+            else 
+                total=red_acc(total,res)
+            end
+        end
+        @async gather(rr)
     end
-    
-    rem_results = @pipe workers() |> map(pid->remotecall(pid,do_mapred, nothing), _)
-    @pipe rem_results |> map(fetch,_) |> reduce(red_acc, _)
+    total
+end
+
+function prechunked_mapreduce(r_chunks::Vector{RemoteRef}, map_fun::Function, red_acc::Function)
+    rem_results = map(r_chunks) do rchunk
+        function do_mapred()
+            @assert r_chunk.where==myid()
+            @pipe r_chunk |> fetch |> map(map_fun,_) |> reduce(red_acc, _)
+        end
+        remotecall(r_chunk.where,do_mapred)
+    end
+    @pipe rem_results|> convert(Vector{RemoteRef},_) |> fetch_reduce(red_acc, _)
+end
+
+function prechunked_mapreduce(r_chunks::Vector{RemoteRef}, r_map_funs::Vector{RemoteRef}, red_acc::Function)
+    rem_results = map(zip(r_chunks,r_map_funs)) do rs
+        r_chunk=rs[1]
+        r_map_fun=rs[2]
+        @assert r_map_fun.where==r_chunk.where
+        
+        function do_mapred()
+            @assert r_chunk.where==myid()
+            map_fun = fetch(r_map_fun)
+            @pipe r_chunk |> fetch |> map(map_fun,_) |> reduce(red_acc, _)
+        end
+        remotecall(r_chunk.where,do_mapred) 
+    end
+    @pipe rem_results|> convert(Vector{RemoteRef},_) |> fetch_reduce(red_acc, _)
 end
 
 
@@ -50,4 +86,4 @@ function get_chunks(data::Vector, nchunks::Int)
     Task(_it)
 end
 
-#end
+end
