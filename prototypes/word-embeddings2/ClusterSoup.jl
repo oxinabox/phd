@@ -3,12 +3,31 @@ module ClusterSoup
 export r_chunk_data, prechunked_mapreduce, put!, update_remote, fetch_reduce
 
 using Pipe
+using Zlib
 
 import Base.put!
 function put!(pids::Vector{Int}, val) 
     [put!(RemoteRef(id)::RemoteRef, val) for id in pids] 
 end
 
+
+#put! now with compression,
+#compression from 0 (fastest, no compression), to 9 (slowest, most compression)
+#It is a tradeoff between increasing CPU time (higher compression level) and increasing network time (lower compression level)
+#Requires Zlib and Type T to be define at all processes
+function put!{T}(pids::Vector{Int}, data::T, compression_level=5)
+    data_streamed = IOBuffer()
+    serialize(data_streamed, data)
+    data_ser_compressed = compress(data_streamed.data, compression_level)
+    
+    function decomp(comp_data::Array{Uint8,1}) 
+       data_ser = decompress(comp_data)
+       deserialize(IOBuffer(data_ser)) :: T
+    end
+    
+    [remotecall(pid, decomp, data_ser_compressed) for pid in pids]
+end
+    
 
 
 function update_remote(rr::RemoteRef, updater!::Function)

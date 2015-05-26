@@ -19,14 +19,13 @@ type RAE<: Embedder
 end
 
 
-function RAE(L::Matrix{Float64},word_index::Dict{String,Int}, indexed_words::Vector{String})
+function RAE(L::Matrix{Float64},word_index::Dict{String,Int}, indexed_words::Vector{String}, init_varience=0.01)
     emb_width = size(L,1)
     
-    W_e =0.01*randn(emb_width,emb_width*2) 
-    b_e = 0.01*randn(emb_width) 
-    #W_d = 0.01*randn(emb_width*2,emb_width)
-    W_d = pinv(W_e) #Cheat (Actually why can't I always do this to initialize?);
-    b_d = 0.01*randn(emb_width*2)
+    W_e = init_varience*randn(emb_width,emb_width*2) 
+    b_e = init_varience*randn(emb_width) 
+    W_d = init_varience*randn(emb_width*2,emb_width)
+    b_d = init_varience*randn(emb_width*2)
     
     RAE(L,word_index, indexed_words, W_e, b_e, W_d, b_d)
 end
