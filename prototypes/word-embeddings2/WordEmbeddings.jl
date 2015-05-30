@@ -62,17 +62,17 @@ end
 
 #----------- Eval nearest tools 
 
-function cosine_dist(a,b)
+function cosine_sim(a,b) #This is actually the definition of cosign similarity
     (a⋅b)/(norm(a)*norm(b))
 end
 
-function neighbour_dists(cc::Vector{Float64}, globe::Matrix{Float64})
+function neighbour_sims(cc::Vector{Float64}, globe::Matrix{Float64})
     [cosine_dist(cc, globe[:,ii]) for ii in 1:size(globe,2)]
 end
 
 
 function show_best(embedder,ĉ::Embedding, nbest=20)
-    candidates=neighbour_dists(ĉ,embedder.L)   
+    candidates=neighbour_sims(ĉ,embedder.L)   
     best_cands = [ (findfirst(candidates,score), score)
                     for score in select(candidates,1:nbest, rev=true)[1:nbest]]
     vcat([[embedder.indexed_words[ii] round(score,2)] for (ii,score) in best_cands]...)
