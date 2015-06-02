@@ -67,7 +67,7 @@ function cosine_sim(a,b) #This is actually the definition of cosign similarity
 end
 
 function neighbour_sims(cc::Vector{Float64}, globe::Matrix{Float64})
-    [cosine_dist(cc, globe[:,ii]) for ii in 1:size(globe,2)]
+    [cosine_sim(cc, globe[:,ii]) for ii in 1:size(globe,2)]
 end
 
 
