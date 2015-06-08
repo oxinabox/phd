@@ -2,14 +2,13 @@ module WordEmbeddings
 
 using Pipe
 
-export Words, Embedding, Embeddings, load_embeddings, cosine_dist, neighbour_dists,show_best, show_bests, WE, Embedder, get_word_index, eval_word_embedding, eval_word_embeddings
+export Words, Embedding, Embeddings, load_embeddings, cosine_dist, neighbour_dists,show_best, show_bests, WE, Embedder, get_word_index, eval_word_embedding, eval_word_embeddings, load_word2vec_embeddings
 
 typealias Words Union(AbstractArray{ASCIIString,1},AbstractArray{String,1})
 typealias Embedding Vector{Float64}
 typealias Embeddings Matrix{Float64}
 
-#returns `LL` embedding matrix and onehot lookup `ee`,
-#Such that `LL*ee["example"]` returns the word embedding for "example"
+#Loads Turins embeddings
 function load_embeddings(embedding_file)
     embeddingsDict = Dict{String,Embedding}()
     #sizehint!(embeddings, 268810)
@@ -27,25 +26,53 @@ function load_embeddings(embedding_file)
     LL,word_indexes, indexed_words
 end
 
+#Loads googles word2vec_embeddings
+function load_word2vec_embeddings(embedding_file)
+    fh = open(embedding_file,"r")
+    vocab_size, vector_size = @pipe readline(fh)|> split |> map(int, _)
+    max_stored_vocab_size = 1000000 #HACK: I know there actually <10^6 words in the vocab, when phrases are exlusded, so lock the vocab size to this to save 70%RAM
+    indexed_words = Array(String,max_stored_vocab_size)
+    word_indexes = Dict{String,Int64}()
+    LL = Array(Float32,(vector_size, max_stored_vocab_size))
+
+
+    index = 1
+    for _ in 1:vocab_size
+        word = readuntil(fh,' ') #Technically this is 'ISO-8859-1' may have to deal with encoding issues
+        vector = read(fh, Float32,vector_size )
+
+        if !contains(word, "_") #If it isn't a phrase
+            LL[:,index]=vector./norm(vector)
+            indexed_words[index] = word
+            word_indexes[word] = index
+            index+=1
+        end
+    end
+    LL = LL[:,1:index-1] #throw away unused columns
+    indexed_words = indexed_words[1:index-1] #throw away unused columns
+end
+
 #----
 
 abstract Embedder
-type WE<:Embedder
+immutable WE<:Embedder
     L::Matrix{Float64}
     word_index::Dict{String,Int}
     indexed_words::Vector{String}
 end
 
 function get_word_index(we::Embedder, input::String, show_warn=true)
-    if haskey(we.word_index, input)
+    if haskey(we.word_index, input) #Direct
         ii = we.word_index[input]
-    elseif haskey(we.word_index, lowercase(input))
+    elseif haskey(we.word_index, lowercase(input)) #remove capitals
         ii = we.word_index[lowercase(input)]
+    elseif haskey(we.word_index, uppercase(input[1:1])*input[2:end]) # add capital at start (eg if a name)
+        ii = we.word_index[uppercase(input[1:1])*input[2:end]]
     else
-        ii = we.word_index["*UNKNOWN*"]
         if show_warn
             warn("$input not found. Defaulting.")
         end
+        ii = we.word_index["*UNKNOWN*"]
     end
     ii
 end
