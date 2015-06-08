@@ -2,7 +2,7 @@ module WordEmbeddings
 
 using Pipe
 
-export Words, Embedding, Embeddings, load_embeddings, cosine_dist, neighbour_dists,show_best, show_bests, WE, Embedder, get_word_index, eval_word_embedding, eval_word_embeddings, load_word2vec_embeddings
+export Words, Embedding, Embeddings, load_embeddings, cosine_dist, neighbour_dists,show_best, show_bests, WE, Embedder, get_word_index, eval_word_embedding, eval_word_embeddings, load_word2vec_embeddings, has_word
 
 typealias Words Union(AbstractArray{ASCIIString,1},AbstractArray{String,1})
 typealias Embedding Vector{Float64}
@@ -27,10 +27,14 @@ function load_embeddings(embedding_file)
 end
 
 #Loads googles word2vec_embeddings
-function load_word2vec_embeddings(embedding_file)
+function load_word2vec_embeddings(embedding_file, max_stored_vocab_size = 1000000)
+    #Note: I know there actually <10^6 words in the vocab, when phrases are exlusded, so lock the vocab size to this to save 70%RAM
+    #Words are loosely organised by commonness,  AFAICT
     fh = open(embedding_file,"r")
     vocab_size, vector_size = @pipe readline(fh)|> split |> map(int, _)
-    max_stored_vocab_size = 1000000 #HACK: I know there actually <10^6 words in the vocab, when phrases are exlusded, so lock the vocab size to this to save 70%RAM
+    max_stored_vocab_size = min(max_stored_vocab_size, vocab_size) #if using a small vocab then there is a chance you might be willing ot store more words than it has
+    
+    
     indexed_words = Array(String,max_stored_vocab_size)
     word_indexes = Dict{String,Int64}()
     LL = Array(Float32,(vector_size, max_stored_vocab_size))
@@ -38,18 +42,25 @@ function load_word2vec_embeddings(embedding_file)
 
     index = 1
     for _ in 1:vocab_size
-        word = readuntil(fh,' ') #Technically this is 'ISO-8859-1' may have to deal with encoding issues
-        vector = read(fh, Float32,vector_size )
+        word = readuntil(fh,' ') |> strip #Technically this is 'ISO-8859-1' may have to deal with encoding issues
+        vector = read(fh, Float32,vector_size ) 
 
         if !contains(word, "_") #If it isn't a phrase
             LL[:,index]=vector./norm(vector)
             indexed_words[index] = word
             word_indexes[word] = index
+            
             index+=1
+            if index>max_stored_vocab_size
+                break
+            end
         end
+        
+        
     end
     LL = LL[:,1:index-1] #throw away unused columns
     indexed_words = indexed_words[1:index-1] #throw away unused columns
+    LL,word_indexes, indexed_words
 end
 
 #----
@@ -59,6 +70,15 @@ immutable WE<:Embedder
     L::Matrix{Float64}
     word_index::Dict{String,Int}
     indexed_words::Vector{String}
+end
+
+
+
+
+function has_word(we::Embedder, input::String)
+    haskey(we.word_index, input) || 
+    haskey(we.word_index, lowercase(input)) ||
+    haskey(we.word_index, uppercase(input[1:1])*input[2:end])
 end
 
 function get_word_index(we::Embedder, input::String, show_warn=true)
