@@ -6,6 +6,7 @@ using Base.Collections
 export UnfoldLeaf, FoldData, UnfoldData, fold, unfold, UBPTS, loss,loss_and_loss_grad
 
 abstract Side
+
 immutable Left<:Side
 end
 
@@ -29,7 +30,7 @@ immutable UnfoldData{T<:Side}
     depth::Int64
 end
 
-immutable UnfoldLeaf{T<:Side}
+immutable UnfoldLeaf{T<:Side} 
     ĉ::Embedding
     parent::UnfoldData
     c::Embedding

@@ -7,19 +7,19 @@ export  RAE, get_word_index, eval_word_embedding,eval_word_embeddings, eval_merg
 
 
 type RAE<: Embedder
-    L::Matrix{Float64}
+    L::Embeddings
     word_index::Dict{String,Int}
     indexed_words::Vector{String}
     
-    W_e::Matrix{Float64}
-    b_e::Vector{Float64}
-    W_d::Matrix{Float64}
-    b_d::Vector{Float64}
+    W_e::Embeddings
+    b_e::Embedding
+    W_d::Embeddings
+    b_d::Embedding
    
 end
 
 
-function RAE(L::Matrix{Float64},word_index::Dict{String,Int}, indexed_words::Vector{String}, init_varience=0.01)
+function RAE(L::Embeddings,word_index::Dict{String,Int}, indexed_words::Vector{String}, init_varience=0.01)
     emb_width = size(L,1)
     
     W_e = init_varience*randn(emb_width,emb_width*2) 

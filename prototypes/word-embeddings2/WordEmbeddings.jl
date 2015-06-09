@@ -5,8 +5,10 @@ using Pipe
 export Words, Embedding, Embeddings, load_embeddings, cosine_dist, neighbour_dists,show_best, show_bests, WE, Embedder, get_word_index, eval_word_embedding, eval_word_embeddings, load_word2vec_embeddings, has_word
 
 typealias Words Union(AbstractArray{ASCIIString,1},AbstractArray{String,1})
-typealias Embedding Vector{Float64}
-typealias Embeddings Matrix{Float64}
+typealias Embedding Union(Vector{Float64}, Vector{Float32}) 
+typealias Embeddings Union(Matrix{Float64},Matrix{Float32})
+
+const UNKNOWN_WORD = "*UNKNOWN*"
 
 #Loads Turins embeddings
 function load_embeddings(embedding_file)
@@ -40,7 +42,14 @@ function load_word2vec_embeddings(embedding_file, max_stored_vocab_size = 100000
     LL = Array(Float32,(vector_size, max_stored_vocab_size))
 
 
-    index = 1
+    
+    #Add a Zero vector for the unknown words
+    LL[:,1]*=0
+    indexed_words[1]=UNKNOWN_WORD
+    word_indexes[UNKNOWN_WORD]=1
+
+    #Add all from data
+    index = 2
     for _ in 1:vocab_size
         word = readuntil(fh,' ') |> strip #Technically this is 'ISO-8859-1' may have to deal with encoding issues
         vector = read(fh, Float32,vector_size ) 
@@ -55,7 +64,6 @@ function load_word2vec_embeddings(embedding_file, max_stored_vocab_size = 100000
                 break
             end
         end
-        
         
     end
     LL = LL[:,1:index-1] #throw away unused columns
@@ -92,7 +100,7 @@ function get_word_index(we::Embedder, input::String, show_warn=true)
         if show_warn
             warn("$input not found. Defaulting.")
         end
-        ii = we.word_index["*UNKNOWN*"]
+        ii = we.word_index[UNKNOWN_WORD]
     end
     ii
 end
@@ -113,20 +121,20 @@ function cosine_sim(a,b) #This is actually the definition of cosign similarity
     (a⋅b)/(norm(a)*norm(b))
 end
 
-function neighbour_sims(cc::Vector{Float64}, globe::Matrix{Float64})
-    [cosine_sim(cc, globe[:,ii]) for ii in 1:size(globe,2)]
+function neighbour_sims(cc::Embedding, globe::Embeddings, similarity=cosine_sim)
+    [similarity(cc, globe[:,ii]) for ii in 1:size(globe,2)]
 end
 
 
-function show_best(embedder,ĉ::Embedding, nbest=20)
-    candidates=neighbour_sims(ĉ,embedder.L)   
+function show_best(embedder,ĉ::Embedding, nbest=20, similarity=cosine_sim )
+    candidates=neighbour_sims(ĉ,embedder.L, similarity)   
     best_cands = [ (findfirst(candidates,score), score)
                     for score in select(candidates,1:nbest, rev=true)[1:nbest]]
     vcat([[embedder.indexed_words[ii] round(score,2)] for (ii,score) in best_cands]...)
 end
 
-function show_bests(embedder,ĉs::Embeddings, nbest=20)
-    hcat([show_best(embedder,ĉs[:,ii],nbest) for ii in 1:size(ĉs,2)]...)
+function show_bests(embedder,ĉs::Embeddings, nbest=20, similarity=cosine_sim)
+    hcat([show_best(embedder,ĉs[:,ii],nbest, similarity) for ii in 1:size(ĉs,2)]...)
 end
 
 
