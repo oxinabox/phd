@@ -55,10 +55,10 @@ end
 function fold(rae::RAE, tree::(Any,Any))
     function eval_child(child::String)
         c=eval_word_embedding(rae,child,false)
-        c
+        c::Embedding
     end
     function eval_child(c::Embedding)
-        c
+        c::Embedding
     end
     function eval_child(child::Any)
         fold(rae,child)
@@ -94,7 +94,7 @@ end
 
 #---------------______GRADIENT___________--------------------
 
-function δ(a::Embedding, δ_above::Vector{Float64}, W::Matrix{Float64})
+function δ(a::Embedding, δ_above::Vector{Number}, W::Matrix{Number})
     #a is the ouput of this layer: a=tanh(z) where z is the input from layer below
     #W is matrix to move to above layer, from this one
     dz = 1-a.^2 #Derivitive of a=tanh(z)
@@ -111,22 +111,22 @@ function δ(ĉ_ij::Embedding,c_ij::Embedding)
 end
 
 
-function sidepad(d::Vector{Float64}, ::Left)
-    padding=zeros(size(d))
+function sidepad(d::Vector{Number}, ::Left)
+    padding=zeros(d)
     [d, padding]
 end
-function sidepad(d::Vector{Float64}, ::Right)
-    padding=zeros(size(d))
+function sidepad(d::Vector{Number}, ::Right)
+    padding=zeros(d)
     [padding, d]
 end
 
-function sidepad(d::Vector{Float64}, ::NoSide)
+function sidepad(d::Vector{Number}, ::NoSide)
     d
 end
 
 
 function UBPTS(rae::RAE, nodes::Vector{UnfoldLeaf} )
-    parent_deltas = Dict{UnfoldData, Vector{Float64}}()
+    parent_deltas = Dict{UnfoldData, Vector{Number}}()
     function add!(parent_node, delta)
         if haskey(parent_deltas, parent_node)
             parent_deltas[parent_node]+=delta
@@ -136,7 +136,7 @@ function UBPTS(rae::RAE, nodes::Vector{UnfoldLeaf} )
     end
     
     @inbounds for leaf in nodes
-        δ_node = δ(leaf.ĉ,leaf.c)
+        δ_node::Vector{Number} = δ(leaf.ĉ,leaf.c)
         δ_padded = sidepad(δ_node, get_side(leaf))
         add!(leaf.parent, δ_padded)
     end
@@ -144,7 +144,7 @@ function UBPTS(rae::RAE, nodes::Vector{UnfoldLeaf} )
     UBPTS(rae,parent_deltas)
 end
 
-function UBPTS(rae::RAE, parent_deltas::Dict{UnfoldData,Vector{Float64}})
+function UBPTS(rae::RAE, parent_deltas::Dict{UnfoldData,Vector{Number}})
     foldnode = nothing
     δ_above_fold = 0
     
@@ -152,7 +152,7 @@ function UBPTS(rae::RAE, parent_deltas::Dict{UnfoldData,Vector{Float64}})
     enqueue!(node::UnfoldData) = pending_nodes[node] = node.depth #Priority of node.depth (syntax on julia Priority queues is weird)
     map(enqueue!, keys(parent_deltas)) #Add all that were passed, as none have been processed
     
-    function pend!(parent_node::UnfoldData, δ_node::Vector{Float64})
+    function pend!(parent_node::UnfoldData, δ_node::Vector{Number})
         if !haskey(parent_deltas,parent_node)
             enqueue!(parent_node) #then also hasn't been enque
             parent_deltas[parent_node]=δ_node
@@ -161,7 +161,7 @@ function UBPTS(rae::RAE, parent_deltas::Dict{UnfoldData,Vector{Float64}})
         end
     end
         
-    function pend!(node::FoldData, δ_node::Vector{Float64})
+    function pend!(node::FoldData, δ_node::Vector{Number})
         foldnode = node
         δ_above_fold+=δ_node
     end
@@ -170,33 +170,29 @@ function UBPTS(rae::RAE, parent_deltas::Dict{UnfoldData,Vector{Float64}})
     Δb_d=0 
     while !isempty(pending_nodes)
         node = dequeue!(pending_nodes)
-        δ_above =  parent_deltas[node]
+        δ_above::Vector{Number} =  parent_deltas[node]
         #Note: node.p_in= suitable half of node.parent.ĉ_i or node.parent.ĉ_j
         #      The line below takes a lot of thinking to be sure it is right
-        δ_node = δ(node.p_in, δ_above, rae.W_d)
-
+        δ_node::Vector{Number} = δ(node.p_in, δ_above, rae.W_d)
         δ_padded = sidepad(δ_node, get_side(node))
-        
         
         ΔW_d += δ_above*node.p_in'
         Δb_d += δ_above
-
-        
         pend!(node.parent,δ_padded)
     end
 
     (δ_above_fold, ΔW_d, Δb_d)
 end
 
-function UBPTS(rae::RAE, node::FoldData, δ_above::Vector{Float64})
+function UBPTS(rae::RAE, node::FoldData, δ_above::Vector{Number})
     c_i=emb(node.left)
     c_j=emb(node.right)
     a= [c_i; c_j]
     
-    δ_node =  δ(a, δ_above, rae.W_e)
+    δ_node::Vector{Number} =  δ(a, δ_above, rae.W_e)
     
-    δ_left = δ_node[1:end/2]
-    δ_right = δ_node[end/2+1 : end]
+    δ_left::Vector{Number} = δ_node[1:end/2]
+    δ_right::Vector{Number} = δ_node[end/2+1 : end]
     
                    
     ΔW_e=δ_above*a'
@@ -208,7 +204,7 @@ function UBPTS(rae::RAE, node::FoldData, δ_above::Vector{Float64})
     (ΔW_e+ΔW_e_left+ΔW_e_right, Δb_e+Δb_e_left+Δb_e_right)
 end
 
-function UBPTS(rae::RAE, node::Embedding, δ_above::Vector{Float64})
+function UBPTS(rae::RAE, node::Embedding, δ_above::Vector{Number})
     0,0,0 # Nothing to learn here (at least until we start learning rae.L)
 end
 

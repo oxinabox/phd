@@ -5,8 +5,8 @@ using Pipe
 export Words, Embedding, Embeddings, load_embeddings, cosine_dist, neighbour_dists,show_best, show_bests, WE, Embedder, get_word_index, eval_word_embedding, eval_word_embeddings, load_word2vec_embeddings, has_word
 
 typealias Words Union(AbstractArray{ASCIIString,1},AbstractArray{String,1})
-typealias Embedding Union(Vector{Float64}, Vector{Float32}) 
-typealias Embeddings Union(Matrix{Float64},Matrix{Float32})
+typealias Embedding  Vector{Number}
+typealias Embeddings Matrix{Number}
 
 const UNKNOWN_WORD = "*UNKNOWN*"
 
@@ -17,7 +17,7 @@ function load_embeddings(embedding_file)
     for line in eachline(open(embedding_file))
         fields = line |> split
         word = fields[1]
-        vec = map(fs -> parse(Float64,fs), fields[2:end])
+        vec = map(fs -> parse(Float32,fs), fields[2:end])
         embeddingsDict[word] = vec
     end
     
@@ -41,8 +41,6 @@ function load_word2vec_embeddings(embedding_file, max_stored_vocab_size = 100000
     word_indexes = Dict{String,Int64}()
     LL = Array(Float32,(vector_size, max_stored_vocab_size))
 
-
-    
     #Add a Zero vector for the unknown words
     LL[:,1]*=0
     indexed_words[1]=UNKNOWN_WORD
@@ -66,16 +64,18 @@ function load_word2vec_embeddings(embedding_file, max_stored_vocab_size = 100000
         end
         
     end
+    close(fh)
+    
     LL = LL[:,1:index-1] #throw away unused columns
     indexed_words = indexed_words[1:index-1] #throw away unused columns
-    LL,word_indexes, indexed_words
+    convert(Matrix{Number}, LL), word_indexes, indexed_words
 end
 
 #----
 
 abstract Embedder
 immutable WE<:Embedder
-    L::Matrix{Float64}
+    L::Matrix{Number}
     word_index::Dict{String,Int}
     indexed_words::Vector{String}
 end

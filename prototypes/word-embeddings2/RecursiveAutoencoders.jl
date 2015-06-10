@@ -70,13 +70,13 @@ end
 
 function reconstruct(rae::RAE, pp::Embedding)
     ĉ_ij = tanh(rae.W_d*pp+rae.b_d)
-    ĉ_i = ĉ_ij[1:end/2]
-    ĉ_j = ĉ_ij[end/2+1:end]
+    ĉ_i::Embedding = ĉ_ij[1:end/2]
+    ĉ_j::Embedding = ĉ_ij[end/2+1:end]
     ĉ_i, ĉ_j
 end
 
 function unfold_merges(rae::RAE, pps::Embeddings)
-    ĉ_ijs = tanh(rae.W_d*pps .+ rae.b_d)
+    ĉ_ijs::Embeddings = tanh(rae.W_d*pps .+ rae.b_d)
 end
 
 
