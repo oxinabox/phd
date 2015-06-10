@@ -22,7 +22,7 @@ function load_embeddings(embedding_file)
     end
     
     LL = hcat(collect(values(embeddingsDict))...)
-    word_indexes = [word=>ii for (ii,word) in enumerate(keys(embeddingsDict))]  #Dict mapping Word to Index
+    word_indexes::Dict{String,Int64} = [word::String=>ii::Int64 for (ii,word) in enumerate(keys(embeddingsDict))]  #Dict mapping Word to Index
     indexed_words = embeddingsDict |> keys |> collect # Vector mapping index to string
    
     LL,word_indexes, indexed_words
@@ -127,7 +127,8 @@ end
 
 
 function show_best(embedder,ĉ::Embedding, nbest=20, similarity=cosine_sim )
-    candidates=neighbour_sims(ĉ,embedder.L, similarity)   
+    candidates=neighbour_sims(ĉ,embedder.L, similarity)  
+    candidates[find(map(isnan, candidates))]= -Inf #If the zero vector was an option, it will be NaN similar so it is banned from winning
     best_cands = [ (findfirst(candidates,score), score)
                     for score in select(candidates,1:nbest, rev=true)[1:nbest]]
     vcat([[embedder.indexed_words[ii] round(score,2)] for (ii,score) in best_cands]...)
