@@ -2,11 +2,16 @@ module WordEmbeddings
 
 using Pipe
 
-export Words, Embedding, Embeddings, load_embeddings, cosine_dist, neighbour_dists,show_best, show_bests, WE, Embedder, get_word_index, eval_word_embedding, eval_word_embeddings, load_word2vec_embeddings, has_word
+export NumericVector,NumericMatrix,  Words, Embedding, Embeddings, load_embeddings, cosine_dist, neighbour_dists,show_best, show_bests, WE, Embedder, get_word_index, eval_word_embedding, eval_word_embeddings, load_word2vec_embeddings, has_word
+
 
 typealias Words Union(AbstractArray{ASCIIString,1},AbstractArray{String,1})
-typealias Embedding  Vector{Number}
-typealias Embeddings Matrix{Number}
+
+typealias NumericVector Union(Vector{Float32}, Vector{Float64}, Vector{Number})
+typealias NumericMatrix Union(Matrix{Float32}, Matrix{Float64}, Matrix{Number})
+
+typealias Embedding  NumericVector
+typealias Embeddings NumericMatrix
 
 const UNKNOWN_WORD = "*UNKNOWN*"
 
@@ -68,14 +73,14 @@ function load_word2vec_embeddings(embedding_file, max_stored_vocab_size = 100000
     
     LL = LL[:,1:index-1] #throw away unused columns
     indexed_words = indexed_words[1:index-1] #throw away unused columns
-    convert(Matrix{Number}, LL), word_indexes, indexed_words
+    LL, word_indexes, indexed_words
 end
 
 #----
 
 abstract Embedder
 immutable WE<:Embedder
-    L::Matrix{Number}
+    L::NumericMatrix
     word_index::Dict{String,Int}
     indexed_words::Vector{String}
 end
