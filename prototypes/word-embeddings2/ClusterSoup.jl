@@ -50,7 +50,7 @@ function fetch_reduce(red_acc::Function, rem_results::Vector{RemoteRef})
     #TODO: consider strongly wrapping total in a lock, when in 0.4, so that it is garenteed safe 
     @sync for rr in rem_results
         function gather(rr)
-            res=fetch(rr)
+            const res=fetch(rr)
             if total===nothing
                 total=res
             else 
@@ -75,8 +75,8 @@ end
 
 function prechunked_mapreduce(r_chunks::Vector{RemoteRef}, r_map_funs::Vector{RemoteRef}, red_acc::Function)
     rem_results = map(zip(r_chunks,r_map_funs)) do rs
-        r_chunk=rs[1]
-        r_map_fun=rs[2]
+        const r_chunk=rs[1]
+        const r_map_fun=rs[2]
         @assert r_map_fun.where==r_chunk.where
         
         function do_mapred()

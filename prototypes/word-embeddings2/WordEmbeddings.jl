@@ -4,11 +4,12 @@ using Pipe
 
 export NumericVector,NumericMatrix,  Words, Embedding, Embeddings, load_embeddings, cosine_dist, neighbour_dists,show_best, show_bests, WE, Embedder, get_word_index, eval_word_embedding, eval_word_embeddings, load_word2vec_embeddings, has_word
 
-
 typealias Words Union(AbstractArray{ASCIIString,1},AbstractArray{String,1})
 
-typealias NumericVector Union(Vector{Float32}, Vector{Float64}, Vector{Number})
-typealias NumericMatrix Union(Matrix{Float32}, Matrix{Float64}, Matrix{Number})
+import DualNumbers.Dual
+numeric_types = [Number, Float64, Float32, Dual{Float64}]
+typealias NumericVector Union([Vector{t} for t in numeric_types]...)
+typealias NumericMatrix Union([Matrix{t} for t in numeric_types]...)
 
 typealias Embedding  NumericVector
 typealias Embeddings NumericMatrix
