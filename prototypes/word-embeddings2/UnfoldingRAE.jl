@@ -52,7 +52,7 @@ end
 
 #------------------____FOLDING/UNFOLDING________---------------
 
-function fold(rae::RAE, tree::(Any,Any))
+function fold(rae::RAE, tree::Tuple{Any,Any})
     function eval_child(child::String)
         c=eval_word_embedding(rae,child,false)
         c::Embedding
@@ -94,6 +94,11 @@ end
 
 #---------------______GRADIENT___________--------------------
 
+macro pz(ee)
+    ee_expr = @sprintf "%s" string(ee)
+    esc(:(println($ee_expr,"\t\t",typeof($ee), "\t", size($ee))))
+end
+
 function δ(a::Embedding, δ_above::NumericVector, W::NumericMatrix)
     #a is the ouput of this layer: a=tanh(z) where z is the input from layer below
     #W is matrix to move to above layer, from this one
@@ -113,11 +118,11 @@ end
 
 function sidepad(d::NumericVector, ::Left)
     padding=zeros(d)
-    [d, padding]
+    [d; padding]
 end
 function sidepad(d::NumericVector, ::Right)
     padding=zeros(d)
-    [padding, d]
+    [padding; d]
 end
 
 function sidepad(d::NumericVector, ::NoSide)
@@ -148,7 +153,7 @@ function UBPTS(rae::RAE, parent_deltas::Dict{UnfoldData,NumericVector})
     foldnode = nothing
     δ_above_fold = 0
     
-    pending_nodes = PriorityQueue{UnfoldData, Int64}(Base.Order.Reverse)
+    pending_nodes = PriorityQueue(UnfoldData, Int64,Base.Order.Reverse)
     enqueue!(node::UnfoldData) = pending_nodes[node] = node.depth #Priority of node.depth (syntax on julia Priority queues is weird)
     map(enqueue!, keys(parent_deltas)) #Add all that were passed, as none have been processed
     
@@ -191,8 +196,8 @@ function UBPTS(rae::RAE, node::FoldData, δ_above::NumericVector)
     
     δ_node::NumericVector =  δ(a, δ_above, rae.W_e)
     
-    δ_left::NumericVector = δ_node[1:end/2]
-    δ_right::NumericVector = δ_node[end/2+1 : end]
+    δ_left::NumericVector = δ_node[1:end÷2]
+    δ_right::NumericVector = δ_node[1+ end÷2 : end]
     
                    
     ΔW_e=δ_above*a'
@@ -215,14 +220,14 @@ function loss(unfold_leaves::Vector{UnfoldLeaf})
         end |> sum 
 end
 
-function loss(rae::RAE, tree::(Any,Any))
+function loss(rae::RAE, tree::Tuple{Any,Any})
     fold_tree = fold(rae, tree)
     unfold_leaves = unfold(rae, fold_tree)
     loss(unfold_leaves)
 end
 
 
-function loss_and_loss_grad(rae::RAE, tree::(Any,Any))
+function loss_and_loss_grad(rae::RAE, tree::Tuple{Any,Any})
     fold_tree = fold(rae, tree)
     unfold_leaves = unfold(rae, fold_tree)
     err=loss(unfold_leaves)

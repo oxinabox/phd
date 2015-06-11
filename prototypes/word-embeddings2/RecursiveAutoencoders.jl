@@ -5,11 +5,10 @@ using Pipe
 export  RAE, get_word_index, eval_word_embedding,eval_word_embeddings, eval_merges, eval_scores, reconstruct, unfold_merges, unfold, eval_merge
 
 
-
-type RAE<: Embedder
+type RAE{S<:AbstractString}<: Embedder
     L::Embeddings
-    word_index::Dict{String,Int}
-    indexed_words::Vector{String}
+    word_index::Dict{S,Int}
+    indexed_words::Vector{S}
     
     W_e::Embeddings
     b_e::Embedding
@@ -19,7 +18,7 @@ type RAE<: Embedder
 end
 
 
-function RAE(L::Embeddings,word_index::Dict{String,Int}, indexed_words::Vector{String}, init_varience=0.01)
+function RAE{S<:AbstractString}(L::Embeddings,word_index::Dict{S,Int}, indexed_words::Vector{S}, init_varience=0.01)
     emb_width = size(L,1)
     
     W_e = init_varience*randn(emb_width,emb_width*2) 
@@ -33,7 +32,7 @@ end
 #-----Basic methods
 
 
-function eval_word_embeddings(rae::RAE, tree::(Any,Any))
+function eval_word_embeddings(rae::RAE, tree::Tuple{Any,Any})
     function eval_child(child::String)
         eval_word_embedding(rae,child,false)
     end
@@ -70,8 +69,8 @@ end
 
 function reconstruct(rae::RAE, pp::Embedding)
     ĉ_ij = tanh(rae.W_d*pp+rae.b_d)
-    ĉ_i::Embedding = ĉ_ij[1:end/2]
-    ĉ_j::Embedding = ĉ_ij[end/2+1:end]
+    ĉ_i::Embedding = ĉ_ij[1 : round(Int,end/2)]
+    ĉ_j::Embedding = ĉ_ij[round(Int,end/2) + 1:end]
     ĉ_i, ĉ_j
 end
 

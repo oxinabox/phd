@@ -133,7 +133,7 @@ function unfold(rae::RAE, tree::(String,Any), pp::Embedding)
     
 end
 
-function unfold(rae::RAE, tree::(Any,Any), pp::Embedding)
+function unfold(rae::RAE, tree::Tuple{Any,Any}, pp::Embedding)
     p̂_is, p̂_js = reconstruct(rae, pp)
     ĉ_is = unfold(rae, tree[1], p̂_is)
     ĉ_js = unfold(rae, tree[2], p̂_js)

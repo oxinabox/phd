@@ -1,5 +1,8 @@
 module WordEmbeddings
+using DataStructures
 
+push!(LOAD_PATH, "../util")
+using DataStructuresExtended
 using Pipe
 
 export NumericVector,NumericMatrix,  Words, Embedding, Embeddings, load_embeddings, cosine_dist, neighbour_dists,show_best, show_bests, WE, Embedder, get_word_index, eval_word_embedding, eval_word_embeddings, load_word2vec_embeddings, has_word
@@ -18,20 +21,24 @@ const UNKNOWN_WORD = "*UNKNOWN*"
 
 #Loads Turins embeddings
 function load_embeddings(embedding_file)
-    embeddingsDict = Dict{String,Embedding}()
-    #sizehint!(embeddings, 268810)
-    for line in eachline(open(embedding_file))
-        fields = line |> split
-        word = fields[1]
-        vec = map(fs -> parse(Float32,fs), fields[2:end])
-        embeddingsDict[word] = vec
-    end
+    word_indexes=Dict{ASCIIString,Int64}()
+    words = Deque{ASCIIString}()
+    vecs = Deque{Vector{Float32}}()
     
-    LL = hcat(collect(values(embeddingsDict))...)
-    word_indexes::Dict{String,Int64} = [word::String=>ii::Int64 for (ii,word) in enumerate(keys(embeddingsDict))]  #Dict mapping Word to Index
-    indexed_words = embeddingsDict |> keys |> collect # Vector mapping index to string
-   
-    LL,word_indexes, indexed_words
+    index=0
+    for line in eachline(open(embedding_file))
+        index+=1
+        fields = line |> split
+        word = convert(ASCIIString, fields[1])
+        vec = [parse(Float32,fs) for fs in fields[2:end]]
+        push!(words, word)
+        push!(vecs, vec)
+        word_indexes[word]=index
+    end
+        
+    convert(Matrix{Float32},vecs),
+    word_indexes,
+    vcat(words...)
 end
 
 #Loads googles word2vec_embeddings
