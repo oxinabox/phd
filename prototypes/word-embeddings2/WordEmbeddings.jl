@@ -1,8 +1,4 @@
 module WordEmbeddings
-using DataStructures
-
-push!(LOAD_PATH, "../util")
-using DataStructuresExtended
 using Pipe
 
 export NumericVector,NumericMatrix,  Words, Embedding, Embeddings, load_embeddings, cosine_dist, neighbour_dists,show_best, show_bests, WE, Embedder, get_word_index, eval_word_embedding, eval_word_embeddings, load_word2vec_embeddings, has_word
@@ -20,25 +16,36 @@ typealias Embeddings NumericMatrix
 const UNKNOWN_WORD = "*UNKNOWN*"
 
 #Loads Turins embeddings
-function load_embeddings(embedding_file)
+function load_embeddings(embedding_file, max_stored_vocab_size = 500_000)
+    vector_size=0
+    open(embedding_file,"r") do fh
+        vector_size = length(split(readline(fh)))-1
+    end
+
     word_indexes=Dict{ASCIIString,Int64}()
-    words = Deque{ASCIIString}()
-    vecs = Deque{Vector{Float32}}()
+    indexed_words = Array(ASCIIString,max_stored_vocab_size)
+    LL = Array(Float32,(vector_size, max_stored_vocab_size))
     
-    index=0
-    for line in eachline(open(embedding_file))
-        index+=1
+    index=1
+    for line in eachline(open(embedding_file,"r"))
         fields = line |> split
         word = convert(ASCIIString, fields[1])
         vec = [parse(Float32,fs) for fs in fields[2:end]]
-        push!(words, word)
-        push!(vecs, vec)
+        
+        indexed_words[index]= word
+        LL[:, index] = vec
         word_indexes[word]=index
+        
+        index+=1
+        if index>max_stored_vocab_size
+            warn("Max Vocab size exceeded. More words are available if you want.")
+            break
+        end
     end
         
-    convert(Matrix{Float32},vecs),
-    word_indexes,
-    vcat(words...)
+    LL = LL[:,1:index-1] #throw away unused columns
+    indexed_words = indexed_words[1:index-1] #throw away unused columns
+    LL, word_indexes, indexed_words
 end
 
 #Loads googles word2vec_embeddings
@@ -72,6 +79,7 @@ function load_word2vec_embeddings(embedding_file, max_stored_vocab_size = 100000
             
             index+=1
             if index>max_stored_vocab_size
+                warn("Max Vocab size exceeded. More words are available if you want.")
                 break
             end
         end
