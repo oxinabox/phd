@@ -5,7 +5,7 @@ using Compat
 using WordEmbeddings
 using Pipe
 
-export  RAE,RAE_empty_like, get_word_index, eval_word_embedding,eval_word_embeddings, eval_merges, eval_scores, reconstruct, unfold_merges, unfold, eval_merge
+export  RAE,RAE_empty_like, get_word_index, eval_word_embedding,eval_word_embeddings, eval_merges, eval_scores, reconstruct, unfold_merges, unfold, eval_merge, pack, unpack!
 
 
 type RAE{N<:Number, S<:AbstractString}<: Embedder
