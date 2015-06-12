@@ -63,14 +63,14 @@ function fold(rae::RAE, tree::@compat Tuple{Any,Any})
     function eval_child(c::Embedding)
         c::Embedding
     end
-    function eval_child(child::Any)
-        fold(rae,child)
+    function eval_child(tree::@compat Tuple{Any,Any})
+        fold(rae,tree)
     end
     
    
-    left = eval_child(tree[1])
-    right = eval_child(tree[2])
-    p=eval_merge(rae, emb(left), emb(right))
+    const left = eval_child(tree[1])
+    const right = eval_child(tree[2])
+    const p=eval_merge(rae, emb(left), emb(right))
     FoldData(p, left, right)   
 end
 
@@ -81,11 +81,11 @@ end
 
 function unfold{T}(rae::RAE, act::FoldData, p_in::Embedding, parent, ::Type{T}, depth::Int)
     #Side is a ignored argument. This could be replaced with a generated function
-    ĉ_i, ĉ_j = reconstruct(rae,p_in)
-    data = UnfoldData{T}(p_in, parent, ĉ_i, ĉ_j,depth)
+    const ĉ_i, ĉ_j = reconstruct(rae,p_in)
+    const data = UnfoldData{T}(p_in, parent, ĉ_i, ĉ_j,depth)
     
-    left = unfold(rae, act.left, ĉ_i, data, Left, depth+1)
-    right= unfold(rae, act.right, ĉ_j, data, Right, depth+1)
+    const left = unfold(rae, act.left, ĉ_i, data, Left, depth+1)
+    const right= unfold(rae, act.right, ĉ_j, data, Right, depth+1)
     [left; right]
 end
 
@@ -97,44 +97,39 @@ end
 
 #---------------______GRADIENT___________--------------------
 
-macro pz(ee)
-    ee_expr = @sprintf "%s" string(ee)
-    esc(:(println($ee_expr,"\t\t",typeof($ee), "\t", size($ee))))
-end
-
-function δ{N<:Number}(a::Embedding, δ_above::AbstractVector{N}, W::AbstractMatrix{N})
+function δ(a::Embedding, δ_above::NumericVector, W::NumericMatrix)
     #a is the ouput of this layer: a=tanh(z) where z is the input from layer below
     #W is matrix to move to above layer, from this one
-    dz = 1-a.^2 #Derivitive of a=tanh(z)
+    const dz = 1-a.^2 #Derivitive of a=tanh(z)
     (W'*δ_above).*dz
 end
 
 function δ(ĉ_ij::Embedding,c_ij::Embedding) 
     #Output Layer
-    M = length(c_ij)# ==length(ĉ_ij)
-    dz = 1-ĉ_ij.^2
-    δ_above = -(c_ij-ĉ_ij)
+    const M = length(c_ij)# ==length(ĉ_ij)
+    const dz = 1-ĉ_ij.^2
+    const δ_above = -(c_ij-ĉ_ij)
     δ_above.*dz
     #δ(ĉ_ij,δ_above, eye(M))     
 end
 
 
-function sidepad{N<:Number}(d::AbstractVector{N}, ::Left)
-    padding=zeros(d)
+function sidepad(d::NumericVector, ::Left)
+    const padding=zeros(d)
     [d; padding]
 end
-function sidepad{N<:Number}(d::AbstractVector{N}, ::Right)
-    padding=zeros(d)
+function sidepad(d::NumericVector, ::Right)
+    const padding=zeros(d)
     [padding; d]
 end
 
-function sidepad{N<:Number}(d::AbstractVector{N}, ::NoSide)
+function sidepad(d::NumericVector, ::NoSide)
     d
 end
 
 
-function UBPTS{N<:Number}(rae::RAE, nodes::Vector{UnfoldLeaf} )
-    parent_deltas = Dict{UnfoldData, AbstractVector{N}}()
+function UBPTS(rae::RAE, nodes::Vector{UnfoldLeaf} )
+    parent_deltas = Dict{UnfoldData, NumericVector}()
     function add!(parent_node, delta)
         if haskey(parent_deltas, parent_node)
             parent_deltas[parent_node]+=delta
@@ -144,8 +139,8 @@ function UBPTS{N<:Number}(rae::RAE, nodes::Vector{UnfoldLeaf} )
     end
     
     @inbounds for leaf in nodes
-        δ_node::AbstractVector{N} = δ(leaf.ĉ,leaf.c)
-        δ_padded = sidepad(δ_node, get_side(leaf))
+        const δ_node::NumericVector = δ(leaf.ĉ,leaf.c)
+        const δ_padded = sidepad(δ_node, get_side(leaf))
         add!(leaf.parent, δ_padded)
     end
         
@@ -194,22 +189,19 @@ function UBPTS(rae::RAE, parent_deltas::Dict{UnfoldData,NumericVector})
 end
 
 function UBPTS(rae::RAE, node::FoldData, δ_above::NumericVector)
-    c_i=emb(node.left)
-    c_j=emb(node.right)
-    a= [c_i; c_j]
+    const c_i=emb(node.left)
+    const c_j=emb(node.right)
+    const a= [c_i; c_j]
     
-    δ_node::NumericVector =  δ(a, δ_above, rae.W_e)
+    const δ_node::NumericVector =  δ(a, δ_above, rae.W_e)
+    const δ_left::NumericVector = δ_node[1:end÷2]
+    const δ_right::NumericVector = δ_node[1+ end÷2 : end]
     
-    δ_left::NumericVector = δ_node[1:end÷2]
-    δ_right::NumericVector = δ_node[1+ end÷2 : end]
+    const ΔW_e=δ_above*a'
+    const Δb_e=δ_above   
     
-                   
-    ΔW_e=δ_above*a'
-    Δb_e=δ_above   
-    
-    
-    ΔW_e_left, Δb_e_left = UBPTS(rae, node.left, δ_left)
-    ΔW_e_right, Δb_e_right = UBPTS(rae, node.right, δ_right)
+    const ΔW_e_left, Δb_e_left = UBPTS(rae, node.left, δ_left)
+    const ΔW_e_right, Δb_e_right = UBPTS(rae, node.right, δ_right)
     (ΔW_e+ΔW_e_left+ΔW_e_right, Δb_e+Δb_e_left+Δb_e_right)
 end
 
@@ -225,21 +217,21 @@ function loss(unfold_leaves::Vector{UnfoldLeaf})
 end
 
 function loss(rae::RAE, tree::@compat Tuple{Any,Any})
-    fold_tree = fold(rae, tree)
-    unfold_leaves = unfold(rae, fold_tree)
+    const fold_tree = fold(rae, tree)
+    const unfold_leaves = unfold(rae, fold_tree)
     loss(unfold_leaves)
 end
 
 
 function loss_and_loss_grad(rae::RAE, tree::@compat Tuple{Any,Any})
-    fold_tree = fold(rae, tree)
-    unfold_leaves = unfold(rae, fold_tree)
-    err=loss(unfold_leaves)
+    const fold_tree = fold(rae, tree)
+    const unfold_leaves = unfold(rae, fold_tree)
+    const err=loss(unfold_leaves)
 
-    δd,∇W_d, ∇b_d = UBPTS(rae, unfold_leaves)
-    ∇W_e,∇b_e = UBPTS(rae, fold_tree, δd)
+    const δd,∇W_d, ∇b_d = UBPTS(rae, unfold_leaves)
+    const ∇W_e,∇b_e = UBPTS(rae, fold_tree, δd)
 
-    Δs = (∇W_e, ∇b_e, ∇W_d, ∇b_d)
+    const Δs = (∇W_e, ∇b_e, ∇W_d, ∇b_d)
     (Δs, err)
 end
 

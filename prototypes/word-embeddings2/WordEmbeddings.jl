@@ -9,9 +9,9 @@ export NumericVector,NumericMatrix,  Words, Embedding, Embeddings, load_embeddin
 typealias Words Union(AbstractArray{ASCIIString,1},AbstractArray{String,1})
 
 import DualNumbers.Dual
-#numeric_types = [Number, Float64, Float32, Dual{Float64}]
-#typealias NumericVector Union([Vector{t} for t in numeric_types]...)
-#typealias NumericMatrix Union([Matrix{t} for t in numeric_types]...)
+numeric_types = [Number, Float32, Dual{Float32}]
+typealias NumericVector Union([Vector{t} for t in numeric_types]...)
+typealias NumericMatrix Union([Matrix{t} for t in numeric_types]...)
 
 typealias Embedding{N<:Number} AbstractVector{N}
 typealias Embeddings{N<:Number} AbstractMatrix{N}
@@ -130,7 +130,7 @@ function get_word_index(we::Embedder, input::String, show_warn=true)
 end
 
 function eval_word_embedding(we::Embedder, input::String, show_warn=true)
-    k=get_word_index(we, input, show_warn)
+    const k=get_word_index(we, input, show_warn)
     we.L[:,k]
 end
 
@@ -145,8 +145,8 @@ function eval_word_embeddings(embedder::Embedder, tree::@compat Tuple{Any,Any}; 
     function eval_child(tree::@compat Tuple{Any,Any})
         eval_word_embeddings(embedder,tree; flatten=flatten)
     end
-    c_i = eval_child(tree[1])
-    c_j = eval_child(tree[2])
+    const c_i = eval_child(tree[1])
+    const c_j = eval_child(tree[2])
     
     flatten ? [c_i c_j] : (c_i, c_j)
 end
