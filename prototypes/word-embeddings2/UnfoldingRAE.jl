@@ -102,7 +102,7 @@ macro pz(ee)
     esc(:(println($ee_expr,"\t\t",typeof($ee), "\t", size($ee))))
 end
 
-function δ(a::Embedding, δ_above::NumericVector, W::NumericMatrix)
+function δ{N<:Number}(a::Embedding, δ_above::AbstractVector{N}, W::AbstractMatrix{N})
     #a is the ouput of this layer: a=tanh(z) where z is the input from layer below
     #W is matrix to move to above layer, from this one
     dz = 1-a.^2 #Derivitive of a=tanh(z)
@@ -119,22 +119,22 @@ function δ(ĉ_ij::Embedding,c_ij::Embedding)
 end
 
 
-function sidepad(d::NumericVector, ::Left)
+function sidepad{N<:Number}(d::AbstractVector{N}, ::Left)
     padding=zeros(d)
     [d; padding]
 end
-function sidepad(d::NumericVector, ::Right)
+function sidepad{N<:Number}(d::AbstractVector{N}, ::Right)
     padding=zeros(d)
     [padding; d]
 end
 
-function sidepad(d::NumericVector, ::NoSide)
+function sidepad{N<:Number}(d::AbstractVector{N}, ::NoSide)
     d
 end
 
 
-function UBPTS(rae::RAE, nodes::Vector{UnfoldLeaf} )
-    parent_deltas = Dict{UnfoldData, NumericVector}()
+function UBPTS{N<:Number}(rae::RAE, nodes::Vector{UnfoldLeaf} )
+    parent_deltas = Dict{UnfoldData, AbstractVector{N}}()
     function add!(parent_node, delta)
         if haskey(parent_deltas, parent_node)
             parent_deltas[parent_node]+=delta
@@ -144,7 +144,7 @@ function UBPTS(rae::RAE, nodes::Vector{UnfoldLeaf} )
     end
     
     @inbounds for leaf in nodes
-        δ_node::NumericVector = δ(leaf.ĉ,leaf.c)
+        δ_node::AbstractVector{N} = δ(leaf.ĉ,leaf.c)
         δ_padded = sidepad(δ_node, get_side(leaf))
         add!(leaf.parent, δ_padded)
     end

@@ -9,12 +9,12 @@ export NumericVector,NumericMatrix,  Words, Embedding, Embeddings, load_embeddin
 typealias Words Union(AbstractArray{ASCIIString,1},AbstractArray{String,1})
 
 import DualNumbers.Dual
-numeric_types = [Number, Float64, Float32, Dual{Float64}]
-typealias NumericVector Union([Vector{t} for t in numeric_types]...)
-typealias NumericMatrix Union([Matrix{t} for t in numeric_types]...)
+#numeric_types = [Number, Float64, Float32, Dual{Float64}]
+#typealias NumericVector Union([Vector{t} for t in numeric_types]...)
+#typealias NumericMatrix Union([Matrix{t} for t in numeric_types]...)
 
-typealias Embedding  NumericVector
-typealias Embeddings NumericMatrix
+typealias Embedding{N<:Number} AbstractVector{N}
+typealias Embeddings{N<:Number} AbstractMatrix{N}
 
 const UNKNOWN_WORD = "*UNKNOWN*"
 
@@ -98,8 +98,8 @@ end
 #----
 
 abstract Embedder
-immutable WE<:Embedder
-    L::NumericMatrix
+immutable WE{N}<:Embedder
+    L::Embeddings{N}
     word_index::Dict{String,Int}
     indexed_words::Vector{String}
 end

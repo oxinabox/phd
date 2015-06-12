@@ -18,6 +18,13 @@ function tuple_of_cols(a::Matrix)
     @pipe [a[:,col_ii] for col_ii in 1:size(a,2)] |> tuple(_...)
 end
 
+function eval_scores{N}(rae::RAE, c_is::Embeddings{N}, c_js::Embeddings{N},
+    pps=eval_merges(rae, c_is, c_js)::Embeddings{N},
+    ĉ_ijs = unfold_merges(rae,pps)::Embeddings{N})
+    c_ijs = [c_is;c_js]
+     
+     1/2*sum((c_ijs-ĉ_ijs).^2,1)
+end
 
 
 function eval_to_tree(rr::RAE, sentence::Words)
@@ -49,6 +56,8 @@ function eval_to_tree(rr::RAE, sentence::Words)
     #Note The final step in tree creates a tuple containing one element, as first and last parts are empty
     tree[1], act_tree[1], cs[:], score_total
 end
+
+
 
 #------------------------------------BPTS
 
