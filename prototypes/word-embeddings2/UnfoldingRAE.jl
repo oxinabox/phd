@@ -1,4 +1,7 @@
 module UnfoldingRAE
+using Compat
+
+
 using RecursiveAutoencoders
 using WordEmbeddings
 using Base.Collections
@@ -52,7 +55,7 @@ end
 
 #------------------____FOLDING/UNFOLDING________---------------
 
-function fold(rae::RAE, tree::Tuple{Any,Any})
+function fold(rae::RAE, tree::@compat Tuple{Any,Any})
     function eval_child(child::String)
         c=eval_word_embedding(rae,child,false)
         c::Embedding
@@ -153,7 +156,8 @@ function UBPTS(rae::RAE, parent_deltas::Dict{UnfoldData,NumericVector})
     foldnode = nothing
     δ_above_fold = 0
     
-    pending_nodes = PriorityQueue(UnfoldData, Int64,Base.Order.Reverse)
+    #pending_nodes = PriorityQueue(UnfoldData, Int64,Base.Order.Reverse) #0.4 style
+    pending_nodes = PriorityQueue{UnfoldData, Int64}(Base.Order.Reverse) #0.3 style
     enqueue!(node::UnfoldData) = pending_nodes[node] = node.depth #Priority of node.depth (syntax on julia Priority queues is weird)
     map(enqueue!, keys(parent_deltas)) #Add all that were passed, as none have been processed
     
@@ -220,14 +224,14 @@ function loss(unfold_leaves::Vector{UnfoldLeaf})
         end |> sum 
 end
 
-function loss(rae::RAE, tree::Tuple{Any,Any})
+function loss(rae::RAE, tree::@compat Tuple{Any,Any})
     fold_tree = fold(rae, tree)
     unfold_leaves = unfold(rae, fold_tree)
     loss(unfold_leaves)
 end
 
 
-function loss_and_loss_grad(rae::RAE, tree::Tuple{Any,Any})
+function loss_and_loss_grad(rae::RAE, tree::@compat Tuple{Any,Any})
     fold_tree = fold(rae, tree)
     unfold_leaves = unfold(rae, fold_tree)
     err=loss(unfold_leaves)

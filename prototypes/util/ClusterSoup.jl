@@ -1,13 +1,13 @@
 
 module ClusterSoup
-export r_chunk_data, prechunked_mapreduce, put!, update_remote, fetch_reduce
+export scatter_data, prescattered_mapreduce, put!, update_remote,replace_remote, fetch_reduce, rmap
 
 using Pipe
 using Zlib
 
 import Base.put!
 function put!(pids::Vector{Int}, val) 
-    [put!(RemoteRef(id)::RemoteRef, val) for id in pids] 
+    RemoteRef[put!(RemoteRef(id)::RemoteRef, val) for id in pids] 
 end
 
 
@@ -18,28 +18,41 @@ end
 function put!{T}(pids::Vector{Int}, data::T, compression_level=5)
     data_streamed = IOBuffer()
     serialize(data_streamed, data)
-    data_ser_compressed = compress(data_streamed.data, compression_level)
+    const data_ser_compressed = compress(data_streamed.data, compression_level)
     
     function decomp(comp_data::Array{Uint8,1}) 
        data_ser = decompress(comp_data)
        deserialize(IOBuffer(data_ser)) :: T
     end
     
-    [remotecall(pid, decomp, data_ser_compressed) for pid in pids]
+    RemoteRef[remotecall(pid, decomp, data_ser_compressed) for pid in pids]
 end
     
 
+function rmap(fun::Function, r_refs::Vector{RemoteRef})
+    RemoteRef[remotecall(r_ref.where, fun, r_ref) for r_ref in r_refs]
+end
 
-function update_remote(rr::RemoteRef, updater!::Function)
+function update_remote(updater!::Function,rr::RemoteRef)
     function update!()
         @pipe rr |> fetch |> updater!(_)
+        rr
     end
     remotecall(rr.where, update!) 
 end
 
-function r_chunk_data(data::Vector)
+function replace_remote(updater!::Function,rr::RemoteRef)
+    function update!()
+        @pipe rr |> take! |> updater!(_)
+        rr
+    end
+    remotecall(rr.where, update!) 
+end
+
+
+function scatter_data(data::Vector)
     all_chuncks = get_chunks(data, nworkers()) |> collect;
-    remote_chunks = [put!(RemoteRef(pid)::RemoteRef, all_chuncks[ii]) for (ii,pid) in enumerate(workers())]
+    remote_chunks = RemoteRef [put!(RemoteRef(pid), all_chuncks[ii]) for (ii,pid) in enumerate(workers())]
     #Have to add the type annotation sas otherwise it thinks that, RemoteRef(pid) might return a RemoteValue
 end
 
@@ -62,7 +75,7 @@ function fetch_reduce(red_acc::Function, rem_results::Vector{RemoteRef})
     total
 end
 
-function prechunked_mapreduce(r_chunks::Vector{RemoteRef}, map_fun::Function, red_acc::Function)
+function prescattered_mapreduce(r_chunks::Vector{RemoteRef}, map_fun::Function, red_acc::Function)
     rem_results = map(r_chunks) do rchunk
         function do_mapred()
             @assert r_chunk.where==myid()
@@ -73,10 +86,9 @@ function prechunked_mapreduce(r_chunks::Vector{RemoteRef}, map_fun::Function, re
     @pipe rem_results|> convert(Vector{RemoteRef},_) |> fetch_reduce(red_acc, _)
 end
 
-function prechunked_mapreduce(r_chunks::Vector{RemoteRef}, r_map_funs::Vector{RemoteRef}, red_acc::Function)
+function prescattered_mapreduce(r_chunks::Vector{RemoteRef}, r_map_funs::Vector{RemoteRef}, red_acc::Function)
     rem_results = map(zip(r_chunks,r_map_funs)) do rs
-        const r_chunk=rs[1]
-        const r_map_fun=rs[2]
+        const r_chunk, r_map_fun=rs
         @assert r_map_fun.where==r_chunk.where
         
         function do_mapred()

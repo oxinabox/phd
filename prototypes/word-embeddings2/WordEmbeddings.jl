@@ -1,4 +1,7 @@
 module WordEmbeddings
+using Compat
+
+
 using Pipe
 
 export NumericVector,NumericMatrix,  Words, Embedding, Embeddings, load_embeddings, cosine_dist, neighbour_dists,show_best, show_bests, WE, Embedder, get_word_index, eval_word_embedding, eval_word_embeddings, load_word2vec_embeddings, has_word
@@ -133,6 +136,19 @@ end
 
 function eval_word_embeddings(we::Embedder, input::Words, show_warn=true)
     @pipe input|> map(x->eval_word_embedding(we,x, show_warn), _) |> hcat(_...)
+end
+
+function eval_word_embeddings(embedder::Embedder, tree::@compat Tuple{Any,Any}; flatten=false)
+    function eval_child(child::String)
+        eval_word_embedding(embedder,child,false)
+    end
+    function eval_child(tree::@compat Tuple{Any,Any})
+        eval_word_embeddings(embedder,tree; flatten=flatten)
+    end
+    c_i = eval_child(tree[1])
+    c_j = eval_child(tree[2])
+    
+    flatten ? [c_i c_j] : (c_i, c_j)
 end
 
 

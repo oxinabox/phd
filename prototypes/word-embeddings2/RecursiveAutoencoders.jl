@@ -1,8 +1,11 @@
 module RecursiveAutoencoders
+using Compat
+
+
 using WordEmbeddings
 using Pipe
 
-export  RAE, get_word_index, eval_word_embedding,eval_word_embeddings, eval_merges, eval_scores, reconstruct, unfold_merges, unfold, eval_merge
+export  RAE,RAE_empty_like, get_word_index, eval_word_embedding,eval_word_embeddings, eval_merges, eval_scores, reconstruct, unfold_merges, unfold, eval_merge
 
 
 type RAE{S<:AbstractString}<: Embedder
@@ -29,20 +32,14 @@ function RAE{S<:AbstractString}(L::Embeddings,word_index::Dict{S,Int}, indexed_w
     RAE(L,word_index, indexed_words, W_e, b_e, W_d, b_d)
 end
 
+
+function RAE_empty_like(rae::RAE)
+    RAE([NaN]'', Dict{String,Int64}(), String[], rae.W_e, rae.b_e, rae.W_d, rae.b_d)
+end
+
 #-----Basic methods
 
 
-function eval_word_embeddings(rae::RAE, tree::Tuple{Any,Any})
-    function eval_child(child::String)
-        eval_word_embedding(rae,child,false)
-    end
-    function eval_child(child::Any)
-        eval_word_embeddings(rae,child)
-    end
-    c_i = eval_child(tree[1])
-    c_j = eval_child(tree[2])
-    [c_i c_j]
-end
 
 function eval_merge(rae::RAE, c_i::Embedding, c_j::Embedding)
     c_ij = [c_i;c_j]
