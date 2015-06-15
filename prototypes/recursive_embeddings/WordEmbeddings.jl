@@ -98,10 +98,10 @@ end
 #----
 
 abstract Embedder
-immutable WE{N}<:Embedder
+type WE{N<:Number, S}<:Embedder
     L::Embeddings{N}
-    word_index::Dict{String,Int}
-    indexed_words::Vector{String}
+    word_index::Dict{S,Int}
+    indexed_words::Vector{S}
 end
 
 
