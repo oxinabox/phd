@@ -113,6 +113,7 @@ function has_word(we::Embedder, input::String)
     haskey(we.word_index, uppercase(input[1:1])*input[2:end])
 end
 
+    
 function get_word_index(we::Embedder, input::String, show_warn=true)
     if haskey(we.word_index, input) #Direct
         ii = we.word_index[input]
