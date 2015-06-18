@@ -4,7 +4,7 @@ using Compat
 
 using Pipe
 
-export NumericVector,NumericMatrix,  Words, Embedding, Embeddings, load_embeddings, cosine_dist, neighbour_dists,show_best, show_bests, WE, Embedder, get_word_index, eval_word_embedding, eval_word_embeddings, load_word2vec_embeddings, has_word
+export NumericVector,NumericMatrix,  Words, Embedding, Embeddings, load_embeddings, cosine_dist, neighbour_dists,show_best, show_bests, WE, Embedder, get_word_index, get_word_index!, eval_word_embedding, eval_word_embeddings, load_word2vec_embeddings, has_word, WE_light, add_all_words!
 
 typealias Words Union(AbstractArray{ASCIIString,1},AbstractArray{String,1})
 
@@ -105,7 +105,58 @@ type WE{N<:Number, S}<:Embedder
 end
 
 
+import WordEmbeddings.WE
+function WE(N::DataType,S::DataType, embedding_width::Int)
+    L=Array(N,(embedding_width,0))
+    word_index=Dict{S,Int}()
+    indexed_words=S[]
+    WE(L,word_index,indexed_words)
+end
 
+function WE_light{N,S}(we::WE{N,S}, N2=N::DataType)
+    L=convert(Matrix{N2},we.L)
+    word_index=Dict{S,Int}()
+    indexed_words=S[]
+    WE(L,word_index,indexed_words)
+end
+
+function WE_light{N,S}(we::WE{N,S})
+    L=we.L
+    word_index=Dict{S,Int}()
+    indexed_words=S[]
+    WE(L,word_index,indexed_words)
+end
+
+
+
+@doc "Gets the word index, or creates one if it doesn't already exist" ->
+function get_word_index!{N,S, S2}(we::WE{N,S}, word::S2, word_varience = 0.01)
+    if (word in keys(we.word_index))
+        we.word_index[word]
+    else
+        index = length(we.indexed_words)+1
+        we.word_index[word]=index
+        push!(we.indexed_words,word)
+        
+        embedding = convert(Vector{N},word_varience.*randn(size(we.L,1)))
+        we.L = hcat(we.L,embedding)
+        index
+    end
+end
+
+function add_all_words!{N,S}(we::WE{N,S}, words::Vector{S}, word_varience=0.01)
+    for word in words
+        get_word_index!(we, word, word_varience)
+    end
+    we
+end
+
+function add_all_words!{N,S}(we::WE{N,S}, paras::Vector{Vector{S}}, word_varience=0.01)
+    for para in paras
+        add_all_words!(we, para, word_varience)
+    end
+    we
+end
 
 function has_word(we::Embedder, input::String)
     haskey(we.word_index, input) || 
