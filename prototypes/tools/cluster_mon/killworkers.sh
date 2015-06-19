@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-pkill worker
-ssh amon pkill worker
-ssh zeus pkill worker
-ssh jove pkill worker
-ssh ares pkill worker
-ssh heathred pkill worker
+pkill -f "julia --worker" 
+ssh amon 'pkill -f "julia --worker"' 
+ssh zeus 'pkill -f  "julia --worker"'
+ssh jove 'pkill -f "julia --worker"' 
+ssh ares 'pkill -f "julia --worker"' 
+ssh heathred 'pkill  -f "julia --worker"' 
