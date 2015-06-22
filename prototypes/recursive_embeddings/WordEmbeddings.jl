@@ -1,6 +1,8 @@
 module WordEmbeddings
 using Compat
-
+if VERSION<v"0.4.0-dev+0"
+    using Docile
+end
 
 using Pipe
 
