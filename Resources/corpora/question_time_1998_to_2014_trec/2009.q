@@ -6528,7 +6528,8 @@ An opposition member - Not you, Chris!
      </title></top>
 <top>
 <num>2009-11-23-Q18</num>
-<title>
+<title></title></top>
+
 <top>
 <num>2009-11-23-Q19</num>
 <title>
@@ -6629,7 +6630,7 @@ An opposition member - Not you, Chris!
      </title></top>
 <top>
 <num>2009-11-24-Q14</num>
-<title>
+<title></title></top>
 <top>
 <num>2009-11-24-Q15</num>
 <title>
