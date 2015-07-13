@@ -8,6 +8,17 @@ import itertools
 import random
 import copy
 
+#--------UTIL
+def n_wise(n, seq): #TODO move this into an util.py file
+    """ Generalisation of pairwise"""
+    from collections import deque
+    prevs = deque(maxlen=n)
+    for ii,ele in enumerate(seq,1):
+        prevs.append(ele)
+        if ii>=n:
+            yield tuple(prevs)
+        
+
 
 
 #------------ Load the POS tagger
@@ -66,7 +77,56 @@ def unstem_fun(pos_tag):
             return unstem_funs[category]
     else:
         return lambda x: x
-        
+
+valid_words = set(open("/usr/share/dict/british-english-insane").read().split())    #Use the SCOWL wordlist british-insane http://wordlist.aspell.net/scowl-readme/
+def is_real_word(word):
+    return word in valid_words
+    
+
+
+#----------- Thinking about short phrases, eg Chief Financial Officer
+def is_in_wordnet(word):
+    """Check that the word is valid, by seeing if it is in wordnet"""
+    return len(wn.synsets(word))>0
+
+def get_phrases(tagged_sent, max_phrase_length):
+    for phrase_len in range(2, max_phrase_length+1):
+        for tuple_of_tagged_words in n_wise(phrase_len, tagged_sent):
+            words, tags = zip(*tuple_of_tagged_words)
+            possible_phrase = "_".join(words)
+            if is_in_wordnet(possible_phrase): #If there are any, then it is a phrase
+                phrase = possible_phrase.split("_")
+                pos = tags[-1]
+                yield(phrase, pos)
+                
+def get_phrases_indexes(tagged_sent, max_phrase_length):
+    phrase_indexes = set()
+    for phrase_len in range(max_phrase_length,1,-1): #Go from largest to smallest to keep information
+        for indexes in n_wise(phrase_len, range(len(tagged_sent))):
+            tagged_words = [tagged_sent[index] for index in indexes]
+            if not(any([index in phrase_indexes for index in indexes])): #If we haven't already got it covered
+                words, tags = zip(*tagged_words)
+                possible_phrase = "_".join(words)
+                if is_in_wordnet(possible_phrase): #If there are any, then it is a phrase
+                    phrase_indexes.update(indexes)
+    return phrase_indexes
+                    
+def get_tagged_phrases(tagged_sent, max_phrase_length):
+    tagged_phrase_sent = list(tagged_sent)
+    for phrase_len in range(max_phrase_length,1,-1): #Go from largest to smallest to keep information
+        for indexes in n_wise(phrase_len, range(len(tagged_sent))):
+            tagged_words = [tagged_phrase_sent[index] for index in indexes]
+            if not(any([tagged_word is None for tagged_word in tagged_words])):
+                words, tags = zip(*tagged_words)
+                possible_phrase = "_".join(words)
+                if is_in_wordnet(possible_phrase): #If there are any, then it is a phrase
+                    for index in indexes:
+                        tagged_phrase_sent[index] = None #Blank them out with Nones which we will remove later
+                    pos = tags[-1] #Use final tag, it will be the one we need for handling plurals
+                    tagged_phrase_sent[indexes[0]] = (possible_phrase, pos)
+    return [tagged_phrase for tagged_phrase in tagged_phrase_sent if not tagged_phrase is None]
+                    
+
 
 
 #-------------- Get all the ways we can corrupt it
@@ -92,16 +152,20 @@ ADJ_POS_TAGS = frozenset(["JJ","JJS", "JJR", "VBN"]) #VBN is here because it is 
 VERB_POS_TAGS = frozenset(["VB","VBS", "VBN","VBG", "VBD"]) 
 ADVERB_POS_TAGS = frozenset(["RB","RBS"])
 
-BANNED_INPUTS = frozenset(["had", "were", "have", "be", "was"]) #Changing these words tends to have huge impact on sentence, and they are had to change correctly
+
+
+BANNED_AUXILIARY_VERBS = frozenset(["be", "am", "are", "is", "was", "were", "being", "can", "could", "do", "did", "does", "doing", "have", "had", "has", "having", "may", "might", "must", "shall", "should", "will", "would"])
+    #Changing these words tends to have huge impact on sentence, and they are had to change correctly
 
 def get_pos_sub_function(pos_tag_set, wordnet_tag, sub_generator):
-    def get_subs(tagged_words):
+    def get_subs(tagged_words, skip_indexes=set()):
         for ii,(pword,p_pos_tag) in enumerate(tagged_words):
-            if p_pos_tag in pos_tag_set and not(pword in BANNED_INPUTS):
+            if p_pos_tag in pos_tag_set and not(pword in BANNED_AUXILIARY_VERBS) and not(ii in skip_indexes):
                 unstem = unstem_fun(p_pos_tag)
 
                 sub = set(sub_generator(pword, wordnet_tag))
                 sub = map(unstem,sub)
+                sub = filter(is_real_word, sub) #Must be in wordnet -- ensure it is a real word, not a mistake introduced by unstemming.
                 sub = filter(lambda w:not('_' in w), sub) #some WordNet lemmas are not single words. We don't use them.
                 sub = filter(lambda w:not(w==pword), sub) #No subs that make no change
                 sub = list(sub)
@@ -137,13 +201,13 @@ def all_antonym_corruptions(tagged_words):
 
 
 
-def leveled_semantic_corrupt_sentences(sent, get_corruptions):
+def leveled_semantic_corrupt_sentences(sent, get_corruptions, skip_indexes=set()):
     words = nltk.tokenize.word_tokenize(sent)
     tagged_words = pos_tag(words)
-    leveled_semantic_corrupt_sentences_from_pretagged(words,tagged_words,get_corruptions)
+    return leveled_semantic_corrupt_sentences_from_pretagged(words,tagged_words,get_corruptions,skip_indexes)
     
-def leveled_semantic_corrupt_sentences_from_pretagged(words, tagged_words, get_corruptions):
-    corruptions = list(get_corruptions(tagged_words))
+def leveled_semantic_corrupt_sentences_from_pretagged(words, tagged_words, get_corruptions,skip_indexes=set()):
+    corruptions = list(get_corruptions(tagged_words,skip_indexes))
     random.shuffle(corruptions)
     
     for corrupt_index, antos in corruptions:
