@@ -147,12 +147,24 @@ def get_all_synonyms(word, pos=None):
                 
 
 #These constants define the types that I am interested in, as well as what POS tags they have for what wordnet tags
-NOUN_POS_TAGS = frozenset(["NN", "NNS"])
-ADJ_POS_TAGS = frozenset(["JJ","JJS", "JJR", "VBN"]) #VBN is here because it is hard to tell the difference between a VERB PAST PARTICPANT and an ADJECTIVE
+NOUN_POS_TAGS = frozenset(["NN", "NNS"]) #No NNP proper nouns here
+ADJ_POS_TAGS = frozenset(["JJ","JJS", "JJR"]) #VBN could be here because it is hard to tell the difference between a VERB PAST PARTICPANT and an ADJECTIVE
 VERB_POS_TAGS = frozenset(["VB","VBS", "VBN","VBG", "VBD"]) 
 ADVERB_POS_TAGS = frozenset(["RB","RBS"])
 
-
+def pennPOS2WordnetPOS(pennPos):
+    if pennPos in NOUN_POS_TAGS:
+        return wn.NOUN
+    elif pennPos in ADJ_POS_TAGS:
+        return wn.ADJ
+    elif pennPos in VERB_POS_TAGS:
+        return wn.VERB
+    elif pennPos in ADVERB_POS_TAGS:
+        return wn.ADV
+    else:
+        return None
+    
+    
 
 BANNED_AUXILIARY_VERBS = frozenset(["be", "am", "are", "is", "was", "were", "being", "can", "could", "do", "did", "does", "doing", "have", "had", "has", "having", "may", "might", "must", "shall", "should", "will", "would"])
     #Changing these words tends to have huge impact on sentence, and they are had to change correctly
@@ -163,14 +175,14 @@ def get_pos_sub_function(pos_tag_set, wordnet_tag, sub_generator):
             if p_pos_tag in pos_tag_set and not(pword in BANNED_AUXILIARY_VERBS) and not(ii in skip_indexes):
                 unstem = unstem_fun(p_pos_tag)
 
-                sub = set(sub_generator(pword, wordnet_tag))
-                sub = map(unstem,sub)
-                sub = filter(is_real_word, sub) #Must be in wordnet -- ensure it is a real word, not a mistake introduced by unstemming.
-                sub = filter(lambda w:not('_' in w), sub) #some WordNet lemmas are not single words. We don't use them.
-                sub = filter(lambda w:not(w==pword), sub) #No subs that make no change
-                sub = list(sub)
-                if len(sub)>0:
-                    yield(ii, sub)
+                subs = set(sub_generator(pword, wordnet_tag))
+                subs = map(unstem,subs)
+                subs = filter(is_real_word, subs) 
+                subs = filter(lambda w:not('_' in w), subs) #some WordNet lemmas are not single words. We don't use them.
+                subs = filter(lambda w:not(w==pword), subs) #No subs that make no change
+                subs = list(subs)
+                if len(subs)>0:
+                    yield(ii, subs)
     return get_subs
 
 #-------
@@ -210,8 +222,8 @@ def leveled_semantic_corrupt_sentences_from_pretagged(words, tagged_words, get_c
     corruptions = list(get_corruptions(tagged_words,skip_indexes))
     random.shuffle(corruptions)
     
-    for corrupt_index, antos in corruptions:
-        words[corrupt_index] = random.sample(antos,1)[0]
+    for corrupt_index, generated_words in corruptions:
+        words[corrupt_index] = random.sample(generated_words,1)[0]
         fix_indefinite_articles(words)
         yield " ".join(words)
     
