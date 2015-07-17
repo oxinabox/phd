@@ -4,6 +4,8 @@ import nltk
 from nltk.corpus import wordnet as wn
 import pattern.en as en
 
+import numpy as np
+
 import itertools
 import random
 import copy
@@ -65,10 +67,10 @@ def unstem_fun(pos_tag):
     This can be extended as required from https://www.nodebox.net/code/index.php/Linguistics
     """
 
-    unstem_funs = {frozenset(['NNS', 'NNPS']) : en.pluralize,
+    unstem_funs = {frozenset(['NNS', 'NNPS', 'VBZ']) : en.pluralize,
                   frozenset(['RBR', 'JJR']) : en.comparative,
                   frozenset(['JJS']) : en.superlative, #Skip RBS, as ("Most") not changed by WordNet
-                  frozenset(['VBD', 'VBN']) :  lambda w: en.conjugate(w, en.PAST), # A lot more of these can be made with en.conugate
+                  frozenset(['VBD', 'VBN']) :  lambda w: en.conjugate(w, en.PAST), 
                   frozenset(['VBG']) :  lambda w: en.conjugate(w,en.PRESENT,aspect=en.PROGRESSIVE ),
                  }
     
@@ -131,6 +133,8 @@ def get_tagged_phrases(tagged_sent, max_phrase_length):
 
 #-------------- Get all the ways we can corrupt it
 
+
+
 def get_all_antonyms(word, pos=None):
     synsets = wn.synsets(word, pos=pos)
     for synset in synsets:
@@ -143,13 +147,39 @@ def get_all_synonyms(word, pos=None):
     for synset in synsets:
         for lemma_name in synset.lemma_names():
             yield lemma_name
+     
+
+# ---
+            
+def most_common_synset(synsets):
+    def count(synset):
+        return sum([lemma.count() for lemma in synset.lemmas()])
+    counts = np.asarray([count(ss) for ss in synsets])
+    return synsets[np.argmax(counts)]
+
+def get_all_antonyms_of_most_common(word, pos=None):
+    synsets = wn.synsets(word, pos=pos)
+    if synsets:
+        synset = most_common_synset(synsets)
+        for lemma in synset.lemmas():
+            for anto in lemma.antonyms():
+                yield anto.name()
+
+def get_all_synonyms_of_most_common(word, pos=None):
+    synsets = wn.synsets(word, pos=pos)
+    if synsets:
+        synset = most_common_synset(synsets)
+        for lemma_name in synset.lemma_names():
+            yield lemma_name
+
+            
 
                 
 
 #These constants define the types that I am interested in, as well as what POS tags they have for what wordnet tags
 NOUN_POS_TAGS = frozenset(["NN", "NNS"]) #No NNP proper nouns here
 ADJ_POS_TAGS = frozenset(["JJ","JJS", "JJR"]) #VBN could be here because it is hard to tell the difference between a VERB PAST PARTICPANT and an ADJECTIVE
-VERB_POS_TAGS = frozenset(["VB","VBS", "VBN","VBG", "VBD"]) 
+VERB_POS_TAGS = frozenset(["VB","VBZ", "VBN","VBG", "VBD", "VBP"]) 
 ADVERB_POS_TAGS = frozenset(["RB","RBS"])
 
 def pennPOS2WordnetPOS(pennPos):
@@ -169,6 +199,8 @@ def pennPOS2WordnetPOS(pennPos):
 BANNED_AUXILIARY_VERBS = frozenset(["be", "am", "are", "is", "was", "were", "being", "can", "could", "do", "did", "does", "doing", "have", "had", "has", "having", "may", "might", "must", "shall", "should", "will", "would"])
     #Changing these words tends to have huge impact on sentence, and they are had to change correctly
 
+
+    
 def get_pos_sub_function(pos_tag_set, wordnet_tag, sub_generator):
     def get_subs(tagged_words, skip_indexes=set()):
         for ii,(pword,p_pos_tag) in enumerate(tagged_words):
@@ -178,6 +210,7 @@ def get_pos_sub_function(pos_tag_set, wordnet_tag, sub_generator):
                 subs = set(sub_generator(pword, wordnet_tag))
                 subs = map(unstem,subs)
                 subs = filter(is_real_word, subs) 
+                subs = map(lambda w: w[0].upper()+w[1:] if pword[0].isupper() else w, subs) #match captialisation of orignal word
                 subs = filter(lambda w:not('_' in w), subs) #some WordNet lemmas are not single words. We don't use them.
                 subs = filter(lambda w:not(w==pword), subs) #No subs that make no change
                 subs = list(subs)
@@ -191,15 +224,10 @@ def get_pos_sub_function(pos_tag_set, wordnet_tag, sub_generator):
 
 #Define the functions: all take sequence of words as parameter
 get_noun_synonyms = get_pos_sub_function(NOUN_POS_TAGS, wn.NOUN, get_all_synonyms)
-get_adj_synonyms = get_pos_sub_function(ADJ_POS_TAGS, wn.ADJ, get_all_synonyms)
-get_verb_synonyms = get_pos_sub_function(VERB_POS_TAGS, wn.VERB, get_all_synonyms)
-get_adverb_synonyms = get_pos_sub_function(ADVERB_POS_TAGS, wn.ADV, get_all_synonyms)
-
-get_noun_antos = get_pos_sub_function(NOUN_POS_TAGS, wn.NOUN, get_all_antonyms)
-get_adj_antos = get_pos_sub_function(ADJ_POS_TAGS, wn.ADJ, get_all_antonyms)
 get_verb_antos = get_pos_sub_function(VERB_POS_TAGS, wn.VERB, get_all_antonyms)
-get_adverb_antos = get_pos_sub_function(ADVERB_POS_TAGS, wn.ADV, get_all_antonyms)
 
+get_noun_synonyms_of_most_common_ = get_pos_sub_function(NOUN_POS_TAGS, wn.NOUN, get_all_synonyms_of_most_common)
+get_verb_antos_of_most_common_ = get_pos_sub_function(VERB_POS_TAGS, wn.VERB, get_all_antonyms_of_most_common)
 
 
 #-------------------------- Do the Corupting
@@ -219,9 +247,10 @@ def leveled_semantic_corrupt_sentences(sent, get_corruptions, skip_indexes=set()
     return leveled_semantic_corrupt_sentences_from_pretagged(words,tagged_words,get_corruptions,skip_indexes)
     
 def leveled_semantic_corrupt_sentences_from_pretagged(words, tagged_words, get_corruptions,skip_indexes=set()):
+    
     corruptions = list(get_corruptions(tagged_words,skip_indexes))
     random.shuffle(corruptions)
-    
+    words = copy.copy(words) #Copy it since wi will change it later
     for corrupt_index, generated_words in corruptions:
         words[corrupt_index] = random.sample(generated_words,1)[0]
         fix_indefinite_articles(words)
