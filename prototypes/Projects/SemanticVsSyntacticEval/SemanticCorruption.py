@@ -67,11 +67,14 @@ def unstem_fun(pos_tag):
     This can be extended as required from https://www.nodebox.net/code/index.php/Linguistics
     """
 
-    unstem_funs = {frozenset(['NNS', 'NNPS', 'VBZ']) : en.pluralize,
+    unstem_funs = {frozenset(['NNS', 'NNPS']) : en.pluralize,
+                   
                   frozenset(['RBR', 'JJR']) : en.comparative,
                   frozenset(['JJS']) : en.superlative, #Skip RBS, as ("Most") not changed by WordNet
-                  frozenset(['VBD', 'VBN']) :  lambda w: en.conjugate(w, en.PAST), 
-                  frozenset(['VBG']) :  lambda w: en.conjugate(w,en.PRESENT,aspect=en.PROGRESSIVE ),
+                  frozenset(['VBD']) :  lambda w: en.conjugate(w, en.PAST), 
+                  frozenset(['VBN']) :  lambda w: en.conjugate(w,en.PAST, aspect=en.PROGRESSIVE)
+                  en.conjugate("bear",en.PAST, aspect=en.PROGRESSIVE) en.conjugate(w, en.PRESENT), 
+                  frozenset(['VBG']) :  lambda w: en.conjugate(w,en.PRESENT,aspect=en.PROGRESSIVE),
                  }
     
     for category in unstem_funs.keys():
