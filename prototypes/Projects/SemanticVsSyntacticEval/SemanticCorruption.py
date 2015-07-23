@@ -52,7 +52,7 @@ def fix_indefinite_articles(words):
             referenced_form = en.referenced(words[ii+1]) #Smarter than simple vowel match eg "a yak" not "an yak"
             replacement_article = referenced_form.split()[0] #'an' or 'a'
             if words[ii][0]=='A':
-                replacement_article[0] == 'A' #Uppercase it
+                replacement_article = 'A' + 'n' if len(replacement_article)==2 else "" #Uppercase it
             words[ii]=replacement_article
 
     return words
@@ -72,9 +72,10 @@ def unstem_fun(pos_tag):
                   frozenset(['RBR', 'JJR']) : en.comparative,
                   frozenset(['JJS']) : en.superlative, #Skip RBS, as ("Most") not changed by WordNet
                   frozenset(['VBD']) :  lambda w: en.conjugate(w, en.PAST), 
-                  frozenset(['VBN']) :  lambda w: en.conjugate(w,en.PAST, aspect=en.PROGRESSIVE)
-                  en.conjugate("bear",en.PAST, aspect=en.PROGRESSIVE) en.conjugate(w, en.PRESENT), 
                   frozenset(['VBG']) :  lambda w: en.conjugate(w,en.PRESENT,aspect=en.PROGRESSIVE),
+                  frozenset(['VBZ']) :  lambda w: en.conjugate(w,en.PRESENT),
+                  frozenset(['VBN']) :  lambda w: en.conjugate(w,en.PAST, aspect=en.PROGRESSIVE),
+                  
                  }
     
     for category in unstem_funs.keys():
