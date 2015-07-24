@@ -6,6 +6,10 @@
 \begin_preamble
 \usepackage{tikz}
 \usetikzlibrary{positioning, fit}
+\usepackage{verbatim}
+\usepackage{pdfcomment}
+\usepackage{environ}
+\RenewEnviron{comment}{\pdfcomment{\BODY}}
 \end_preamble
 \use_default_options true
 \maintain_unincluded_children false
@@ -74,8 +78,7 @@
 \begin_body
 
 \begin_layout Title
-A Method for the Evaluation of the Semantic vs Syntactic Localization of
- Sentence Embeddings
+A Method for the Evaluation of the Semantic Localization of Sentence Embeddings
 \end_layout
 
 \begin_layout Author
@@ -118,7 +121,7 @@ key "le2014distributed"
 
 .
  A sentence is a single idea 
-\begin_inset Note Note
+\begin_inset Note Comment
 status open
 
 \begin_layout Plain Layout
@@ -128,7 +131,7 @@ CITE ME
 \end_inset
 
 , thus is a valid target for TRAVEL TO THE MOON 
-\begin_inset Note Note
+\begin_inset Note Comment
 status open
 
 \begin_layout Plain Layout
@@ -198,7 +201,7 @@ While additional information is present, each sentence implies most of the
 
 \begin_layout Standard
 It should be noted that that semantic similarity is often defined differently
- for sentences as for words.
+ for words.
  While semantic similarity for sentences is defined in terms of shared meaning
  and mutual entailment, semantic similarity for words can be defined in
  terms of shared properties
@@ -250,6 +253,98 @@ The share price is predicted to fall.
  in applications such as machine translation.
 \end_layout
 
+\begin_layout Subsubsection
+The Validity of Substitutions
+\end_layout
+
+\begin_layout Standard
+One of the basic tests for determining the part of speech a word of unknown
+ lexical category is to substitute a word of known category in its place,
+ if the sentence is still correct, then the unknown word may have that category
+\begin_inset CommandInset citation
+LatexCommand cite
+key "radford2004minimalist"
+
+\end_inset
+
+.
+ For example if a sentence contains the never seen word 
+\begin_inset Quotes eld
+\end_inset
+
+foobar
+\begin_inset Quotes erd
+\end_inset
+
+, and substituting 
+\begin_inset Quotes eld
+\end_inset
+
+hat
+\begin_inset Quotes erd
+\end_inset
+
+ in its place is grammatical, it can be concluded that 
+\begin_inset Quotes eld
+\end_inset
+
+foobar
+\begin_inset Quotes erd
+\end_inset
+
+ is most likely also a noun.
+ It has been suggested that this is the mechanism by which people learn
+ the parts of speech relations.
+ In general, substitutions of the same parts of speech are valid.
+\end_layout
+
+\begin_layout Standard
+As synonyms and antonyms make up the same parts of speech as their base
+ form, it is grammatically valid to substitute for the original.
+ Substituting a synonym is not expected to change the meaning of the sentence,
+ thus such a substitution creates a new sentence which is semantically equivalen
+t.
+ Indeed this has been proposed as the very definition of synonymy (
+\begin_inset CommandInset citation
+LatexCommand cite
+key "miller1991contextualsemantics"
+
+\end_inset
+
+ attributes this definition to Leibniz), though there has been some debate
+ over the nature and degree of this relation
+\begin_inset CommandInset citation
+LatexCommand cite
+key "miller1991contextualsemantics"
+
+\end_inset
+
+.
+ It has been noted in a limited study that subjects could identify whether
+ an adjective or its antonym belong in blanked out section of a sentence
+\begin_inset CommandInset citation
+LatexCommand cite
+key "APS:2745308"
+
+\end_inset
+
+.
+ This suggests that identical sentences up to an antonym swap in adjectives,
+ may not occur in natural English
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+It would be better to refer to a paper about verbs and nouns
+\end_layout
+
+\end_inset
+
+.
+ Never-the-less, such a swap is still a part-of-speech matched substitution
+ and thus is grammatical.
+\end_layout
+
 \begin_layout Section
 Background and Motivation
 \begin_inset Note Note
@@ -286,11 +381,11 @@ Indexing and Retrieval
 \end_layout
 
 \begin_layout Itemize
-Summerisation
+Summarization
 \end_layout
 
 \begin_layout Itemize
-Automatic Paraphasing
+Automatic Paraphrasing
 \begin_inset CommandInset citation
 LatexCommand cite
 key "iyyer2014generating"
@@ -319,20 +414,6 @@ key "iyyer2014generating"
  a given method is more influenced by the structure (syntax) of the sentence
  embedded, or of its meaning (semantics).
  
-\end_layout
-
-\begin_layout Subsection
-Motivating better use of Semantic Resources in embedding creation
-\end_layout
-
-\begin_layout Standard
-\begin_inset CommandInset citation
-LatexCommand cite
-key "yu2014improving"
-
-\end_inset
-
-
 \end_layout
 
 \begin_layout Subsection
@@ -456,7 +537,7 @@ What is required
 
 \begin_layout Standard
 What is required is a corpus containing 
-\begin_inset Note Note
+\begin_inset Note Comment
 status open
 
 \begin_layout Plain Layout
@@ -473,253 +554,27 @@ Creation of Corpus
 \end_layout
 
 \begin_layout Subsection
-Sources of Knowledge
-\begin_inset Note Note
-status open
-
-\begin_layout Plain Layout
-This obviously need to be work int othe other sections or at least reformatted
+Base Corpus
 \end_layout
 
-\end_inset
-
-
+\begin_layout Standard
+The Microsoft Research Paraphrase Corpus is used as a base source of sentences,
+ and a ground truth for their semantic equality.
+ The sentences with paraphrases provided are combined from the training
+ and testing sets.
+ This gives 7,800 sentences for evaluation.
+ Of these 311 are repeated -- that is they have multiple different paraphrases
+ specified -- no special handling is done for these cases.
+ The sentences are modified by the procedure described below to create semantica
+lly equivalent and semantically distinct versions.
 \end_layout
 
-\begin_layout Itemize
-WordNet
-\begin_inset CommandInset citation
-LatexCommand cite
-key "miller1995wordnet"
-
-\end_inset
-
-, via NLTK
-\begin_inset CommandInset citation
-LatexCommand cite
-key "bird2009natural"
-
-\end_inset
-
- interface
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-Synonyms
-\end_layout
-
-\begin_layout Itemize
-Antonyms
-\end_layout
-
-\begin_layout Itemize
-Short Phrases
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-Stanford POS Tagger
-\begin_inset CommandInset citation
-LatexCommand cite
-key "StandfordPOSTagger"
-
-\end_inset
-
- via NLTK
-\begin_inset CommandInset citation
-LatexCommand cite
-key "bird2009natural"
-
-\end_inset
-
- interface
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-Parts of Speech Tags
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-NLTK
-\begin_inset CommandInset citation
-LatexCommand cite
-key "bird2009natural"
-
-\end_inset
-
- TreebankWordTokenizer Tokenizer.
- This tokenizer is based on regular expressions.
- It splits the sentences in to words, punctuation elements, and also separates
- contractions: 
-\begin_inset Quotes eld
-\end_inset
-
-don't
-\begin_inset Quotes erd
-\end_inset
-
- becomes 
-\begin_inset Quotes eld
-\end_inset
-
-do n't
-\begin_inset Quotes erd
-\end_inset
-
-.
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-Word Tokens
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-Spell Checker Orientated Word Lists (SCOWL)
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SCOWL"
-
-\end_inset
-
-.
- Used the 
-\begin_inset Quotes eld
-\end_inset
-
-british-english-insane
-\begin_inset Quotes erd
-\end_inset
-
- collection which contains 650,656 words, including both 
-\begin_inset Quotes eld
-\end_inset
-
--ize
-\begin_inset Quotes erd
-\end_inset
-
- and 
-\begin_inset Quotes eld
-\end_inset
-
--ise
-\begin_inset Quotes erd
-\end_inset
-
- endings, proper nouns and abbreviations.
- This word-list is a superset of the words allowed by WordNet -- WordNet
- is one of the sources used to create it.
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-Legality of Words
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-Pattern
-\begin_inset CommandInset citation
-LatexCommand cite
-key "de2012pattern"
-
-\end_inset
-
- for
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-Unstemming:
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-Re-pluralising nouns
-\end_layout
-
-\begin_layout Itemize
-Restoring comparativity and superlativity adjectives (not used in final
- method)
-\end_layout
-
-\begin_layout Itemize
-Re-conjegating verbs
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-Correcting form of the indefinite article: 
-\begin_inset Quotes eld
-\end_inset
-
-an
-\begin_inset Quotes erd
-\end_inset
-
- vs 
-\begin_inset Quotes eld
-\end_inset
-
-a
-\begin_inset Quotes erd
-\end_inset
-
-.
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-Microsoft Research Paraphrase Corpus (MSRP Corpus)
-\begin_inset CommandInset citation
-LatexCommand cite
-key "msrParapharaCorpus"
-
-\end_inset
-
-
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-Source of sentences that are semantically equivalent.
- 
-\end_layout
-
-\begin_layout Itemize
-Here semantically equivelent is defined as quote 
-\begin_inset Quotes eld
-\end_inset
-
-mostly bidirectional entailment
-\begin_inset Quotes erd
-\end_inset
-
-, which is to say that most of the meaning in each sentence is common to
- both.
-\end_layout
-
-\begin_layout Itemize
-Authors note that full bidirectional entailment would largely restrict the
- paraphrases to being nearly identical sentences.
-\end_layout
-
-\begin_layout Itemize
-Sentences checked by human annotators.
-\end_layout
-
-\end_deeper
 \begin_layout Subsection
 Tokenization 
 \end_layout
 
 \begin_layout Standard
-\begin_inset Note Note
+\begin_inset Note Comment
 status open
 
 \begin_layout Plain Layout
@@ -928,7 +783,7 @@ WordNet Lookup
 \end_layout
 
 \begin_layout Standard
-\begin_inset Note Note
+\begin_inset Note Comment
 status open
 
 \begin_layout Plain Layout
@@ -1241,7 +1096,7 @@ name "sub:Unstemming"
 \end_layout
 
 \begin_layout Standard
-\begin_inset Note Note
+\begin_inset Note Comment
 status open
 
 \begin_layout Plain Layout
@@ -1347,7 +1202,7 @@ reference "fig:POS-Tags-for-pattern"
 
 .
  It can be noted that no processing is done on the Verb, non-3rd person
- singular present case (VBP), this is because with the exclusise of the
+ singular present case (VBP), this is because with the exception of the
  various forms of the verb 
 \begin_inset Quotes eld
 \end_inset
@@ -1356,7 +1211,7 @@ be
 \begin_inset Quotes erd
 \end_inset
 
-, which are excluded earlier as and auxillary/model, the non-3rd person
+, which are excluded earlier as and auxiliary/model, the non-3rd person
  singular present is always the same as the base form of the verb
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -1366,8 +1221,8 @@ key "huddleston2002cambridge"
 \end_inset
 
 .
- These rules implimented have been found to be generally sufficent to ensure
- grammatical text.
+ These rules have been found to be generally sufficient to ensure grammatical
+ text.
 \end_layout
 
 \begin_layout Standard
@@ -1389,7 +1244,7 @@ key "SCOWL"
 \end_inset
 
 
-\begin_inset Note Note
+\begin_inset Note Comment
 status open
 
 \begin_layout Plain Layout
@@ -1403,10 +1258,10 @@ could comment on what this contains
 \end_layout
 
 \begin_layout Standard
-During this step, the initial letter captitalisation of any generated word
+During this step, the initial letter capitalization of any generated word
  is matched to that of the base word.
- While no method evaluated below makes use of capitals they are presseved
- for ease of future comparasons with methods which do.
+ While no method evaluated below makes use of capitals they are preserved
+ for ease of future comparisons with methods which do.
  
 \end_layout
 
@@ -1417,20 +1272,24 @@ sideways false
 status open
 
 \begin_layout Plain Layout
+
+\size small
 \begin_inset Tabular
 <lyxtabular version="3" rows="9" columns="6">
-<features rotate="0" tabularvalignment="middle">
+<features rotate="0" tabularvalignment="middle" tabularwidth="100text%">
+<column alignment="center" valignment="top" width="2cm">
+<column alignment="center" valignment="top" width="0.7cm">
+<column alignment="center" valignment="top" width="1cm">
 <column alignment="center" valignment="top">
-<column alignment="center" valignment="top">
-<column alignment="center" valignment="top">
-<column alignment="center" valignment="top">
-<column alignment="center" valignment="top">
-<column alignment="left" valignment="top">
+<column alignment="left" valignment="top" width="2cm">
+<column alignment="left" valignment="top" width="3cm">
 <row>
 <cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 Sentence
 \end_layout
 
@@ -1440,6 +1299,8 @@ Sentence
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 base word
 \end_layout
 
@@ -1449,7 +1310,9 @@ base word
 \begin_inset Text
 
 \begin_layout Plain Layout
-correct generated word
+
+\size small
+generated word
 \end_layout
 
 \end_inset
@@ -1458,15 +1321,19 @@ correct generated word
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 POS
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 POS meaning
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -1483,6 +1350,8 @@ key "Penn_POS_Taggening"
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 Pattern.en method to un-lemmatize
 \end_layout
 
@@ -1494,6 +1363,8 @@ Pattern.en method to un-lemmatize
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 The share price will rise.
 \end_layout
 
@@ -1505,6 +1376,7 @@ The share price will rise.
 \begin_layout Plain Layout
 
 \series bold
+\size small
 rise
 \end_layout
 
@@ -1516,6 +1388,7 @@ rise
 \begin_layout Plain Layout
 
 \series bold
+\size small
 fall
 \end_layout
 
@@ -1525,15 +1398,19 @@ fall
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 VB
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 Verb, base form
 \end_layout
 
@@ -1543,6 +1420,8 @@ Verb, base form
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 --
 \end_layout
 
@@ -1554,6 +1433,8 @@ Verb, base form
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 The share price rose.
 \end_layout
 
@@ -1563,6 +1444,8 @@ The share price rose.
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 rose
 \end_layout
 
@@ -1572,6 +1455,8 @@ rose
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 fell
 \end_layout
 
@@ -1581,15 +1466,19 @@ fell
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 VBD
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 Verb, past tense
 \end_layout
 
@@ -1601,6 +1490,7 @@ Verb, past tense
 \begin_layout Plain Layout
 
 \family typewriter
+\size small
 conjugate(lemma, tense=PAST)
 \end_layout
 
@@ -1612,6 +1502,8 @@ conjugate(lemma, tense=PAST)
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 The share price is rising.
 \end_layout
 
@@ -1621,6 +1513,8 @@ The share price is rising.
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 rising
 \end_layout
 
@@ -1630,6 +1524,8 @@ rising
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 falling
 \end_layout
 
@@ -1639,15 +1535,19 @@ falling
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 VBG
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 Verb, gerund or present participle
 \end_layout
 
@@ -1659,6 +1559,7 @@ Verb, gerund or present participle
 \begin_layout Plain Layout
 
 \family typewriter
+\size small
 conjugate(lemma, tense=PRESENT, aspect=PROGRESSIVE)
 \end_layout
 
@@ -1670,6 +1571,8 @@ conjugate(lemma, tense=PRESENT, aspect=PROGRESSIVE)
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 The share price normally rises.
 \end_layout
 
@@ -1679,6 +1582,8 @@ The share price normally rises.
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 rises
 \end_layout
 
@@ -1688,6 +1593,8 @@ rises
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 falls
 \end_layout
 
@@ -1697,15 +1604,19 @@ falls
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 VBZ
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 Verb, present tense, 3rd person singular
 \end_layout
 
@@ -1717,6 +1628,7 @@ Verb, present tense, 3rd person singular
 \begin_layout Plain Layout
 
 \family typewriter
+\size small
 conjugate(lemma, tense=PRESENT)
 \end_layout
 
@@ -1728,6 +1640,8 @@ conjugate(lemma, tense=PRESENT)
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 The share price has risen.
 \end_layout
 
@@ -1737,6 +1651,8 @@ The share price has risen.
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 risen
 \end_layout
 
@@ -1746,6 +1662,8 @@ risen
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 fallen
 \end_layout
 
@@ -1755,15 +1673,19 @@ fallen
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 VBN
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 Verb, past participle
 \end_layout
 
@@ -1775,6 +1697,7 @@ Verb, past participle
 \begin_layout Plain Layout
 
 \family typewriter
+\size small
 conjugate(lemma, tense=PAST, aspect=PROGRESSIVE)
 \end_layout
 
@@ -1786,6 +1709,8 @@ conjugate(lemma, tense=PAST, aspect=PROGRESSIVE)
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 The share prices rise.
 \end_layout
 
@@ -1797,6 +1722,7 @@ The share prices rise.
 \begin_layout Plain Layout
 
 \series bold
+\size small
 rise
 \end_layout
 
@@ -1808,6 +1734,7 @@ rise
 \begin_layout Plain Layout
 
 \series bold
+\size small
 fall
 \end_layout
 
@@ -1817,24 +1744,30 @@ fall
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 VBP
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 Verb, non-3rd person singular present 
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 --
 \end_layout
 
@@ -1846,6 +1779,8 @@ Verb, non-3rd person singular present
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 The car is hot.
 \end_layout
 
@@ -1857,6 +1792,7 @@ The car is hot.
 \begin_layout Plain Layout
 
 \series bold
+\size small
 car
 \end_layout
 
@@ -1868,6 +1804,7 @@ car
 \begin_layout Plain Layout
 
 \series bold
+\size small
 automobile
 \end_layout
 
@@ -1877,15 +1814,19 @@ automobile
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 NN
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 Noun, singular or mass
 \end_layout
 
@@ -1895,6 +1836,8 @@ Noun, singular or mass
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 --
 \end_layout
 
@@ -1906,6 +1849,8 @@ Noun, singular or mass
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 The cars are hot.
 \end_layout
 
@@ -1915,6 +1860,8 @@ The cars are hot.
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 cars
 \end_layout
 
@@ -1924,6 +1871,8 @@ cars
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 automobiles
 \end_layout
 
@@ -1933,15 +1882,19 @@ automobiles
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 NNS
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 Noun, plural
 \end_layout
 
@@ -1953,6 +1906,7 @@ Noun, plural
 \begin_layout Plain Layout
 
 \family typewriter
+\size small
 pluralize(lemma)
 \end_layout
 
@@ -2086,37 +2040,65 @@ Examples of Constructed Evaluation Sentences
 
 \begin_layout Standard
 \begin_inset Tabular
-<lyxtabular version="3" rows="9" columns="3">
-<features rotate="0" tabularvalignment="middle">
-<column alignment="center" valignment="top">
-<column alignment="center" valignment="top">
-<column alignment="center" valignment="top" width="1in">
+<lyxtabular version="3" rows="10" columns="3">
+<features rotate="0" tabularvalignment="middle" tabularwidth="100text%">
+<column alignment="center" valignment="top" width="1.5cm">
+<column alignment="center" valignment="top" width="7cm">
+<column alignment="center" valignment="top" width="1.5cm">
 <row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\series bold
+Change
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Sentence
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size small
+Wiki PV-DM Concatenting Model Distance
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
 Base Sentence
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
+\size small
 However , other unions including the powerful CGT remained opposed to the
  reform and demanded the government begin fresh negotiations with them .
 \end_layout
@@ -2127,199 +2109,156 @@ However , other unions including the powerful CGT remained opposed to the
 \begin_inset Text
 
 \begin_layout Plain Layout
-Wiki PV-DM Concatenting Model Distance
+
+\size small
+0.00
 \end_layout
 
 \end_inset
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
+Paraphrase
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+The powerful CGT and other unions remained opposed to the plans , however
+ , and demanded the government renegotiate the reform with them .
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size small
+0.35
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
 1 Noun Synonym
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
+\size small
 However , other 
-\family default
 \series bold
-\shape default
-\size default
-\emph default
-\bar default
-\strikeout default
-\uuline default
-\uwave default
-\noun default
-\color inherit
 brotherhoods
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
+\series default
  including the powerful CGT remained opposed to the reform and demanded
  the government begin fresh negotiations with them .
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 
-\series bold
-0.273068
+\size small
+\emph on
+0.27
 \end_layout
 
 \end_inset
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 2 Noun Synonym
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-However , other brotherhoods including the powerful CGT remained opposed
- to the reform and demanded the 
-\family default
-\series bold
-\shape default
-\size default
-\emph default
-\bar default
-\strikeout default
-\uuline default
-\uwave default
-\noun default
-\color inherit
-authorities
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
- begin fresh negotiations with them .
-\end_layout
-
-\end_inset
-</cell>
 <cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 
+\size small
+However , other brotherhoods including the powerful CGT remained opposed
+ to the reform and demanded the 
 \series bold
-0.246624
+authorities
+\series default
+ begin fresh negotiations with them .
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+\emph on
+0.25
 \end_layout
 
 \end_inset
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 3 Noun Synonym
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
+\size small
 However , other brotherhoods including the powerful CGT remained opposed
  to the reform and demanded the authorities begin fresh 
-\family default
 \series bold
-\shape default
-\size default
-\emph default
-\bar default
-\strikeout default
-\uuline default
-\uwave default
-\noun default
-\color inherit
 dialogues
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
+\series default
  with them .
 \end_layout
 
@@ -2329,132 +2268,104 @@ dialogues
 \begin_inset Text
 
 \begin_layout Plain Layout
-0.434389
+
+\size small
+0.43
 \end_layout
 
 \end_inset
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 1 Verb Antonym
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
+\size small
 However , other unions including the powerful CGT remained opposed to the
  reform and 
-\family default
 \series bold
-\shape default
-\size default
-\emph default
-\bar default
-\strikeout default
-\uuline default
-\uwave default
-\noun default
-\color inherit
 obviated
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
+\series default
  the government begin fresh negotiations with them .
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 
-\series bold
-0.359438
+\size small
+\emph on
+0.36
 \end_layout
 
 \end_inset
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 2 Verb Antonym
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
+\size small
 However , other unions including the powerful CGT remained opposed to the
  reform and obviated the government 
-\family default
 \series bold
-\shape default
-\size default
-\emph default
-\bar default
-\strikeout default
-\uuline default
-\uwave default
-\noun default
-\color inherit
 end
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
+\series default
  fresh negotiations with them .
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+\emph on
+0.36
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+3 Verb Antonym
 \end_layout
 
 \end_inset
@@ -2464,131 +2375,52 @@ end
 
 \begin_layout Plain Layout
 
-\series bold
-0.362282
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-3 Verb Antonym
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
+\size small
 However , other unions including the powerful CGT 
-\family default
 \series bold
-\shape default
-\size default
-\emph default
-\bar default
-\strikeout default
-\uuline default
-\uwave default
-\noun default
-\color inherit
 changed
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
+\series default
  opposed to the reform and obviated the government end fresh negotiations
  with them .
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 
-\series bold
-0.433479
+\size small
+\emph on
+0.43
 \end_layout
 
 \end_inset
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
+
+\size small
 4 Verb Antonym
 \end_layout
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
+\size small
 However , other unions 
-\family default
 \series bold
-\shape default
-\size default
-\emph default
-\bar default
-\strikeout default
-\uuline default
-\uwave default
-\noun default
-\color inherit
 excluding
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
+\series default
  the powerful CGT changed opposed to the reform and obviated the government
  end fresh negotiations with them .
 \end_layout
@@ -2600,50 +2432,9 @@ excluding
 
 \begin_layout Plain Layout
 
-\series bold
-0.461351
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-Paraphrase
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-The powerful CGT and other unions remained opposed to the plans , however
- , and demanded the government renegotiate the reform with them .
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-0.351618
+\size small
+\emph on
+0.46
 \end_layout
 
 \end_inset
@@ -2660,12 +2451,114 @@ The powerful CGT and other unions remained opposed to the plans , however
 Evaluation
 \end_layout
 
+\begin_layout Standard
+A given model may be evaluated on how semantically close, or distantly it
+ places sentences which are semantically equivalent, or not.
+ As discussed, replacing a noun with its synonym produces a semantically
+ equivalent sentence -- both the original sentence, and the modified sentence
+ entail the other.
+ Conversely, replacing a verb with its antonym generally will produce a
+ semantically different sentence, often the the modified sentence will entail
+ the converse of the original and visa-verse.
+ As a baseline for a reasonable distance under a model, the distance to
+ the gold standard, semantically equal, paraphrase is computed.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Scoring
+\end_layout
+
+\begin_layout Standard
+By comparing the distance from the base sentence embedding to the paraphrase
+ and modified sentence embeddings, the success of the modal at semantic
+ localization is evaluated.
+ It is assessed on keeping close semantically similar sentences, and distant
+ semantically distinct sentences.
+ A semantically different sentence must be further away that a semantically
+ equivalent one, thus the sentences modified by replacing verbs with their
+ antonyms must be more distant than the semantically equal paraphrase.
+ Conversely, the semantically identical similar form should be no further
+ away than the paraphrase.
+ By counting the portion of the evaluation corpus is correctly placed under
+ this definition, the models semantic semantic accuracy with respect to
+ fine-grained changed is scored.
+\end_layout
+
+\begin_layout Subsubsection
+Distance
+\end_layout
+
+\begin_layout Standard
+Distance may be calculated though any method the model specifies.
+ The models chosen below, as most for vector embeddings, use the cosine
+ distance.
+ This is given by 
+\begin_inset Formula $d(\tilde{u},\tilde{v})=1-\dfrac{\tilde{u}\cdot\tilde{v}}{\left\Vert \tilde{u}\right\Vert _{2}\left\Vert \tilde{v}\right\Vert _{2}}$
+\end_inset
+
+, this is between 0, and 2 and is proportional to the cosine of the angle
+ between the embeddings 
+\begin_inset Formula $\tilde{u}$
+\end_inset
+
+ and 
+\begin_inset Formula $\tilde{v}$
+\end_inset
+
+
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+Double check this
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+The Models
+\end_layout
+
+\begin_layout Standard
+For demonstration purposes, several models are evaluated below.
+\end_layout
+
+\begin_layout Subsubsection
+RAE
+\end_layout
+
+\begin_layout Subsubsection
+Doc2Vec: PV-DM concatenating
+\end_layout
+
+\begin_layout Subsubsection
+Doc2Vec: PV-DM concatenating sentences
+\end_layout
+
 \begin_layout Section
 Results and Discussion
 \end_layout
 
 \begin_layout Section
 Conclusion and Future Work
+\end_layout
+
+\begin_layout Subsection
+Motivating better use of Semantic Resources in embedding creation
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset citation
+LatexCommand cite
+key "yu2014improving"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
