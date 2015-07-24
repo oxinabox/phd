@@ -161,6 +161,10 @@ def most_common_synset(synsets):
     counts = np.asarray([count(ss) for ss in synsets])
     return synsets[np.argmax(counts)]
 
+
+
+
+
 def get_all_antonyms_of_most_common(word, pos=None):
     synsets = wn.synsets(word, pos=pos)
     if synsets:
@@ -177,7 +181,14 @@ def get_all_synonyms_of_most_common(word, pos=None):
             yield lemma_name
 
             
-
+def get_direct_antonyms_of_most_common_lemma(word, pos=None):
+    word_lemma = wn.morphy(word)
+    if word_lemma:
+        lemmas = wn.lemmas(word_lemma, pos=pos)
+        if lemmas:
+            lemma = lemmas[np.argmax([ll.count() for ll in lemmas])]
+            for anto in lemma.antonyms():
+                yield anto.name()
                 
 
 #These constants define the types that I am interested in, as well as what POS tags they have for what wordnet tags
@@ -185,6 +196,8 @@ NOUN_POS_TAGS = frozenset(["NN", "NNS"]) #No NNP proper nouns here
 ADJ_POS_TAGS = frozenset(["JJ","JJS", "JJR"]) #VBN could be here because it is hard to tell the difference between a VERB PAST PARTICPANT and an ADJECTIVE
 VERB_POS_TAGS = frozenset(["VB","VBZ", "VBN","VBG", "VBD", "VBP"]) 
 ADVERB_POS_TAGS = frozenset(["RB","RBS"])
+
+    
 
 def pennPOS2WordnetPOS(pennPos):
     if pennPos in NOUN_POS_TAGS:
@@ -205,7 +218,9 @@ BANNED_AUXILIARY_VERBS = frozenset(["be", "am", "are", "is", "was", "were", "bei
 
 
     
-def get_pos_sub_function(pos_tag_set, wordnet_tag, sub_generator):
+def get_pos_sub_function(pos_tag_set, sub_generator):
+    wordnet_tag = pennPOS2WordnetPOS(iter(pos_tag_set).next()) #Grab a random penn tag and resolve the wordnet tag
+    
     def get_subs(tagged_words, skip_indexes=set()):
         for ii,(pword,p_pos_tag) in enumerate(tagged_words):
             if p_pos_tag in pos_tag_set and not(pword in BANNED_AUXILIARY_VERBS) and not(ii in skip_indexes):
@@ -227,12 +242,14 @@ def get_pos_sub_function(pos_tag_set, wordnet_tag, sub_generator):
 
 
 #Define the functions: all take sequence of words as parameter
-get_noun_synonyms = get_pos_sub_function(NOUN_POS_TAGS, wn.NOUN, get_all_synonyms)
-get_verb_antos = get_pos_sub_function(VERB_POS_TAGS, wn.VERB, get_all_antonyms)
+get_noun_synonyms = get_pos_sub_function(NOUN_POS_TAGS, get_all_synonyms)
+get_verb_antos = get_pos_sub_function(VERB_POS_TAGS, get_all_antonyms)
 
-get_noun_synonyms_of_most_common_ = get_pos_sub_function(NOUN_POS_TAGS, wn.NOUN, get_all_synonyms_of_most_common)
-get_verb_antos_of_most_common_ = get_pos_sub_function(VERB_POS_TAGS, wn.VERB, get_all_antonyms_of_most_common)
+get_noun_synonyms_of_most_common = get_pos_sub_function(NOUN_POS_TAGS, get_all_synonyms_of_most_common)
+get_verb_antos_of_most_common = get_pos_sub_function(VERB_POS_TAGS, get_all_antonyms_of_most_common)
 
+get_adjective_synonyms_of_most_common = get_pos_sub_function(ADJ_POS_TAGS, get_all_synonyms_of_most_common)
+get_adjective_antos_of_most_common = get_pos_sub_function(ADJ_POS_TAGS, get_direct_antonyms_of_most_common_lemma)
 
 #-------------------------- Do the Corupting
 
