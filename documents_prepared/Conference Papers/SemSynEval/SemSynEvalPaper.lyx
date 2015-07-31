@@ -5,7 +5,7 @@
 \textclass acm-sigs
 \begin_preamble
 \usepackage{tikz}
-\usetikzlibrary{positioning, fit}
+\usetikzlibrary{positioning, fit,arrows,chains,shapes.geometric}
 \usepackage{verbatim}
 \usepackage{pdfcomment}
 \usepackage{environ}
@@ -266,7 +266,7 @@ This paper aims to provide a method to assess if the models are capturing
  meanings are located distantly.
  To do this a synthetic evaluation corpus is developed from existing resources
  though word substitution.
- Correctly seperating sentences with similar word content and structure
+ Correctly separating sentences with similar word content and structure
  but different meaning, is a challenging task and proves a models semantic
  encoding strength.
  Assessment on this task will allow a better understanding of how these
@@ -284,32 +284,12 @@ The paper shall be laid out as in 5 sections.
  The Conclusion closes the paper and suggests new directions for development.
 \end_layout
 
-\begin_layout Subsubsection
-Sentence Embedding
+\begin_layout Section
+Literature Review
 \end_layout
 
-\begin_layout Standard
-Several different terms have been used to decribe the notion of a sentence
- embedding.
- It is called a phrase embedding in the work of Sorcher et Al
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SocherEtAl2013:CVG,SocherEtAl2011:PoolRAE,Socher2011ParsingPhrases,socher2010PhraseEmbedding,SocherEtAl2011:RAE"
-
-\end_inset
-
-, and is one form of what is called a paragraph or document embedding in
- 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "le2014distributed"
-
-\end_inset
-
-.
- Semantically, a sentence is the expression of a single idea.
- Thus embedding sentences into vector spaces is the same as embedding ideas
- into vector spaces.
+\begin_layout Subsection
+Linguistics
 \end_layout
 
 \begin_layout Subsubsection
@@ -323,7 +303,8 @@ Sentences are said to be semantically equivalent if they each imply the
  A is equivalent to B if A being true implies that B also must be true,
  and if B is true then A also must be true.
  This definition is closely related to that for logical equivalence.
- Different equivalent sentences are said to be paraphrases of each other.
+ Linguistically different but equivalent sentences are said to be paraphrases
+ of each other.
 \end_layout
 
 \begin_layout Standard
@@ -442,115 +423,7 @@ The share price is predicted to fall.
 \end_layout
 
 \begin_layout Subsubsection
-A Substitution Based Evaluation Corpus
-\end_layout
-
-\begin_layout Standard
-The method proposed here to evaluate the semantic localization requires
- the construction of a corpus which contains semantically close and semantically
- distant sentences.
- To allow discrimination between embeddings which capture structure (syntax)
- or word content, and those which capture meaning, the semantically distinct
- sentences should have the same structure and word content except for the
- variations evaluated.
- Thus a method is required to change the meaning of sentences, without changing
- anything else.
- To change meaning at least one word must be changed.
- As the key action or statement of a sentence clause is given by its verb
-\begin_inset Note Comment
-status open
-
-\begin_layout Plain Layout
-I can't quiet cite this.
- I can cite some closely related statements about syntax.
-\end_layout
-
-\end_inset
-
-, replacing that verb with its antonym will substantially change the clauses
- meaning.
- This change will always break semantic entailment, though the pragmatic
- change may not always be as strong as in the share price example from above.
- Consider instead the sentences: 
-\begin_inset Quotes eld
-\end_inset
-
-They inhaled the smog filled air.
-\begin_inset Quotes erd
-\end_inset
-
- vs 
-\begin_inset Quotes eld
-\end_inset
-
-They exhaled the smog filled air.
-\begin_inset Quotes erd
-\end_inset
-
-.
- Clearly there is no bi-directional entailment between the two sentences,
- though pragmatically the meaning is similar -- the air the characters were
- breathing was smog-filled.
- As the number of verbs changed increase though the meaning generally gets
- more distant, though multiple negations may apply.
- For example: 
-\begin_inset Quotes eld
-\end_inset
-
-They exhaled the smog emptied air
-\begin_inset Quotes erd
-\end_inset
-
- 
-\begin_inset Note Comment
-status open
-
-\begin_layout Plain Layout
-The natural sentence is 
-\begin_inset Quotes eld
-\end_inset
-
-They exhaled the smog cleared air
-\begin_inset Quotes erd
-\end_inset
-
- but but my method produced emptied, wordnet considers 
-\begin_inset Quotes eld
-\end_inset
-
-cleared
-\begin_inset Quotes erd
-\end_inset
-
- to be a hypernym of 
-\begin_inset Quotes eld
-\end_inset
-
-emptied
-\begin_inset Quotes erd
-\end_inset
-
-.
-\end_layout
-
-\end_inset
-
-.
- Thus semantically distinct sentences are constructed.
- by progressively negating the verbs.
-\end_layout
-
-\begin_layout Standard
-To contrast this, and see the effect of simply changing words, but not structure
- or meaning, a second method is used.
- For this evaluation, nouns are replaced with their synonyms.
- Thus the structure and meaning are preserved, and only the word content
- is changed.
- 
-\end_layout
-
-\begin_layout Subsubsection
-The Validity of Substitutions
+Substitutions
 \end_layout
 
 \begin_layout Standard
@@ -595,8 +468,10 @@ foobar
 \end_layout
 
 \begin_layout Standard
-As synonyms and antonyms make up the same parts of speech as their base
- form, it is grammatically valid to substitute for the original.
+For any given word, its synonym or its antonym will have make up the same
+ part of speech.
+ It is thus grammatically valid to subsitute a synonym or antonym into that
+ place.
  Substituting a synonym is not expected to change the meaning of the sentence,
  thus such a substitution creates a new sentence which is semantically equivalen
 t.
@@ -641,56 +516,76 @@ It would be better to refer to a paper about verbs and nouns
  and thus is grammatical.
 \end_layout
 
-\begin_layout Section
-Literature Review
-\end_layout
-
-\begin_layout Subsection
-Semantic Tasks
+\begin_layout Subsubsection
+Semantic Similarity from Word Similarity
 \end_layout
 
 \begin_layout Standard
-Many of the key tasks in natural language processing and generation have
- strong semantic components:
-\end_layout
+Many past approaches towards measuring the semantic similarity of sentences
+ have come from extending known results about the semantic similarity of
+ words.
+ Semantic relationships between words are well established, and large resources
+ are available for them.
+ These include both knowledge based approaches, and corpus based approaches.
+ The knowledge based approaches for word semantic relations include WordNets
+ categorizing of synonyms, antonyms, hypernyms and hyponyms.
+ Corpus bases approach use various forms of information derived from word
+ co-occurrences, such as in latent semantic analysis.
+ These methods can be combined with a bag-of-word approach to apply to sentences
+, as was done in the work of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mihalcea2006corpus"
 
-\begin_layout Itemize
-Translation
-\end_layout
+\end_inset
 
-\begin_layout Itemize
-Sentiment Recognition
-\end_layout
+.
+ Though, as acknowledged in that work, methods such as this, which ignore
+ the structure of sentences are ultimately limited in there potential.
+ Incorporating structure into the analysis is one of the great promises
+ of current vector embedding models
+\begin_inset CommandInset citation
+LatexCommand cite
+key "le2014distributed,SocherEtAl2011:RAE"
 
-\begin_layout Itemize
-Indexing and Retrieval
-\end_layout
+\end_inset
 
-\begin_layout Itemize
-Summarization
-\end_layout
-
-\begin_layout Itemize
-Automatic Paraphrasing
+.
 \end_layout
 
 \begin_layout Subsection
-Existing Corpora
+Evaluation Methods
+\end_layout
+
+\begin_layout Standard
+As discussed in the introduction, current methods of evaluating the quality
+ of embedding are on direct practical applications.
+ The evaluation methods are not directly link to the methods used for training.
 \end_layout
 
 \begin_layout Subsubsection
-Paraphrase Corpora
+Paraphrase Detection
 \end_layout
 
 \begin_layout Standard
-Closely related to the corpus use for evaluation here are paraphrase corpora
+Closely related to the corpus used for evaluation here are paraphrase corpora
  such as MSRP.
  The paraphrase corpora and paraphrase detection tasks present sentences
  and possible paraphrases.
  The goal is to determine weather a sentence is a paraphrase of another
  or not.
- This implicitly requires working out if the sentences are semantically
- equivalent.
+ 
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+Could mention here the embeddigns are used as a feature for classification?
+\end_layout
+
+\end_inset
+
+This implicitly requires working out if the sentences are semantically equivalen
+t.
  However the corpora are not control to present syntactically similar sentences,
  thus can not be use to assess to prevalence of syntactic vs semantic informatio
 n in the vector encoding.
@@ -722,118 +617,50 @@ key "SocherEtAl2013:CVG,SocherEtAl2011:PoolRAE,Socher2011ParsingPhrases,socher20
 \end_layout
 
 \begin_layout Subsubsection
-Finding Structural Matches in Large Corpora
+Sentiment Analysis
 \end_layout
 
 \begin_layout Standard
-Inspection of large corpora will reveal that structurally identical sentences
- are rare.
- While Large corpora contain many thousands of sentences, very few have
- the same structure, or even same order of POS tags.
- For example, MASC
+Sentiment Analysis is another often used technique for evaluating the quality
+ of embedding.
+ It was used both for Recussive Autoencoder in 
 \begin_inset CommandInset citation
 LatexCommand cite
-key "passonneau2012masc"
+key "SocherEtAl2011:RAE"
 
 \end_inset
 
- (Manually Annotated Sub-Corpus of the Open American National Corpus) contains
- 34,535 sentences, only 4,230 share a set and ordering of POS tags with
- another.
- Further: if trivial sentences with 5 or fewer tokens are excluded there
- are just 634.
- If sentences where 30% or more of the words are proper nouns, dates, times,
- or numbers are also excluded (thus removing sentences such as 
-\begin_inset Quotes eld
-\end_inset
-
-'Posted by : tomemos | Sunday , 09 May 2010 at 09:16 AM'), only 316 sentences
- remain.
- Only a subset of these will be structurally identical when considered under
- a parse tree.
-\end_layout
-
-\begin_layout Standard
-Thus it is not surprising that MSRPC, which only contains 7800 sentences,
- contains 5 structurally identical sentences in two structural classes,
- other than paraphrases or differing only numerically.
- Even these sentences are highly similar in topic and word usage.
- Class 1: {'Schering-Plough shares fell 72 cents to close at $ 18.34 on the
- New York Stock Exchange .', 'Wal-Mart shares rose 16 cents to close at $
- 58.28 on the New York Stock Exchange .', 'Xerox shares rose 2 cents to close
- at $ 11.45 on the New York Stock Exchange .'}, Class 2: {'Jason Giambi capitalize
-d with an RBI single to center .', 'Randall Simon followed with an RBI single
- to right .'}.
-\end_layout
-
-\begin_layout Standard
-Similarly, there is only one structural match between MSRPC and the MASC
- corpus: MSRPC contains: 
-\begin_inset Quotes eld
-\end_inset
-
-I'm never going to forget this day.
-\begin_inset Quotes erd
-\end_inset
-
- which is a structural match for the sentence: 
-\begin_inset Quotes eld
-\end_inset
-
-I'm not going to allow that question.
-\begin_inset Quotes erd
-\end_inset
-
- from MASC.
- Thus it is not viable to find naturally occurring sentences of the same
- structure, but different meaning.
-\end_layout
-
-\begin_layout Subsubsection
-Lexical Substitution Corpora
-\end_layout
-
-\begin_layout Standard
-.
-\end_layout
-
-\begin_layout Standard
-CoInCo (Concepts in Context) is a manually created all-words lexical substitutio
-n corpus
+and for the paragraph vector models in 
 \begin_inset CommandInset citation
 LatexCommand cite
-key "kremer2014substitutes"
+key "le2014distributed"
 
 \end_inset
 
 .
- Approximately 2500 sentences from a subset of MASC (Manually Annotated
- Subcorpus of the Open American National Corpus), were given to human annotator,
- who were tasked with listing all the word synonyms that could replace words.
- CoInCo only handles synonym substitutions, though an effort could be made
- to automatically extend it to antonyms (and other lexical relations), by
- mapping substitution lemmas from CoInCo on to WordNet synsets.
- According to 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "kremer2014substitutes"
-
+ Determining the sentiment of a sentence is partially a semantic task, but
+ it does have pragmatic concerns.
+ Sentences with the same semantic meaning may convey different sentiment.
+ For example 
+\begin_inset Quotes eld
 \end_inset
 
- CoInCo is the only large scale, manually created corpus of its type, though
- other single word substitution corpora exist.
-\end_layout
+The movie was a heart-wretching tragedy
+\begin_inset Quotes erd
+\end_inset
 
-\begin_layout Subsubsection
-What is required
-\end_layout
+ vs 
+\begin_inset Quotes eld
+\end_inset
 
-\begin_layout Standard
-To create a corpus capable of assessing the degree of semantic information,
- as compared to syntactic and word content information, a paraphrase corpus
- is extended through lexical substitutions maintaining the syntactic structure.
- The automatically created corpus discussed here, combines features of existing
- corpora, to make it suited to this fine-grained approach.
+The most depressing film I have seen.
+\begin_inset Quotes erd
+\end_inset
+
+, it could be argues these a semantically close, but of very different sentiment.
+ Success at sentiment classification is a valuable property that some sentence
+ embedding models have shown, but it is not a direct indication of semantic
+ consistency.
 \end_layout
 
 \begin_layout Section
@@ -901,7 +728,63 @@ ns of the sentences.
 \end_layout
 
 \begin_layout Subsection
-Method
+Corpus Creation Method
+\end_layout
+
+\begin_layout Standard
+A summery of the method used to create the evaluation corpus can be seen
+ in 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:block"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide true
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset include
+LatexCommand include
+filename "figs/corpus_gen.pgf"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:block"
+
+\end_inset
+
+The process used to generate several modified sentences for each base sentence
+ in the corpus.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsubsection
@@ -1132,9 +1015,16 @@ key "tengi1998design"
 
 \end_inset
 
-, will call these collocations, they are also sometimes referred to as continuou
-s dictionary phrases.
- WordNet Version 3.0 contains 64,331 such collocations.
+, will call these phrases.
+ In 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "tengi1998design"
+
+\end_inset
+
+ they are called collocations.
+ WordNet Version 3.0 contains 64,331 such phrases.
 \end_layout
 
 \begin_layout Standard
@@ -1236,7 +1126,7 @@ police police officer
 \end_layout
 
 \begin_layout Standard
-If collocations were handled as words, 
+If phrases were handled as words, 
 \begin_inset Quotes eld
 \end_inset
 
@@ -1261,17 +1151,18 @@ police officer
 \end_layout
 
 \begin_layout Standard
-These collocations are detected using a sliding window of width 3 and 2
- words across the sentences.
- The words in the window are then checked to see if they form a collocations
- known to WordNet.
+These phrases are detected using a sliding window of width 3 and 2 words
+ across the sentences.
+ The words in the window are then checked to see if they form a phrase known
+ to WordNet.
  If they do then they are blocked from substitution.
- This blocks all such collocations of up to length 3.
+ This blocks all such phrases of up to length 3, covering the vast majority
+ of cases.
  
 \end_layout
 
 \begin_layout Standard
-While this blocks all such continuous phrases it does not handle other kinds.
+While this blocks continuous phrases it does not handle other kinds.
  Several other kinds of phrases have been distinguished as having distinct
  meaning.
  Such as the skip-bigrams considered by 
