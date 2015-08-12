@@ -21,7 +21,19 @@ def n_wise(n, seq): #TODO move this into an util.py file
             yield tuple(prevs)
         
 
-
+def random_from_iterable(iterable, prob_of_terminating_at_each_step=0.01):
+    import random
+    import itertools
+    
+    for element in itertools.cycle(iterable):
+        if random.random()<prob_of_terminating_at_each_step:
+            return element
+    else:
+        assert(len(iterable)==0)
+        return None 
+        
+    
+    
 
 #------------ Load the POS tagger
 
@@ -154,43 +166,62 @@ def get_all_synonyms(word, pos=None):
      
 
 # ---
-            
-def most_common_synset(synsets):
-    def count(synset):
-        return sum([lemma.count() for lemma in synset.lemmas()])
-    counts = np.asarray([count(ss) for ss in synsets])
-    return synsets[np.argmax(counts)]
 
-
-
-
-
-def get_all_antonyms_of_most_common(word, pos=None):
-    synsets = wn.synsets(word, pos=pos)
-    if synsets:
-        synset = most_common_synset(synsets)
-        for lemma in synset.lemmas():
-            for anto in lemma.antonyms():
-                yield anto.name()
-
-def get_all_synonyms_of_most_common(word, pos=None):
-    synsets = wn.synsets(word, pos=pos)
-    if synsets:
-        synset = most_common_synset(synsets)
-        for lemma_name in synset.lemma_names():
-            yield lemma_name
-
-            
-def get_direct_antonyms_of_most_common_lemma(word, pos=None):
+def get_most_common_lemma(word, pos=None):
     word_lemma = wn.morphy(word)
     if word_lemma:
         lemmas = wn.lemmas(word_lemma, pos=pos)
         if lemmas:
             lemma = lemmas[np.argmax([ll.count() for ll in lemmas])]
+            return lemma
+        
+    #Otherwise
+    return None
+            
+
+
+
+def get_all_synonyms_of_most_common(word, pos=None):
+    lemma = get_most_common_lemma(word,pos)
+    if lemma:
+        synset = lemma.synset()
+        for lemma_name in synset.lemma_names():
+            yield lemma_name
+
+def get_all_antonyms_of_most_common(word, pos=None):
+    lemma = get_most_common_lemma(word,pos)
+    if lemma:
+        synset = lemma.synset()
+        for lemma in synset.lemmas():
             for anto in lemma.antonyms():
                 yield anto.name()
-                
+            
+def get_direct_antonyms_of_most_common_lemma(word, pos=None):
+    lemma = get_most_common_lemma(word,pos)
+    if lemma:
+        for anto in lemma.antonyms():
+            yield anto.name()
+            
 
+
+_all_words_of_pos = dict()
+def get_random_pos_matched(word, pos=None):
+    import random
+    
+    global _all_words_of_pos
+    words = _all_words_of_pos.setdefault(pos, list(wn.all_lemma_names(pos)))
+    
+    returned = set([wn.morphy(word)]) #doesn't return the lemma of the inital word
+    
+    while(True):
+        ret = random.choice(words)
+        if not ret in returned:
+            returned.add(ret)
+            yield ret
+        if len(returned)==len(words):
+            break #we have returned everything
+       
+    
 #These constants define the types that I am interested in, as well as what POS tags they have for what wordnet tags
 NOUN_POS_TAGS = frozenset(["NN", "NNS"]) #No NNP proper nouns here
 ADJ_POS_TAGS = frozenset(["JJ","JJS", "JJR"]) #VBN could be here because it is hard to tell the difference between a VERB PAST PARTICPANT and an ADJECTIVE
@@ -226,30 +257,34 @@ def get_pos_sub_function(pos_tag_set, sub_generator):
             if p_pos_tag in pos_tag_set and not(pword in BANNED_AUXILIARY_VERBS) and not(ii in skip_indexes):
                 unstem = unstem_fun(p_pos_tag)
 
-                subs = set(sub_generator(pword, wordnet_tag))
+                subs = sub_generator(pword, wordnet_tag)
                 subs = map(unstem,subs)
                 subs = filter(is_real_word, subs) 
                 subs = map(lambda w: w[0].upper()+w[1:] if pword[0].isupper() else w, subs) #match captialisation of orignal word
                 subs = filter(lambda w:not('_' in w), subs) #some WordNet lemmas are not single words. We don't use them.
                 subs = filter(lambda w:not(w==pword), subs) #No subs that make no change
-                subs = list(subs)
-                if len(subs)>0:
-                    yield(ii, subs)
+                sub = random_from_iterable(subs)
+                if not sub is None:
+                    yield(ii, sub)
     return get_subs
 
 #-------
 
 
-
 #Define the functions: all take sequence of words as parameter
 get_noun_synonyms = get_pos_sub_function(NOUN_POS_TAGS, get_all_synonyms)
-get_verb_antos = get_pos_sub_function(VERB_POS_TAGS, get_all_antonyms)
-
 get_noun_synonyms_of_most_common = get_pos_sub_function(NOUN_POS_TAGS, get_all_synonyms_of_most_common)
-get_verb_antos_of_most_common = get_pos_sub_function(VERB_POS_TAGS, get_all_antonyms_of_most_common)
+get_noun_randoms = get_pos_sub_function(NOUN_POS_TAGS, get_random_pos_matched)
 
 get_adjective_synonyms_of_most_common = get_pos_sub_function(ADJ_POS_TAGS, get_all_synonyms_of_most_common)
 get_adjective_antos_of_most_common = get_pos_sub_function(ADJ_POS_TAGS, get_direct_antonyms_of_most_common_lemma)
+get_adjectives_randoms = get_pos_sub_function(ADJ_POS_TAGS, get_random_pos_matched)
+
+get_verb_antos = get_pos_sub_function(VERB_POS_TAGS, get_all_antonyms)
+get_verb_antos_of_most_common = get_pos_sub_function(VERB_POS_TAGS, get_all_antonyms_of_most_common)
+get_verb_synonyms_of_most_common = get_pos_sub_function(VERB_POS_TAGS, get_all_synonyms_of_most_common)
+get_verb_randoms = get_pos_sub_function(VERB_POS_TAGS, get_random_pos_matched)
+
 
 #-------------------------- Do the Corupting
 
@@ -271,9 +306,9 @@ def leveled_semantic_corrupt_sentences_from_pretagged(words, tagged_words, get_c
     
     corruptions = list(get_corruptions(tagged_words,skip_indexes))
     random.shuffle(corruptions)
-    words = copy.copy(words) #Copy it since wi will change it later
-    for corrupt_index, generated_words in corruptions:
-        words[corrupt_index] = random.sample(generated_words,1)[0]
+    words = copy.copy(words) #Copy it since we will change it later
+    for corrupt_index, subsitution in corruptions:
+        words[corrupt_index] = subsitution
         fix_indefinite_articles(words)
         yield " ".join(words)
     
