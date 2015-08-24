@@ -1,0 +1,6474 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass acm-sigs
+\begin_preamble
+\usepackage{tikz}
+\usetikzlibrary{positioning, fit,arrows,chains,shapes.geometric}
+\usepackage{verbatim}
+\usepackage{pdfcomment}
+\usepackage{environ}
+\RenewEnviron{comment}{\pdfcomment[author={Lyndon}]{\BODY}}
+\end_preamble
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+A Method for the Evaluation of the Semantic Localization of Sentence Embeddings
+\end_layout
+
+\begin_layout Author
+Lyndon White
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+Who are the authors? Should sort that out at some point
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Abstract
+Several approaches for embedding a sentence into a vector space have been
+ developed recently.
+ It is unclear as to the information contained into these embeddings.
+ To what extent the position in vector space reflect semantic meaning, rather
+ than other factors such as syntactic structure.
+ For many applications it is most desirably to be encoding the meaning in
+ the embedding.
+ Currently the semantic localization is assessed indirectly through practical
+ benchmarks on these applications.
+ Here a new method is presented to directly assess if the embeddings produced
+ by a model are semantically consistent.
+ It is demonstrated on 3 existing models and on a bag of words benchmark.
+\end_layout
+
+\begin_layout Abstract
+This new method uses as synthetic corpus constructed from a paraphrase corpus,
+ by using word replacement to generate sentences which are semantically
+ equivalent, or not, to the original sentences.
+ The embedding distances between the original and the synthetic sentences
+ can then be compared ot the distances between the original and the semantically
+ equivalent paraphrase.
+ This thus allows the assessment as to strength of the link between semantic
+ closeness and the embedding closeness.
+\end_layout
+
+\begin_layout Terms
+General terms from the ACM classification.
+ See 
+\begin_inset CommandInset href
+LatexCommand href
+target "http://www.acm.org/about/class/"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Keywords
+Free key words
+\end_layout
+
+\begin_layout Section
+Introduction
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+1 page
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Various sentence embeddings are often called semantic vector space representatio
+ns, such as in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "iyyer2014generating"
+
+\end_inset
+
+.
+ The embedding the meaning of a sentence into a vector space is highly desirable.
+ A wide array of tools exist which can handle vector representations, but
+ not natural language discourse.
+ Vector embeddings of a sentence may encode a number of factors including
+ semantic meaning, syntactic structure or topic.
+ Since many of these embeddings are learned unsupervised on textual corpora,
+ it is not entirely clear the emphasis placed on each factor in the encoding.
+ For certain applications encoding semantic meaning is particularly desirable.
+ These applications include
+\begin_inset Note Comment
+status collapsed
+
+\begin_layout Plain Layout
+I have a paper that uses embeddings for many of these
+\end_layout
+
+\end_inset
+
+, machine translation, automatic summarization, and to a lesser extent sentiment
+ recognition.
+ For successful application to these areas it is required that the embeddings
+ generated by the models correctly encode meaning such that sentences with
+ the same meaning are co-located in the vector space, and sentences with
+ significantly differing meanings are further away.
+\end_layout
+
+\begin_layout Standard
+Current methods to produce these embeddings generate them as a byproduct
+ of unsupervised tasks.
+ 
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+All the papers in this section to an extent suggest they are capturing semantics
+, except perhaps the structure one
+\end_layout
+
+\end_inset
+
+Several underlying have been used, including: word prediction, as in the
+ work of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "le2014distributed"
+
+\end_inset
+
+; recreation of input, as in the auto-encoders of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:RAE,SocherEtAl2011:PoolRAE"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "iyyer2014generating"
+
+\end_inset
+
+; alignment of sentences embeddings across a parallel mulch-lingual corpus
+ as in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "DBLP:journals/corr/HermannB13"
+
+\end_inset
+
+; and structural classification as in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2013:CVG,socher2010PhraseEmbedding"
+
+\end_inset
+
+.
+ These methods learn the vector representations of their inputs which is
+ best for the optimization function of their choice -- one for which sufficient
+ training data exists.
+ The methods are then used as a feature detectors step in other tasks.
+ The information captured by the methods has proved to be very useful in
+ these other tasks approach or exceeding previous state-of-the-art results
+ in sentiment analysis and paraphrase detection.
+ It is not entirely clear, though, the precise nature of the information
+ captured, is it semantic, syntactic, topical or some other factor.
+\end_layout
+
+\begin_layout Standard
+This paper aims to provide a method to assess if the models are capturing
+ semantic information.
+ The strict definition of semantic equivalence for sentences is that each
+ shall entail the other.
+ This method will allow us to directly assess as to whether an give models
+ embedding of the sentence is a encoding of meaning, consistent with the
+ encodings for other sentences with similar meanings.
+ The method functions in rough terms, by checking if sentence with meaning
+ the same thing are located closely; and whether sentences of different
+ meanings are located distantly.
+ To do this a synthetic evaluation corpus is developed from existing resources
+ though word substitution.
+ Correctly separating sentences with similar word content and structure
+ but different meaning, is a challenging task and proves a models semantic
+ encoding strength.
+ Assessment on this task will allow a better understanding of how these
+ models work, and suggest new directions for the development in this area.
+\end_layout
+
+\begin_layout Standard
+The paper shall be laid out as in 5 sections.
+ The Related Works section discusses the linguistic underpinnings of this
+ work as well as various models and how they are currently assessed.
+ The Methodology section describes the development of the evaluation corpus
+ and how it is used to evaluated the semantic consistency of a model.
+ The Results and Discussion section applies the method to 4 existing models
+ and discusses the implications for their accuracy.
+ The Conclusion closes the paper and suggests new directions for development.
+\end_layout
+
+\begin_layout Section
+Literature Review
+\end_layout
+
+\begin_layout Subsection
+Linguistics
+\end_layout
+
+\begin_layout Subsubsection
+Semantic Equivalence
+\end_layout
+
+\begin_layout Standard
+Sentences are said to be semantically equivalent if they each imply the
+ other -- the relationship is that of bidirectional entailment.
+ If we consider two sentences A and B.
+ A is equivalent to B if A being true implies that B also must be true,
+ and if B is true then A also must be true.
+ This definition is closely related to that for logical equivalence.
+ Linguistically different but equivalent sentences are said to be paraphrases
+ of each other.
+\end_layout
+
+\begin_layout Standard
+The paraphrases from the Microsoft Research Paraphrase Corpus (MSRPC) were
+ judged by the human raters to have the same high-level meaning, and to
+ show 
+\begin_inset Quotes eld
+\end_inset
+
+mostly bidirectional entailment
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "msrParapharaCorpus"
+
+\end_inset
+
+.
+ That is to say, that while each sentence may contain information which
+ is not implied by the other, the core meaning of the sentences is entailed
+ by both.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "msrParapharaCorpus"
+
+\end_inset
+
+ provides the examples of:
+\end_layout
+
+\begin_layout Description
+Sentence
+\begin_inset space ~
+\end_inset
+
+A: Charles O.
+ Prince, 53, was named as Mr.
+ Weill’s successor.
+ 
+\end_layout
+
+\begin_layout Description
+Sentence
+\begin_inset space ~
+\end_inset
+
+B: Mr.
+ Weill’s longtime confidant, Charles O.
+ Prince, 53, was named as his successor.
+ 
+\end_layout
+
+\begin_layout Standard
+While additional information is present in Sentence B, still each sentence
+ implies most of the meaning of the other.
+ Thus while not semantically equivalent, they are considered semantically
+ close.
+\end_layout
+
+\begin_layout Standard
+It should be noted that that semantic similarity is often defined differently
+ for words.
+ While semantic similarity for sentences is defined in terms of shared meaning
+ and mutual entailment, semantic similarity for words can be defined in
+ terms of shared properties
+\begin_inset CommandInset citation
+LatexCommand cite
+key "manning1999foundations"
+
+\end_inset
+
+.
+ For example: 
+\begin_inset Quotes eld
+\end_inset
+
+rise
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+fall
+\begin_inset Quotes erd
+\end_inset
+
+ are antonyms, but are under the aforementioned definition for word semantic
+ similarity are very similar: they both describe an vertical change in (potentia
+lly metaphorical) position.
+ However, the sentences 
+\begin_inset Quotes eld
+\end_inset
+
+The share price is predicted to rise.
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+The share price is predicted to fall.
+\begin_inset Quotes erd
+\end_inset
+
+ are not semantically similar sentences, as they do not imply each other
+ - in-fact each implies that the other is false.
+ This sentence definition of semantic equivalence can be seen to be essential
+ in applications such as machine translation.
+\end_layout
+
+\begin_layout Subsubsection
+Substitutions
+\end_layout
+
+\begin_layout Standard
+One of the basic tests for determining the part of speech a word of unknown
+ lexical category is to substitute a word of known category in its place,
+ if the sentence is still correct, then the unknown word may have that category
+\begin_inset CommandInset citation
+LatexCommand cite
+key "radford2004minimalist"
+
+\end_inset
+
+.
+ For example if a sentence contains the never seen word 
+\begin_inset Quotes eld
+\end_inset
+
+foobar
+\begin_inset Quotes erd
+\end_inset
+
+, and substituting 
+\begin_inset Quotes eld
+\end_inset
+
+hat
+\begin_inset Quotes erd
+\end_inset
+
+ in its place is grammatical, it can be concluded that 
+\begin_inset Quotes eld
+\end_inset
+
+foobar
+\begin_inset Quotes erd
+\end_inset
+
+ is most likely also a noun.
+ It has been suggested that this is the mechanism by which people learn
+ the parts of speech relations.
+ In general, substitutions of the same parts of speech are valid.
+\end_layout
+
+\begin_layout Standard
+For any given word, its synonym or its antonym will have make up the same
+ part of speech.
+ It is thus grammatically valid to subsitute a synonym or antonym into that
+ place.
+ Substituting a synonym is not expected to change the meaning of the sentence,
+ thus such a substitution creates a new sentence which is semantically equivalen
+t.
+ Indeed this has been proposed as the very definition of synonymy (
+\begin_inset CommandInset citation
+LatexCommand cite
+key "miller1991contextualsemantics"
+
+\end_inset
+
+ attributes this definition to Leibniz), though there has been some debate
+ over the nature and degree of this relation
+\begin_inset CommandInset citation
+LatexCommand cite
+key "miller1991contextualsemantics"
+
+\end_inset
+
+.
+ It has been noted in a limited study that subjects could identify whether
+ an adjective or its antonym belong in blanked out section of a sentence
+\begin_inset CommandInset citation
+LatexCommand cite
+key "APS:2745308"
+
+\end_inset
+
+.
+ This suggests that identical sentences up to an antonym swap in adjectives,
+ may not occur in natural English
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+It would be better to refer to a paper about verbs and nouns
+\end_layout
+
+\end_inset
+
+.
+ Never-the-less, such a swap is still a part-of-speech matched substitution
+ and thus is grammatical.
+\end_layout
+
+\begin_layout Subsubsection
+Semantic Similarity from Word Similarity
+\end_layout
+
+\begin_layout Standard
+Many past approaches towards measuring the semantic similarity of sentences
+ have come from extending known results about the semantic similarity of
+ words.
+ Semantic relationships between words are well established, and large resources
+ are available for them.
+ These include both knowledge based approaches, and corpus based approaches.
+ The knowledge based approaches for word semantic relations include WordNets
+ categorizing of synonyms, antonyms, hypernyms and hyponyms.
+ Corpus bases approach use various forms of information derived from word
+ co-occurrences, such as in latent semantic analysis.
+ These methods can be combined with a bag-of-word approach to apply to sentences
+, as was done in the work of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mihalcea2006corpus"
+
+\end_inset
+
+.
+ Though, as acknowledged in that work, methods such as this, which ignore
+ the structure of sentences are ultimately limited in there potential.
+ Incorporating structure into the analysis is one of the great promises
+ of current vector embedding models
+\begin_inset CommandInset citation
+LatexCommand cite
+key "le2014distributed,SocherEtAl2011:RAE"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+Evaluation Methods
+\end_layout
+
+\begin_layout Standard
+As discussed in the introduction, current methods of evaluating the quality
+ of embedding are on direct practical applications.
+ The evaluation methods are not directly link to the methods used for training.
+\end_layout
+
+\begin_layout Subsubsection
+Paraphrase Detection
+\end_layout
+
+\begin_layout Standard
+Closely related to the corpus used for evaluation here are paraphrase corpora
+ such as MSRP.
+ The paraphrase corpora and paraphrase detection tasks present sentences
+ and possible paraphrases.
+ The goal is to determine weather a sentence is a paraphrase of another
+ or not.
+ 
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+Could mention here the embeddigns are used as a feature for classification?
+\end_layout
+
+\end_inset
+
+This implicitly requires working out if the sentences are semantically equivalen
+t.
+ However the corpora are not control to present syntactically similar sentences,
+ thus can not be use to assess to prevalence of syntactic vs semantic informatio
+n in the vector encoding.
+\end_layout
+
+\begin_layout Standard
+The Paraphrases for Plagiarism corpus (P4P)
+\begin_inset CommandInset citation
+LatexCommand cite
+key "barron2013plagiarism"
+
+\end_inset
+
+ does have useful information on the types of changes and relations between
+ the compared texts, but is not a sentence orientated corpus.
+ P4P compares short paragraphs, giving more context.
+ While this results in a deeper and more meaningful paraphrasing task, the
+ multiple sentences complicates the evaluation, and renders some embedding
+ methods (
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2013:CVG,SocherEtAl2011:PoolRAE,Socher2011ParsingPhrases,socher2010PhraseEmbedding,SocherEtAl2011:RAE"
+
+\end_inset
+
+) unable to directly process the result.
+ As with other paraphrasing corpora it also does not constrain the structure
+ of sentences.
+\end_layout
+
+\begin_layout Subsubsection
+Sentiment Analysis
+\end_layout
+
+\begin_layout Standard
+Sentiment Analysis is another often used technique for evaluating the quality
+ of embedding.
+ It was used both for Recussive Autoencoder in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:RAE"
+
+\end_inset
+
+and for the paragraph vector models in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "le2014distributed"
+
+\end_inset
+
+.
+ Determining the sentiment of a sentence is partially a semantic task, but
+ it does have pragmatic concerns.
+ Sentences with the same semantic meaning may convey different sentiment.
+ For example 
+\begin_inset Quotes eld
+\end_inset
+
+The movie was a heart-wretching tragedy
+\begin_inset Quotes erd
+\end_inset
+
+ vs 
+\begin_inset Quotes eld
+\end_inset
+
+The most depressing film I have seen.
+\begin_inset Quotes erd
+\end_inset
+
+, it could be argues these a semantically close, but of very different sentiment.
+ Success at sentiment classification is a valuable property that some sentence
+ embedding models have shown, but it is not a direct indication of semantic
+ consistency.
+\end_layout
+
+\begin_layout Section
+Methodology
+\end_layout
+
+\begin_layout Subsection
+Base Paraphrase Corpus
+\end_layout
+
+\begin_layout Standard
+The Microsoft Research Paraphrase Corpus (MSRPC)
+\begin_inset CommandInset citation
+LatexCommand cite
+key "msrParapharaCorpus"
+
+\end_inset
+
+ is used as a base source of sentences, and of the ground truth for their
+ semantic equality.
+ The sentences with paraphrases provided are combined from the training
+ and testing sets.
+ This gives 7,800 sentences for evaluation.
+ Of these 311 are repeated -- that is they have multiple different paraphrases
+ specified -- no special handling is done for these cases.
+ The sentences are modified by the procedure described below to create semantica
+lly equivalent and semantically distinct versions.
+\end_layout
+
+\begin_layout Subsection
+WordNet Lookup
+\end_layout
+
+\begin_layout Standard
+The second primary resource required is a source of synonyms and antonyms
+ for the words being modified.
+ For this WordNet 3.0
+\begin_inset CommandInset citation
+LatexCommand cite
+key "miller1995wordnet"
+
+\end_inset
+
+ is used, via the NLTK
+\begin_inset CommandInset citation
+LatexCommand cite
+key "bird2009natural"
+
+\end_inset
+
+ interface.
+ WordNet organizes the words in to sets of synonymous words called synsets.
+ WordNet only stores the base word form i.e.
+ lemma for each word, but the Morphy tool is provided to lookup the lemma
+ for the words inflicted forms
+\begin_inset CommandInset citation
+LatexCommand cite
+key "tengi1998design"
+
+\end_inset
+
+.
+ Thus WordNet can be used to find the replacement words need for the modificatio
+ns of the sentences.
+\end_layout
+
+\begin_layout Subsection
+Corpus Creation Method
+\end_layout
+
+\begin_layout Standard
+A summery of the method used to create the evaluation corpus can be seen
+ in 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:block"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide true
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset include
+LatexCommand include
+filename "figs/corpus_gen.pgf"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:block"
+
+\end_inset
+
+The process used to generate several modified sentences for each base sentence
+ in the corpus.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Tokenization 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+Page 124 of Statistical Language Processing
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The first step is to tokenize the sentence.
+ This was achieved using the NLTK
+\begin_inset CommandInset citation
+LatexCommand cite
+key "bird2009natural"
+
+\end_inset
+
+ Treebank Word Tokenizer.
+ This tokenizer is based on regular expressions.
+ It splits the sentences in to words, punctuation elements, and also separates
+ contractions: 
+\begin_inset Quotes eld
+\end_inset
+
+don't
+\begin_inset Quotes erd
+\end_inset
+
+ becomes 
+\begin_inset Quotes eld
+\end_inset
+
+do n't
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Tokenization is a fairly simple task, accomplished by these regular expressions.
+\end_layout
+
+\begin_layout Subsubsection
+POS Tagging and Restriction of Auxiliary Verbs
+\end_layout
+
+\begin_layout Standard
+The second step is to tag the the word tokens with their parts of speech
+ (POS).
+ The Stanford POS Tagger
+\begin_inset CommandInset citation
+LatexCommand cite
+key "StandfordPOSTagger"
+
+\end_inset
+
+ was used via NLTK
+\begin_inset CommandInset citation
+LatexCommand cite
+key "bird2009natural"
+
+\end_inset
+
+ interface, to accomplish this.
+ The Stanford POS Tagger, has a 97.24% accuracy on the Penn Treebank Wall
+ Street Journal test set
+\begin_inset CommandInset citation
+LatexCommand cite
+key "StandfordPOSTagger"
+
+\end_inset
+
+.
+ It is one of the best POS taggers available.
+ 
+\end_layout
+
+\begin_layout Standard
+Though it does still make some mistakes, for example, in the sentence: 
+\begin_inset Quotes eld
+\end_inset
+
+Cadets were ticketted for drinking alcohol.
+\begin_inset Quotes erd
+\end_inset
+
+ drinking is mistaken for a noun, when it should be a verb.
+\end_layout
+
+\begin_layout Standard
+The sentences are tagged with the Penn Treebank tagset
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Penn_POS_Taggening"
+
+\end_inset
+
+.
+ This tagset contains 37 POS tags.
+ Of interest to this work are the tags for nouns and verbs.
+ Valid noun tags for transformation are NN and NNS, which covers singular,
+ mass and plural nouns.
+ The proper noun tags NNP and NNPS are not valid for transformation and
+ are excluded.
+ Valid verbs are marked those marked with all verb tags (VB,VBD,VBG, VBN,
+ VBZ, VBP), except for models (MD) and auxiliaries.
+\end_layout
+
+\begin_layout Standard
+Model and auxiliary verbs are normally inverted by inserting a not after
+ the verb, or equivalently a contraction n't.
+\begin_inset CommandInset citation
+LatexCommand cite
+key "radford2004english"
+
+\end_inset
+
+ This is forbidden by the guideline of not changing the structure in the
+ generated sentences.
+ Thus model verbs and auxiliaries are excluded.
+ 
+\end_layout
+
+\begin_layout Standard
+While the POS tagger captures models with the MD tag, the other auxiliary
+ verbs are not caught.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Penn_POS_Taggening"
+
+\end_inset
+
+ states they are to be handles as other verbs.
+ Some of them also have non-auxiliary senses, for example 
+\begin_inset Quotes eld
+\end_inset
+
+has
+\begin_inset Quotes erd
+\end_inset
+
+ in 
+\begin_inset Quotes eld
+\end_inset
+
+he has gone
+\begin_inset Quotes erd
+\end_inset
+
+ is an auxiliary
+\begin_inset CommandInset citation
+LatexCommand cite
+key "radford2004english"
+
+\end_inset
+
+, but in 
+\begin_inset Quotes eld
+\end_inset
+
+He has a dog
+\begin_inset Quotes erd
+\end_inset
+
+ it is not.
+ WordNet also does not differentiate auxiliaries from other verbs, and so
+ in both cases suggests that antonym for 
+\begin_inset Quotes eld
+\end_inset
+
+has
+\begin_inset Quotes erd
+\end_inset
+
+ is 
+\begin_inset Quotes eld
+\end_inset
+
+lacks
+\begin_inset Quotes erd
+\end_inset
+
+.
+ To avoid any confusion of this sort auxiliary verbs are blocked using a
+ blacklist.
+ This blocks changes to: "be", "am", "are", "is", "was", "were", "being",
+ "can", "could", "do", "did", "does", "doing", "have", "had", "has", "having",
+ "may", "might", "must", "shall", "should", "will", and "would".
+\end_layout
+
+\begin_layout Standard
+WordNet uses much simpler parts of speech tags, as it only considered lemmas.
+ WordNet POS tags are: noun, verb, adverb and adjective.
+ The Penn Treebank POS tags can be simplified down to them.
+ Further more, the additional information captured in the Penn Treebank
+ Tags, is sufficient to allow recover the full form an a lemma generated
+ from WordNet.
+ (see 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "sub:Unstemming"
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Subsubsection
+Phrase Detection
+\end_layout
+
+\begin_layout Standard
+Certain sets of words are best treated as a single unit, this paper, as
+ in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "tengi1998design"
+
+\end_inset
+
+, will call these phrases.
+ In 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "tengi1998design"
+
+\end_inset
+
+ they are called collocations.
+ WordNet Version 3.0 contains 64,331 such phrases.
+\end_layout
+
+\begin_layout Standard
+Consider the word sequences: 
+\begin_inset Quotes eld
+\end_inset
+
+chief financial officer
+\begin_inset Quotes erd
+\end_inset
+
+, and 
+\begin_inset Quotes eld
+\end_inset
+
+police officer
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+A synset exist containing 
+\begin_inset Quotes eld
+\end_inset
+
+chief_finial_officer
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+CFO
+\begin_inset Quotes erd
+\end_inset
+
+, another exist containing: 
+\begin_inset Quotes eld
+\end_inset
+
+police_officer
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+officer
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+policeman
+\begin_inset Quotes erd
+\end_inset
+
+.
+ If collocations were handled as word sequences 
+\begin_inset Quotes eld
+\end_inset
+
+chief financial officer
+\begin_inset Quotes erd
+\end_inset
+
+ could have the officer replaced, to get: 
+\begin_inset Quotes eld
+\end_inset
+
+chief financial policeman
+\begin_inset Quotes erd
+\end_inset
+
+, or even: 
+\begin_inset Quotes eld
+\end_inset
+
+police officer
+\begin_inset Quotes erd
+\end_inset
+
+ could become 
+\begin_inset Quotes eld
+\end_inset
+
+police police officer
+\begin_inset Quotes erd
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+If phrases were handled as words, 
+\begin_inset Quotes eld
+\end_inset
+
+policeman
+\begin_inset Quotes erd
+\end_inset
+
+ could become 
+\begin_inset Quotes eld
+\end_inset
+
+police officer
+\begin_inset Quotes erd
+\end_inset
+
+.
+ This adds a word, violating the constraint of not changing the sentence's
+ structure.
+ To avoid all these issues entirely, we forbid the substituting for any
+ words in a phrase, as well as forbidding substituting a phrase for any
+ words.
+\end_layout
+
+\begin_layout Standard
+These phrases are detected using a sliding window of width 3 and 2 words
+ across the sentences.
+ The words in the window are then checked to see if they form a phrase known
+ to WordNet.
+ If they do then they are blocked from substitution.
+ This blocks all such phrases of up to length 3, covering the vast majority
+ of cases.
+ 
+\end_layout
+
+\begin_layout Standard
+While this blocks continuous phrases it does not handle other kinds.
+ Several other kinds of phrases have been distinguished as having distinct
+ meaning.
+ Such as the skip-bigrams considered by 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "yin2014exploration"
+
+\end_inset
+
+.
+ The necessity of avoiding substitutions with these is less clear.
+ As they are not considered as clear single lexical entity (unlike the continous
+ dictionary phrases), they may be sufficiently handled by word sense disambiguat
+ion.
+\end_layout
+
+\begin_layout Subsubsection
+Word Sense Disambiguation 
+\end_layout
+
+\begin_layout Standard
+Word sense disambiguation is used to select the correct sense of the word
+ being substituted for -- so that it synonym or antonym is the same sense.
+ This is used for example to ensure that the synonym of 
+\begin_inset Quotes eld
+\end_inset
+
+bank
+\begin_inset Quotes erd
+\end_inset
+
+, as in a financial institution, is not 
+\begin_inset Quotes eld
+\end_inset
+
+shore
+\begin_inset Quotes erd
+\end_inset
+
+ as in the edge of a body of water
+\begin_inset CommandInset citation
+LatexCommand cite
+key "manning1999foundations"
+
+\end_inset
+
+.
+ While several methods were considered for performing the word sense disambiguat
+ion, it was resolve to use the simple Most Frequent Sense (MFS).
+\end_layout
+
+\begin_layout Standard
+The MFS is a naïve method for determining word sense.
+ It functions by always choosing the word sense that occurs most often --
+ without regard for context, beyond the POS tag of the word.
+ This method is almost certain to make some mistakes, however more sophisticated
+ algorithms have been shown to offer little improvement over it.
+ 
+\end_layout
+
+\begin_layout Standard
+BabelNet
+\begin_inset CommandInset citation
+LatexCommand cite
+key "navigli2010babelnet"
+
+\end_inset
+
+ is a multilingual extension of WordNet that has seen significant use as
+ a target for the evaluation of word sense disambiguation methods.
+ In the English BabelNet WSD subtask at 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "navigli2013semeval"
+
+\end_inset
+
+, the MFS obtained a F1 score of 66.5%, the best competing algorithm scores
+ 68.6%.
+ Since then, new methods have improved that to 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "basile-caputo-semeraro:2014:Coling"
+
+\end_inset
+
+ 71.5% -- which exceeds MFS by 5%.
+ On a similar task at 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "moro2015semeval"
+
+\end_inset
+
+, no entry exceeded the MFS F1 score of 67.5%.
+ As simple MFS remains one of the most competitive methods it is used in
+ this system.
+\end_layout
+
+\begin_layout Subsubsection
+Substitution Generation
+\end_layout
+
+\begin_layout Paragraph
+Noun Synonyms
+\end_layout
+
+\begin_layout Standard
+As discussed above, all words sorted in WordNet are stored in synsets
+\begin_inset CommandInset citation
+LatexCommand cite
+key "miller1995wordnet"
+
+\end_inset
+
+.
+ A synset contains many lemmas all with the same semantic meaning.
+ Any given word may have many word-senses, each word-sense for that word
+ belongs to a different synset.
+ All the lemmas within a synset are synonymous.
+ The synonyms of a noun are all the lemmas form the correct synset.
+\end_layout
+
+\begin_layout Paragraph
+Verb Antonyms
+\end_layout
+
+\begin_layout Standard
+Verbs, as nouns are stored in synsets.
+ WordNet stores antonyms on a per-lemma basis.
+ The possible antonyms for a given verb are thus the antonym of the lemma,
+ and also of the any synonyms -- lemmas from the same synset.
+ This extension increases the number of antonym lemmas available for any
+ base lemma.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Un-lemmatizing 
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Unstemming"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+I think that I should use italics (emphasis) instead of quotes.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+As the words generated from WordNet are lemmatized, this process must be
+ reversed to restore them to their grammatically correct from for the context.
+ For example, the verbs, 
+\begin_inset Quotes eld
+\end_inset
+
+rise
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+rose
+\begin_inset Quotes erd
+\end_inset
+
+, and 
+\begin_inset Quotes eld
+\end_inset
+
+rising
+\begin_inset Quotes erd
+\end_inset
+
+ are all mapped to the lemma 
+\begin_inset Quotes eld
+\end_inset
+
+rise
+\begin_inset Quotes erd
+\end_inset
+
+, from this lemma we generate the antonym: 
+\begin_inset Quotes eld
+\end_inset
+
+fall
+\begin_inset Quotes erd
+\end_inset
+
+, to put it into the context of the first word, it needs to be mapped to
+ 
+\begin_inset Quotes eld
+\end_inset
+
+fall
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+fell
+\begin_inset Quotes erd
+\end_inset
+
+, and 
+\begin_inset Quotes eld
+\end_inset
+
+falling
+\begin_inset Quotes erd
+\end_inset
+
+ respectively.
+ Similarly, for nouns lemmatization removes plurals.
+ The needed information for both is captured in the parts of speech tags.
+\end_layout
+
+\begin_layout Standard
+The Penn Treebank POS tags captures the information required to go from
+ a lemma to the correct form.
+ This can be used with the heuristic conjugation and pluralization methods
+ from the Pattern.en library
+\begin_inset CommandInset citation
+LatexCommand cite
+key "de2012pattern"
+
+\end_inset
+
+ to correct the generated lemma to the appropriate form
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Pattern.en Verb Conjugation methods use are described in detail in the documentat
+ion 
+\begin_inset CommandInset href
+LatexCommand href
+name "http://www.clips.ua.ac.be/pages/pattern-en#conjugation"
+target "http://www.clips.ua.ac.be/pages/pattern-en#conjugation"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+.
+ The mappings used are shown in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:POS-Tags-for-pattern"
+
+\end_inset
+
+.
+ It can be noted that no processing is done on the Verb, non-3rd person
+ singular present case (VBP), this is because with the exception of the
+ various forms of the verb 
+\begin_inset Quotes eld
+\end_inset
+
+be
+\begin_inset Quotes erd
+\end_inset
+
+, which are excluded earlier as and auxiliary/model, the non-3rd person
+ singular present is always the same as the base form of the verb
+\begin_inset CommandInset citation
+LatexCommand cite
+key "huddleston2002cambridge"
+
+\end_inset
+
+
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+Page 84.
+\end_layout
+
+\end_inset
+
+.
+ These rules have been found to be generally sufficient to ensure grammatical
+ text.
+\end_layout
+
+\begin_layout Standard
+To ensure against any failure in the heuristic rules based un-lemmatization
+ the validity of the generated and un-lemmatized word is checked against
+ the 
+\begin_inset Quotes eld
+\end_inset
+
+british-english-insane
+\begin_inset Quotes erd
+\end_inset
+
+ collection of words from the Spell Checker Orientated Word Lists (SCOWL)
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SCOWL"
+
+\end_inset
+
+
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+could comment on what this contains
+\end_layout
+
+\end_inset
+
+.
+ Any generated words which fail this test are discarded.
+\end_layout
+
+\begin_layout Standard
+During this step, the initial letter capitalization of any generated word
+ is matched to that of the base word.
+ While no method evaluated below makes use of capitals they are preserved
+ for ease of future comparisons with methods which do.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide true
+sideways false
+status open
+
+\begin_layout Plain Layout
+
+\size small
+\begin_inset Tabular
+<lyxtabular version="3" rows="9" columns="6">
+<features rotate="0" tabularvalignment="middle" tabularwidth="14cm">
+<column alignment="center" valignment="top" width="2cm">
+<column alignment="center" valignment="top" width="0.7cm">
+<column alignment="center" valignment="top" width="2cm">
+<column alignment="center" valignment="top">
+<column alignment="left" valignment="top" width="2cm">
+<column alignment="left" valignment="top" width="3cm">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+Sentence
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+base word
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+generated word
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+POS
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+POS meaning
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Penn_POS_Taggening"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+Pattern.en method to un-lemmatize
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+The share price will rise.
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size small
+rise
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size small
+fall
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+VB
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+Verb, base form
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+--
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+The share price rose.
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+rose
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+fell
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+VBD
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+Verb, past tense
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\size small
+conjugate(lemma, tense=PAST)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+The share price is rising.
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+rising
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+falling
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+VBG
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+Verb, gerund or present participle
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\size small
+conjugate(lemma, tense=PRESENT, aspect=PROGRESSIVE)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+The share price normally rises.
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+rises
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+falls
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+VBZ
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+Verb, present tense, 3rd person singular
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\size small
+conjugate(lemma, tense=PRESENT)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+The share price has risen.
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+risen
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+fallen
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+VBN
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+Verb, past participle
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\size small
+conjugate(lemma, tense=PAST, aspect=PROGRESSIVE)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+The share prices rise.
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size small
+rise
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size small
+fall
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+VBP
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+Verb, non-3rd person singular present 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+--
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+The car is hot.
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size small
+car
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size small
+automobile
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+NN
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+Noun, singular or mass
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+--
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+The cars are hot.
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+cars
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+automobiles
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+NNS
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+Noun, plural
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family typewriter
+\size small
+pluralize(lemma)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\size default
+
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:POS-Tags-for-pattern"
+
+\end_inset
+
+POS Tags for various forms of words.
+ The WordNet lemma is in 
+\series bold
+bold
+\series default
+.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Indefinite Article Correction
+\end_layout
+
+\begin_layout Standard
+A word substituted for may have been preceded by an indefinite article.
+ Depending on the vowel sound at the start of the next word, it may no longer
+ be appropriate
+\begin_inset CommandInset citation
+LatexCommand cite
+key "huddleston2002cambridge"
+
+\end_inset
+
+
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+page.
+ 1618
+\end_layout
+
+\end_inset
+
+.
+ This case is detected and rectified, again making use of the Pattern.en
+ library
+\begin_inset CommandInset citation
+LatexCommand cite
+key "de2012pattern"
+
+\end_inset
+
+.
+ This correctly handles phonetic cases such as 
+\begin_inset Quotes eld
+\end_inset
+
+an honest man
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+a unit of measure
+\begin_inset Quotes erd
+\end_inset
+
+.
+ Case is again preserved.
+ This is the final step in the generation of semantically altered sentences.
+\end_layout
+
+\begin_layout Subsection
+Sequential addition of substitutions
+\end_layout
+
+\begin_layout Standard
+For each sentence, for each verb/noun with a valid substitution that substitutio
+n is made progressively.
+ Starting with the base sentence, first one word is changed, and the new
+ sentence added to the corpus, than another and so forth until valid substitutio
+ns are exhausted.
+ This is applied separately for nouns and verbs to generate the two test
+ sets.
+ These progressive additions allow investigation into whether simple word
+ content affects reported distances, as well as into the effects of double
+ negation.
+ Examples of this can be seen in the next section.
+\end_layout
+
+\begin_layout Subsection
+Final Corpus Size
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+this should not be its own section, but where to put it? Perhaps it should
+ be an extra column on the respective results tables
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Of the 7800 base sentences with paraphrases, the above method generated
+ many modified sentences for evaluation.
+ The precise counts are in the table below.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Tabular
+<lyxtabular version="3" rows="10" columns="4">
+<features rotate="0" tabularvalignment="middle" tabularwidth="100col%">
+<column alignment="center" valignment="top" width="4em">
+<column alignment="center" valignment="top" width="4em">
+<column alignment="center" valignment="top" width="4em">
+<column alignment="center" valignment="top" width="0pt">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Number
+\end_layout
+
+\begin_layout Plain Layout
+of
+\end_layout
+
+\begin_layout Plain Layout
+substitutions
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Noun
+\end_layout
+
+\begin_layout Plain Layout
+Synonyms
+\end_layout
+
+\begin_layout Plain Layout
+Sentences
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Verb 
+\end_layout
+
+\begin_layout Plain Layout
+Antonym
+\end_layout
+
+\begin_layout Plain Layout
+Sentences
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+Overlap
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7168
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3061
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2829
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5503
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+590
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+449
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3395
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+82
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+46
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1747
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+12
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+813
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+6
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+309
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+104
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+8
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+22
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+9
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+9
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:corpus_size"
+
+\end_inset
+
+ The size of the corpus.
+ How many of each sentence variation are present for use in assessment.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Examples of Constructed Evaluation Sentences
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+this should not be its own section, but where to put it?
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+The distance column is just for example, perhaps it should be removed, or
+ replaced with Bag of Words distance
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+The example sentence was chosen fairly fairly arbitrarily, it was the first
+ sentence I came across that has a significant number of modifications of
+ both types.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:example_sentence"
+
+\end_inset
+
+ one of the 7800 base sentences, and its paraphrase and constructed variants
+ are shown.
+ The distance from the base setence to the modified sentence/paraphrase
+ under the PV-DM model is shown to illustrate the functioning of distance
+ measure used for assessment of the models (see 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "sub:Evaluation"
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide true
+sideways false
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Tabular
+<lyxtabular version="3" rows="10" columns="3">
+<features rotate="0" tabularvalignment="middle" tabularwidth="100text%">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="60text%">
+<column alignment="center" valignment="top" width="4em">
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Change
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Sentence
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size small
+PV-DM Model Distance
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+Base Sentence
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+However , other unions including the powerful CGT remained opposed to the
+ reform and demanded the government begin fresh negotiations with them .
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+0.00
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+Paraphrase
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+The powerful CGT and other unions remained opposed to the plans , however
+ , and demanded the government renegotiate the reform with them .
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size small
+0.35
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+1 Noun Synonym
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+However , other 
+\series bold
+brotherhoods
+\series default
+ including the powerful CGT remained opposed to the reform and demanded
+ the government begin fresh negotiations with them .
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+\emph on
+0.27
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+2 Noun Synonym
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+However , other 
+\series bold
+brotherhoods
+\series default
+ including the powerful CGT remained opposed to the reform and demanded
+ the 
+\series bold
+authorities
+\series default
+ begin fresh negotiations with them .
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+\emph on
+0.25
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+3 Noun Synonym
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+However , other 
+\series bold
+brotherhoods
+\series default
+ including the powerful CGT remained opposed to the reform and demanded
+ the 
+\series bold
+authorities
+\series default
+ begin fresh 
+\series bold
+dialogues
+\series default
+ with them .
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+0.43
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+1 Verb Antonym
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+However , other unions including the powerful CGT remained opposed to the
+ reform and 
+\series bold
+obviated
+\series default
+ the government begin fresh negotiations with them .
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+\emph on
+0.36
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+2 Verb Antonym
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+However , other unions including the powerful CGT remained opposed to the
+ reform and 
+\series bold
+obviated
+\series default
+ the government 
+\series bold
+end
+\series default
+ fresh negotiations with them .
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+\emph on
+0.36
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+3 Verb Antonym
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+However , other unions including the powerful CGT 
+\series bold
+changed
+\series default
+ opposed to the reform and 
+\series bold
+obviated
+\series default
+ the government 
+\series bold
+end
+\series default
+ fresh negotiations with them .
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+\emph on
+0.43
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+4 Verb Antonym
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+However , other unions 
+\series bold
+excluding
+\series default
+ the powerful CGT 
+\series bold
+changed
+\series default
+ opposed to the reform and 
+\series bold
+obviated
+\series default
+ the government 
+\series bold
+end
+\series default
+ fresh negotiations with them .
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size small
+\emph on
+0.46
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:example_sentence"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Evaluation Using the Corpus
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Evaluation"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+A given model may be evaluated on how semantically close, or distantly it
+ places sentences which are semantically equivalent, or not.
+ As discussed, replacing a noun with its synonym produces a semantically
+ equivalent sentence -- both the original sentence, and the modified sentence
+ entail the other.
+ Conversely, replacing a verb with its antonym generally will produce a
+ semantically different sentence, often the the modified sentence will entail
+ the converse of the original and visa-verse.
+ As a baseline for a reasonable distance under a model, the distance to
+ the gold standard, semantically equal, paraphrase is computed.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Scoring
+\end_layout
+
+\begin_layout Standard
+By comparing the distance from the base sentence embedding to the paraphrase
+ and modified sentence embeddings, the success of the modal at semantic
+ localization is evaluated.
+ It is assessed on keeping close semantically similar sentences, and distant
+ semantically distinct sentences.
+ A semantically different sentence must be further away that a semantically
+ equivalent one, thus the sentences modified by replacing verbs with their
+ antonyms must be more distant than the semantically equal paraphrase.
+ Conversely, the semantically identical similar form should be no further
+ away than the paraphrase.
+ By counting the portion of the evaluation corpus is correctly placed under
+ this definition, the models semantic semantic accuracy with respect to
+ fine-grained changed is scored.
+\end_layout
+
+\begin_layout Section
+Results and Discussion
+\end_layout
+
+\begin_layout Subsection
+The Models
+\end_layout
+
+\begin_layout Standard
+For demonstration purposes, several models are evaluated below.
+\end_layout
+
+\begin_layout Paragraph
+Distance
+\end_layout
+
+\begin_layout Standard
+Distance may be calculated though any method the model specifies.
+ The All the model chosen below, use the cosine distance (or equivalently
+ cosign similarity).
+ This is given by 
+\begin_inset Formula $d(\tilde{u},\tilde{v})=1-\dfrac{\tilde{u}\cdot\tilde{v}}{\left\Vert \tilde{u}\right\Vert _{2}\left\Vert \tilde{v}\right\Vert _{2}}$
+\end_inset
+
+, this is between 0, and 2 and is proportional to the cosine of the angle
+ between the embeddings 
+\begin_inset Formula $\tilde{u}$
+\end_inset
+
+ and 
+\begin_inset Formula $\tilde{v}$
+\end_inset
+
+
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+Double check this
+\end_layout
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection
+Unfolding Recursive Auto-Encoder (U-RAE)
+\end_layout
+
+\begin_layout Standard
+The Unfolding Recursive Auto-Encoder is a autoencoder based method.
+ It functions by using the same network to recursively pairwise combine
+ embedded representations, following the parse tree
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:PoolRAE"
+
+\end_inset
+
+.
+ It's optimization target is to be be able to reverse (unfold) the merges
+ and produce the original sentence.
+ The central folding layer - where the whole sentence is collapsed to a
+ single embedding vector is the representation.
+\end_layout
+
+\begin_layout Standard
+In this evaluation we make use of the pretrained network the authors of
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:PoolRAE"
+
+\end_inset
+
+ have graciously made available
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://www.socher.org/index.php/Main/DynamicPoolingAndUnfoldingRecursiveAutoencodersForParaphraseDetection"
+target "http://www.socher.org/index.php/Main/DynamicPoolingAndUnfoldingRecursiveAutoencodersForParaphraseDetection"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+, full information is available in that paper.
+ It is initialized on the unsupervised Collobert and Weston word embeddings
+\begin_inset CommandInset citation
+LatexCommand cite
+key "collobert2008unified"
+
+\end_inset
+
+, and training on a subset of 150,000 sentences from the gigaword corpus.
+ In the evaluation below the dynamic pooling layer is not used.
+\end_layout
+
+\begin_layout Subsubsection
+Doc2Vec Models
+\end_layout
+
+\begin_layout Standard
+Two new methods, commonly refereed to a doc2vec are described in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "le2014distributed"
+
+\end_inset
+
+.
+ For both, we evaluate using the GenSim implementation
+\begin_inset CommandInset citation
+LatexCommand cite
+key "rehurek_lrec"
+
+\end_inset
+
+ from the current develop branch.
+\end_layout
+
+\begin_layout Standard
+Both are trained on approximately 12 million sentences from 500 randomly
+ selected wikipedia articles.
+ In both the window size was set to 8 words, and the vectors were of 300
+ dimensions.
+\end_layout
+
+\begin_layout Paragraph
+PV-DM
+\end_layout
+
+\begin_layout Standard
+Distributed Memory Paragraph Vectors (PV-DM) Doc2Vec document embeddings
+ are based on an extension of Continuous Bag-of-Words word-embedding model
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mikolov2013efficient"
+
+\end_inset
+
+.
+ It is trained using a sliding window of words to predict the next word.
+ The softmax predictor network is feed a word-embedding for each word in
+ the window, and an additional embedding vector which is reused for all
+ words in the sentence (called the paragraph vector in original paper).
+ These input embeddings can be concatenated or averaged, in the results
+ show below they were concatenated.
+ During training both word and sentence vectors are allows to vary, in evaluatio
+n, the word vectors are locked and the sentence vector trained until convergence.
+ 
+\end_layout
+
+\begin_layout Paragraph
+PV-DBOW
+\end_layout
+
+\begin_layout Standard
+Distributed Bag of Words version of Paragraph Vectors (PV-DBOW), is based
+ on the Skip-gram model for word-embeddings, also from 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mikolov2013efficient"
+
+\end_inset
+
+.
+ In PV-DBOW a sentence vector is used as the sole input to a neural net.
+ That network is tasked with predicting the words in the sentence.
+\end_layout
+
+\begin_layout Subsubsection
+Baseline: Bag of Words
+\end_layout
+
+\begin_layout Standard
+The traditional bag of words model is presented as a baseline.
+ There is a dimension in each vector for the count of each token, including
+ punctuation.
+ In bag of words, there is a direct relationship between the number of words
+ in-common, the sentence length, and the distance.
+\end_layout
+
+\begin_layout Subsection
+Model Results and Discussion
+\end_layout
+
+\begin_layout Subsubsection
+Noun Synonym Distance vs Paraphrase Distance
+\end_layout
+
+\begin_layout Standard
+Replacing one or more nouns with their synonyms does not break logical entailmen
+t.
+ Thus it is expected that a model locating in purely semantic space would
+ locate the modified sentences at least as close to the original sentence,
+ as the paraphrase was.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Tabular
+<lyxtabular version="3" rows="11" columns="6">
+<features rotate="0" tabularvalignment="middle" tabularwidth="100col%">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size scriptsize
+Change
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size scriptsize
+PV-
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size scriptsize
+Evaluation
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size scriptsize
+Count
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size scriptsize
+U-RAE
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size scriptsize
+PV-DM
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size scriptsize
+DBOW
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size scriptsize
+BOW
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size scriptsize
+Cases
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+95%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+91%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+90%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+100%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+7168
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+91%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+84%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+82%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+99%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+5503
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+87%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+76%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+75%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+95%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+3395
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+83%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+68%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+67%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+85%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+1747
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+79%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+58%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+57%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+66%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+813
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+6
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+75%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+52%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+50%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+50%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+309
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+7
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+75%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+36%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+39%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+34%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+104
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+8
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+73%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+36%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+27%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+18%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+22
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+9
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+89%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+56%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+33%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+11%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+9
+\begin_inset Note Comment
+status collapsed
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+This resault isn't going to be statically significant.
+ Shall I remove it?
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Portion of the evaluation cases where the distance from the base sentence
+ to the sentence modified by noun substitution was less than, or equal to
+ the distance from the base sentence to the paraphrase.
+ Larger is better.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Unsurprisingly, the BOW model does very well for small number of changes,
+ but is overtaken by the other models as the number of changes increases.
+ This shows that the models do, to some extent recognise the lack of semantic
+ change from the substitution.
+ It can be seen that the U-RAE, outperfroms the PV-DM, which outperforms
+ the PV-DBOW model.
+ This order does correspond the significance each model places on structure,
+ which may be significant.
+\end_layout
+
+\begin_layout Subsubsection
+Verb Antonym Distance vs Paraphrase Distance
+\end_layout
+
+\begin_layout Standard
+Replacing one of more verbs with their antonyms generally breaks logical
+ entailment.
+ Thus it is expected that a model locating in purely semantic space would
+ place the modified sentences at more distantly than the paraphrases were
+ placed to the original.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Tabular
+<lyxtabular version="3" rows="7" columns="6">
+<features rotate="0" tabularvalignment="middle" tabularwidth="100col%">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size scriptsize
+Change
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size scriptsize
+PV-
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size scriptsize
+Evaluation
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size scriptsize
+Count
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size scriptsize
+U-RAE
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size scriptsize
+PV-DM
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size scriptsize
+DBOW
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size scriptsize
+BOW
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size scriptsize
+Cases
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+6%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+8%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+9%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+3061
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+10%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+13%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+15%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+1%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+590
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+21%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+22%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+20%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+1%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+82
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+17%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+17%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+58%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+12
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+5
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+100%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+2
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Portion of the evaluation cases where the distance from the base sentence
+ to the sentence modified by verb antonym substitution was greater than,
+ the distance from the base sentence to the paraphrase.
+ Larger is better.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+As is expected the BOW model performs very poorly -- it has no mechanism
+ to recognize the additional significance of changing the verb to its opposite.
+ The neural models do perform better, though still poorly.
+ Indicating that some level of logical significance may being induced into
+ the sentence embeddings.
+ It is not clear whether double and quadrupedal negatives impacted the distance,
+ though the decrease in relative distance between three and four substitutions
+ for the U-RAE and PV-DM suggests that may be the case.
+\end_layout
+
+\begin_layout Subsubsection
+Verb Antonym Distance vs Noun Synonym Distance
+\end_layout
+
+\begin_layout Standard
+The above metrics compared the modified sentences of different entailment
+ to paraphrases with differing word content and structure.
+ To compare solely on the modification to the key words, the distance between
+ the noun synonym and verb antonym modified sentences can be compared.
+ As the noun synonym modified sentences are semantically equivalent to the
+ base sentences, it is expected that they be closer to the base sentence
+ than the semantically different verb antonym sentences.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Tabular
+<lyxtabular version="3" rows="6" columns="6">
+<features rotate="0" tabularvalignment="middle" tabularwidth="100col%">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
+<column alignment="center" valignment="top" width="0pt">
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size scriptsize
+Change
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size scriptsize
+PV-
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size scriptsize
+Evaluation
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size scriptsize
+Count
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size scriptsize
+U-RAE
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size scriptsize
+PV-DM
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size scriptsize
+DBOW
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size scriptsize
+BOW
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size scriptsize
+Cases
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+61%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+49%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+50%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+1%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+2829
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+58%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+50%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+43%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+4%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+449
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+43%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+39%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+43%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+7%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+46
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+4
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+0%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+25%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+75%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+25%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+4
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Portion of the evaluation cases where the distance from the base sentence
+ to the sentence modified by verb antonym substitution was greater than,
+ the distance from the base sentence to the sentence modified by noun synonym
+ substitution.
+ Larger is better.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The BOW distance for a verb change and a noun change are under most circumstance
+s exactly equal.
+ The exception to this is when the change occurs in a word which results
+ in the number of instances of the same word changing, eg if a sentence
+ previously used the word 
+\begin_inset Quotes eld
+\end_inset
+
+share
+\begin_inset Quotes erd
+\end_inset
+
+ twice and one of those uses is changed to 
+\begin_inset Quotes eld
+\end_inset
+
+part
+\begin_inset Quotes erd
+\end_inset
+
+ then the distance is different to if a non-repeated word was changed to
+ another non-repeated word.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+There is definitely more discussion to be had here
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Conclusion
+\end_layout
+
+\begin_layout Standard
+A method what presented, to evaluate the semantic localization of sentence
+ embedding models.
+ Semantically equivalent sentences are those which exhibit bidirectional
+ entailment -- they each imply the truth of the other.
+ Paraphrases are mostly semantically equivalent.
+ Replacing a noun with its synonym creates another sentence which is semanticall
+y equivalent to the original.
+ Replacing a verb with its antonym creates a new sentence which is not.
+ By comparing the distances of the generated sentences, and paraphrases
+ from the original sentence, the relationship between semantic closeness
+ and embedding distance can be seen.
+\end_layout
+
+\begin_layout Standard
+The models evaluated using this method show that they are substantially
+ more permanent the a naive bag of words approach there is still significant
+ room for improvement.
+ While these models perform very well at related practical tasks, this new
+ method highlights some of their limitations.
+ It suggests that calling the vector space the models embed into a syntactic
+ space is misleading.
+ The space clearly incorporates elements of syntax and word choice, as well
+ as meaning.
+ This result is not surprising and indeed some papers (including 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:PoolRAE"
+
+\end_inset
+
+) do refer to the space this way.
+ The new method does make its truth substantially clearer.
+\end_layout
+
+\begin_layout Subsection
+Motivating better use of Semantic Resources in embedding creation
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset citation
+LatexCommand cite
+key "yu2014improving"
+
+\end_inset
+
+ is a improved method over word2vec for determining word embeddings making
+ use of semantic knowledge, potential exists to extend in into the document
+ domain through the doc2vec models presented in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "le2014distributed"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+In 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "iyyer2014generating"
+
+\end_inset
+
+, dependency trees are used instead of the constituency tree used in the
+ original URAE, because of its improved invariance to syntactical changes.
+ This may, by decreasing the impact of syntax create models with a greater
+ emphasis on semantic placement.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+bibfiles "../../../Resources/master_bibliography/master"
+options "ieeetr"
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
