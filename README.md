@@ -1,2 +1,2 @@
 # phd
-stuff for my phd
+Stuff for my phd
