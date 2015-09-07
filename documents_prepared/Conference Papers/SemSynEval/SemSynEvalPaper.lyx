@@ -299,9 +299,9 @@ Layout paragraph needs rewriting
 
 \begin_layout Standard
 The paper shall be laid out as in 5 sections.
- The Related Works section discusses the existing models being assessed,
- the methods traditional used to assess them, and the more recent work on
- methods to assess their semantic correctness.
+ The Background section discusses the existing models being assessed, the
+ methods traditional used to assess them, and the more recent work on methods
+ to assess their semantic correctness.
  The Methodology section describes the processes by which the models are
  evaluated, and the parameters used in the evaluation.
  Corpus Creation details the the development of the evaluation corpora for
@@ -312,28 +312,47 @@ The paper shall be laid out as in 5 sections.
 \end_layout
 
 \begin_layout Section
-Related Works
+Background
 \end_layout
 
 \begin_layout Subsection
 Models
 \end_layout
 
-\begin_layout Subsubsection
-Unfolding Recursive Auto-Encoder (U-RAE)
-\end_layout
-
 \begin_layout Standard
-The Unfolding Recursive Auto-Encoder is a autoencoder based method.
- It functions by using the same network to recursively pairwise combine
- embedded representations, following the parse tree
+Three well known sentence embedding methods are evaluted in this work.
+ The compositional distributed model of the unfoldering recurrive autoencoder
+ from the work of 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "SocherEtAl2011:PoolRAE"
 
 \end_inset
 
+, and the two word content predictive models, PV-DM and PV-DBOW commonly
+ referred to as doc2vec from the work of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "le2014distributed"
+
+\end_inset
+
 .
+ As well as the advanced sentence embedding models, a simple mean of word
+ embeddings is also assessed.
+ These models and there variant forms have been applied to numerous natural
+ language processing tasks.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Unfolding Recursive Auto-Encoder (URAE)
+\end_layout
+
+\begin_layout Standard
+The Unfolding Recursive Autoencoder (URAE) is an autoencoder based method.
+ It functions by using the same single layer neural-network to recursively
+ pairwise combine embedded representations, following the parse tree.
  It's optimization target is to be be able to reverse (unfold) the merges
  and produce the original sentence.
  The central folding layer - where the whole sentence is collapsed to a
@@ -379,36 +398,6 @@ key "collobert2008unified"
 \end_layout
 
 \begin_layout Subsubsection
-Doc2Vec Models
-\end_layout
-
-\begin_layout Standard
-Two new methods, commonly referred to as doc2vec are described in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "le2014distributed"
-
-\end_inset
-
-.
- For both, we evaluate using the GenSim implementation
-\begin_inset CommandInset citation
-LatexCommand cite
-key "rehurek_lrec"
-
-\end_inset
-
- from the current develop branch.
-\end_layout
-
-\begin_layout Standard
-Both are trained on approximately 12 million sentences from randomly selected
- wikipedia articles.
- In both the window size was set to 8 words, and the vectors were of 300
- dimensions.
-\end_layout
-
-\begin_layout Paragraph
 PV-DM
 \end_layout
 
@@ -433,13 +422,13 @@ n, the word vectors are locked and the sentence vector trained until convergence
  
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Subsubsection
 PV-DBOW
 \end_layout
 
 \begin_layout Standard
-Distributed Bag of Words version of Paragraph Vectors (PV-DBOW), is based
- on the Skip-gram model for word-embeddings, also from 
+Distributed Bag of Words Paragraph Vectors (PV-DBOW), is based on the Skip-gram
+ model for word-embeddings, also from 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "mikolov2013efficient"
@@ -452,25 +441,7 @@ key "mikolov2013efficient"
 \end_layout
 
 \begin_layout Subsubsection
-Bag of Words
-\end_layout
-
-\begin_layout Standard
-A bag of words (BOW) model is presented as a baseline.
- There is a dimension in each vector embedding for the count of each token,
- including punctuation, in the sentence.
- In the corpus there were a total of 1085 unique tokens, thus a BOW embedding
- has 1085 dimensions.
- For comparison to the lower dimensional models Principle Component Analysis
- (PCA) was used to produce a additional baseline set of embeddings.
- In the evaluations below the PCA was computed only on the training portions
- of the data, and used to project both the testing and training BOW representati
-ons down to 300 dimensions.
- These bag of words models do not have any outside knowledge.
-\end_layout
-
-\begin_layout Subsubsection
-Mean of Word Embeddings 
+Mean of Word Embeddings (MOWE)
 \end_layout
 
 \begin_layout Standard
@@ -503,67 +474,6 @@ key "KaagebExtractiveSummaristation"
 
 .
  It is a computationally cheap model, pretrained word embeddings are available.
-\end_layout
-
-\begin_layout Standard
-The word embeddings used were taken from the Google News pretrained model
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-Available at 
-\begin_inset CommandInset href
-LatexCommand href
-name "https://code.google.com/p/word2vec/"
-target "https://code.google.com/p/word2vec/"
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
- base on the method described in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "mikolovSkip"
-
-\end_inset
-
-.
- This has been trained on 100 million sentences from Google News.
- 54 tokens of the 1085 unique tokens in the corpus did not have embeddings
- in the Google News model.
- These were largely numbers, punctuation characters, proper nouns and unusual
- spellings, as well as the stop-words: 
-\begin_inset Quotes eld
-\end_inset
-
-and
-\begin_inset Quotes erd
-\end_inset
-
-, 
-\begin_inset Quotes eld
-\end_inset
-
-a
-\begin_inset Quotes erd
-\end_inset
-
- and 
-\begin_inset Quotes eld
-\end_inset
-
-of
-\begin_inset Quotes erd
-\end_inset
-
-.
- These words were simply skipped.
- The resulting embeddings have 300 dimensions, like the word embeddings
- they were based on.
 \end_layout
 
 \begin_layout Subsection
@@ -1002,6 +912,161 @@ Model Pretraining
 \begin_layout Standard
 Prior to application to semantic classification task, as with any task the
  models had to be pretrained.
+ Here we are using hte term pretraining to differentiate the model training
+ from the classifier training.
+ The pretraining is not done using the evaluation corpus as it is very small.
+ Instead other data is used, and the inference procedure given for each
+ method is then used to produce the vectors.
+ The model parameters used are details belows.
+\end_layout
+
+\begin_layout Subsubsection
+Unfolding Recursive Auto-Encoder (URAE)
+\end_layout
+
+\begin_layout Standard
+In this evaluation we make use of the pretrained network the authors of
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:PoolRAE"
+
+\end_inset
+
+ have graciously made available
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://www.socher.org/index.php/Main/DynamicPoolingAndUnfoldingRecursiveAutoencodersForParaphraseDetection"
+target "http://www.socher.org/index.php/Main/DynamicPoolingAndUnfoldingRecursiveAutoencodersForParaphraseDetection"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+, full information is available in that paper.
+ It is initialized on the unsupervised Collobert and Weston word embeddings
+\begin_inset CommandInset citation
+LatexCommand cite
+key "collobert2008unified"
+
+\end_inset
+
+, and training on a subset of 150,000 sentences from the gigaword corpus.
+ In the evaluation below the dynamic pooling layer is not used.
+\end_layout
+
+\begin_layout Subsubsection
+Doc2Vec Models (
+\begin_inset space ~
+\end_inset
+
+PV-DM and PV-DBOW)
+\end_layout
+
+\begin_layout Standard
+Both PV-DM and PV-DBOW, were evaluated using the GenSim implementation
+\begin_inset CommandInset citation
+LatexCommand cite
+key "rehurek_lrec"
+
+\end_inset
+
+ from the current develop branch.
+ Both were trained on approximately 1.2 million sentences from randomly selected
+ Wikipedia articles, and the window size was set to 8 words, and the vectors
+ were of 300 dimensions.
+\end_layout
+
+\begin_layout Subsubsection
+Mean of Word Embeddings (MOWE)
+\end_layout
+
+\begin_layout Standard
+The word embeddings used for MOWE were taken from the Google News pretrained
+ model
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Available at 
+\begin_inset CommandInset href
+LatexCommand href
+name "https://code.google.com/p/word2vec/"
+target "https://code.google.com/p/word2vec/"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ base on the method described in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mikolovSkip"
+
+\end_inset
+
+.
+ This has been trained on 100 million sentences from Google News.
+ A small portion of the corpus did not have embeddings in the Google News
+ model.
+ These tokens were largely numerals, punctuation characters, proper nouns
+ and unusual spellings, as well as the stop-words: 
+\begin_inset Quotes eld
+\end_inset
+
+and
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+a
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+of
+\begin_inset Quotes erd
+\end_inset
+
+.
+ These words were simply skipped.
+ The resulting embeddings have 300 dimensions, like the word embeddings
+ they were based on.
+\end_layout
+
+\begin_layout Subsubsection
+Bag of Words
+\end_layout
+
+\begin_layout Standard
+A bag of words (BOW) model is also presented as a baseline.
+ There is a dimension in each vector embedding for the count of each token,
+ including punctuation, in the sentence.
+ In the Opinosis and MSRP subcorpore there were a total of 1,085 and 2,976
+ unique tokens respectively, leading to BOW embeddings of corresponding
+ dimensionality.
+ For comparison to the lower dimensional models Principle Component Analysis
+ (PCA) was used to produce a additional baseline set of embeddings.
+ In the evaluations below the PCA was computed only on the training portions
+ of the data, and used to project both the testing and training BOW representati
+ons down to 300 dimensions.
+ These bag of words models do not have any outside knowledge.
 \end_layout
 
 \begin_layout Section
@@ -1049,7 +1114,7 @@ Paraphrases were identified using the standard criterion: bidirectional
 \end_inset
 
  of sentences: 
-\begin_inset Formula $\forall s_{1},\, s_{2}\in\mathcal{S},\quad s_{1}\entails s_{2}\quad\wedge\; s_{2}\entails s_{1}$
+\begin_inset Formula $\forall s_{1},\,s_{2}\in\mathcal{S},\quad s_{1}\entails s_{2}\quad\wedge\;s_{2}\entails s_{1}$
 \end_inset
 
 , every sentence in the group entails the every other sentence in the group.
