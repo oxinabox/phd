@@ -299,17 +299,271 @@ Layout paragraph needs rewriting
 
 \begin_layout Standard
 The paper shall be laid out as in 5 sections.
- The Related Works section discusses the linguistic underpinnings of this
- work as well as various models and how they are currently assessed.
- The Methodology section describes the development of the evaluation corpus
- and how it is used to evaluated the semantic consistency of a model.
- The Results and Discussion section applies the method to existing models
- and discusses the implications for their accuracy.
+ The Related Works section discusses the existing models being assessed,
+ the methods traditional used to assess them, and the more recent work on
+ methods to assess their semantic correctness.
+ The Methodology section describes the processes by which the models are
+ evaluated, and the parameters used in the evaluation.
+ Corpus Creation details the the development of the evaluation corpora for
+ the semantic classification task.
+ The Results and Discussion section details the results from evaluating
+ the models and discusses the implications for their semantic consistency.
  The Conclusion closes the paper and suggests new directions for development.
 \end_layout
 
 \begin_layout Section
 Related Works
+\end_layout
+
+\begin_layout Subsection
+Models
+\end_layout
+
+\begin_layout Subsubsection
+Unfolding Recursive Auto-Encoder (U-RAE)
+\end_layout
+
+\begin_layout Standard
+The Unfolding Recursive Auto-Encoder is a autoencoder based method.
+ It functions by using the same network to recursively pairwise combine
+ embedded representations, following the parse tree
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:PoolRAE"
+
+\end_inset
+
+.
+ It's optimization target is to be be able to reverse (unfold) the merges
+ and produce the original sentence.
+ The central folding layer - where the whole sentence is collapsed to a
+ single embedding vector is the representation.
+\end_layout
+
+\begin_layout Standard
+In this evaluation we make use of the pretrained network the authors of
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:PoolRAE"
+
+\end_inset
+
+ have graciously made available
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "http://www.socher.org/index.php/Main/DynamicPoolingAndUnfoldingRecursiveAutoencodersForParaphraseDetection"
+target "http://www.socher.org/index.php/Main/DynamicPoolingAndUnfoldingRecursiveAutoencodersForParaphraseDetection"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+, full information is available in that paper.
+ It is initialized on the unsupervised Collobert and Weston word embeddings
+\begin_inset CommandInset citation
+LatexCommand cite
+key "collobert2008unified"
+
+\end_inset
+
+, and training on a subset of 150,000 sentences from the gigaword corpus.
+ In the evaluation below the dynamic pooling layer is not used.
+\end_layout
+
+\begin_layout Subsubsection
+Doc2Vec Models
+\end_layout
+
+\begin_layout Standard
+Two new methods, commonly referred to as doc2vec are described in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "le2014distributed"
+
+\end_inset
+
+.
+ For both, we evaluate using the GenSim implementation
+\begin_inset CommandInset citation
+LatexCommand cite
+key "rehurek_lrec"
+
+\end_inset
+
+ from the current develop branch.
+\end_layout
+
+\begin_layout Standard
+Both are trained on approximately 12 million sentences from randomly selected
+ wikipedia articles.
+ In both the window size was set to 8 words, and the vectors were of 300
+ dimensions.
+\end_layout
+
+\begin_layout Paragraph
+PV-DM
+\end_layout
+
+\begin_layout Standard
+Distributed Memory Paragraph Vectors (PV-DM) Doc2Vec document embeddings
+ are based on an extension of Continuous Bag-of-Words word-embedding model
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mikolov2013efficient"
+
+\end_inset
+
+.
+ It is trained using a sliding window of words to predict the next word.
+ The softmax predictor network is feed a word-embedding for each word in
+ the window, and an additional embedding vector which is reused for all
+ words in the sentence (called the paragraph vector in original paper).
+ These input embeddings can be concatenated or averaged, in the results
+ show below they were concatenated.
+ During training both word and sentence vectors are allows to vary, in evaluatio
+n, the word vectors are locked and the sentence vector trained until convergence.
+ 
+\end_layout
+
+\begin_layout Paragraph
+PV-DBOW
+\end_layout
+
+\begin_layout Standard
+Distributed Bag of Words version of Paragraph Vectors (PV-DBOW), is based
+ on the Skip-gram model for word-embeddings, also from 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mikolov2013efficient"
+
+\end_inset
+
+.
+ In PV-DBOW a sentence vector is used as the sole input to a neural net.
+ That network is tasked with predicting the words in the sentence.
+\end_layout
+
+\begin_layout Subsubsection
+Bag of Words
+\end_layout
+
+\begin_layout Standard
+A bag of words (BOW) model is presented as a baseline.
+ There is a dimension in each vector embedding for the count of each token,
+ including punctuation, in the sentence.
+ In the corpus there were a total of 1085 unique tokens, thus a BOW embedding
+ has 1085 dimensions.
+ For comparison to the lower dimensional models Principle Component Analysis
+ (PCA) was used to produce a additional baseline set of embeddings.
+ In the evaluations below the PCA was computed only on the training portions
+ of the data, and used to project both the testing and training BOW representati
+ons down to 300 dimensions.
+ These bag of words models do not have any outside knowledge.
+\end_layout
+
+\begin_layout Subsubsection
+Mean of Word Embeddings 
+\end_layout
+
+\begin_layout Standard
+Taking the element-wise mean of the word embeddings over all words in the
+ sentence also produces a vector with the potential to encode meaning.
+ Like bag of words no order information is encoded, but the model can take
+ into word relations such as synonymity.
+ This method was used as baseline in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "le2014distributed"
+
+\end_inset
+
+.
+ The closely related sum of word embeddings was first considered in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mikolovSkip"
+
+\end_inset
+
+ for short phrases.
+ It was found to be an effective model for summarization in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "KaagebExtractiveSummaristation"
+
+\end_inset
+
+.
+ It is a computationally cheap model, pretrained word embeddings are available.
+\end_layout
+
+\begin_layout Standard
+The word embeddings used were taken from the Google News pretrained model
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Available at 
+\begin_inset CommandInset href
+LatexCommand href
+name "https://code.google.com/p/word2vec/"
+target "https://code.google.com/p/word2vec/"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ base on the method described in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mikolovSkip"
+
+\end_inset
+
+.
+ This has been trained on 100 million sentences from Google News.
+ 54 tokens of the 1085 unique tokens in the corpus did not have embeddings
+ in the Google News model.
+ These were largely numbers, punctuation characters, proper nouns and unusual
+ spellings, as well as the stop-words: 
+\begin_inset Quotes eld
+\end_inset
+
+and
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+a
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+of
+\begin_inset Quotes erd
+\end_inset
+
+.
+ These words were simply skipped.
+ The resulting embeddings have 300 dimensions, like the word embeddings
+ they were based on.
 \end_layout
 
 \begin_layout Subsection
@@ -706,15 +960,6 @@ Process
 \end_layout
 
 \begin_layout Subsection
-Model Pretraining
-\end_layout
-
-\begin_layout Standard
-Prior to application to semantic classification task, as with any task the
- models had to be pretrained.
-\end_layout
-
-\begin_layout Subsection
 Semantic Classification Task
 \end_layout
 
@@ -748,6 +993,15 @@ Unlike the tasks discussed in the previous section, semantic classification
  Rather it serves as a measure to assess the models general suitability
  for other tasks requiring a model with consistency between meaning and
  embedding.
+\end_layout
+
+\begin_layout Subsection
+Model Pretraining
+\end_layout
+
+\begin_layout Standard
+Prior to application to semantic classification task, as with any task the
+ models had to be pretrained.
 \end_layout
 
 \begin_layout Section
@@ -1471,261 +1725,6 @@ Results and Discussion
 \end_layout
 
 \begin_layout Subsection
-The Models
-\end_layout
-
-\begin_layout Standard
-For demonstration purposes, several models are evaluated below.
-\end_layout
-
-\begin_layout Subsubsection
-Unfolding Recursive Auto-Encoder (U-RAE)
-\end_layout
-
-\begin_layout Standard
-The Unfolding Recursive Auto-Encoder is a autoencoder based method.
- It functions by using the same network to recursively pairwise combine
- embedded representations, following the parse tree
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SocherEtAl2011:PoolRAE"
-
-\end_inset
-
-.
- It's optimization target is to be be able to reverse (unfold) the merges
- and produce the original sentence.
- The central folding layer - where the whole sentence is collapsed to a
- single embedding vector is the representation.
-\end_layout
-
-\begin_layout Standard
-In this evaluation we make use of the pretrained network the authors of
- 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SocherEtAl2011:PoolRAE"
-
-\end_inset
-
- have graciously made available
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-\begin_inset CommandInset href
-LatexCommand href
-name "http://www.socher.org/index.php/Main/DynamicPoolingAndUnfoldingRecursiveAutoencodersForParaphraseDetection"
-target "http://www.socher.org/index.php/Main/DynamicPoolingAndUnfoldingRecursiveAutoencodersForParaphraseDetection"
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-, full information is available in that paper.
- It is initialized on the unsupervised Collobert and Weston word embeddings
-\begin_inset CommandInset citation
-LatexCommand cite
-key "collobert2008unified"
-
-\end_inset
-
-, and training on a subset of 150,000 sentences from the gigaword corpus.
- In the evaluation below the dynamic pooling layer is not used.
-\end_layout
-
-\begin_layout Subsubsection
-Doc2Vec Models
-\end_layout
-
-\begin_layout Standard
-Two new methods, commonly referred to as doc2vec are described in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "le2014distributed"
-
-\end_inset
-
-.
- For both, we evaluate using the GenSim implementation
-\begin_inset CommandInset citation
-LatexCommand cite
-key "rehurek_lrec"
-
-\end_inset
-
- from the current develop branch.
-\end_layout
-
-\begin_layout Standard
-Both are trained on approximately 12 million sentences from randomly selected
- wikipedia articles.
- In both the window size was set to 8 words, and the vectors were of 300
- dimensions.
-\end_layout
-
-\begin_layout Paragraph
-PV-DM
-\end_layout
-
-\begin_layout Standard
-Distributed Memory Paragraph Vectors (PV-DM) Doc2Vec document embeddings
- are based on an extension of Continuous Bag-of-Words word-embedding model
-\begin_inset CommandInset citation
-LatexCommand cite
-key "mikolov2013efficient"
-
-\end_inset
-
-.
- It is trained using a sliding window of words to predict the next word.
- The softmax predictor network is feed a word-embedding for each word in
- the window, and an additional embedding vector which is reused for all
- words in the sentence (called the paragraph vector in original paper).
- These input embeddings can be concatenated or averaged, in the results
- show below they were concatenated.
- During training both word and sentence vectors are allows to vary, in evaluatio
-n, the word vectors are locked and the sentence vector trained until convergence.
- 
-\end_layout
-
-\begin_layout Paragraph
-PV-DBOW
-\end_layout
-
-\begin_layout Standard
-Distributed Bag of Words version of Paragraph Vectors (PV-DBOW), is based
- on the Skip-gram model for word-embeddings, also from 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "mikolov2013efficient"
-
-\end_inset
-
-.
- In PV-DBOW a sentence vector is used as the sole input to a neural net.
- That network is tasked with predicting the words in the sentence.
-\end_layout
-
-\begin_layout Subsubsection
-Bag of Words
-\end_layout
-
-\begin_layout Standard
-A bag of words (BOW) model is presented as a baseline.
- There is a dimension in each vector embedding for the count of each token,
- including punctuation, in the sentence.
- In the corpus there were a total of 1085 unique tokens, thus a BOW embedding
- has 1085 dimensions.
- For comparison to the lower dimensional models Principle Component Analysis
- (PCA) was used to produce a additional baseline set of embeddings.
- In the evaluations below the PCA was computed only on the training portions
- of the data, and used to project both the testing and training BOW representati
-ons down to 300 dimensions.
- These bag of words models do not have any outside knowledge.
-\end_layout
-
-\begin_layout Subsubsection
-Mean of Word Embeddings 
-\end_layout
-
-\begin_layout Standard
-Taking the element-wise mean of the word embeddings over all words in the
- sentence also produces a vector with the potential to encode meaning.
- Like bag of words no order information is encoded, but the model can take
- into word relations such as synonymity.
- This method was used as baseline in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "le2014distributed"
-
-\end_inset
-
-.
- The closely related sum of word embeddings was first considered in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "mikolovSkip"
-
-\end_inset
-
- for short phrases.
- It was found to be an effective model for summarization in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "KaagebExtractiveSummaristation"
-
-\end_inset
-
-.
- It is a computationally cheap model, pretrained word embeddings are available.
-\end_layout
-
-\begin_layout Standard
-The word embeddings used were taken from the Google News pretrained model
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-Available at 
-\begin_inset CommandInset href
-LatexCommand href
-name "https://code.google.com/p/word2vec/"
-target "https://code.google.com/p/word2vec/"
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
- base on the method described in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "mikolovSkip"
-
-\end_inset
-
-.
- This has been trained on 100 million sentences from Google News.
- 54 tokens of the 1085 unique tokens in the corpus did not have embeddings
- in the Google News model.
- These were largely numbers, punctuation characters, proper nouns and unusual
- spellings, as well as the stop-words: 
-\begin_inset Quotes eld
-\end_inset
-
-and
-\begin_inset Quotes erd
-\end_inset
-
-, 
-\begin_inset Quotes eld
-\end_inset
-
-a
-\begin_inset Quotes erd
-\end_inset
-
- and 
-\begin_inset Quotes eld
-\end_inset
-
-of
-\begin_inset Quotes erd
-\end_inset
-
-.
- These words were simply skipped.
- The resulting embeddings have 300 dimensions, like the word embeddings
- they were based on.
-\end_layout
-
-\begin_layout Subsection
 Classification Into Group with SVM
 \end_layout
 
@@ -2099,7 +2098,7 @@ MSRP Subcorpus
 \end_inset
 
 
-\begin_inset Note Note
+\begin_inset Note Comment
 status open
 
 \begin_layout Plain Layout
@@ -2109,10 +2108,6 @@ Should this be in a bar chart?
 \end_inset
 
 
-\end_layout
-
-\begin_layout Subsubsection
-Opinosis Subcorpus
 \end_layout
 
 \begin_layout Subsubsection
