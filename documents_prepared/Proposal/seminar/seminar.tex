@@ -2,13 +2,16 @@
 \newif\ifGm@compatii
 \makeatother
 \documentclass[12pt,landscape,english]{beamer}
-\setbeameroption{show notes}
 
 
-\usepackage{palatino}
-\usepackage[T1]{fontenc}
+
 \usepackage{bbding}
 \usepackage{etoolbox, verbatim}
+
+\usepackage{graphicx}
+\graphicspath{{../figs/}}
+
+%%%%%%%%%%%%%%%TIKZ
 
 \usepackage{tikz}
 \usetikzlibrary{positioning, fit,arrows,chains,shapes.geometric}
@@ -16,37 +19,46 @@
 %\usetikzlibrary{decorations.text}
 \usetikzlibrary{petri}
 \usegdlibrary{force, layered, trees}
+%%%%%%%%%%%%%%%%%%
 
-
-\usepackage[backend=bibtex, 
-bibstyle=ieee,citestyle=verbose-note,firstinits=true]{biblatex}
+%%%%%%%%%%%%%Bibliography
+\usepackage[backend=bibtex, url=false,
+bibstyle=ieee,firstinits=true]{biblatex}
 \bibliography{../../../Resources/master_bibliography/master.bib}
-
+\renewcommand*{\thefootnote}{} %No symbol or marker
 \renewcommand{\footnotesize}{\scriptsize}
+%%%%%%%%%%%%%%%%%
+
+
+
 
 \mode<presentation>
+\setbeameroption{show notes}
 
-%\usetheme[navmenu]{uwa_eng} 
-\usetheme{Berkeley}
+%%%%%%%%%%%%%%%Template
+\setbeamertemplate{navigation symbols}{}
+\setbeamercolor{palette sidebar secondary}{fg=black,bg=blue!30!gray}
+\setbeamercolor{sidebartitle}{fg=black,bg=blue!30!gray}
+\useoutertheme{sidebar_custom}
+\usebackgroundtemplate{\includegraphics[width=\paperwidth,height=\paperheight]{uwa_eng.png}}
 
 \setbeamertemplate{itemize item}{\raisebox{-2px}{\JackStarBold} \hskip -.2em}
 \setbeamertemplate{itemize subitem}{\raisebox{-2px}{\FourAsterisk} \hskip -.2em}
 \setbeamertemplate{itemize subsubitem}{\raisebox{-2px}{\JackStar} \hskip -.2em}
 
 
-\usepackage{graphicx}
-\graphicspath{{../figs/}}
+\setbeamercolor{title}{fg=black}
+\usefonttheme{structurebold}
+\addtobeamertemplate{frametitle}{}{\vskip-1.2cm}
+
+\setbeamercolor{sidebar}{fg=darkgray!80!black}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 \makeatletter
 
-\definecolor{myframe}{rgb}{0.2,0.2,0.2}  % charcoal frametitle
-\setbeamercolor{frametitle}{fg=myframe}
-\definecolor{mystruc}{rgb}{0,0.25,0.45}  % turquoise
-\usecolortheme[named=mystruc]{structure} 
 
-\setbeamercolor{title}{fg=black}
-\usefonttheme{structuresmallcapsserif}
 
 
 
@@ -54,15 +66,16 @@ bibstyle=ieee,citestyle=verbose-note,firstinits=true]{biblatex}
 	
 % Titlepage info
 
-\title[Semantic Vector Representations]{Semantic Vector Representations for Natural Language}
+\title[Semantic Vectors]{Semantic Vector Representations for Natural Language}
 \author[L.~White]{
 	Lyndon White \texorpdfstring{\\\medskip{\scriptsize Supervised by:\\ Prof Roberto Togneri\\ Dr Wei Liu\\W/Prof Mohammed Bennamoun\\ }}{}}
 
 \date{} % show no date
 %\titlegraphic{\includegraphics[width=2.1cm]{balls}}
-{
-\usebackgroundtemplate{\includegraphics[width=\paperwidth,height=\paperheight]{uwa_eng_title.png}}
+
 \begin{frame}[plain]
+	\vfill
+	\vspace{2cm}
 	\titlepage
 \end{frame}
 }
@@ -78,14 +91,13 @@ bibstyle=ieee,citestyle=verbose-note,firstinits=true]{biblatex}
 
 
 \section{Introduction}
-\begin{frame} {Why Natural Language Understanding?} 
-	\vspace{-1cm}
+\begin{frame} {Natural Language} 
 	
 	\note{Shown are two lists of information. On one side are examples of informaition in a form easily accessable by software. On the other is information recored digitally in natural language.
 		}
-\begin{columns}
+\begin{columns}[T]
 	\begin{column}{0.5\textwidth}
-		\center\resizebox{0.4\textwidth}{!}{\includegraphics{pres/people.png}}
+		\centering\resizebox{0.4\textwidth}{!}{\includegraphics{pres/people.png}}
 		\begin{itemize}
 			\item $10^7$ {\small StackOverflow QAs}
 			\item $10^7$ Digitalised Books \note[item]{Google has digitalisd over 20 million books alone}
@@ -97,7 +109,7 @@ bibstyle=ieee,citestyle=verbose-note,firstinits=true]{biblatex}
 		\end{itemize}		
 	\end{column}
 		\begin{column}{0.5\textwidth}
-			\center\resizebox{0.4\textwidth}{!}{\includegraphics{pres/PC.png}}
+			\centering\resizebox{0.4\textwidth}{!}{\includegraphics{pres/PC.png}}
 			\begin{itemize}
 				\item $10^6$ {\small Cyc: Common- sense Facts}
 				\item $10^6$ DBpedia Entries
@@ -107,27 +119,44 @@ bibstyle=ieee,citestyle=verbose-note,firstinits=true]{biblatex}
 				\item ...
 			\end{itemize}		
 		\end{column}
-	
 \end{columns}
 	\note{NLU is the subarea of NLP which is base around creating software which in some sense comprehends the natural language.}
 \end{frame}
 
-\begin{frame} {Why Vector Repressentations?} 
-	\center\resizebox{\textwidth}{!}{\includegraphics{./workflow}}
+
+\begin{frame} {Applications: Embeddings} 
+		\vspace{1ex}
+	\centering\resizebox{!}{0.5\textheight}{\includegraphics{./embed}}
+	\vspace{1ex}
+	\begin{itemize}
+		\item Extractive Summarization
+		\item Similarity Measurement \note{More over if the vector space can be made common between two languages, then we get biligaul sentence similarity, which has applications for machine translation.}
+		\item Searching for Images with Descriptions \note{Historically Image search worked by looking for key words on a website and then returning that websites pictures. If we convert both the Embed both images and text to a common vector space then we can do similarity matching as just discussed}
+		\item Feature Detector For Classifiers
+		\note{\begin{itemize}
+			\item Sentiment Analysis
+			\item Topic Classification
+			\item Paraphrase Detection
+		\end{itemize}}
+	\end{itemize}
 \end{frame}
 
-%Room for a few more slides on Application Here
-
-\begin{frame} {How to get Vector Repressentations?} 
-	Extract form Neural Network Hidden Layer.
+\begin{frame} {Applications: Full Cycle} 
+	\centering\resizebox{!}{0.5\textheight}{\includegraphics{./workflow}}
+	\begin{itemize}
+		\item Abstractive Summarization
+		\item Paraphrase Generation \note{and this means using the multilanguage common vector space from before, Phrasal translation.}
+		\item Generating Image Descriptions
+		\item Semantically Lossy Text Compression \note{This is neat. Like a JPG image can be compressed by 2 orders of magnitude, at the cost of intoducting a few visual inaccuracies and blurs. We could compress text, at the cost of introducing artifacts in meaning.}
+	\end{itemize}
 \end{frame}
 
 
-\section{Methods}
-\begin{frame} {2 minute Into To NN}
+\section{Current Methods}
+\begin{frame} {2 minute Intro To NNs}
 	\begin{columns} 
 	\begin{column}{0.5\textwidth}
-		\center\input{../figs/NN.pgf}
+		\centering\input{../figs/NN.pgf}
 	\end{column}
 	\begin{column}{0.5\textwidth}
 	
@@ -142,24 +171,65 @@ bibstyle=ieee,citestyle=verbose-note,firstinits=true]{biblatex}
 	\note[item]{Lets just assume we already knew it}
 \end{frame}
 
-\begin{frame} {NN with Look Up}
-	\center\input{../figs/LU_NN.pgf}
-	\colorbox{lime}{Tune:	$W_i,\b_i,\x_j$}
-
+\begin{frame} {NN with Embedding Look Up}
+	\centering\resizebox{!}{0.7\textheight}{\input{../figs/LU_NN2.pgf}}
+	
+	\rightskip 1ex \colorbox{lime}{Tune:	$W_i,\b_i,\x_j$}
 \end{frame}
 
+\begin{frame} {Neural Probabalistic LM}
+	\centering\resizebox{!}{0.7\textheight}{\input{../figs/NPLM1.pgf}}
+	\footfullcite{NPLM}
+\end{frame}
 
-\begin{frame} {Sliding Window: CBOW} 
+\begin{frame} {Neural Probabalistic LM}
+	\centering\resizebox{!}{0.7\textheight}{\input{../figs/NPLM2.pgf}}
+	\footfullcite{NPLM}
+\end{frame}
+
+\begin{frame} {Neural Probabalistic LM}
+	\centering\resizebox{!}{0.7\textheight}{\input{../figs/NPLM3.pgf}}
+	\footfullcite{NPLM}
+	
+	\note{\begin{itemize}
+		\item By tweaking this general structure we can produce a variety of models
+		\item replace the simple classifier with a Convolutional Neural Net and share the word embedding look-up table across several tasks, and you get the Colbert and Weston Embeddings
+		\item remove the hidden layer and average instead of concatenating and you get Continuous Bag of Word Embeddings
+		\item make the task to use one word embedding to work out all the context works and you get Skip nGrams.
+		\item There are a lot of word-embedding methods based on this idea
+		
+		\item That there is the limitation though, we get word embeddings, vector representations for the words. But most of the documents we want to use NLU  to understand are not words. They are sentences. Which is what the rest of this presentation will focus on.
+		
+		\item One issue is that we are not looking at all the content all the time. If a word at the start of a sentence has a lot of interaction with a word at the end, then the windowed model can't hand that.
+		
+		
+		\end{itemize}
+
+		}
+	
 	
 \end{frame}
+
 
 \begin{frame} {PV DM} 
-	
+	\centering\resizebox{!}{0.7\textheight}{\input{../figs/PVDM1.pgf}}
+	\footfullcite{le2014distributed}
 \end{frame}
 
-\begin{frame} {RNN} 
-	
+
+\begin{frame} {PV DM} 
+	\centering\resizebox{!}{0.7\textheight}{\input{../figs/PVDM2.pgf}}
+	\footfullcite{le2014distributed}
 \end{frame}
+
+
+\begin{frame} {PV DM} 
+	\centering\resizebox{!}{0.7\textheight}{\input{../figs/PVDM3.pgf}}
+	\footfullcite{le2014distributed}
+	
+	\note[item]{This is a nice method. Now we have vectors for sentences, or paragraphs. As well as for words.}
+\end{frame}
+
 
 \begin{frame} {RvNN} 
 	
@@ -173,7 +243,7 @@ bibstyle=ieee,citestyle=verbose-note,firstinits=true]{biblatex}
 	Why not do both?
 \end{frame}
 
-\section{Limitations}
+\section{Future Work}
 \begin{frame}{Not reversible}
 	Even The URAE which looks reversible, requires you to know the way out to get there.
 	For RvNN decended models, we end up with a tree search problem
