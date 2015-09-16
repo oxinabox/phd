@@ -2250,25 +2250,25 @@ Semantic Evaluation (Work Completed)
 
 \begin_layout Standard
 Current methods for assessing the quality of representations are not sufficient
- to a certain whether they are sufficiently semantically consistent for
+ to ascertain whether they are sufficiently semantically consistent for
  use in resynthesis.
- The predominant assessment method is the use as a classifier for sentiment
- analysis.
- While sentiment analysis does have semantic component, it is far too loosely
+ The predominant assessment method is to use as classifier feature-vector
+ for sentiment analysis.
+ While sentiment analysis does have a semantic component, it is too loosely
  grained to reveal if sentences with the same meaning are collocated in
- vector space.
+ the vector space.
  Thus a new method for direct semantic evaluation was created.
  To enable the checking of the semantic localization sentences from real
  world corpora were categorized into groups of paraphrases -- sentences
  with the same semantic meaning.
- They groups were stratified into testing and training splits and a linear
+ The groups were stratified into testing and training splits and a linear
  support vector machine was used to classify the sentences in their paraphrase
  groups.
- The SVM was given embeddings from PV DM, DBOW, URAE, and the Mean of Word
- Embeddings each in turn.
- Being able to correctly classify the sentences indicate that the embeddings
+ The SVM was given embeddings from the PV DM, DBOW, URAE, and the mean of
+ Word Embeddings methods each in turn.
+ Being able to correctly classify the sentences indicates that the embeddings
  and meanings consistently align and do not overlap.
- Unexpectedly, the Mean of Word Embeddings performed substantially better
+ Unexpectedly, the mean of Word Embeddings performed substantially better
  than the more complex models.
  Further research revealed a very recent result, 
 \begin_inset CommandInset citation
@@ -2277,7 +2277,7 @@ key "RitterPosition"
 
 \end_inset
 
-, which found similarly for Sum of Word Embeddings.
+, which had a similar result for the related sum of Word Embeddings.
 \end_layout
 
 \begin_layout Paragraph
@@ -2295,7 +2295,7 @@ name "par:Sum-Of-Word"
 A sentence as the sum of its words is a neat, and unexpected result.
  It bears investigation and development.
  Resynthesizing a sentence from such a sum is a theoretically intractable
- problem, but with suitable approximations and heuristics may be feasible.
+ problem, but with suitable approximations and heuristics this may be feasible.
  The problem of working out which word embeddings add up to a particular
  vector is equivalent to the subset sum problem which is proven NP-Complete.
  The second problem is the loss of word order.
@@ -2310,17 +2310,17 @@ key "manning1999foundations"
 
 .
  The co-occurrence statistics can be used to greedily prune the search space
- such that embeddings words which are only rarely found together are not
- considered as possible partial sums.
+ such that embedding for words the do not co-occur are not considered as
+ possible partial sums.
  The ngrams can be used to order the words, once the unordered set is solved
  for.
- The problem would also require aggressive dimensionality reduction to reduce
- to time-complexity.
+ The problem would also require aggressive dimensionality reduction to so
+ as to reduce the practical exponent in the time-complexity.
  Preliminary results have shown that it is viable to preform substantial
  dimensionality reduction on word embeddings, without correspondent loss
  of information.
- This is helped, as it the overall problem, by restricting the vocabulary
- -- for example only using the 1000 most common English words.
+ For identical reasons it desired to restricted the vocabulary -- for example
+ only using the 1000 most common English words.
  Given these constraints and heuristics, it should be feasible to tackle
  this problem using dynamic programming
 \begin_inset CommandInset citation
@@ -2346,11 +2346,11 @@ Other investigations to be co-occurring with the development of resynthesis,
  Current word embeddings are based on only the word -- that means that there
  is one embedding for bank as in to "bank a plane", as for bank as in "the
  bank of a river".
- Using current systems it is possible to reliably parts of speech tag, which
+ Using current systems it is possible to reliably tag parts of speech, which
  will allow the separation of such homonyms.
  However it does not completely solve the problem: a financial "bank" and
  a river bank are both nouns.
- A complete solution would be require word sense disambiguation.
+ A complete solution would be to require word sense disambiguation.
 \end_layout
 
 \begin_layout Standard
@@ -2366,22 +2366,40 @@ key "navigli2013semeval,basile-caputo-semeraro:2014:Coling,moro2015semeval"
  This is worse than assigning a combined embedding for all uses.
 \end_layout
 
+\begin_layout Standard
+Further possible improvements to be investigated include using neural probabilis
+tic ngrams and co-occurrences as was done in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "NPLM"
+
+\end_inset
+
+.
+ These could be co-trained with the word vectors.
+ This may allow for a more optimal representation of both, thus decreasing
+ information loss in dimensionality reduction; or the opposite effect may
+ be observed and the co-adaptation may cause loss of capacity for generalization
+ outside of the training data.
+ Thus investigation and further research is required.
+\end_layout
+
 \begin_layout Paragraph
 Semi-supervised Semantic Constraints
 \end_layout
 
 \begin_layout Standard
 Drawing on the semantic requirements determined in the Semantic Evaluation
- subproject, in this section is is proposed to optimize for those constraints
+ subproject, in this section it is proposed to optimize for those constraints
  directly.
- Forcing the embeddings to be collocated with other embeddings for sentences
- of the same meaning.
- As in the BRAE, two connect two URAEs will be connected at the central
- merge, and an error signal created based on the difference in position
- of two sentences which are deemed semantically equivalent.
+ That is, forcing the embeddings to be collocated with other embeddings
+ for sentences of the same meaning.
+ As in the BRAE, two URAEs will be connected at the central merge, and an
+ error signal created based on the difference in position of two sentences
+ which are deemed semantically equivalent.
  Unlike in the BRAE, both URAEs will be for the same language (nominally
  English), and will infact be the same URAE but with different inputs.
- These inputs witll be semantically equivalent or semantically opposing.
+ These inputs will be semantically equivalent or semantically opposing.
  The supervised error signal from the difference in position will supplement
  the unsupervised reconstruction error signal, thus forming a semisupervised
  model.
@@ -2389,7 +2407,7 @@ Drawing on the semantic requirements determined in the Semantic Evaluation
 
 \begin_layout Standard
 In preparing this model several other techniques will also be brought to
- bare.
+ bear.
  The enhanced parts-of-speech word vectors developed in the previous section
  may be used.
  Also, rather than the traditional constituency tree URAE, a DT RAE as in
@@ -2414,22 +2432,23 @@ Tree Search
 Given semantically consistent embeddings from a compositional model like
  an RAE, reconstructing a corresponding sentence is a matter of finding
  the right tree to decompose it into.
- 
+ As discussed in the literature review, the work of 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "iyyer2014generating"
 
 \end_inset
 
- shows a proof of concept for this task, though they do not propose an algorithm
- for selecting the tree, just how it can be done if the tree is given.
- A method for selecting the tree with be developed in this subproject.
+ shows a proof of concept for this task, however they do not propose an
+ algorithm for selecting the tree, just how it can be done if the tree is
+ given.
+ A method for selecting the tree will be developed in this subproject.
  A starting point would be the naive requirement of selecting the tree which
- for which the leaf-nodes are closest to existent word embeddings.
- Such implementing such would require some cut-offs to avoid searching the
- infinite space of all possible trees.
+ for which the leaf-nodes are closest to existing word embeddings.
+ Such an implementation such would require some cut-offs to avoid searching
+ the infinite space of all possible trees.
  The issues are not dissimilar to those encountered when reconstructing
- from Sum of Word Embeddings, thus some techniques may be transferred.
+ from Sum of Word Embeddings, thus some techniques may be transferable.
  
 \end_layout
 
@@ -2442,33 +2461,21 @@ The preceding subprojects have been based around traditional neural networks,
  albeit with nontraditional topologies.
  In this subproject it is proposed to tackle the same problems using higher
  order models, which can encode more complex relationships.
- The Matrix-Vector RvNN (
-\series bold
-MV-RvNN
-\series default
-) 
+ The MV-RvNN 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "SocherMVRNN"
 
 \end_inset
 
-, the Neural Tensor Network (
-\series bold
-NTN
-\series default
-) 
+, NTN 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "Socher2013TensorReasoning"
 
 \end_inset
 
- and the Recursive NTN (
-\series bold
-RvNTN
-\series default
-)
+ and the RvNTN
 \begin_inset CommandInset citation
 LatexCommand cite
 key "RvNTN"
@@ -2476,7 +2483,7 @@ key "RvNTN"
 \end_inset
 
  are three such models.
- to the candidates knowledge, none have been applied as an autoencoder.
+ To the candidate's knowledge, none have been applied as an autoencoder.
  Other models such as the Deep Tensor Neural Network (
 \series bold
 DTNN
@@ -2523,24 +2530,37 @@ options "bibtotoc,IEEEtran"
 Research Project Details
 \end_layout
 
-\begin_layout Itemize
-This project does not involve the collection of confidential or sensitive
- information.
+\begin_layout Description
+Confidential/Sensitive
+\begin_inset space ~
+\end_inset
+
+Information: project does not involve the collection of confidential or
+ sensitive information.
 \end_layout
 
-\begin_layout Itemize
-The are no current intellectual property agreements relating to this research.
+\begin_layout Description
+Intellectual
+\begin_inset space ~
+\end_inset
+
+Property
+\begin_inset space ~
+\end_inset
+
+Information: The are no current intellectual property agreements relating
+ to this research.
  There are no plans to commercialize the products of this research during
  the duration of the candidature.
 \end_layout
 
-\begin_layout Itemize
-This project does not involve fieldwork.
+\begin_layout Description
+Fieldwork: This project does not involve fieldwork.
 \end_layout
 
-\begin_layout Itemize
-Additional computational resources are required and have been acquired for
- the project.
+\begin_layout Description
+Facilities: Additional computational resources are required and have been
+ acquired for the project.
  For purposes of experimentation and development of the algorithms distributed
  computing methods are used.
  The estimated requirements are 32 CPU-Cores and at least 2Gb RAM per core.
@@ -2550,49 +2570,69 @@ Additional computational resources are required and have been acquired for
  The allocation will need to be renewed on the 31st of December 2015.
 \end_layout
 
-\begin_layout Itemize
-There are no advanced statistical analysis required for this project, beyond
- the consideration and design of the algorithms developed as statistical
+\begin_layout Description
+Statistical
+\begin_inset space ~
+\end_inset
+
+Component: are no advanced statistical analysis required for this project,
+ beyond the consideration and design of the algorithms developed as statistical
  analysis tools themselves.
 \end_layout
 
-\begin_layout Itemize
-The outputs of the project will be communicated by publication in journals
- and conferences.
+\begin_layout Description
+Research
+\begin_inset space ~
+\end_inset
+
+Project
+\begin_inset space ~
+\end_inset
+
+Communication: The outputs of the project will be communicated by publication
+ in journals and conferences.
  As is conventional within this area, research will be primarily communicated
  largely though conference papers.
  The intent is to publish one conference paper in the first year, two in
  the second (targeting the same conference), and one in the third.
- As judged appropriate based on research in question, one or more of these
- conference papers will be extended into journal articles.
+ As judged appropriate based on the research in question, one or more of
+ these conference papers will be extended into journal articles.
  Other work will be published as journal articles without correspondent
  conference paper, as venue scheduling determines.
  The thesis shall be presented as this series of conference and journal
  papers, with additional introductory and concluding chapters.
 \end_layout
 
-\begin_layout Itemize
-This project does not require any approvals.
+\begin_layout Description
+Approvals: This project does not require any approvals.
  It has been investigated if the intended research publications require
  Defense Export Control Office (DECO) approval for publications.
  DECO approval is not required for publication.
  This may change in future years.
 \end_layout
 
-\begin_layout Itemize
-Any new and derived data sets will be placed in the Signals and Information
- Processing lab's existing UWA Institutional Research Data Store (IRDS).
- Where licensing allows it will also be publicly published though the candidates
- website.
+\begin_layout Description
+Data
+\begin_inset space ~
+\end_inset
+
+Management: Any new and derived data sets will be placed in the existing
+ UWA Institutional Research Data Store (IRDS).
+ Where licensing permits they will also be publicly published though the
+ candidate's website.
  The focus of this course of study is to create new methods of processing
  data rather than new data.
  The methods for processing data will be version controlled via private
  Github, with intent to open source them at the pertinent times.
 \end_layout
 
-\begin_layout Standard
-In the table below is shown a skills audit for the skills required in this
- project
+\begin_layout Description
+Skills
+\begin_inset space ~
+\end_inset
+
+Audit: A skills audit for the skills required in this project is shown in
+ the table below.
 \end_layout
 
 \begin_layout Standard
@@ -3631,14 +3671,13 @@ The timeline for this research program is spread over 3 years, to inline
  this also is indicated in the timeline below, to allow for adjustment to
  be scaled.
  Failure to complete before the termination of the funding will result in
- sever difficulties to the candidate's living circumstance and will likely
+ severe difficulties to the candidate's living circumstance and will likely
  result in non-completion.
 \end_layout
 
 \begin_layout Standard
-This timeline below should be reach in conjunction with the Candidature
- Tasks, on the cover-sheet, and the Research Project Overview in Figure
- 
+This timeline below should align with the Candidature Tasks, on the cover-sheet,
+ and the Research Project Plan in Figure 
 \begin_inset CommandInset ref
 LatexCommand vref
 reference "fig:Gantt"
@@ -3652,7 +3691,7 @@ reference "fig:Gantt"
 
 \size small
 \begin_inset Tabular
-<lyxtabular version="3" rows="17" columns="5">
+<lyxtabular version="3" rows="16" columns="5">
 <features rotate="0" islongtable="true" longtabularalignment="center">
 <column alignment="center" valignment="top" width="20text%">
 <column alignment="center" valignment="top" width="0pt">
@@ -4437,77 +4476,6 @@ M
 \uwave off
 \noun off
 \color none
-15/02/2017 
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-Nomination of Examiners
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-M
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
 08/03/2017 
 \end_layout
 
@@ -4650,7 +4618,7 @@ Dissertation Draft submitted to supervisors
 \uwave off
 \noun off
 \color none
-08/03/2018 
+08/02/2018 
 \end_layout
 
 \end_inset
@@ -4671,7 +4639,7 @@ Dissertation Draft submitted to supervisors
 \uwave off
 \noun off
 \color none
-Dissertation submitted for examination
+Nomination of Examiners
 \end_layout
 
 \end_inset
@@ -4742,7 +4710,7 @@ M
 \uwave off
 \noun off
 \color none
-APA Termination
+Dissertation submitted for examination
 \end_layout
 
 \end_inset
@@ -4760,7 +4728,7 @@ APA Termination
 \begin_inset Text
 
 \begin_layout Plain Layout
-
+M
 \end_layout
 
 \end_inset
@@ -4792,7 +4760,7 @@ APA Termination
 \uwave off
 \noun off
 \color none
-05/09/2018 
+08/03/2018 
 \end_layout
 
 \end_inset
@@ -4813,7 +4781,7 @@ APA Termination
 \uwave off
 \noun off
 \color none
-APA Extension Termination
+APA Termination
 \end_layout
 
 \end_inset
@@ -4858,8 +4826,8 @@ Confirmation of Candidature
 \end_layout
 
 \begin_layout Standard
-The full list of confirmation of candidature tasks can be found on reverse
- of the cover-sheet.
+The full list of confirmation of candidature tasks is included with the
+ cover-sheet.
 \end_layout
 
 \begin_layout Subsection
@@ -4867,7 +4835,7 @@ Working Hours
 \end_layout
 
 \begin_layout Standard
-Inline with UWA Policy, and the conditions of the Australian Postgraduate
+Inline with UWA Policy, and the conditions of the Australian Postgraduate
  Award, the candidate will spend at least 30 hours per week, during normal
  office hours, within this proposed research program.
 \end_layout
