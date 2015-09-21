@@ -1,0 +1,433 @@
+\makeatletter
+\newif\ifGm@compatii
+\makeatother
+\documentclass[12pt,landscape,english]{beamer}
+
+
+
+\usepackage{bbding}
+\usepackage{etoolbox, verbatim}
+
+\usepackage{graphicx}
+\graphicspath{{../figs/}}
+
+%%%%%%%%%%%%%%%TIKZ
+
+\usepackage{tikz}
+\usetikzlibrary{positioning, fit,arrows,chains,shapes.geometric}
+\usetikzlibrary{graphs,graphdrawing}
+\usetikzlibrary{petri, shapes}
+\usetikzlibrary{calc}
+\usegdlibrary{force, layered, trees}
+%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%Bibliography
+\usepackage[backend=bibtex, url=false,
+bibstyle=ieee,firstinits=true]{biblatex}
+\bibliography{../../../Resources/master_bibliography/master.bib}
+\renewcommand*{\thefootnote}{} %No symbol or marker
+\renewcommand{\footnotesize}{\scriptsize}
+%%%%%%%%%%%%%%%%%
+
+
+
+
+\mode<presentation>
+%\setbeameroption{show notes}
+
+%%%%%%%%%%%%%%%Template
+\setbeamertemplate{navigation symbols}{}
+\setbeamercolor{palette sidebar secondary}{fg=black,bg=blue!30!gray}
+\setbeamercolor{sidebartitle}{fg=black,bg=blue!30!gray}
+
+%\setbeamercolor{sidebar}{fg=darkgray!80!black}
+\useoutertheme{sidebar_custom}
+\usebackgroundtemplate{\includegraphics[width=\paperwidth,height=\paperheight]{uwa_eng.png}}
+
+\setbeamertemplate{itemize item}{\raisebox{-2px}{\JackStarBold} \hskip -.2em}
+\setbeamertemplate{itemize subitem}{\raisebox{-2px}{\FourAsterisk} \hskip -.2em}
+\setbeamertemplate{itemize subsubitem}{\raisebox{-2px}{\JackStar} \hskip -.2em}
+
+
+\setbeamercolor{title}{fg=black}
+\usefonttheme{structurebold}
+\addtobeamertemplate{frametitle}{}{\vskip-0.8cm}
+
+
+\setbeamertemplate{blocks}[rounded]
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\makeatletter
+
+
+
+
+\begin{document}
+	
+% Titlepage info
+
+\title[Semantic Vectors]{Semantic Vector Representations for Natural Languages}
+\author[L.~White]{
+	Lyndon White \texorpdfstring{\\\medskip{\scriptsize Supervised by:\\ Prof Roberto Togneri\\ Dr Wei Liu\\W/Prof Mohammed Bennamoun\\ }}{}}
+
+\date{} % show no date
+%\titlegraphic{\includegraphics[width=2.1cm]{balls}}
+
+\begin{frame}[plain]
+	\vfill
+	\vspace{2cm}
+	\titlepage
+\end{frame}
+}
+
+%%%%%%%%%%%%%%%%%%%%Definitions
+
+\def\x{\tilde{x}}
+\def\y{\tilde{y}}
+\def\b{\tilde{b}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\section{Introduction}
+\begin{frame}[fragile] {Natural Language} 
+	\begin{columns}[T]
+		\begin{column}{0.5\textwidth}
+			\setbeamercolor{block title}{bg=blue!50,fg=black}
+			\setbeamercolor{block body}{bg=blue!30,fg=black}
+			 \begin{block}{Natural Language}
+			 	\textit{Prime Minister Tony Abbott and Premier Colin Barnett opened the Grand Gateway section of the \$1 billion jointly funded state and federal government project on Sunday.}
+			 \end{block}
+		\end{column}
+		
+		\begin{column}{0.5\textwidth}
+			\setbeamercolor{block title}{bg=yellow!50!orange,fg=black}
+			\setbeamercolor{block body}{bg=yellow!30,fg=black}
+			\begin{block}{YAML}
+%				\vspace{-0.5cm}
+				\scriptsize
+			 	\begin{verbatim}
+event: Grand Gateway Opening
+date: 13/9/2015
+persons:
+  - name: Tony Abbott
+    postion: Prime Minister
+  - name: Colin Barnett
+    position: WA Premier
+funding:
+  cost: $1000000000.00
+  bodies:
+     - WA Government
+     - Federal Government
+			 	\end{verbatim}
+			 \end{block}
+		\end{column}
+	\end{columns}
+	
+	\footnote{APA, September 13, 2015}
+\end{frame}
+
+\begin{frame} {Information to Process} 
+	
+	\note{Shown are two lists of information. On one side are examples of informaition in a form easily accessable by software. On the other is information recored digitally in natural language.
+		}
+	
+	\begin{columns}[T]
+		\begin{column}{0.5\textwidth}
+			\centering\resizebox{0.4\textwidth}{!}{\includegraphics{pres/people.png}}
+			\begin{itemize}
+				\item $10^7$ {\small  StackOverflow QAs}
+				\item $10^7$ {\small Digitalised Books} \note[item]{Google has digitalisd over 20 million books alone}
+				\item $10^7$ {\small Wikipedia Articles}
+				\item $10^8$ Amazon Reviews \note[item]{Amazon reviews from the Amazon Review dataset}
+				\item $10^8$ Journal Articles \note[item]{Journal Articles from Web of Science extrapolated}
+				\item ...
+	
+			\end{itemize}		
+		\end{column}
+		\begin{column}{0.5\textwidth}
+			\centering\resizebox{0.4\textwidth}{!}{\includegraphics{pres/PC.png}}
+			\begin{itemize}
+				\item $10^6$ {\small  Cyc: Common- sense Facts}
+				\item $10^6$ DBpedia Entries
+				\item $10^8$ DNA Sequences \note[item]{GenBank Nucleotide}
+				\item $10^9$ Weather Records
+				\item $10^{10}$ Census Records
+				\item ...
+			\end{itemize}		
+		\end{column}
+	\end{columns}
+		\note{NLU is the subarea of NLP which is base around creating software which in some sense comprehends the natural language.}
+\end{frame}
+
+
+\begin{frame}{Applications: Embeddings} 
+		\vspace{1ex}
+	\centering\resizebox{!}{0.5\textheight}{\includegraphics{./embed}}
+	\vspace{1ex}
+	\begin{itemize}
+		\item Extractive Summarization
+		\item Similarity Measurement \note{More over if the vector space can be made common between two languages, then we get biligaul sentence similarity, which has applications for machine translation.}
+		\item Searching for Images with Descriptions \note{Historically Image search worked by looking for key words on a website and then returning that websites pictures. If we convert both the Embed both images and text to a common vector space then we can do similarity matching as just discussed}
+		\item Feature Detector for Classifiers
+		\note{\begin{itemize}
+			\item Sentiment Analysis
+			\item Topic Classification
+			\item Paraphrase Detection
+		\end{itemize}}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Applications: Full Cycle} 
+	\centering\resizebox{!}{0.6\textheight}{\includegraphics{./workflow}}
+	\begin{itemize}
+		\item Abstractive Summarization
+		\item Paraphrase Generation \note{and this means using the multilanguage common vector space from before, Phrasal translation.}
+		\item Generating Image Descriptions
+	\end{itemize}
+\end{frame}
+
+
+\section{Current Methods}
+\begin{frame} {2 minute Intro To NNs}
+	\begin{columns} 
+	\begin{column}{0.5\textwidth}
+		\centering\input{../figs/NN.pgf}
+	\end{column}
+	\begin{column}{0.5\textwidth}
+	
+			$f:\x\mapsto\y$
+			$$NN\big(W_1,\b_1,..;\x\big)\approx f \big(\x\big)$$
+
+		\colorbox{lime}{Tune:	$W_i,\b_i$}
+
+	\end{column}
+	\end{columns}
+	\note[item]{But how to we get the vector representation $\x$ for the input in question?}
+	\note[item]{Lets just assume we already knew it}
+\end{frame}
+
+\begin{frame} {NN with Embedding Look Up}
+	\centering
+	\resizebox{!}{0.7\textheight}{\input{../figs/LU_NN2.pgf}}
+	
+	\rightskip 1ex \colorbox{lime}{Tune:	$W_i,\b_i,\x_j$}
+\end{frame}
+
+\begin{frame} {Neural Probabalistic LM}
+	\centering\resizebox{!}{0.8\textheight}{\input{../figs/NPLM1.pgf}}
+	\footfullcite{NPLM}
+\end{frame}
+
+\begin{frame} {Neural Probabalistic LM}
+	\centering\resizebox{!}{0.8\textheight}{\input{../figs/NPLM2.pgf}}
+	\footfullcite{NPLM}
+\end{frame}
+
+\begin{frame} {Neural Probabalistic LM}
+	\centering\resizebox{!}{0.8\textheight}{\input{../figs/NPLM3.pgf}}
+	\footfullcite{NPLM}
+	
+	\note{\begin{itemize}
+		\item By tweaking this general structure we can produce a variety of models
+		\item replace the simple classifier with a Convolutional Neural Net and share the word embedding look-up table across several tasks, and you get the Colbert and Weston Embeddings
+		\item remove the hidden layer and average instead of concatenating and you get Continuous Bag of Word Embeddings
+		\item make the task to use one word embedding to work out all the context works and you get Skip-Grams.
+		\item There are a lot of word-embedding methods based on this idea
+		
+		\item That there is the limitation though, we get word embeddings, vector representations for the words. But most of the documents we want to use NLU  to understand are not words. They are sentences. Which is what the rest of this presentation will focus on.
+		
+		\item One issue is that we are not looking at all the content all the time. If a word at the start of a sentence has a lot of interaction with a word at the end, then the windowed model can't hand that.
+		
+		
+		\end{itemize}
+
+		}
+	
+	
+\end{frame}
+
+\begin{frame}{Word Embeddings}
+	\begin{columns}
+		\begin{column}{0.5\textwidth}
+			\centering\resizebox{\textwidth}{!}{
+			\input{../figs/WE.pgf}
+			}
+		\end{column}
+		\begin{column}{0.5\textwidth}
+			\begin{itemize}
+				\item Position:
+					\begin{itemize}
+						\item Semantic
+						\item Syntactic						
+					\end{itemize}						
+				\item Other Methods:
+				\begin{itemize}
+					\item Skip-gram
+					\item CBOW					
+				\end{itemize}	
+				\item Only Embedding Words			
+			\end{itemize}		
+		\end{column}
+	\end{columns}
+	\footfullcite{mikolov2013efficient}
+\end{frame}
+
+\begin{frame} {PV DM} 
+	\hskip-1cm
+	\resizebox{!}{0.8\textheight}{\input{../figs/PVDM1.pgf}}
+	\footfullcite{le2014distributed}
+\end{frame}
+
+
+\begin{frame} {PV DM} 
+	\hskip-1cm
+	\resizebox{!}{0.8\textheight}{\input{../figs/PVDM2.pgf}}
+	\footfullcite{le2014distributed}
+\end{frame}
+
+
+\begin{frame} {PV DM}
+	\hskip-1cm
+	\resizebox{!}{0.8\textheight}{\input{../figs/PVDM3.pgf}}
+	\footfullcite{le2014distributed}
+	
+	\note[item]{This is a nice method. Now we have vectors for sentences, or paragraphs. As well as for words.}
+\end{frame}
+
+\begin{frame} {Paragraph Vectors}
+	\centering\resizebox{!}{0.4\textheight}{\input{../figs/PVDM3_no_label.pgf}}
+	\vskip3ex
+	\begin{itemize}
+		\item Uses Paragraph Vector as ``Memory'' Slot
+		\item Useful Embedding for Word Sequence
+		\item No Linguistic Structures Use
+	\end{itemize}	
+
+\end{frame}
+	
+
+\begin{frame} {RvNN}
+	\hskip-1cm
+	\resizebox{!}{0.7\textheight}{\input{../figs/RvNN.pgf}}
+	\note[item]{ constituency-based parse tree, Not Reoccurant}
+	\note[item]{Here is an alternitive, the Recurssive Neural Net, merges its inputs, pairwise in a tree}
+	\note[item]{At each level we get a new embedding. Which is concatenated with another and merged again until we reach the top}
+	\note[item]{It reuses the same embedding matrix}
+	\note[item]{In the black box can go more or less anything, probably a more traditional neural network classifier, so long as it produces a error signal which can be backproperated.}
+	\footfullcite{socher2010PhraseEmbedding}
+\end{frame}
+
+\begin{frame} {URAE}
+		\vskip 2ex
+		\centering\resizebox{!}{0.8\textheight}{\input{../figs/URAE.pgf}}
+		\footfullcite{SocherEtAl2011:PoolRAE}
+\end{frame}
+
+\begin{frame}[label=ssURAE] {Semisupervised URAE} 
+		\vskip 2ex
+		\centering\resizebox{!}{0.8\textheight}{\input{../figs/ssURAE.pgf}}
+		\footfullcite{zhang2014BRAE}
+\end{frame}
+
+
+
+\section{Future Work}
+\begin{frame}{Resynthesis}
+	\begin{itemize}
+		\item Vector $\longrightarrow$ Sentence
+		\item Word Embeddings are Reversible \note[item]{they have as finite vocab so the look up }
+		\begin{itemize}
+			\item By embedding whole vocabulary
+		\end{itemize}
+		\item Sentence Embeddings are not (trivially) Reversible
+		\note[item]{URAE requires knowing Tree}
+	\end{itemize}
+	\vfill
+	\centering\resizebox{!}{0.4\textheight}{\includegraphics{./deembed}}
+\end{frame}
+
+\begin{frame}{Regenerating From URAE}
+	%%This is the Consitutency Tree version
+\note[item]{Iyyer et al. tried something similar to this. Though using a different type of parse treee. The demonstrated it for short sentences, however no quanitive evaluation or application has taken place.}
+\vskip 2ex
+\centering\resizebox{!}{0.8\textheight}{\input{../figs/Generative_URAE.pgf}}
+\footfullcite{iyyer2014generating}
+\end{frame}
+
+\begin{frame}{The Need For Stronger Semantics}
+	\begin{itemize}
+		\item Goal: Position $\equiv$ Meaning
+		
+		\item Gershman et. al. Compare To Human Similarity Judgements \footfullcite{gershmanphrase}
+		\note[itemize]{Gershman et al recently performed and evaluation of the human similarity judgement of sentences which they progressively modified, to the distances in vector space. They found the alignment to be very poor}
+		
+		\item Ritter et. al. Recognising Positional Statements \footfullcite{RitterPosition} 
+		\note[item]{Ritter et al also recently perform an evaluation, using of carefully constructed sentences about the position of two object with respect to each other, and using the sentence embeddings to train a classifier to determing the positon into 5 catagories. Eg "The Fly is On the Fridge" means the fly is adherded to the surface of the fidge, The "Toaster in on the Fidge" means the toaster was on top of the fridge. "On" is different for Flys and Toasters. A good semantic model should be able to distingish them. The results were not excellent, about 55\% accurasy for the URAE. Surprisingly, simpler models, like just adding up the word vectors, worked better.}
+		\item Own Work:  Semantic Classification
+		\note[item]{My own recent experiments on this front have been on semantic classification. Using the embeddigns to try and classify a corpus of real world sentences as having belongs to a group of paraphrases with the same meaning. My results are similar to those of Ritter. Only more extreme.}
+		
+		\note[item]{These recent results suggest that we still  have a way to go before we achieve this goal of positon}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Sum of Word Embeddings}
+	\centering\resizebox{\textwidth}{!}{\input{../figs/SOWE.pgf}}
+\end{frame}
+
+\begin{frame}{SOWE Resynthesizing}
+	\centering\resizebox{\textwidth}{!}{\input{../figs/SOWE3.pgf}}
+\end{frame}
+
+\begin{frame}{SOWE Resynthesizing}
+	\centering\resizebox{\textwidth}{!}{\input{../figs/SOWE1.pgf}}
+\end{frame}
+
+
+
+\begin{frame} {Semantically Constrained URAE}
+	\vskip 2ex
+	\hskip -1.6cm
+	\resizebox{!}{0.8\textheight}{\input{../figs/semanticURAE.pgf}}
+	\footfullcite{zhang2014BRAE}
+\end{frame}
+
+\note{One option may be using semisupervsion to force sentences that are semantically equivelent to be close to gether during training. So in the black box we would put another copy of the RAE, with a equivelent sentence, and the training criterion of being close together.
+Zhang et al did something similar except the URAE in on the other side (in the black box) was trained in another language.
+instead proposing a URAE with the same language, but with Paraphrases.
+	}
+
+\section{Conclusion}
+\begin{frame}{Proposal}
+	\begin{itemize}
+		\item Resynthesises from Sum of Word Embeddings
+		\begin{itemize}
+			\item Subset Sum, with Heuristics
+		\end{itemize}
+		\item Semantically constrained URAE
+		\begin{itemize}
+			\item Force paraphrases Close Together
+		\end{itemize}
+		\item Search for the Best Tree.
+		\begin{itemize}
+			\item The one where the Leaves are Close to real Word Embeddings
+		\end{itemize}
+	\end{itemize}
+
+\end{frame}
+
+
+\begin{frame}{Conclusion}
+	\begin{itemize}
+		\item Too much Information
+		\item Embeddings allow Spacial Reasoning
+		\item Thus processing the Information
+	\end{itemize}
+		\centering\resizebox{!}{0.5\textheight}{\includegraphics{./workflow}}
+\end{frame}
+
+
+
+
+
+\end{document}

@@ -6,6 +6,15 @@
 \begin_preamble
 \usepackage{tikz}
 \usetikzlibrary{positioning, fit,arrows,chains,shapes.geometric}
+\usetikzlibrary{graphs,graphdrawing}
+\usegdlibrary{force, layered, trees}
+
+
+\renewcommand{\tabref}{\Tabref}
+\renewcommand{\figref}{\Figref}
+\renewcommand{\secref}{\Secref}
+
+
 \usepackage{verbatim}
 \usepackage{pdfcomment}
 \usepackage{environ}
@@ -78,25 +87,16 @@
 \begin_body
 
 \begin_layout Title
-The Evaluation of the Sentence Embeddings on the Semantic Localization of
- Groups of Paraphrases
+Evaluating Semantic Localization of Sentence Embeddings through a Semantic
+ Classification Task
 \end_layout
 
 \begin_layout Author
-Lyndon White
-\end_layout
-
-\begin_layout Standard
-\begin_inset Note Comment
-status open
-
-\begin_layout Plain Layout
-Who are the authors? Should sort that out at some point
-\end_layout
-
-\end_inset
-
-
+L.
+ White, R.
+ Togneri., W.
+ Liu, M.
+ Bennamoun
 \end_layout
 
 \begin_layout Standard
@@ -107,28 +107,49 @@ Who are the authors? Should sort that out at some point
 
 \end_layout
 
-\begin_layout Abstract
-Several approaches for embedding a sentence into a vector space have been
- developed.
- It is unclear as to the information contained into these embeddings.
- To what extent the position in vector space reflect semantic meaning, rather
- than other factors such as syntactic structure.
- For many applications such as machine translation and automated summrization,
- it is highly desirable to have the meaning encoded in the embedding.
- Currently the semantic localization is assessed indirectly through practical
- benchmarks on certain applications.
- Here a new method is presented to more directly assess if the embeddings
- produced by a model are semantically consistent.
- It is demonstrated on several existing models and on a bag of words benchmark.
+\begin_layout Standard
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+Guide can be found at https://www.acm.org/sigs/publications/sigguide-v2.2sp
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Abstract
-A subset of the Opinosis corpus was annotated into groups of paraphrases
- -- sentences with the same meaning.
- By assessing the localisation and separability of these paraphrase groups
- in the models vector space the models semantic strength can be evaluated.
- The results found on these evaluations highlight some limitations of current
- models.
+Several approaches for embedding a sentence into a vector space have been
+ developed.
+ However, it is unclear to what extent the sentence's position in a vector
+ space reflect semantic meaning, rather than other factors such as syntactic
+ structure.
+ Depending on the model used for the embeddings this will vary -- different
+ models are suited for different down-stream applications.
+ For applications such as machine translation and automated summarization,
+ it is highly desirable to have semantic meaning encoded in the embedding.
+ We consider the to be the quality of 
+\emph on
+semantic localization
+\emph default
+ for the model -- how well sentences meaning coincides with their embedding's
+ position in vector space.
+ Currently the semantic localization is assessed indirectly through practical
+ benchmarks for specific applications.
+ 
+\end_layout
+
+\begin_layout Abstract
+In this paper, we ground the semantic localization problem by assessing
+ the localization and separability of paraphrase groups in the embedding
+ space.
+ Two corpora, namely, a subset of the Microsoft Research Paraphrase Corpus
+ and and a subset of the Opinosis corpus were grouped into classes of sentences
+ with the same meaning.
+ Several existing models, including URAE, PV--DM and PV--DBOW, were assessed
+ against a bag of words benchmark.
 \end_layout
 
 \begin_layout Terms
@@ -162,8 +183,8 @@ status open
 \end_layout
 
 \begin_layout Standard
-Various sentence embeddings are often called semantic vector space representatio
-ns, such as in 
+Sentence embeddings are often referent to as semantic vector space representatio
+ns
 \begin_inset CommandInset citation
 LatexCommand cite
 key "iyyer2014generating"
@@ -171,39 +192,30 @@ key "iyyer2014generating"
 \end_inset
 
 .
- The embedding the meaning of a sentence into a vector space is expected
- to be very useful.
- A wide array of tools exist which can handle vector representations, but
- not natural language discourse.
- Vector embeddings of a sentence may encode a number of factors including
+ Embedding the meaning of a sentence into a vector space is expected to
+ be very useful for natural language understanding tasks.
+ Such vector representation of natural languages enables discourse analysis
+ to take advantage to the array of tools available for computation in vector
+ spaces.
+ However, the embeddings of a sentence may encode a number of factors including
  semantic meaning, syntactic structure and topic.
- Since many of these embeddings are learned unsupervised on textual corpora,
- it is not entirely clear the emphasis placed on each factor in the encoding.
- For certain applications encoding semantic meaning is particularly desirable.
- These applications include machine translation, automatic summarization,
- and to a lesser extent sentiment analysis.
- For successful application to these areas it is required that the embeddings
- generated by the models correctly encode meaning such that sentences with
- the same meaning are co-located in the vector space, and sentences with
- differing meanings are further away.
+ Since many of these embeddings are learned unsupervised on textual corpora
+ using various models with different training objectives, it is not entirely
+ clear the emphasis placed on each factor in the encoding.
+ For applications where encoding semantic meaning is particularly desirable,
+ such as machine translation and automatic summarization, it is crucial
+ to be able to assess how well the embeddings capture the sentences semantics.
+ In other words, for successful application to these areas it is required
+ that the embeddings generated by the models correctly encode meaning such
+ that sentences with the same meaning are co-located in the vector space,
+ and sentences with differing meanings are further away.
+ However, few current models are directly trained to optimize for this criteria.
 \end_layout
 
 \begin_layout Standard
-Current methods to produce these embeddings generate them as a byproduct
- of unsupervised tasks.
- 
-\begin_inset Note Comment
-status open
-
-\begin_layout Plain Layout
-All the papers in this section to an extent suggest they are capturing semantics
-, except perhaps the structure one
-\end_layout
-
-\end_inset
-
-Several underlying have been used, including: word prediction, as in the
- work of 
+Currently sentence embeddings are often generated as a byproduct of unsupervised
+, or semi-supervised, tasks.
+ These tasks include: word prediction 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "le2014distributed"
@@ -224,15 +236,15 @@ key "iyyer2014generating"
 
 \end_inset
 
-; alignment of sentences embeddings across a parallel mulch-lingual corpus
- as in 
+; alignment of sentence embeddings across a parallel multilingual corpus
+ 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "DBLP:journals/corr/HermannB13"
 
 \end_inset
 
-; and structural classification as in 
+; and syntactic structural classification 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "SocherEtAl2013:CVG,socher2010PhraseEmbedding"
@@ -240,117 +252,351 @@ key "SocherEtAl2013:CVG,socher2010PhraseEmbedding"
 \end_inset
 
 .
- These methods learn the vector representations of their inputs which is
- best for the optimization function of their choice -- one for which sufficient
- training data exists.
- The methods are then used as a feature detectors step in other tasks.
- The information captured by the methods has proved to be very useful in
- these other tasks approach or exceeding previous state-of-the-art results
- in sentiment analysis and paraphrase detection.
- It is not entirely clear, though, the precise nature of the information
- captured, is it semantic, syntactic, topical or some other factor.
-\end_layout
-
-\begin_layout Standard
-This paper aims to provide a method to assess if the models are capturing
- semantic information.
- The strict definition of semantic equivalence for sentences is that each
- shall entail the other.
- This method will allow us to directly assess as to whether an give models
- embedding of the sentence is a encoding of meaning, consistent with the
- embeddings for other synonymous sentences.
- The method functions in rough terms, by checking if sentence with meaning
- the same thing are located closely; and whether sentences of different
- meanings are located distantly.
- To do this a evaluation corpus was prepared by grouping paraphrases from
- the Opinosis corpus.
- Ensuring that the many sentenced of common meaning but differing form are
- located in vector space together, is a challenging task and shows a models
- semantic encoding strength.
- Assessment on this task will allow a better understanding of how these
- models work, and suggest new directions for the development in this area.
-\end_layout
-
-\begin_layout Standard
-\begin_inset Note Comment
-status open
-
-\begin_layout Plain Layout
-Layout paragraph needs rewriting
-\end_layout
+ As a result the vector representations of the input sentences learned by
+ these models are tuned towards the chosen optimization task.
+ When employing the embeddings produced as a features for other tasks, the
+ information captured by the embeddings often proved to be very useful:
+ e.g.
+ approaching or exceeding previous state-of-the-art results, in sentiment
+ analysis
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:RAE,SocherMVRNN,le2014distributed"
 
 \end_inset
 
+ and paraphrase detection
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:PoolRAE"
 
+\end_inset
+
+.
+ However these practical applications do not directly show how well meaning
+ is captured by the embeddings.
 \end_layout
 
 \begin_layout Standard
-The paper shall be laid out as in 5 sections.
- The Related Works section discusses the linguistic underpinnings of this
- work as well as various models and how they are currently assessed.
- The Methodology section describes the development of the evaluation corpus
- and how it is used to evaluated the semantic consistency of a model.
- The Results and Discussion section applies the method to existing models
- and discusses the implications for their accuracy.
- The Conclusion closes the paper and suggests new directions for development.
-\end_layout
-
-\begin_layout Section
-Literature Review
-\end_layout
-
-\begin_layout Subsection
-Evaluation Methods
+This paper aims to provide a method to assess how well the models are capturing
+ semantic information.
+ A strict definition of sentences semantic equivalence is: that each sentence
+ shall entail the other.
+ Such mutually entailing sentences are called 
+\emph on
+paraphrases
+\emph default
+.
+ In this paper we propose to use paraphrases to assess how well the true
+ semantic space aligns with the vector space the models embed into.
+ It thus assesses whether projecting a sentence via the models in to the
+ vector space preserves meaning.
 \end_layout
 
 \begin_layout Standard
-As discussed in the introduction, current methods of evaluating the quality
- of embedding are on direct practical applications.
- The evaluation methods are not directly link to the methods used for training.
-\end_layout
-
-\begin_layout Subsubsection
-Paraphrase Detection
-\end_layout
-
-\begin_layout Standard
-Closely related to the evaluation here is 
-\end_layout
-
-\begin_layout Standard
-evaluation here are paraphrase corpora, such as the Microsoft Research Paraphara
-se (MSRP) Corpus 
+The evaluation corpora were prepared by grouping paraphrases from the Microsoft
+ Research Paraphrase (MSRP) 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "msrParapharaCorpus"
 
 \end_inset
 
+ and Opinosis 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "ganesan2010opinosis"
+
+\end_inset
+
+ corpora.
+ A semantic classification task was defined which assesses if the model's
+ embeddings could be used to correctly classify sentences as belonging to
+ the paraphrase group with semantically equivalent sentences.
+ Ensuring that the many sentences of common meaning, but differing form
+ are located in vector space together, is a challenging task and shows a
+ model's semantic encoding strength.
+ This assessment allows for a better understanding of how these models work,
+ and suggest new directions for the development in this area.
+\end_layout
+
+\begin_layout Standard
+The rest of the paper is organized into the following sections.
+ 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "sec:Background"
+
+\end_inset
+
+ discusses the existing models being assessed, the methods traditionally
+ used to assess them, and the more recent work on methods to assess their
+ semantic correctness.
+ The 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "sec:Methodology"
+
+\end_inset
+
+ describes the processes by which the models are evaluated using our new
+ method, and the parameters used in the evaluation.
+ 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "sec:Corpus-Construction"
+
+\end_inset
+
+ continues into more details on the development of the evaluation corpora
+ for the semantic classification evaluation task.
+ 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "sec:Results-and-Discussion"
+
+\end_inset
+
+ section details the results from evaluating the models and discusses the
+ implications for their semantic consistency.
+ 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "sec:Conclusion"
+
+\end_inset
+
+ closes the paper and suggests new directions for development.
+\end_layout
+
+\begin_layout Section
+Background
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Background"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Models
+\end_layout
+
+\begin_layout Standard
+Three well known sentence embedding methods are evaluated in this work.
+ The compositional distributed model of the Unfoldering Recussive Autoencoder
+ (URAE) by Socher et.
+ al.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:PoolRAE"
+
+\end_inset
+
+; and the two word content predictive models, Distributed Memory (PV-DM)
+ and Distributed Bag of Words by Le and Mikolov 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "le2014distributed"
+
+\end_inset
+
 .
- Such corpora present pairs of sentences and have the associated task of
- determining if the sentences are paraphrases, or not.
- This pairwise check is valuable, and does indicate to an extent if the
- embeddings are capturing the meaning.
- However, by looking at groups of paraphrases, a greater intuition can be
- gained as to the arrangement of meaning within the vector space.
+ In addition to these advanced sentence embedding models, a simple average
+ of word embeddings, from Mikolov et.
+ al.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mikolovSkip"
+
+\end_inset
+
+, is also assessed.
+ These models and their variant forms have been applied to a number of natural
+ language processing tasks in the past, as details in the subsequent sections,
+ but not to a real-sentence semantic classification task as described here..
  
 \end_layout
 
 \begin_layout Subsubsection
-Sentiment Analysis
+Unfolding Recursive Auto-Encoder (URAE)
 \end_layout
 
 \begin_layout Standard
-Sentiment Analysis is another often used technique for evaluating the quality
+The Unfolding Recursive Autoencoder (URAE) 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:PoolRAE"
+
+\end_inset
+
+ is an autoencoder based method.
+ It functions by recursively using a single layer feedforward neural-network
+ to combine embedded representations, following the parse tree.
+ Its optimization target is to be be able to reverse (unfold) the merges
+ and produce the original sentence.
+ The central folding layer -- where the whole sentence is collapsed to a
+ single embedding vector -- is the sentence representation.
+\end_layout
+
+\begin_layout Subsubsection
+PV-DM
+\end_layout
+
+\begin_layout Standard
+The Distributed Memory Paragraph Vectors (PV-DM) 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "le2014distributed"
+
+\end_inset
+
+ method is based on an extension of Continuous Bag-of-Words word-embedding
+ model 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mikolov2013efficient"
+
+\end_inset
+
+.
+ It is trained using a sliding window of words to predict the next word.
+ The softmax predictor network is fed a word-embedding for each word in
+ the window, plus an additional sentence embedding vector which is reused
+ for all words in the sentence -- called the paragraph vector in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "le2014distributed"
+
+\end_inset
+
+.
+ These input embeddings can be concatenated or averaged, in the results
+ show below they were concatenated.
+ During training both word and sentence vectors are allowed to vary, in
+ evaluation (i.e.
+ inference), the word vectors are locked and the sentence vector is trained
+ until convergence on the prediction task occurs.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+PV-DBOW
+\end_layout
+
+\begin_layout Standard
+Distributed Bag of Words Paragraph Vectors (PV-DBOW)
+\begin_inset CommandInset citation
+LatexCommand cite
+key "le2014distributed"
+
+\end_inset
+
+, is based on the Skip-gram model for word-embeddings, also from 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mikolov2013efficient"
+
+\end_inset
+
+.
+ In PV-DBOW a sentence vector is used as the sole input to a neural net.
+ That network is tasked with predicting the words in the sentence.
+ At each training iteration, the network is tasked to predict a number of
+ words from the sentence, selected with a specified window size, using the
+ sentence vector being trained as the input.
+ As in PV-DM to infer embedding the rest of the network is locked, and only
+ the sentence vector input allowed to vary and it is trained to convergence.
+\end_layout
+
+\begin_layout Subsubsection
+Mean of Word Embeddings (MOWE)
+\end_layout
+
+\begin_layout Standard
+Taking the element-wise mean of the word embeddings over all words in the
+ sentence also produces a vector with the potential to encode meaning.
+ Like traditional bag of words no order information is encoded, but the
+ model can take into consideration word relations such as synonymity as
+ encoded by the word vectors.
+ This method was used as baseline in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "le2014distributed"
+
+\end_inset
+
+.
+ Closely related is the sum of word embeddings first considered in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mikolovSkip"
+
+\end_inset
+
+ for short phrases.
+ The cosign distance, as is commonly used when comparing distances between
+ embeddings, is invariant between sum and mean of word embeddings.
+ The sum was found to be an effective model for summarization in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "KaagebExtractiveSummaristation"
+
+\end_inset
+
+.
+ It is a computationally cheap model, because pretrained word embeddings
+ are available.
+\end_layout
+
+\begin_layout Subsection
+General Evaluation Methods
+\end_layout
+
+\begin_layout Standard
+As discussed in the introduction, current methods of evaluating the quality
+ of embedding are on direct practical applications designed down-stream.
+ The evaluation methods are not directly link to the methods used for training.
+ One of the more semantically focused is paraphrase detection.
+\end_layout
+
+\begin_layout Standard
+Evaluation on a Paraphrase Detection task takes the form of being presented
+ with pairs of sentences and tasked with determining if the sentences are
+ paraphrases or not.
+ The MSRP Corpus 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "msrParapharaCorpus"
+
+\end_inset
+
+ which we used in the semantic classification task is intended for such
+ use.
+ This pairwise check is valuable, and does indicate to a certain extent
+ if the embeddings are capturing meaning, or not.
+ However, by looking at groups of paraphrases, a deeper intuition can be
+ gained on the arrangement of meaning within the vector space.
+\end_layout
+
+\begin_layout Standard
+Sentiment Analysis is very commonly used technique for evaluating the quality
  of embedding.
- It was used both for Recussive Autoencoder in 
+ It was used both for recursive autoencoder in 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "SocherEtAl2011:RAE"
 
 \end_inset
 
-and for the paragraph vector models in 
+ and for the paragraph vector models in 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "le2014distributed"
@@ -359,7 +605,7 @@ key "le2014distributed"
 
 .
  Sentiment Analysis is normally tasked with classifying as positive or negative,
- though some variations exist as in the Sentiment Treebank
+ or assigning a score, as in the Sentiment Treebank 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "socher2013recursive"
@@ -369,8 +615,9 @@ key "socher2013recursive"
 .
  Determining the sentiment of a sentence is partially a semantic task, but
  it is lacking in several areas that would be required for meaning.
- There is only an indirect requirement for the model to encode the subject
- at all: 
+ For example, there is only an indirect requirement for the model to process
+ the subject at all.
+  
 \begin_inset Quotes eld
 \end_inset
 
@@ -387,1120 +634,480 @@ The engine was quiet
 \end_inset
 
  but this is a limited affect.
- Sentiment Analysis is certainly a key task in natural language processing,
- but it is very distinct from semantic meaning.
+ Sentiment Analysis is a key task in natural language processing, but it
+ is very distinct from semantic meaning.
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+Need Linking sentence?
 \end_layout
 
-\begin_layout Subsubsection
-Information Retrieval
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
-Where as the Sentiment Analysis task does not strongly depend on the topic,
- Information Retrieval tasks depend almost entirely on topic.
+Document Classification is a classic natural language processing task.
+ A particular case of this is topic categorization, where the task is to
+ classify the texts based on topic.
+ Early work in the area goes back to 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "maron1961automatic"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "borko1963automatic"
+
+\end_inset
+
+.
+ Much more recently it has been used to assess the convolution neural networks
+ of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "DBLP:journals/corr/ZhangL15"
+
+\end_inset
+
+, where the articles of several News corpora were classified into categories
+ such as 
+\begin_inset Quotes eld
+\end_inset
+
+Sports
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+Business
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+Entertainment
+\begin_inset Quotes erd
+\end_inset
+
+.
+ The topics for classification tend to be broad.
+ A huge spectrum of different sentences are assigned to the same topic.
+ It is thus too board and insufficiently specific to evaluate the consistency
+ of meanings.
+ Information retrieval can be seen as the inverse of the document classification
+ task.
+\end_layout
+
+\begin_layout Standard
+Information Retrieval is the task of identifying the documents which most
+ match a query.
+ Such document selection depends almost entirely on topic.
  Suitable results for information retrieval have no requirement to agree
- on meaning.
+ on meaning, though text with the same meaning are more likely to match
+ the same queries.
+ 
+\end_layout
+
+\begin_layout Standard
+The evaluation of semantic consistency requires a task which is fine grained,
+ and preserving meaning.
+ Document Classification and Information Retrieval are insufficiently fine-grain
+ed.
+ Sentiment Analysis does not preserve meaning, only semantic orientation.
+ Paraphrase Detection is directly relevant to the evaluating semantic constancy,
+ however it is just binary choice based on a pairwise comparison -- a more
+ spatial application is desirable for evaluating these vector spaces.
+ Thus the current down-steam application tasks are not sufficient for assessing
+ semantic consistency -- more specialized methods are required.
+\end_layout
+
+\begin_layout Subsection
+Evaluations of Semantic Consistency
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Evaluations-of-Semantic"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Semantic consistency for word embeddings is often measured using the analogy
+ task.
+ In an analogy the meta-relation: 
+\family typewriter
+A is to B as C is to D
+\family default
+.
+ Mikolov et.
+ al.
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mikolov2013linguisticsubstructures"
+
+\end_inset
+
+ demonstrated that the word-embedding models are semantically consistent
+ by showing that the semantic relations between words were reflected as
+ a linear offset in the vector space.
+ That is to say, for embeddings 
+\begin_inset Formula $\tilde{x}_{a},\,\tilde{x}_{b},\,\tilde{x}_{c},\,\tilde{x}_{d}$
+\end_inset
+
+ corresponding to words A, B, C and D, respectively; it was tested that
+ if for a strong relationship matching between A/B and C/D, then the offset
+ vector would be approximately equal: 
+\begin_inset Formula $\tilde{x}_{b}-\tilde{x}_{a}\approxeq\,\tilde{x}_{d}-\tilde{x}_{c}$
+\end_inset
+
+.
+ Rearranging this in word space gets the often quoted example of 
+\begin_inset Formula $\mathtt{King}-\mathtt{Man}+\mathtt{Woman}\approxeq\mathtt{Queen}$
+\end_inset
+
+, As man is to woman, king is to queen.
+ In the rating task as described by 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "jurgens2012semeval"
+
+\end_inset
+
+, the goal is to rank such analogous word pairs based on the degree the
+ relation matches.
+ Thus to evaluate the word-embedding model using this task, it was a matter
+ of sorting closeness of the corresponding offset vectors.
+ Surprisingly strong results were found at this task
+\begin_inset CommandInset citation
+LatexCommand cite
+key "mikolov2013linguisticsubstructures"
+
+\end_inset
+
+.
+ It was thus demonstrated that word embeddings were not simply semantically
+ consistent, but more so that this consistency was displayed as local linearity.
+ This result gives confidence semantic quality of the word embeddings.
+ However, this relationship analogy test cannot be performed for sentence
+ embeddings.
+\end_layout
+
+\begin_layout Standard
+Gershman et.
+ al.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "gershmanphrase"
+
+\end_inset
+
+, compares the distances of modified sentences in vector space, to the semantic
+ distances ascribed to them by human raters.
+ Like the analogy task for word vectors, this task requires ranking the
+ targets based on the vector distance, however instead of rating on the
+ strength of relationship it measures simply the similarities of the sentences
+ to an original base sentence for each group.
+ In that evaluation 30 simple base sentences of the form 
+\family typewriter
+A
+\family default
+ 
+\family typewriter
+[adjective1]
+\family default
+ 
+\family typewriter
+[noun1]
+\family default
+ 
+\family typewriter
+[prepositional phrase]
+\family default
+ 
+\family typewriter
+[adjective2]
+\family default
+ 
+\family typewriter
+[noun2]
+\family default
+ were modified to produce 4 difference derived sentences.
+ The derived sentences were produced by swapping the nouns, swapping the
+ adjectives, reversing the positional phrase (so
+\emph on
+ 
+\family typewriter
+\emph default
+behind
+\family default
+ becomes 
+\family typewriter
+in front of
+\family default
+), and a paraphrase by doing all of the aforementioned changes.
+ Human raters were tasked with sorting the transformed sentences in similarity
+ to the base sentence.
+ This evaluation found that the embedding models considered did not agree
+ with the semantic similarity rankings placed by humans.
+ While the sentence embedding models performed poorly on the distance ranking
+ measure, it is also worth considering how they perform on a meaning classificat
+ion task.
+\end_layout
+
+\begin_layout Standard
+A meaning classification task was recently proposed by Ritter et.
+ al.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "RitterPosition"
+
+\end_inset
+
+, to classify sentences based on which spatial relationship was described.
+ The task was to classify the sentence as describing: 
+\emph on
+Adhesion to Vertical Surface
+\emph default
+,
+\emph on
+ Support by Horizontal Surface
+\emph default
+,
+\emph on
+ Full Containment
+\emph default
+,
+\emph on
+ Partial Containment
+\emph default
+,
+\emph on
+ 
+\emph default
+or
+\emph on
+ Support from Above.
+
+\emph default
+ In this evaluation also, the sentences took a very structured form: 
+\family typewriter
+There is a [noun1] [on/in] the [noun2]
+\family default
+.
+ These highly structured sentences take advantage of the disconnection between
+ word content and the positional relationship described to form a task that
+ must be solved by a compositional understanding combining the understanding
+ of the words.
+ 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+The apples is on the refrigerator
+\emph default
+
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+The magnet is on the refrigerator
+\begin_inset Quotes erd
+\end_inset
+
+
+\emph default
+ belong to two separate spatial categories, even though the word content
+ is very similar.
+ Surprisingly, the simple model of adding word vectors outperformed compositiona
+l models such as the recursive autoencoder.
+ The result does have some limitation due to the highly artificial nature
+ of the sentences, and the restriction to categorizing into a small number
+ of classes based only on the meaning in terms of positional relationship.
+ To generalize this task, in this paper we consider real world sentences
+ being classed into groups according to their full semantic meaning.
 \end_layout
 
 \begin_layout Section
 Methodology
 \end_layout
 
-\begin_layout Subsection
-Opinosis Paraphrase Grouped Subcorpus (Opinosis Subcorpus)
-\end_layout
+\begin_layout Standard
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Methodology"
 
-\begin_layout Subsubsection
-Corpus
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
-The Opinosis Corpus
-\begin_inset CommandInset citation
-LatexCommand cite
-key "ganesan2010opinosis"
+\begin_inset Float figure
+placement t
+wide true
+sideways false
+status open
+
+\begin_layout Plain Layout
+
+\size footnotesize
+\begin_inset CommandInset include
+LatexCommand include
+filename "figs/block_overview.pgf"
 
 \end_inset
 
- was used as a source of original natural text.
- It is sourced from several online review sites: Tripadvisor, Edmunds.com,
- and Amazon.com, and contains single sentence statements about hotels, cars
- and electronics.
- The advantage of this as a source for texts is that comments on the quality
- of services and products tend to be along similar lines.
- The review sentences are syntactically simpler than sentences from a news-wire
- corpus, and also contain less named entities.
- However as they are from more casual communications, the adherence to grammar
- and spelling may be less formal.
- 
+
 \end_layout
 
-\begin_layout Subsubsection
-Identification of Paraphrases
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Process-Diagram"
+
+\end_inset
+
+Process Diagram for the Evaluation of Semantic Consistency via our method
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
-Paraphrases were identified using the standard criterion: bidirectional
- entailment.
- For a paraphrase group 
-\begin_inset Formula $\mathcal{S}$
-\end_inset
-
- of sentences: 
-\begin_inset Formula $\forall s_{1},\,s_{2}\in\mathcal{S},\,s_{1}\entails s_{2}\;\wedge\;s_{2}\entails s_{1}$
-\end_inset
-
-, every sentence in the group entails the every other sentence in the group.
- A stricter interpretation of bidirectional entailment was used, as compared
- to the 
-\begin_inset Quotes eld
-\end_inset
-
-exhibiting mostly bidirectional entailment
-\begin_inset Quotes erd
-\end_inset
-
- used in the MSRP corpus.
- The manual grouping was carried out, grouping paraphrases by human comprehensio
+To evaluate how well a model's vectors capture the meaning of a sentence,
+ a semantic classification task was defined.
+ The task is to classify sentences into classes where each shares the same
+ meaning.
+ Each class is thus defined as a paraphrase groups.
+ This is a far finer-grained task than topic classification.
+ It is a multiclass classification problem, rather than the binary decision
+ problem of paraphrase detection.
+ Such multiclass classification requires the paraphrase groups to be projected
+ into compact and distinct groups in the vector space.
+ A model which produces such embeddings which are thus easily classifiable
+ according to their meaning can been thus seen to have good semantic localizatio
 n.
- The general guidelines were as follows.
-\end_layout
-
-\begin_layout Standard
-\begin_inset Note Comment
-status open
-
-\begin_layout Plain Layout
-I could group thi follwoing to Factors that were assumed make sentence the
- same, and factors that were assumed to make them different
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Paragraph
-Tense
-\end_layout
-
-\begin_layout Standard
-Tense was ignored.
- All sentences were in past or present tense.
-\end_layout
-
-\begin_layout Paragraph
-Transitional Phrases, and Discourse Markers
-\end_layout
-
-\begin_layout Standard
-\begin_inset Note Comment
-status open
-
-\begin_layout Plain Layout
-Hedges are a form of Pragmatic Marker.
- Are Pragmatic Markers the same as discourse markers?
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Transitional phrases, as well as pragmatic and discourse markers were ignored
- for purposes of selecting paraphrases.
- This means parts of the sentences, such as 
-\begin_inset Quotes eld
-\end_inset
-
-However, ...
-\begin_inset Quotes erd
-\end_inset
-
- or 
-\begin_inset Quotes eld
-\end_inset
-
-On the plus side, ...
-\begin_inset Quotes erd
-\end_inset
-
-, as well as 
-\begin_inset Quotes eld
-\end_inset
-
-I feel ...
-\begin_inset Quotes erd
-\end_inset
-
- were ignored, and treated as semantically equivalent to the remainder of
- the sentence.
  
 \end_layout
 
-\begin_layout Paragraph
-Intensity
+\begin_layout Standard
+This semantic classification does not have direct practical application
+ -- it is rare that the need will be to quantify sentences into groups with
+ the same prior known meaning.
+ Rather it serves as a measure to assess the models general suitability
+ for other tasks requiring a model with consistency between meaning and
+ embedding.
 \end_layout
 
 \begin_layout Standard
-Levels of intensity were coarsely quantized.
- For example: 
-\begin_inset Quotes eld
+To evaluate the success at the task three main processes are involved, as
+ shown in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:Process-Diagram"
+
 \end_inset
 
-Service was poor
-\begin_inset Quotes erd
-\end_inset
-
- with 
-\begin_inset Quotes eld
-\end_inset
-
-Service was terrible
-\begin_inset Quotes erd
-\end_inset
-
-; 
-\begin_inset Quotes eld
-\end_inset
-
-Service was fabulous
-\begin_inset Quotes erd
-\end_inset
-
- with 
-\begin_inset Quotes eld
-\end_inset
-
-Service was amazing
-\begin_inset Quotes erd
-\end_inset
-
-; and 
-\begin_inset Quotes eld
-\end_inset
-
-Service was reasonable
-\begin_inset Quotes erd
-\end_inset
-
- with 
-\begin_inset Quotes eld
-\end_inset
-
-Service was adequate
-\begin_inset Quotes erd
-\end_inset
-
-.
- Other approximations were handled similarly to intensities.
+: Corpus Preparation, Model Preparation, and the Semantic Classification
+ task itself.
 \end_layout
 
-\begin_layout Paragraph
-Approximations
+\begin_layout Subsection
+Corpus Preparation
 \end_layout
 
 \begin_layout Standard
-When context suggested values to be very similar, the sentences were considered
- to be the same.
- For example: 
-\begin_inset Quotes eld
-\end_inset
-
-The car gets 20 miles/gal.
-\begin_inset Quotes erd
-\end_inset
-
- and 
-\begin_inset Quotes eld
-\end_inset
-
-The car gets 21miles/gal.
-\begin_inset Quotes erd
-\end_inset
-
- would be considered paraphrases.
- More complex approximations are involved with distance and location.
- For example: 
-\begin_inset Quotes eld
-\end_inset
-
-It was in the center of town
-\begin_inset Quotes erd
-\end_inset
-
- and 
-\begin_inset Quotes eld
-\end_inset
-
-It was near the center of town.
-\begin_inset Quotes erd
-\end_inset
-
- are equivalent, as are 
-\begin_inset Quotes eld
-\end_inset
-
-It was very close to...
-\begin_inset Quotes erd
-\end_inset
-
-, 
-\begin_inset Quotes eld
-\end_inset
-
-It was a 5 minute walk from...
-\begin_inset Quotes erd
-\end_inset
-
- and 
-\begin_inset Quotes eld
-\end_inset
-
-It was just a few blocks away from...
-\begin_inset Quotes erd
-\end_inset
-
-.
- Recognizing these approximations as all being equivalent is a requirement
- for natural language understanding.
- The ability to interpret other implications and indirect speech was also
- assumed.
-\end_layout
-
-\begin_layout Paragraph
-Indirect Speech and Euphemisms
-\end_layout
-
-\begin_layout Standard
-Many real world statements are indirect, metaphorical or euphemistic and
- these were groups according to their meaning.
- For example: 
-\begin_inset Quotes eld
-\end_inset
-
-The service needed improvement.
-\begin_inset Quotes erd
-\end_inset
-
- was grouped with 
-\begin_inset Quotes eld
-\end_inset
-
-The service was poor.
-\begin_inset Quotes erd
-\end_inset
-
-.
- Other implications service being synonymous with customer service also
- occur within paraphrase groups where sentence context warrants.
- Conversely, without context, the subject was not assumed to be equivalent.
-\end_layout
-
-\begin_layout Paragraph
-Entity Reference
-\end_layout
-
-\begin_layout Standard
-When the entity was referenced, or implied, it was not groups with entities
- that were directly stated.
- Thus: 
-\begin_inset Quotes eld
-\end_inset
-
-The Tuskan Inn has a great location
-\begin_inset Quotes erd
-\end_inset
-
-, 
-\begin_inset Quotes eld
-\end_inset
-
-It has a great location
-\begin_inset Quotes erd
-\end_inset
-
- and 
-\begin_inset Quotes eld
-\end_inset
-
-The hotel has a great location.
-\begin_inset Quotes erd
-\end_inset
-
- are not paraphrases.
- Without greater context than a single sentence, none of them have enough
- information to entail the others.
- On the other hand, when a entity has multiple common names, for example
- 
-\begin_inset Quotes eld
-\end_inset
-
-San Francisco
-\begin_inset Quotes erd
-\end_inset
-
- and 
-\begin_inset Quotes eld
-\end_inset
-
-SF
-\begin_inset Quotes erd
-\end_inset
-
-, the synonym is sufficient.
- Certain groupings of entities can also be synonymous with entries as a
- whole, for example 
-\begin_inset Quotes eld
-\end_inset
-
-The front desk staff and all the other staff...
-\begin_inset Quotes erd
-\end_inset
-
- is synonymous with 
-\begin_inset Quotes eld
-\end_inset
-
-All the staff...
-\begin_inset Quotes erd
-\end_inset
-
-.
- While the addition of redundant information, does not change the meaning,
- addition of new information does.
-\end_layout
-
-\begin_layout Paragraph
-Additional Information
-\end_layout
-
-\begin_layout Standard
-Any differing information, in a phrase is enough to cause it not to be grouped
- with phrases without that information.
- This comes from the definition of bidirectional entailment.
- If sentence 
-\begin_inset Formula $A$
-\end_inset
-
- entails two facts, which are equivalent to stand-alone sentences 
-\begin_inset Formula $C$
-\end_inset
-
- and 
-\begin_inset Formula $D$
-\end_inset
-
-, and sentence 
-\begin_inset Formula $B$
-\end_inset
-
- does not entail 
-\begin_inset Formula $C$
-\end_inset
-
-, then 
-\begin_inset Formula $B$
-\end_inset
-
- can not entail 
-\begin_inset Formula $A$
-\end_inset
-
- as entailment is a transitive operation.
- For example: 
-\begin_inset Quotes eld
-\end_inset
-
-The rooms were clean, also the housekeeping was polite.
-\begin_inset Quotes erd
-\end_inset
-
- is not a paraphrase of 
-\begin_inset Quotes eld
-\end_inset
-
-The rooms were clean.
-\begin_inset Quotes erd
-\end_inset
-
- or of 
-\begin_inset Quotes eld
-\end_inset
-
-The housekeeping was polite.
-\begin_inset Quotes erd
-\end_inset
-
-.
- This is a notable difference from the MSRP Corpus where the creators noted
+The construction of each of the corpora is detailed more fully in then next
+ section.
+ In brief: Two corpora were constructed by selecting subsets of the Microsoft
+ Research Paraphrase (MSRP) 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "msrParapharaCorpus"
 
 \end_inset
 
- 
-\begin_inset Quotes eld
+ and of the Opinosis 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "ganesan2010opinosis"
+
 \end_inset
 
-...the majority of the 'equivalent' pairs in this dataset exhibit 'mostly bidirecti
-onal entailments', with one sentence containing information that differs
- from or is not contained in the other.
-\begin_inset Quotes erd
-\end_inset
-
-.
- While this approach does lead to more varied paraphrasings, it ties the
- meaning of a sentence to be a subset of its entailments.
- In the two pairwise classification task of paraphrase, or not, this adds
- a subtask of detecting the significance of information overlap, a reasonable
- measure for a system.
- However when examining the space of the embeddings and the relationship
- to meaning it is more problematic.
- For example, three of the largest paraphrase groupings in the corpus are
- around the facts: 
-\begin_inset Quotes eld
-\end_inset
-
-The staff were helpful
-\begin_inset Quotes erd
-\end_inset
-
-, 
-\begin_inset Quotes eld
-\end_inset
-
-The staff were friendly
-\begin_inset Quotes erd
-\end_inset
-
- and 
-\begin_inset Quotes eld
-\end_inset
-
-The staff were friendly and helpful.
-\begin_inset Quotes erd
-\end_inset
-
-.
- If 
-\begin_inset Quotes eld
-\end_inset
-
-mostly bidirectional entailment
-\begin_inset Quotes erd
-\end_inset
-
- were used then either the three groups much be combined though helpful
- and friendly are not synonymous.
- The is scope for further analysis in this area, which considers quantified
- relationships between near paraphrases such as these.
+ Corpora.
+ The corpora were partitions into groups of paraphrases -- sentences with
+ the same meaning.
+ Any Paraphrase groups with less than three sentences were discarded.
+ The paraphrase grouping was carried out manually for Opinosis, and automaticall
+y for the MSRP corpus using the existing paraphrase pairings.
+ The paraphrase groups divide the total semantic space of the corpora into
+ discrete classes, where each class contains sentences sharing the same
+ meaning.
 \end_layout
 
 \begin_layout Standard
-\begin_inset Note Comment
-status open
-
-\begin_layout Plain Layout
-If for sentences 
-\begin_inset Formula $A,B,C$
-\end_inset
-
- such that 
-\begin_inset Formula $A\entails C$
-\end_inset
-
-, but 
-\begin_inset Formula $B\not\entails C$
-\end_inset
-
-, then 
-\begin_inset Formula $B\not\entails A$
-\end_inset
-
-: Proof by contradiction: assume 
-\begin_inset Formula $B\entails A$
-\end_inset
-
-, by transitivity of entailment operator, then 
-\begin_inset Formula $B\entails C$
-\end_inset
-
- which is a contradiction.
- In p
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Subsubsection
-Post-Processing
-\end_layout
-
-\begin_layout Standard
-The subcorpus was post-processed to remove several artifacts present in
- the original corpus.
- Digits and punctuation were removed from the start of sentences unless
- they were required by the context.
- These were present in several sentences which were harvested from numbered
- lists.
- Repeated commas were removed.
- 
-\begin_inset Quotes eld
-\end_inset
-
-&amp
-\begin_inset Quotes erd
-\end_inset
-
- and 
-\begin_inset Quotes eld
-\end_inset
-
-&quot
-\begin_inset Quotes erd
-\end_inset
-
- were replaced with the ampersand and quote symbols respectively.
- These artifacts are presumably from a HTML transcription issue.
- A less expected issue was also corrected where some hyphens were replaced
- with commas.
- These were fixed in the words 
-\begin_inset Quotes eld
-\end_inset
-
-non-smoking
-\begin_inset Quotes erd
-\end_inset
-
-, 
-\begin_inset Quotes eld
-\end_inset
-
-e-ink
-\begin_inset Quotes erd
-\end_inset
-
- and 
-\begin_inset Quotes eld
-\end_inset
-
-on-line
-\begin_inset Quotes erd
-\end_inset
-
-.
-\begin_inset Note Comment
-status open
-
-\begin_layout Plain Layout
-Ensure the following sentence remains accurate
-\end_layout
-
-\end_inset
-
-.
- Finally, any paraphrase group with less than three phrases was discarded.
- With this complete the breakdown is as in 
-\begin_inset CommandInset ref
-LatexCommand formatted
-reference "tab:opinosis_corpus_hist"
-
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float table
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\begin_inset Tabular
-<lyxtabular version="3" rows="10" columns="2">
-<features rotate="0" tabularvalignment="middle">
-<column alignment="center" valignment="top">
-<column alignment="center" valignment="top">
-<row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-Number of Paraphrases
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-Number of Groups
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-3
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-36
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-4
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-20
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-5
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-6
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-6-10
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-16
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-11-20
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-3
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-21-30
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-3
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-33
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-1
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-Total Phrases:
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-521
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-Total Phrase Groups:
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-89
-\end_layout
-
-\end_inset
-</cell>
-</row>
-</lyxtabular>
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption Standard
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "tab:opinosis_corpus_hist"
-
-\end_inset
-
-Break down of how many paraphrases groups are present in the Opinosis subcorpus
- of which sizes.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
+It is by comparing the ability of the models to produce embedding which
+ can be classified back into these classes, that we can compare the real
+ semantic space partitions to their corresponding vector embedding space
+ regions.
 \end_layout
 
 \begin_layout Subsection
-Microsoft Research Paraphrased Grouped Subcorpus
+Model Preparation and Inferring Vectors
 \end_layout
 
 \begin_layout Standard
-While the MSRP Corpus is focused around the pairwise detection of paraphrases,
- or not, a subset of the sentences do occur in multiple paraphrase pairs.
- The transitive closure of the paraphrase pairings can be found, this gives
- paraphrase groups.
- Such a closure was performed across both the training and test sets of
- the corpus.
- Again any paraphrase groups with less than 3 phrases were discarded.
- The resulting sub-corpus has the breakdown as shown in 
-\begin_inset CommandInset ref
-LatexCommand formatted
-reference "tab:msrp_corpus_hist"
-
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float table
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\begin_inset Tabular
-<lyxtabular version="3" rows="6" columns="2">
-<features rotate="0" tabularvalignment="middle">
-<column alignment="center" valignment="top">
-<column alignment="center" valignment="top">
-<row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-Number of Paraphrases
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-Number of Groups
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-3
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-240
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-4
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-31
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-5
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-3
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-Total Phrases:
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-859
-\end_layout
-
-\end_inset
-</cell>
-</row>
-<row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-Total Phrase Groups:
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-273
-\end_layout
-
-\end_inset
-</cell>
-</row>
-</lyxtabular>
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption Standard
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "tab:msrp_corpus_hist"
-
-\end_inset
-
- Break down of how many paraphrases groups are present in the MSRP subcorpus
- of which sizes.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Section
-Results and Discussion
-\end_layout
-
-\begin_layout Subsection
-The Models
-\end_layout
-
-\begin_layout Standard
-For demonstration purposes, several models are evaluated below.
+Prior to application to semantic classification task, as with any task the
+ models had to be pretrained.
+ Here we use the term 
+\emph on
+pretraining
+\emph default
+ to differentiate the model training from the classifier training.
+ The pretraining is not done using the evaluation corpora as they are both
+ very small.
+ Instead other data are used, and the inference/evaluation procedure given
+ for each method was then used to produce the vectors for each sentence.
+ The model parameters used are detailed below.
 \end_layout
 
 \begin_layout Subsubsection
-Unfolding Recursive Auto-Encoder (U-RAE)
+Unfolding Recursive Auto-Encoder (URAE)
 \end_layout
 
 \begin_layout Standard
-The Unfolding Recursive Auto-Encoder is a autoencoder based method.
- It functions by using the same network to recursively pairwise combine
- embedded representations, following the parse tree
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SocherEtAl2011:PoolRAE"
-
-\end_inset
-
-.
- It's optimization target is to be be able to reverse (unfold) the merges
- and produce the original sentence.
- The central folding layer - where the whole sentence is collapsed to a
- single embedding vector is the representation.
-\end_layout
-
-\begin_layout Standard
-In this evaluation we make use of the pretrained network the authors of
- 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "SocherEtAl2011:PoolRAE"
-
-\end_inset
-
+In this evaluation we make use of the pretrained network that Socher et.
+ al.
  have graciously made available
 \begin_inset Foot
 status open
@@ -1518,7 +1125,14 @@ target "http://www.socher.org/index.php/Main/DynamicPoolingAndUnfoldingRecursive
 
 \end_inset
 
-, full information is available in that paper.
+, full information is available in the paper
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:PoolRAE"
+
+\end_inset
+
+.
  It is initialized on the unsupervised Collobert and Weston word embeddings
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -1527,138 +1141,60 @@ key "collobert2008unified"
 \end_inset
 
 , and training on a subset of 150,000 sentences from the gigaword corpus.
- In the evaluation below the dynamic pooling layer is not used.
+ It produces embeddings with 200 dimensions.
+ This pretrained model when used with dynamic pooling and other word based
+ features performed very well on the MSRP corpus paraphrase detection.
+ However in the evaluation below the dynamic pooling techniques are not
+ used as they are only directly suitable for enhancing pairwise comparisons
+ between sentences.
 \end_layout
 
 \begin_layout Subsubsection
-Doc2Vec Models
+Paragraph Vector Methods (PV-DM and PV-DBOW)
 \end_layout
 
 \begin_layout Standard
-Two new methods, commonly referred to as doc2vec are described in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "le2014distributed"
-
-\end_inset
-
-.
- For both, we evaluate using the GenSim implementation
+Both PV-DM and PV-DBOW, were evaluated using the GenSim implementation 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "rehurek_lrec"
 
 \end_inset
 
- from the current develop branch.
-\end_layout
+ from the current 
+\emph on
+develop
+\emph default
+ branch
+\begin_inset Foot
+status open
 
-\begin_layout Standard
-Both are trained on approximately 12 million sentences from 500 randomly
- selected wikipedia articles.
- In both the window size was set to 8 words, and the vectors were of 300
- dimensions.
-\end_layout
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+name "https://github.com/piskvorky/gensim/tree/develop/"
+target "https://github.com/piskvorky/gensim/tree/develop/"
 
-\begin_layout Paragraph
-PV-DM
-\end_layout
+\end_inset
 
-\begin_layout Standard
-Distributed Memory Paragraph Vectors (PV-DM) Doc2Vec document embeddings
- are based on an extension of Continuous Bag-of-Words word-embedding model
-\begin_inset CommandInset citation
-LatexCommand cite
-key "mikolov2013efficient"
+
+\end_layout
 
 \end_inset
 
 .
- It is trained using a sliding window of words to predict the next word.
- The softmax predictor network is feed a word-embedding for each word in
- the window, and an additional embedding vector which is reused for all
- words in the sentence (called the paragraph vector in original paper).
- These input embeddings can be concatenated or averaged, in the results
- show below they were concatenated.
- During training both word and sentence vectors are allows to vary, in evaluatio
-n, the word vectors are locked and the sentence vector trained until convergence.
- 
-\end_layout
-
-\begin_layout Paragraph
-PV-DBOW
-\end_layout
-
-\begin_layout Standard
-Distributed Bag of Words version of Paragraph Vectors (PV-DBOW), is based
- on the Skip-gram model for word-embeddings, also from 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "mikolov2013efficient"
-
-\end_inset
-
-.
- In PV-DBOW a sentence vector is used as the sole input to a neural net.
- That network is tasked with predicting the words in the sentence.
+ Both were trained on approximately 1.2 million sentences from randomly selected
+ Wikipedia articles, and the window size was set to 8 words, and the vectors
+ were of 300 dimensions.
 \end_layout
 
 \begin_layout Subsubsection
-Bag of Words
+Mean of Word Embeddings (MOWE)
 \end_layout
 
 \begin_layout Standard
-A bag of words (BOW) model is presented as a baseline.
- There is a dimension in each vector embedding for the count of each token,
- including punctuation, in the sentence.
- In the corpus there were a total of 1085 unique tokens, thus a BOW embedding
- has 1085 dimensions.
- For comparison to the lower dimensional models Principle Component Analysis
- (PCA) was used to produce a additional baseline set of embeddings.
- After performing PCA, the resultant vectors had dimensionality of 300.
- PCA was performed, unsupervised, over the whole corpus prior to separation
- into testing and training.
- The bag of words model does not have any outside knowledge.
-\end_layout
-
-\begin_layout Subsubsection
-Mean of Word Embeddings 
-\end_layout
-
-\begin_layout Standard
-Taking the element-wise mean of the word embeddings over all words in the
- sentence also produces a vector with the potential to encode meaning.
- Like bag of words no order information is encoded, but the model can take
- into word relations such as synonymity.
- This method was used as baseline in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "le2014distributed"
-
-\end_inset
-
-.
- The closely related sum of word embeddings was first considered in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "mikolovSkip"
-
-\end_inset
-
- for short phrases.
- It was found to be an effective model for summarization in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "KaagebExtractiveSummaristation"
-
-\end_inset
-
-.
- It is a computationally cheap model, pretrained word embeddings are available.
-\end_layout
-
-\begin_layout Standard
-The word embeddings used were taken from the Google News pretrained model
+The word embeddings used for MOWE were taken from the Google News pretrained
+ model
 \begin_inset Foot
 status open
 
@@ -1676,7 +1212,7 @@ target "https://code.google.com/p/word2vec/"
 
 \end_inset
 
- base on the method described in 
+ based on the method described in 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "mikolovSkip"
@@ -1685,10 +1221,10 @@ key "mikolovSkip"
 
 .
  This has been trained on 100 million sentences from Google News.
- 54 tokens of the 1085 unique tokens in the corpus did not have embeddings
- in the Google News model.
- These were largely numbers, punctuation characters, proper nouns and unusual
- spellings, as well as the stop-words: 
+ A small portion of the evaluation corpus did not have embeddings in the
+ Google News model.
+ These tokens were largely numerals, punctuation symbols, proper nouns and
+ unusual spellings, as well as the stop-words: 
 \begin_inset Quotes eld
 \end_inset
 
@@ -1718,30 +1254,475 @@ of
  they were based on.
 \end_layout
 
-\begin_layout Subsection
-Classification Into Group with SVM
+\begin_layout Subsubsection
+Bag of Words (BOW)
 \end_layout
 
 \begin_layout Standard
-A support vector machine (SVM), with a linear kernel, was applied to the
- task of predicting which paraphrase group a sentence belong to was used
- to evaluate the embeddings.
- A range of values for the margin parameter (C) were trialed for each model.
- The best results are reported on here.
- Classification was verified using threefold cross-validation, the average
- results are shown in this section.
+A bag of words (BOW) model is also presented as a baseline.
+ There is a dimension in each vector embedding for the count of each token,
+ including punctuation, in the sentence.
+ In the Opinosis and MSRP subcorpora there were a total of 1,085 and 2,976
+ unique tokens respectively, leading to BOW embeddings of corresponding
+ dimensionality.
+ As it is a distributional rather than distributed representation, the BOW
+ model does not need any pretraining step.
+ For comparison to the lower dimensional models Principle Component Analysis
+ (PCA) was applied to the BOW embeddings to produce a additional baseline
+ set of embeddings of 300 dimensions -- in line with PV-DM, PV-DBOW, and
+ MOWE models.
+ It does not quite follow the steps shown in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:Process-Diagram"
+
+\end_inset
+
+, as the PCA pretraining step is performed on the training embeddings only
+ during the SVM classification process, and it is used to infer the PCA
+ BOW embeddings during the testing step.
+ This avoids unfair information transfer where the PCA would otherwise be
+ about to chose representation optimised for the whole set, including the
+ test data.
+ It was found that when the PCA model was allowed to cheat in this way it
+ performed a few percentage points better.
+ The bag of words models do not have any outside knowledge.
+\end_layout
+
+\begin_layout Subsection
+Semantic Classification 
+\end_layout
+
+\begin_layout Standard
+The core of this evaluation procedure is in the semantic classification
+ step.
+ A support vector machine (SVM), with a linear kernel, and class weighting
+ was applied to the task of predicting which paraphrase group each sentence
+ belongs to.
+ Classification was verified using 3-fold cross-validation across different
+ splits of the testing/training data, the average results are shown in this
+ section.
+ The splits were in proportion to the class size.
  For the smallest groups this means there were two training cases and one
  test case to classify.
- As a linear SVM's classification success depends on how linearly separable
- the input data is, this is a good method to assess the quality of the localizat
-ion of the paraphrase groupings embeddings.
-\end_layout
-
-\begin_layout Subsection
-Model Results and Discussion
+ 
 \end_layout
 
 \begin_layout Standard
+In this paper, only a linear kernel was used, because a more powerful kernel
+ such as RBF may be able to compensate for irregularities in the vector
+ space, which makes model comparison more difficult.
+ Scikit-learn 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "scikit-learn"
+
+\end_inset
+
+ was used to orchestrate the cross-validation and to interface with the
+ LibLinear SVM implementation 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "LIBLIBEAR"
+
+\end_inset
+
+.
+ As the linear SVM's classification success depends on how linearly separable
+ the input data is, thus this assessed the quality of the localization of
+ the paraphrase groupings embeddings.
+\end_layout
+
+\begin_layout Section
+Corpus Construction
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Corpus-Construction"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Microsoft Research Paraphrased Grouped Subcorpus
+\end_layout
+
+\begin_layout Standard
+The MSRP corpus is a very well established data set for the paraphrase detection
+ task 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "msrParapharaCorpus"
+
+\end_inset
+
+.
+ Sentences are presented as pairs which are either paraphrases, or not.
+ A significant number of paraphrases appear in multiple different pairings.
+ Using this information, groups of paraphrases can be formed.
+\end_layout
+
+\begin_layout Standard
+The corpus was partitioned according to sentence meaning by taking the symmetric
+ and transitive closures the set of paraphrase pairs.
+ For example if sentences 
+\emph on
+A
+\emph default
+,
+\emph on
+ B
+\emph default
+,
+\emph on
+ C
+\emph default
+ and 
+\emph on
+D
+\emph default
+ were present in the original corpus as paraphrase pairs: 
+\begin_inset Formula $A,B$
+\end_inset
+
+, 
+\begin_inset Formula $D,\,A$
+\end_inset
+
+ and 
+\begin_inset Formula $B,C$
+\end_inset
+
+ then the paraphrase group 
+\begin_inset Formula $\{A,B,C,D\}$
+\end_inset
+
+ is found.
+ Any paraphrase groups containing less than 3 phrases were discarded.
+ The resulting sub-corpus has the breakdown as shown in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:msrp_corpus_hist"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figs/msrp_corpus_stats.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:msrp_corpus_hist"
+
+\end_inset
+
+ Break down of how many paraphrases groups are present in the MSRP subcorpus
+ of which sizes.It contains a total of 859 unique sentences, broken up into
+ 273 paraphrase groups.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figs/opinosis_corpus_stats.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:opinosis_corpus_hist"
+
+\end_inset
+
+ Break down of how many paraphrases groups are present in the Opinosis subcorpus
+ of which sizes.
+ It contains a total of 521 unique sentences, broken up into 89 paraphrase
+ groups.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Opinosis Paraphrase Grouped Subcorpus
+\end_layout
+
+\begin_layout Standard
+The Opinosis Corpus
+\begin_inset CommandInset citation
+LatexCommand cite
+key "ganesan2010opinosis"
+
+\end_inset
+
+ was used as secondary source of original real-world text.
+ It is sourced from several online review sites: Tripadvisor, Edmunds.com,
+ and Amazon.com, and contains single sentence statements about hotels, cars
+ and electronics.
+ The advantage of this as a source for texts is that comments on the quality
+ of services and products tend to be along similar lines.
+ The review sentences are syntactically simpler than sentences from a news-wire
+ corpus, and also contain less named entities.
+ However, as they are from more casual communications, the adherence to
+ grammar and spelling may be less formal.
+ 
+\end_layout
+
+\begin_layout Standard
+Paraphrases were identified using the standard criterion: bidirectional
+ entailment.
+ For a paraphrase group 
+\begin_inset Formula $\mathcal{S}$
+\end_inset
+
+ of sentences: 
+\begin_inset Formula $\forall s_{1},\,s_{2}\in\mathcal{S},\quad s_{1}\entails s_{2}\quad\wedge\;s_{2}\entails s_{1}$
+\end_inset
+
+, every sentence in the group entails the every other sentence in the group.
+ A stricter interpretation of bidirectional entailment was used, as compared
+ to the 
+\begin_inset Quotes eld
+\end_inset
+
+mostly bidirectional entailment
+\begin_inset Quotes erd
+\end_inset
+
+ used in the MSRP corpus.
+ The grouping was carried out manually.
+ The general guidelines were as follows.
+\end_layout
+
+\begin_layout Itemize
+Tense, Transitional Phrases, and Discourse and Pragmatic Markers were ignored.
+\end_layout
+
+\begin_layout Itemize
+Statement intensity was coarsely quantized.
+ 
+\end_layout
+
+\begin_layout Itemize
+Approximately equal quantitative and qualitative values were treated as
+ synonymous.
+\end_layout
+
+\begin_layout Itemize
+Sentences with entities mentioned explicitly were grouped separately from
+ similar statements where they were implied.
+\end_layout
+
+\begin_layout Itemize
+Sentences with additional information were grouped separately from those
+ without that information.
+\end_layout
+
+\begin_layout Standard
+The final point is the most significant change from the practices apparent
+ in the construction of the MSRP corpus.
+ Sentences with differing or additional information were classified as non-parap
+hrases.
+ This requirement comes from the definition of bidirectional entailment.
+ For example, 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+The staff were friendly and polite.
+\begin_inset Quotes erd
+\end_inset
+
+
+\emph default
+, 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+The staff were polite.
+\begin_inset Quotes erd
+\end_inset
+
+
+\emph default
+ and 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+The staff were friendly.
+\begin_inset Quotes erd
+\end_inset
+
+
+\emph default
+ are in three separate paraphrase groups.
+ The creators of the MSRP corpus, however, note 
+\begin_inset Quotes eld
+\end_inset
+
+...the majority of the equivalent pairs in this dataset exhibit `mostly bidirection
+al entailments', with one sentence containing information `that differs'
+ from or is not contained in the other.
+\begin_inset Quotes erd
+\end_inset
+
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "msrParapharaCorpus"
+
+\end_inset
+
+.
+ While this does lead to more varied paraphrases; it strays from the strict
+ linguistic definition of a paraphrase, which complicates the evaluation
+ of the semantic space attempted here.
+ This stricter adherence to bidirectional entailment resulted in finer separatio
+n of groups, which makes this a more challenging corpus.
+\end_layout
+
+\begin_layout Standard
+After the corpus had been broken into paraphrase groups some simple post-process
+ing was done.
+ Several artifacts present in the original corpus were removed, such as
+ substituting the ampersand symbol for 
+\family typewriter
+\emph on
+&amp
+\family default
+\emph default
+.
+ Any paraphrase groups with containing identical sentences were merged,
+ and duplicated removed.
+ Finally, any group with less than three phrases was discarded.
+ With this complete the breakdown is as in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:opinosis_corpus_hist"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Further information on the construction of the corpora in this section,
+ and download links are available online
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+INSERT LINK HERE
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Results and Discussion
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Results-and-Discussion"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Classification Results and Discussion
+\end_layout
+
+\begin_layout Standard
+The results of performing the evaluation method described in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "sec:Methodology"
+
+\end_inset
+
+ are shown in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:results"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
 \begin_inset Tabular
 <lyxtabular version="3" rows="7" columns="3">
 <features rotate="0" tabularvalignment="middle">
@@ -1774,7 +1755,7 @@ Model Results and Discussion
 \uwave off
 \noun off
 \color none
-Opinosis Subcorpus
+MSRP Subcorpus
 \end_layout
 
 \end_inset
@@ -1795,7 +1776,7 @@ Opinosis Subcorpus
 \uwave off
 \noun off
 \color none
-MSRP Subcorpus
+Opinosis Subcorpus
 \end_layout
 
 \end_inset
@@ -1806,33 +1787,12 @@ MSRP Subcorpus
 \begin_inset Text
 
 \begin_layout Plain Layout
- PVDM
+ PV-DM
 \end_layout
 
 \end_inset
 </cell>
 <cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-38.26%
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1853,13 +1813,34 @@ MSRP Subcorpus
 
 \end_inset
 </cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+38.26%
+\end_layout
+
+\end_inset
+</cell>
 </row>
 <row>
 <cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
- DBOW
+ PV-DBOW
 \end_layout
 
 \end_inset
@@ -1880,7 +1861,7 @@ MSRP Subcorpus
 \uwave off
 \noun off
 \color none
-32.19%
+89.93%
 \end_layout
 
 \end_inset
@@ -1901,7 +1882,7 @@ MSRP Subcorpus
 \uwave off
 \noun off
 \color none
-89.93%
+32.19%
 \end_layout
 
 \end_inset
@@ -1933,7 +1914,7 @@ MSRP Subcorpus
 \uwave off
 \noun off
 \color none
-20.86%
+51.14%
 \end_layout
 
 \end_inset
@@ -1954,7 +1935,7 @@ MSRP Subcorpus
 \uwave off
 \noun off
 \color none
-50.88%
+20.86%
 \end_layout
 
 \end_inset
@@ -1975,17 +1956,6 @@ MSRP Subcorpus
 
 \begin_layout Plain Layout
 
-\series bold
-69.30%
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
 \family roman
 \series medium
 \shape up
@@ -1998,6 +1968,17 @@ MSRP Subcorpus
 \noun off
 \color none
 97.91%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+69.30%
 \end_layout
 
 \end_inset
@@ -2018,18 +1999,8 @@ MSRP Subcorpus
 
 \begin_layout Plain Layout
 
-\family roman
-\series medium
-\shape up
-\size normal
-\emph off
-\bar no
-\strikeout off
-\uuline off
-\uwave off
-\noun off
-\color none
-65.23%
+\series bold
+98.37%
 \end_layout
 
 \end_inset
@@ -2050,7 +2021,7 @@ MSRP Subcorpus
 \uwave off
 \noun off
 \color none
-98.37%
+65.23%
 \end_layout
 
 \end_inset
@@ -2070,6 +2041,15 @@ MSRP Subcorpus
 \begin_inset Text
 
 \begin_layout Plain Layout
+97.96%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
 
 \family roman
 \series medium
@@ -2082,18 +2062,7 @@ MSRP Subcorpus
 \uwave off
 \noun off
 \color none
-62.90%
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-98.60%
+54.43%
 \end_layout
 
 \end_inset
@@ -2104,10 +2073,31 @@ MSRP Subcorpus
 \end_inset
 
 
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:results"
+
+\end_inset
+
+The semantic classification accuracy of the various models across the two
+ evaluation corpora.
 \end_layout
 
-\begin_layout Subsubsection
-Opinosis Subcorpus
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsubsection
@@ -2115,23 +2105,29 @@ Difference in Performance Between the Corpora
 \end_layout
 
 \begin_layout Standard
-While the ranking of models is similar between the corpora, the absolute
- performance differs.
- All the models perform much better on the MSRP subcorpus than on the Opinosis
- subcorpus.
+While the relative performance of the models is similar between the corpora,
+ the absolute performance differs.
+ On the absolute scale, all the models perform much better on the MSRP subcorpus
+ than on the Opinosis subcorpus.
  This can be attributed to the significantly more distinct classes in the
  MSRP subcorpus.
  The Opinosis subcorpus draws a finer line between sentences with similar
  meanings.
- For example, there is a paraphrase group for 
+ As discussed earlier, for example there is a paraphrase group for 
+\emph on
+
 \begin_inset Quotes eld
 \end_inset
 
-The staff were nice.
+The staff were polite.
 \begin_inset Quotes erd
 \end_inset
 
+
+\emph default
 , another for 
+\emph on
+
 \begin_inset Quotes eld
 \end_inset
 
@@ -2139,7 +2135,11 @@ The staff were friendly.
 \begin_inset Quotes erd
 \end_inset
 
+,
+\emph default
  and a third for 
+\emph on
+
 \begin_inset Quotes eld
 \end_inset
 
@@ -2147,16 +2147,350 @@ The staff were friendly and polite.
 \begin_inset Quotes erd
 \end_inset
 
+
+\emph default
 .
- In MSRP, as discussed earlier, these would all have been considered the
- same group.
+ Under the guidelines used for paraphrases in MSRP, these would all have
+ been considered the same group.
  Secondly, there is a much wider range of topics in the MSRP.
- Opinosis contains just reviews of electronics, cars, and hotels, where
- as the MSRP contains all News stories, from financials to wars to natural
- disasters.
+ Thus the paraphrase groups with different meanings in MSRP corpus are also
+ more likely to have different topic entirely than those from Opinosis.
  Thus the the ground truth of the semantics separability of phrases from
  the MSRP corpus is higher than for Opinosis.
+ Making the semantic classification of the Opinosis subcorpus is a more
+ challenging task.
+\end_layout
+
+\begin_layout Subsubsection
+The performance of the URAE
+\end_layout
+
+\begin_layout Standard
+The URAE model performs substantially worse than the other models.
+ In 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "KaagebExtractiveSummaristation"
+
+\end_inset
+
+ is was suggested that the URAE's poor performance at summarizing the Opinosis
+ corpus could perhaps be attributed to the less formally structured product
+ reviews -- the URAE being a highly structured compositional model.
+ However its poor performance on the MSRP subcorpus suggests otherwise.
+ The pretrained URAE model used here performed well on paraphrase detection
+ in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "SocherEtAl2011:PoolRAE"
+
+\end_inset
+
+, when used in concert with other features including the word embedding
+ distances.
+ This suggests the URAE may work best when used to supplement other features.
+ There are several more advanced versions of the RAE which are not evaluated
+ here.
+\end_layout
+
+\begin_layout Subsection
+Agreement in Difficulty
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figs/msrp_difficulty_agreement.png
+	width 100col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:msrp_difficulty_agreement"
+
+\end_inset
+
+ The misclassification agreement between each of the models for the MSRP
+ subcorpus.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figs/opinosis_difficulty_agreement.png
+	width 100col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:opinosis_difficulty_agreement"
+
+\end_inset
+
+ The misclassification agreement between each of the models for the Opinosis
+ subcorpus.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Model Agreement
+\end_layout
+
+\begin_layout Standard
+None of the models perform perfectly.
+ The misclassifications of the models can be compared.
+ By selecting one of the test/train folds from the classification task above,
+ and comparing the predicted classifications for each test-set sentence,
+ the similarities of the models were assessed.
+ The heatmaps in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:msrp_misclass_agreement"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:msrp_misclass_agreement"
+
+\end_inset
+
+ show the agreement in errors.
+ Here misclassification agreement is: out of all sentences which both models
+ failed to classify, for which portion were their predicted classes the
+ same.
+ This is equivalent to the mean Jacquard index of their sets of mutually
+ incorrect classes.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figs/msrp_misclassification_agreement.png
+	width 100col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:msrp_misclass_agreement"
+
+\end_inset
+
+ The misclassification agreement between each of the models for the MSRP
+ subcorpus.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename figs/opinosis_misclassification_agreement.png
+	width 100col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:opinosis_misclass_agreement"
+
+\end_inset
+
+ The misclassification agreement between each of the models for the Opinosis
+ subcorpus.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+This is speculation.
+ I can't think of a way to prove it yet.
+\end_layout
+
+\end_inset
+
+It can be seen that all misclassification is more in agreement in the MSRP
+ subcorpus than in Opinosis.
+ This may be attributed to the same reasoning that the MSRP classifications
+ perform better -- the increased real semantic difference between statements.
+ Reasonable misclassification occurs when there are multiple phrases that
+ are semantically close together.
+ As there are less statements truly semantically close to any other statements,
+ the chance of there being 3 or more statements all close enough to cause
+ confusion is much lower.
+ Thus when this reasonable confusion occurs, it occurs in the same way across
+ all models.
  
+\end_layout
+
+\begin_layout Standard
+Strong similarity can be seen between the word-based models: MOWE, BOW and
+ PCA BOW.
+ This confirms the expectation that when the word content is misleading
+ as to the meaning, it is misleading consistently.
+ However PV-DBOW, while also another word order ignorant model, makes similar
+ errors in MSRP to the word-based models, that similarity is not seen in
+ Opinosis.
+\end_layout
+
+\begin_layout Standard
+It can be noted that the 3 more advanced models: PV-DM, PV-DBOW and URAE
+ are all much more similar to the word-based models than to each other.
+ This seems to indicate that they do still make word based mistakes, but
+ they make different 
+\end_layout
+
+\begin_layout Subsection
+Limitations
+\end_layout
+
+\begin_layout Standard
+This evaluation has some limitations.
+ As with all such empirical evaluations of machine learning models, a more
+ optimal choice of hyper-parameters and training data will have an impact
+ on the performance.
+ In particular, if the model training was on the evaluation data the models
+ would be expected to be better able to place correct embedding for them.
+ This was however unfeasible due to the small sizes of the datasets used
+ for evaluation, and would not reflect real word application of the models
+ to data not prior seen.
+ Beyond the limitation of the data set is the contents of the corpora themselves.
+\end_layout
+
+\begin_layout Standard
+The paraphrase groups were not selected to be independent of the word content
+ overlap -- they were simply collected on commonality of meaning from real
+ world sourced corpora.
+ This is a distinct contrast to the the work of Ritter et.
+ al.
+\begin_inset CommandInset citation
+LatexCommand cite
+key "RitterPosition"
+
+\end_inset
+
+ discussed in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "sub:Evaluations-of-Semantic"
+
+\end_inset
+
+ where the classes were chosen to not have meaningful word overlap.
+ However our work is complementary to theirs, and our findings are well
+ aligned.
+ The key difference in performance is the magnitude of the performance of
+ the sum of word embeddings (comparable to the mean of word embeddings evaluated
+ here).
+ In 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "RitterPosition"
+
+\end_inset
+
+ the word embedding model performed similarly to the best of the more complex
+ models.
+ In the results presented above we find that the word embedding based model
+ performs significantly beyond the more complex models.
+ This can be attributed to the word overlap in the paraphrase groups --
+ in real-world speech people trying to say the same thing do infact use
+ the same words very often.
 \end_layout
 
 \begin_layout Section
@@ -2164,75 +2498,49 @@ Conclusion
 \end_layout
 
 \begin_layout Standard
-A method what presented, to evaluate the semantic localization of sentence
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Conclusion"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+A method was presented, to evaluate the semantic localization of sentence
  embedding models.
  Semantically equivalent sentences are those which exhibit bidirectional
  entailment -- they each imply the truth of the other.
- Paraphrases are mostly semantically equivalent.
- Replacing a noun with its synonym creates another sentence which is semanticall
-y equivalent to the original.
- Replacing a verb with its antonym creates a new sentence which is not.
- By comparing the distances of the generated sentences, and paraphrases
- from the original sentence, the relationship between semantic closeness
- and embedding distance can be seen.
+ Paraphrases are semantically equivalent.
+ The evaluation method is a semantic classification task -- to classify
+ sentences as belonging to a paraphrase group of semantically equivalent
+ sentences.
+ This classification was performed across two subcorpora derived from existing
+ sources, the closure of the MRSP corpus, and a manually grouped subset
+ of the Opinosis corpus.
+ The relative performance of various models was consistent across the two
+ tasks, though differed on an absolute scale.
 \end_layout
 
 \begin_layout Standard
-The models evaluated using this method show that they are substantially
- more permanent the a naive bag of words approach there is still significant
- room for improvement.
- While these models perform very well at related practical tasks, this new
- method highlights some of their limitations.
- It suggests that calling the vector space the models embed into a syntactic
- space is misleading.
- The space clearly incorporates elements of syntax and word choice, as well
- as meaning.
- This result is not surprising and indeed some papers (including 
+The MOWE and BOW models perform best, followed by the paragraph vector models,
+ with the URAE trailing in both tests.
+ The strong performance of the mean of word embeddings (MOWE) compared to
+ the more advanced models aligned with the results of 
 \begin_inset CommandInset citation
 LatexCommand cite
-key "SocherEtAl2011:PoolRAE"
+key "RitterPosition"
 
 \end_inset
 
-) do refer to the space this way.
- The new method does make its truth substantially clearer.
-\end_layout
-
-\begin_layout Subsection
-Motivating better use of Semantic Resources in embedding creation
-\end_layout
-
-\begin_layout Standard
-\begin_inset CommandInset citation
-LatexCommand cite
-key "yu2014improving"
-
-\end_inset
-
- is a improved method over word2vec for determining word embeddings making
- use of semantic knowledge, potential exists to extend in into the document
- domain through the doc2vec models presented in 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "le2014distributed"
-
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-In 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "iyyer2014generating"
-
-\end_inset
-
-, dependency trees are used instead of the constituency tree used in the
- original URAE, because of its improved invariance to syntactical changes.
- This may, by decreasing the impact of syntax create models with a greater
- emphasis on semantic placement.
+ for sum of word embeddings.
+ The difference in performance presented here for real-word sentences, were
+ more marked.
+ This may be attributed to real-world sentences often having meaning overlap
+ correspondent to word overlap.
+ It can be concluded that adding word vector representations is a practical
+ and surprisingly effective method for encoding the meaning of a sentence.
  
 \end_layout
 
@@ -2240,7 +2548,7 @@ key "iyyer2014generating"
 \begin_inset CommandInset bibtex
 LatexCommand bibtex
 bibfiles "../../../Resources/master_bibliography/master"
-options "ieeetr"
+options "abbrv"
 
 \end_inset
 
