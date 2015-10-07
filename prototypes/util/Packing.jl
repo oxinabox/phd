@@ -1,16 +1,19 @@
 module Packing
-export pack, unpack, unpack!
+export pack,pack!, unpack, unpack!
 
 function pack{T}(sources::AbstractArray{T}...)
     total_length = sum(map(length,sources))
     package = Vector{T}(total_length)
-    
+    pack!(Vector{T}(total_length), sources...)
+end
+
+function pack!{T}(output::Vector{T}, sources::AbstractArray{T}...)
     ii = 1
     for s in sources
-        package[ii:ii+length(s)-1]=vec(s)
+        output[ii:ii+length(s)-1]=vec(s)
         ii+=length(s)
     end
-    package
+    output
 end
 
 function unpack!{T}(package::Vector{T}, dests::AbstractArray{T}...)
