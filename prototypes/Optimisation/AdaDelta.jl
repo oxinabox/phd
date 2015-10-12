@@ -5,6 +5,7 @@ export adadelta
 using Optim
 import Optim.OptimizationTrace
 import Optim.MultivariateOptimizationResults
+import Optim.update!
 
 function maxdiff(x::Array, y::Array)
     res = 0.0
@@ -84,7 +85,7 @@ function adadelta{T}(d::Union{DifferentiableFunction, TwiceDifferentiableFunctio
                              xtol::Real = 1e-32,
                              ftol::Real = 1e-8,
                              grtol::Real = 1e-8,
-                             iterations::Integer = 20*1000,
+                             iterations::Integer = 20_000,
                              store_trace::Bool = false,
                              show_trace::Bool = false,
                              extended_trace::Bool = false,
@@ -118,7 +119,7 @@ function adadelta{T}(d::Union{DifferentiableFunction, TwiceDifferentiableFunctio
     gr = similar(x)
     
 
-    #Running windows of pass gradient and delta
+    #Running windows of past gradient and delta
     E_gr² = zeros(size(x))
     E_Δx² = zeros(size(x))
 
@@ -139,13 +140,14 @@ function adadelta{T}(d::Union{DifferentiableFunction, TwiceDifferentiableFunctio
     # Trace the history of states visited
     tr = OptimizationTrace()
     tracing = store_trace || show_trace || extended_trace
-    @gdtrace
+    
 
     # Assess multiple types of convergence
     x_converged, f_converged, gr_converged = false, false, false
 
     converged = false
     iteration = 0
+    @gdtrace
     while !converged && iteration < iterations
         # Increment the number of steps we've had to perform
         iteration += 1
@@ -160,8 +162,8 @@ function adadelta{T}(d::Union{DifferentiableFunction, TwiceDifferentiableFunctio
         # Update the function value and gradient
         f_x_previous = f_x
         f_x = d.fg!(x, gr)
-        f_calls+=1
-        g_calls+=1
+        f_calls += 1
+        g_calls += 1
 
         if f_x<=f_x_best
             f_x_best = f_x
@@ -189,7 +191,7 @@ function adadelta{T}(d::Union{DifferentiableFunction, TwiceDifferentiableFunctio
                                            x_best,
                                            f_x_best,
                                            iteration,
-                                           iteration == iterations,
+                                           iteration >= iterations,
                                            x_converged,
                                            xtol,
                                            f_converged,
