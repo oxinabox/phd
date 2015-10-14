@@ -1,10 +1,15 @@
+"""
+For many Optimisation methods the parameters must be given as a single vector.
+But for many interesting functions the parameters/coeffients to be optimised are matrixes, or a mixture of matrixes and vectors. Often this mix might be wrapped up into 
+"""
 module Packing
 export pack,pack!, unpack, unpack!, sizes
 
 function pack{T}(sources::AbstractArray{T}...)
     total_length = sum(map(length,sources))
     package = Vector{T}(total_length)
-    pack!(Vector{T}(total_length), sources...)
+    @inbounds pack!(package, sources...)
+    package
 end
 
 function pack!{T}(output::Vector{T}, sources::AbstractArray{T}...)
@@ -27,7 +32,8 @@ end
 
 function unpack{T}(package::Vector{T}, sizes::Union{Int,Tuple{Vararg{Int}}}...)
     ds = [Array{T}(sz) for sz in sizes]
-    unpack!(package, ds...)
+    @inbounds unpack!(package, ds...)
+    ds
 end
 
 
