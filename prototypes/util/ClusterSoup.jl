@@ -20,7 +20,7 @@ function put!{T}(pids::Vector{Int}, data::T, compression_level=5)
     serialize(data_streamed, data)
     const data_ser_compressed = compress(data_streamed.data, compression_level)
     
-    function decomp(comp_data::Array{Uint8,1}) 
+    function decomp(comp_data::Array{UInt8,1}) 
        data_ser = decompress(comp_data)
        deserialize(IOBuffer(data_ser)) :: T
     end
@@ -52,7 +52,7 @@ end
 
 function scatter_data(data::Vector)
     all_chuncks = get_chunks(data, nworkers()) |> collect;
-    remote_chunks = RemoteRef [put!(RemoteRef(pid), all_chuncks[ii]) for (ii,pid) in enumerate(workers())]
+    remote_chunks = RemoteRef[put!(RemoteRef(pid), all_chuncks[ii]) for (ii,pid) in enumerate(workers())]
     #Have to add the type annotation sas otherwise it thinks that, RemoteRef(pid) might return a RemoteValue
 end
 

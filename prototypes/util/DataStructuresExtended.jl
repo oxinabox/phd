@@ -1,6 +1,6 @@
 module DataStructuresExtended
 using DataStructures
-export convert 
+export convert, counter, ==,hash
 
 
 
@@ -28,4 +28,23 @@ function Base.convert{T}(::Type{Matrix{T}}, q::Deque{Vector{T}})
     data
 end
 
+
+
+function DataStructures.counter(T::DataType,seq)
+    ct = counter(T)
+    for x::T in seq
+        push!(ct, x)
+    end
+    return ct
 end
+
+function =={K,V}(lhs::DataStructures.Accumulator{K,V},rhs::DataStructures.Accumulator{K,V})
+    lhs.map == rhs.map    
+end
+
+
+function Base.hash{K,V}(obj::DataStructures.Accumulator{K,V},h::UInt64)
+    hash(obj.map,h)
+end
+
+end #end module
