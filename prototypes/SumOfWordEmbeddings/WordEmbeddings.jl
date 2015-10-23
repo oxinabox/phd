@@ -1,30 +1,30 @@
 module WordEmbeddings
 using Pipe
    
-export load_turins_embeddings, load_word2vec_embeddings
+export load_embeddings, load_word2vec_embeddings
 
 #Loads Turins embeddings
-function load_turins_embeddings(embedding_file, max_stored_vocab_size = 500_000)
+function load_embeddings(embedding_file, max_stored_vocab_size = 500_000, keep_words=Set())
     vector_size=0
     open(embedding_file,"r") do fh
         vector_size = length(split(readline(fh)))-1
     end
 
-    word_indexes=Dict{ASCIIString,Int64}()
-    indexed_words = Array(ASCIIString,max_stored_vocab_size)
+    word_indexes=Dict{AbstractString,Int64}()
+    indexed_words = Array(AbstractString,max_stored_vocab_size)
     LL = Array(Float32,(vector_size, max_stored_vocab_size))
     
     index=1
     for line in eachline(open(embedding_file,"r"))
         fields = line |> split
-        word = convert(ASCIIString, fields[1])
-        vec = [parse(Float32,fs) for fs in fields[2:end]]
-        
-        indexed_words[index]= word
-        LL[:, index] = vec
-        word_indexes[word]=index
-        
-        index+=1
+        word = convert(AbstractString, fields[1])
+        if length(keep_words)==0 || word in keep_words
+            vec = [parse(Float32,fs) for fs in fields[2:end]]
+            indexed_words[index]= word
+            LL[:, index] = vec
+            word_indexes[word]=index
+            index+=1
+        end
         if index>max_stored_vocab_size
             warn("Max Vocab size exceeded. More words are available if you want.")
             break
