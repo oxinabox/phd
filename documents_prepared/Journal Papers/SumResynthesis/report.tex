@@ -1,0 +1,202 @@
+\documentclass[]{scrartcl}
+\usepackage[sharp]{easylist}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\usepackage{pdflscape}
+\usepackage{amsmath}
+%opening
+\title{Resynthesising Sentences from the Sums of their Embeddings}
+\author{Lyndon White}
+\graphicspath{{./figs/}}
+\setlength\itemsep{2mm}
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+\end{abstract}
+
+\section{Introduction}
+
+
+\begin{figure}
+	\centering 
+	\includegraphics{block_diagram}
+\end{figure}
+The task being tackled here is the resynthesise of sentences from vector embeddings.
+In particular it is concerned with the sum of word embeddings type vectors.
+
+\subsection{Where do SOWE type embeddings come from?}
+The most basic place to get a SOWE embedding is by adding up the vectors for the words in a sentence.
+However that is obviously fairly uninteresting -- if the words are already known there is no need to resynthesises them. There may be some uses in this case for say compression.
+
+Other sources are more interesting:
+
+\begin{easylist}[itemize]
+	# Averaging Sentences
+	# Sampling Sentences from near to the SOWE
+	# Transformations from Known Sentence SOWE
+	## For example there is a known (rough) offset vector between Country names and their Capital City names
+	## By adding this vector to sentences, we can transform references to countries into references to their cities
+\end{easylist}
+
+
+\section{Search for Vocabulary Subset used in Sentence}
+
+\includepdf{./figs/algorithm_flowchart.pdf}
+
+\begin{easylist}[itemize]
+	# Method for finding the words that add up to the sentence vector -- or get as near to it as possible. See diagram
+	#Addition Step:
+	## First Add words to our word set, adding the one which gets us closest first
+	## Til we can't find any words that we can add without moving away
+	# Substitution step:
+	## Consider deleting, or subsituting each word in the
+	## This counters some of the greed in the addition step
+	## But not always, sometimes two (or more) words might be wrong, but changing either of them alone does not move closer to target.
+	# Repeat addition and substitution steps until converges
+	## Can do better by also considering swapping two words
+	### But this has time completity of $O(w^2 v^2)$ where $w$ is current word set size, and $v$ is vocab size.
+	### And it gets word for higher order swaps
+	### Still Double swaps may be worth doing. But it took about 30 seconds to solve one sentence that needed a double swap. and that is with a vocab of just 1300 words.
+\end{easylist}
+
+\subsection{Results}
+\begin{easylist}[itemize]
+	# Performance is near to perfect on ATIS2 and the Doctors Letters as far as getting back words, and also on ordering them (next section)
+	
+	# On a 10\% sample of the Brown corpus (4200 sentences),
+	## Overall 68.8\% of sentences recovered all words.
+	## Of the 2252 sentences from that sample with less than 20 words, 97.5\% recover all words. 
+	## Of sentences with 20 or more words only 35.5\% recover all words, however these sentences have a greater problem, in that the ordering taking too long (see next section).
+\end{easylist}
+
+
+
+
+\section{Search for Best Ordering}
+\begin{easylist}[itemize]
+	# Use classical Language Modelling to find probability of any string of words.
+	# Using Kneser-Ney smoothed trigrams, modelled on 90\% of corpus
+	## Save 10\% for test
+	# Trigram has form $P(W_i\!=\!w_i \mid W_{i-1}\!=\!w_{i-1}, W_{i-2}\!=\!_{i-2})$
+	## Which we will write as $P(w_i \mid w_{i-1}, w_{i-2})$
+	## Have pseudo-words for start and end-states. Added before trigram language model is created.
+	### Thus can always start from known states probability of 1.
+	### And can use the information on words likely to start and end sentences
+	# Language model is a Markov model
+	## State is the last two words
+	### Note this means $P(a,b|b,c)=P(a|b,c)$ as old first word in state always becomes new second word in state
+	## Markov Assumption: the next state is dependent only on the current state
+	##  $P(W_i \mid W_{i-1}, W_{i-2}, W_{i-3}, ...) = P(W_i \mid W_{i-1}, W_{i-2})$
+	# Evaluate Markov Chains to find probability of any given ordering
+	## For example:
+	\begin{equation}
+	\begin{split}
+	P(d,c,b,a) &= P(d|c,b,a) P(c,b,a) \\
+			   &= P(d|c,b) P(c,b,a) \\
+			   &= P(d|c,b) P(c,b|b,a) P(b,a) \\
+			   &=P(d|c,b) P(c|b,a) P(b,a)
+	\end{split}
+	\end{equation}
+	
+	# Finding all paths
+	## We need to find the most likely path through the Markov Directed Acyclic Graph
+	## This means finding probability of all possible paths
+	## When considering multiple paths, many of the sub-probabilities will be reused. Thus Dynamic programming can/must/is be used.
+	## Can save some time by removing suitable ``impossible" paths early
+	### Currently defining this by any single trigram in the path having $P=0$ for what a double-precision floating point value considers zero.
+	
+	# Even with these efficiency's this method takes too long for more than 20 word sentences. 
+	## This doesn't seem particularly problematic:
+	### The finding words is more likely to fail for sentences that long
+	### There are published results shown only for shorter sentences. Eg Socher's Parsing with RNNs was only shown for sentences of length up to 14
+	### We can probably work out a way to solve this. More aggressive pruning. Graph partitioning. Something.
+
+	
+\end{easylist}
+
+\subsection{Results}
+It seems reasonable to evaluate the performance with BLEU score as if we were translating from numbers back to the original text. 
+There 
+\begin{easylist}[itemize]
+	# Performance figures are for the subsets of length less than 20. 
+	# It is on the reconstructed bags of words so can not out perform previous step
+	
+	# On ATIS2: Perfect 85\%,  BLEU >95\%
+	## ATIS2 has a lot of sentences which are ambiguous as to order eg "Show me flights from Denvar to San Francisco"
+	### Most language is not like this -- not this bad at least.
+	
+	# Doctors letters: Perfect 98\%, BLEU>99\%
+	
+	# Brown corpus still running.
+\end{easylist}
+ 
+
+\subsection{Freewords}
+\begin{easylist}[itemize]
+# A complication is the possibility of adding "freewords".
+# These are words that can be added during the ordering step, even if they were not in the original.
+# if they increase the probability of a sentence ordering, beyond one that does not have them.
+# Two reasons why they are useful to the think about
+## Some words are missing from the Word Embedding Vocabulary
+### Eg the word \emph{to} is missing from the Google News pretrained skip-grams. 
+### it is one of the most common words in ATIS2. The results reported above for ATIS2 have it inserted as a freeword
+## Not all possitions in SOWE space are grammatical, some freewords can be added to form grammatical sentences 
+### at the cost of potentially distorting meaning
+### But if the right set of free words were chosen eg \emph{and}; this would not be an issue.
+\end{easylist}
+
+
+ 
+\newcommand{\mdiagram}[4][0.9]{%
+\begin{landscape}
+	\includepdf[landscape, scale=#1, offset=100 0,pagecommand={
+		\thispagestyle{empty}
+		\subsection{#3}
+		\begin{itemize}
+			\setlength{\itemsep}{-3pt}
+			#4%
+		\end{itemize}
+	}]{./figs/#2.pdf}
+\end{landscape}
+}
+
+\mdiagram[0.5]{markov_reordering1}{Show Cheap Flights}{
+	\item cheap show flights $P=0.0$
+	\item cheap flights show $P=0.0$
+	\item show cheap flights $P=0.0$
+	\item show flights cheap $P=0.0$
+	\item flights cheap show $P=0.0$
+	\item flights show cheap $P=0.0$
+	\item Fails as this is an very poor sentence
+	}
+\mdiagram{markov_reordering2}{Show The Cheapest Flight}{
+	\item show the cheapest flight $P=0.9994768960040612$
+	\item show flight the cheapest $P=0.0005186917031990766$
+	\item show cheapest flight the $P=4.412292739699182\times 10^{-6}$
+	\item show cheapest the flight $P=0.0$
+	\item flight show cheapest the $P=0.0$
+	\item flight the show cheapest $P=0.0$
+	\item ...
+	}
+\mdiagram{markov_reordering3}{Show All The Cheapest Flights}{
+	\item show all the cheapest flights $P=0.9970072382584245$
+	\item all flights show the cheapest $P=0.002394874466709871$
+	\item all the flights show cheapest $P=0.0005588257639594186$
+	\item flights show all the cheapest $P=3.902260703056939\times 10^{-5}$
+	\item cheapest flights show all the $P=3.89038754905346\times 10^{-8}$
+	\item all cheapest flights the show $P=0.0$
+	\item ...
+	}
+\mdiagram{markov_reordering4}{Show Me All The Cheapest Flights}{
+	\item show me all the cheapest flights $P=0.9976611556180363$
+	\item all flights show me the cheapest $P=0.002287767676692731$
+	\item flights show me all the cheapest $P=5.099115447705249\times 10^{-5}$
+	\item cheapest flights show me all the $P=5.0836007018696596\times 10^{-8}$
+	\item all the cheapest flights show me $P=3.4714786951415333\times 10^{-8}$
+	\item show flights all cheapest the me $P=0.0$
+	\item ...
+	}
+\end{document}
