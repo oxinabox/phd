@@ -86,21 +86,26 @@ $$Minimise\: d(S, \sum_{1\le j\le V}\:\tilde{x}_{j}c_{j})$$
 # Where $d$ is some distance metric
 # $S$ is the target vector,
 # $V$ is size of the vocabulary (~1300 for ATIS2, ~50,000 for Brown, ~10,000 for daily English)
-# $\tilde{x}_j$ is the vector embedding for the jth word in the vocabulary $\tilde{x}_j \in \mathbb{R}^n$ 
+# $\tilde{x}_j$ is the vector embedding for the jth word in the vocabulary $\tilde{x}_j \in \mathbb{R}^n$
+# $n$ is the dimensionality of the word vectors, $n = 300$ in current trials.  
  
 \end{easylist}
 
 
-\subsubsection{TIme Complexity}
+\subsubsection{Time Complexity}
 The time complexity of the addition step is $O(t \cdot V\tau n)$
 Where $t$ is the maximum number of terms (words) in a sentence that adds up to $S$.
 
-$t$ can be bounded by considering how many times the smallest element of the vocabulary can fit into $S$.
+$t$ can be bounded by considering how many times the smallest net vector formed by the smallest some of elements the vocabulary (over all multiplicities) can fit into $S$.
 
-$$t = \min_{\forall 1 \le i \le n}\: \left(\max_{\forall 1\le j \le V}\: \frac{S_i}{x_{ji}} \right)$$
+$$t = \min_{\forall 1 \le i \le n}\: \left(\max_{\forall C \in \mathbb{N}_0^V}\: \frac{S_i}{\sum_{1\le j \le V} C_j\: x_{j,i}} \right)$$
+
+Solving the above for $t$ is not feasible. However in practice, $t$ is equal to the length of the longest sentence allowed (Say 55 words for ATIS). Also, due to the degregation in performance of the greedy algorithm, and the time taken in the resconstruction step it has to be limitted anyway. $t$ can be treated as a small constant.
 
 The time complexity of the swap step is $$O(tVn)$$ also.
-The complextity of the double swap step if $$t^2 V^2 n^2$$
+The complexity of the double swap step is $$t^2 V^2 n^2$$
+
+In all these complexities, the Vocabulary size $V$ dominates. and so other terms can be largely ignored.
 
 \section{Search for Best Ordering}
 \begin{easylist}[itemize]
