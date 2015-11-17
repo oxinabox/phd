@@ -47,4 +47,24 @@ function Base.hash{K,V}(obj::DataStructures.Accumulator{K,V},h::UInt64)
     hash(obj.map,h)
 end
 
+function Base.union{K,V}(aa::DataStructures.Accumulator{K,V},bb::DataStructures.Accumulator{K,V})
+    ret = DataStructures.Accumulator(K,V)
+    for key in union(keys(aa), keys(bb))
+        ret.map[key]=max(aa[key], bb[key])
+    end
+    ret
+end
+
+function Base.intersect{K,V}(aa::DataStructures.Accumulator{K,V},bb::DataStructures.Accumulator{K,V})
+    ret = DataStructures.Accumulator(K,V)
+    for key in union(keys(aa), keys(bb))
+        ret.map[key]=min(aa[key], bb[key])
+    end
+    ret
+end
+
+function Base.sum{K,V}(aa::DataStructures.Accumulator{K,V})
+    sum(aa.map |> values)
+end
+
 end #end module
