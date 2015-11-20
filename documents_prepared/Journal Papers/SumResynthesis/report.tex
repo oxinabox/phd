@@ -4,14 +4,35 @@
 \usepackage{pdfpages}
 \usepackage{pdflscape}
 
+\usepackage{amsthm}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{amsfonts}
 
-\usepackage[backend=bibtex]{biblatex}
+
+\makeatletter
+\numberwithin{equation}{section}
+\numberwithin{figure}{section}
+\theoremstyle{plain}
+\newtheorem{thm}{\protect\theoremname}
+\theoremstyle{definition}
+\newtheorem{defn}[thm]{\protect\definitionname}
+\makeatother
+
+\usepackage[english]{babel}
+\providecommand{\definitionname}{Definition}
+\providecommand{\theoremname}{Theorem}
+
+
+ 
+\usepackage[backend=bibtex,
+ style=authoryear-icomp,
+ maxcitenames=2
+]{biblatex}
 \bibliography{../../../Resources/master_bibliography/master.bib }
+\usepackage{cleveref}
 
 %End Packages
-
 
 
 \DeclareMathOperator*{\argmin}{argmin}
@@ -36,6 +57,8 @@
 \begin{figure}
 	\centering 
 	\includegraphics{block_diagram}
+	\caption{The process for the regenerating sentences from SOWE-type sentence vectors.}
+	\label{block_diagram}
 \end{figure}
 The task being tackled here is the resynthesise of sentences from vector embeddings.
 In particular it is concerned with the sum of word embeddings type vectors.
@@ -47,23 +70,87 @@ It has not received a lot of attention.
 
 
 In general sentence embeddings may be described as compositional, or non-compositional.
-The compositional models come from classical linguistics -- taking the hierarchical  break-down of a sentence into clauses, phrases and words, compositional vector models produce vectors by moving up the tree combining (or composing) the vectors in a substructure to find a vector for the substructure. This composition continues until the a vector has been found for the root of the sentence tree. Many successful compositional models have been developed, of particular note have been the recursive neural network based methods of Socher et al.  \cite{socher2010PhraseEmbedding,SocherEtAl2011:RAE,SocherEtAl2011:PoolRAE,Socher2011ParsingPhrases,SocherMVRNN,RvNTN,SocherEtAl2013:CVG,Socher2013TensorReasoning}. Compositional embedding models have strong basis from their linguistic underpinnings.
+The compositional models come from classical linguistics -- taking the hierarchical  break-down of a sentence into clauses, phrases and words, compositional vector models produce vectors by moving up the tree combining (or composing) the vectors in a substructure to find a vector for the substructure. This composition continues until the a vector has been found for the root of the sentence tree. Many successful compositional models have been developed, of particular note have been the recursive neural network based methods of  \cite{socher2010PhraseEmbedding}%,SocherEtAl2011:RAE,SocherEtAl2011:PoolRAE,Socher2011ParsingPhrases,SocherMVRNN,RvNTN,SocherEtAl2013:CVG,Socher2013TensorReasoning}. Compositional embedding models have strong basis from their linguistic underpinnings.
 
 Non-compositional embeddings cover all other embedding techniques. Recently significant attention has come to Le and Mikolov's work \cite{le2014distributed}, which is a direct augmentation of word embedding creation techniques, with an additional paragraph or sentence vector. Other non-compositional techniques include the classic bag of words (BOW), and the simple sum of word embeddings (SOWE). Non-compositional methods draw a significant criticism for disregarding structure; BOW and SOWE draw additional criticism for also disregarding word order. However these weaknesses, while correct, may be entirely offset by the improved discrimination in other factors -- allowed for some non-compositional methods to be comparable overall. 
 
 
-Recent work of White et. al. \cite{White2015SentVecMeaning} found that classifying real word data sententeces according to meaning SOWE was a very strong model. Work of Ritter et. al. presents a similar task on spacial-positional meaning, which used carefully constructed artificial data, for which it was believed only compositional models could solve, here also SOWE was found performing comparably and again even out performing the compositional models. Thus simple methods such as SOWE are still worth consideration. SOWE is the basic of the work presented in this paper.
+Recently \cite{White2015SentVecMeaning} found that classifying real word data sentences according to meaning SOWE was a very strong model. Work of Ritter et. al. presents a similar task on spacial-positional meaning, which used carefully constructed artificial data, for which it was believed only compositional models could solve, here also SOWE was found performing comparably and again even out performing the compositional models. Thus simple methods such as SOWE are still worth consideration. SOWE is the basic of the work presented in this paper.
 
 
 To our knowledge only two prior works exist in this area, both concerned with compositional vector embeddings.
 
-The work of Dinu and Baroni \cite{Dinu2014CompositionalGeneration},  extends the models described by Zanzotto et al.\cite{zanzotto2010estimating} and Guevara\cite{Guevara2010} for generation; those models are in turn which are in turn specific cases of the general compositional model described by Mitchell and Lapata\cite{Mitchell2008}. The compositional models used in these works are pre-neural network based techniques used in embeddings today -- though the work Dinu and Baroni does apply to some of today's compositional models in general. While it theoretically generalised to whole sentences Dinu and Baroni's work is quantitatively assessed for very short phrases.
+\cite{Dinu2014CompositionalGeneration}  extends the models described by \cite{zanzotto2010estimating, Guevara2010} for generation; those models are in turn which are in turn specific cases of the general compositional model described by Mitchell and Lapata\cite{Mitchell2008}. The compositional models used in these works are pre-neural network based techniques used in embeddings today -- though the work Dinu and Baroni does apply to some of today's compositional models in general. While it theoretically generalised to whole sentences Dinu and Baroni's work is quantitatively assessed for very short phrases.
 
 %Dinu and Baroni \cite{Dinu2014CompositionalGeneration} focuses on describing composition as a pair of linear transformations of word vectors, followed by a sum $$f_{comp}\::\:\mathbb{R}^d\times\mathbb{R}^d \to \mathbb{R}^d\::\: (\tilde{u}, \tilde{v})\mapsto W_1\tilde{u}+W_2\tilde{v}$$ where the linear transformations $W_1$,$W_2$ are dependent on the parts of speech.
 
 The work of Iyyer et. al. \cite{iyyer2014generating} is based on an extension of the unfolding recursive autoencoder\cite{SocherEtAl2011:PoolRAE}. It can produce sentences from vectors, if given the structure to decompose the vector into. Theoretically the unfolding recursive auto-encoder could be used in the same way to generate sentences, however that has never been shown. Recursive neural networks are jointly trained for both composing the sentence's words into a vector, and for decomposing that vector into words. This method was demonstrated quantitatively on five examples. There are not currently any large scale quantitative results published for the use of Iyyer et. al.'s technique.
 
 Both Dinu and Baroni \cite{Dinu2014CompositionalGeneration}, and Iyyer et. al. \cite{iyyer2014generating}, require an output structure to be provided for the decomposition.
+The new method proposed here, does not require, or indeed allow, structural information.
+
+
+
+The method proposed in this paper The method takes in a SOWE-type sentence vector, and outputs the sentence which it corresponds to.
+This is done in two steps, as shown in \cref{block_diagram}.
+The first step is to determine which words are in the sentence -- this converts the SOWE embedding into a bag of words.
+The second step is to order that bag of words into a sentence -- a language modelling task.
+This paper will focus on the first part -- the word selection problem. 
+Though a demonstration of the feasibly of solving the second part -- the ordering problem --  is shown in \cref{ordering}.
+
+\section {The Selection Problem}
+
+
+At the core of this problem is what we will call the Vector Selection Problem, to select which word vectors, with option of repetition, are sum to be closest to the target SOWE.
+As there is a bijection between word embeddings and their words, solving for the word embeddings used also solves for the words used -- note that practice not two words are similar enough in usage in any reasonable training corpora to have the precise same embedding under current methods
+
+\subsection{Formal Definition: }
+\begin{defn} {The Vector Selection Problem}
+
+	
+	The Vector Selection Problem is defined on $(\mathcal{V},\,\tilde{s},\,d)$ for
+	\begin{itemize}
+		\item A finite vocabulary of vectors $\mathcal{V}$, $\mathcal{V}\subset\mathbb{R}^{n}$
+		\item a target vector $\tilde{s}$, $\tilde{s}\in\mathbb{R}^{n}$
+		\item any metric $d$ 
+		
+		
+		by
+		\[
+		\argmin_{\left\{ \forall\tilde{c}\in\mathbb{N}_{0}^{V}\right\} }\:d(\tilde{s},\,\sum_{j=1}^{j=V}\:\tilde{x}_{j}c_{j})
+		\]
+		
+		
+		
+		\medskip{}
+		
+		
+		\item $V$ is size of the vocabulary $\mathcal{V}$. (\textasciitilde{}1300
+		for ATIS2, \textasciitilde{}50,000 for Brown, \textasciitilde{}10,000
+		for daily English) 
+		\item $\tilde{x}_{j}$ is the vector embedding for the jth word in the vocabulary
+		$\tilde{x}_{j}\in\mathcal{V}$ 
+		
+		\begin{itemize}
+			\item We can express the embedding vocabulary $\mathcal{V}=\{\tilde{x}_{j}\,|\,\forall j\in\mathbb{N}\:\wedge\;1\le j\le V\}\subset\mathbb{R}^{n}$
+			\item If we treat $\mathcal{V}$ as a matrix with vectors $\tilde{x}_{j}$
+			for rows,(and treat length 1 vectors as scalars) we get the compact
+			notation 
+			\[
+			\argmin_{\left\{ \forall\tilde{c}\in\mathbb{N}_{0}^{J}\right\} }\:d(\tilde{s},\,\sum_{j=1}^{j=V}\:\tilde{x}_{j}c_{j})=\argmin_{\left\{ \forall\tilde{c}\in\mathbb{N}_{0}^{J}\right\} }\:d(\tilde{s},\,\mathcal{V}\,\tilde{c}^{T})
+			\]
+			
+		\end{itemize}
+		\item $c_{j}$ is the count of how many times the jth word in the vocabulary
+		occurs. $\tilde{c}\in\mathbb{N}_{0}^{V}$, so $c_{j}\in\mathbb{N}_{0}$
+		\item $n$ is the dimensional of the word vectors, $n=300$ in current trials. \end{itemize}
+\end{defn}
+
+\section{The Ordering Problem} \label{ordering}
+In this section a demonstration of the feasibly of solving for the correct word order, given the output of the previous step is shown.
+
+As the overall problem can be consider a task of translating from a vector to a natural language sentence, the BLEU\cite{Papineni2002} score can be used for assessing how well the output sentence matches the input reference.
+
 
 
 \subsection{Where do SOWE type embeddings come from?}
