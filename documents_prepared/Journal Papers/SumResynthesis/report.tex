@@ -114,17 +114,13 @@ As there is a bijection between word embeddings and their words, solving for the
 		\item a target vector $\tilde{s}$, $\tilde{s}\in\mathbb{R}^{n}$
 		\item any metric $d$ 
 		
-		
 		by
 		\[
 		\argmin_{\left\{ \forall\tilde{c}\in\mathbb{N}_{0}^{V}\right\} }\:d(\tilde{s},\,\sum_{j=1}^{j=V}\:\tilde{x}_{j}c_{j})
 		\]
 		
-		
-		
 		\medskip{}
-		
-		
+				
 		\item $V$ is size of the vocabulary $\mathcal{V}$. (\textasciitilde{}1300
 		for ATIS2, \textasciitilde{}50,000 for Brown, \textasciitilde{}10,000
 		for daily English) 
@@ -147,9 +143,26 @@ As there is a bijection between word embeddings and their words, solving for the
 \end{defn}
 
 \section{The Ordering Problem} \label{ordering}
-In this section a demonstration of the feasibly of solving for the correct word order, given the output of the previous step is shown.
+In this section a demonstration of the feasibly of solving for the correct word order, given the output of the previous step is shown. This is a stochastic language modelling problem -- to determine the most likely sequence of words, given the constraints that the words are exactly those given by the BOW output from the previous step. The method presented here simply to show its feasibility; the development of efficient technique for use in the ordering problem is left for future work.
 
-As the overall problem can be consider a task of translating from a vector to a natural language sentence, the BLEU\cite{Papineni2002} score can be used for assessing how well the output sentence matches the input reference.
+
+For purposes of this demonstration a simple Kneser-Ney smoothed trigram model \parencite{kneser1995improved} was used. The language model allows us to evaluate the probability of any given sequence of words using a Markov model.
+A directed acyclic graph of states can be produced for possible sequences of words as shown in \cref{markov_diagram}. The graph is restricted, in that terminal nodes must be followed by the end state, and must also have no words from the input BOW unassigned. The task is then modelled as finding the most-likely path through the graph.
+Beam search was used to search the graph. At each node in the graph only the beam width (in the results following the beam width was five) most likely transitions (using just the a signal step of the trigram) were considered. This search is not complete, nor optimal -- there may be a better ordering that requires a transition that is outside the beam width. The beam-width restriction allows the combinatorial problem to be completed in feasible time. For a BOW with $n$ words, and beam width $b$ (assuming $b<n$) the time complexity is $O(b^{n-b}b!)$, rather than $O(n!)$ for a full search of all possible orderings. Memorization is also used to avoid re-searching known branches; and branches cease to be  if their accumulated probability for the path becomes zero (potentially do to underflow on the 64-bit IEEE floating point numbers).
+
+Even with these techniques to decrease the time taken, running the search over long sentences takes significant amount of time: on the order of 10 seconds for a sentence of length 17. For this reason the ordering step is only carried out for the BOWs corresponding to reference sentences of length 18 or less. 
+  
+  
+\begin{figure}
+	\centering 
+	\includegraphics{markov_reordering2}
+	\caption{The Markov graph of possible states in the search through trigrams for the most-likely ordering of the sentence ``Show The Cheapest Flight''.}
+	\label{markov_diagram}
+\end{figure}
+
+
+As the overall problem can be consider a task of translating from a vector to a natural language sentence, the BLEU  score \parencite{Papineni2002} can be used for assessing how well the output sentence matches the input reference.
+
 
 
 
