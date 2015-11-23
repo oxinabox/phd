@@ -18,12 +18,13 @@ See the example.tex for illustration of how to use.
 
 
 
-Requirements
--------------
-Requires the bbding package, for the cross icons in the bullet points.
-To remove comment out appropriate lines of beamerthemeuwa.sty
+Options:
+-------
+Takes an option `crossbullets`, if pressent uses "more interesting" cross/club shaped bullet points.
+This requires the bbding package to have the icons.
 
-Also requires the graphicx package, but that should be fairly ubiquitous 
+
+
 
 License:
 ---------
