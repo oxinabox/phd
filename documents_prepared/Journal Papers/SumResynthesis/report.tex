@@ -1,4 +1,5 @@
 \documentclass[]{scrartcl}
+
 \usepackage[sharp]{easylist}
 \usepackage{graphicx}
 \usepackage{pdfpages}
@@ -23,6 +24,7 @@
 \newtheorem{defn}[thm]{\protect\definitionname}
 \makeatother
 
+\usepackage{csquotes}
 \usepackage[english]{babel}
 \providecommand{\definitionname}{Definition}
 \providecommand{\theoremname}{Theorem}
@@ -31,9 +33,10 @@
  
 \usepackage[backend=bibtex,
  style=authoryear-icomp,
+ bibencoding=ascii,
  maxcitenames=2
 ]{biblatex}
-\bibliography{../../../Resources/master_bibliography/master.bib }
+\bibliography{../../../Resources/master_bibliography/master}
 \usepackage{cleveref}
 
 %End Packages
@@ -76,10 +79,10 @@ It has not received a lot of attention.
 In general sentence embeddings may be described as compositional, or non-compositional.
 The compositional models come from classical linguistics -- taking the hierarchical  break-down of a sentence into clauses, phrases and words, compositional vector models produce vectors by moving up the tree combining (or composing) the vectors in a substructure to find a vector for the substructure. This composition continues until the a vector has been found for the root of the sentence tree. Many successful compositional models have been developed, of particular note have been the recursive neural network based methods of  \cite{socher2010PhraseEmbedding}%,SocherEtAl2011:RAE,SocherEtAl2011:PoolRAE,Socher2011ParsingPhrases,SocherMVRNN,RvNTN,SocherEtAl2013:CVG,Socher2013TensorReasoning}. Compositional embedding models have strong basis from their linguistic underpinnings.
 
-Non-compositional embeddings cover all other embedding techniques. Recently significant attention has come to Le and Mikolov's work \cite{le2014distributed}, which is a direct augmentation of word embedding creation techniques, with an additional paragraph or sentence vector. Other non-compositional techniques include the classic bag of words (BOW), and the simple sum of word embeddings (SOWE). Non-compositional methods draw a significant criticism for disregarding structure; BOW and SOWE draw additional criticism for also disregarding word order. However these weaknesses, while correct, may be entirely offset by the improved discrimination in other factors -- allowed for some non-compositional methods to be comparable overall. 
+Non-compositional embeddings cover all other embedding techniques. Recently significant attention has come towards  \cite{le2014distributed}, which is a direct augmentation of word embedding creation techniques, with an additional paragraph or sentence vector. Other non-compositional techniques include the classic bag of words (BOW), and the simple sum of word embeddings (SOWE). Non-compositional methods draw a significant criticism for disregarding structure; BOW and SOWE draw additional criticism for also disregarding word order. However these weaknesses, while correct, may be entirely offset by the improved discrimination in other factors -- allowed for some non-compositional methods to be comparable overall. 
 
 
-Recently \cite{White2015SentVecMeaning} found that classifying real word data sentences according to meaning SOWE was a very strong model. Work of Ritter et. al. presents a similar task on spacial-positional meaning, which used carefully constructed artificial data, for which it was believed only compositional models could solve, here also SOWE was found performing comparably and again even out performing the compositional models. Thus simple methods such as SOWE are still worth consideration. SOWE is the basic of the work presented in this paper.
+Recently \cite{White2015SentVecMeaning} found that classifying real word data sentences according to meaning SOWE was a very strong model. \cite{RitterPosition} presents a similar task on spacial-positional meaning, which used carefully constructed artificial data, for which it was believed only compositional models could solve, here also SOWE was found performing comparably and again even out performing the compositional models. Thus simple methods such as SOWE are still worth consideration. SOWE is the basis of the work presented in this paper.
 
 
 To our knowledge only two prior works exist in this area, both concerned with compositional vector embeddings.
@@ -96,11 +99,11 @@ The new method proposed here, does not require, or indeed allow, structural info
 
 
 The method proposed in this paper The method takes in a SOWE-type sentence vector, and outputs the sentence which it corresponds to.
-This is done in two steps, as shown in \cref{block_diagram}.
+This is done in two steps, as shown in \Cref{block_diagram}.
 The first step is to determine which words are in the sentence -- this converts the SOWE embedding into a bag of words.
 The second step is to order that bag of words into a sentence -- a language modelling task.
 This paper will focus on the first part -- the word selection problem. 
-Though a demonstration of the feasibly of solving the second part -- the ordering problem --  is shown in \cref{ordering}.
+Though a demonstration of the feasibly of solving the second part -- the ordering problem --  is shown in \Cref{ordering}.
 
 \section {The Selection Problem}
 
@@ -159,71 +162,83 @@ The subset sum problem is NP-complete\cite{karp1972reducibility}. Is defined: fo
 
 
 \subsection{Selection Algorithm}
-The algorithm proposed here to solve the selection problem is a greedy search for a path to the targeted sum point $\s$, followed by a correction step; this process is repeated until no change is made to the path. 
+The algorithm proposed here to solve the selection problem is a greedy iterative processes that continues to convergence. In each iteratio, first a greedy search (Greedy Addition) for a path to the targeted sum point $\s$ is done, followed by correction with a substitution based step (n/m--substitution). This process is repeated until no change is made to the path. The majority of the selection is done in the Greedy Addition step, the substitution is handles the fine tuning.
 
 \subsubsection{Greedy Addition}
-	\begin{function}[H]
-		\SetAlgoLined
-			\KwData{the metric $d$\\the target sum $\s$\\ the vocabulary of vectors $\V$\\The current best bag of vectors $bag_c$: initially $\emptyset$}
-			\KwResult{The modified $bag_c$  which sum to be as close as greedy search can get to the target $\s$, under the metric $d$}
-			\Begin{
-			$\t \longleftarrow \sum\limits_{x_i\in bag_c} x_i$\;
-	
-			\Repeat{$\neg improved$}{
-				$\x^\ast \longleftarrow \argmin\limits_{x_j\in \V} d(\s, \t+\x_j) $\;
-				
-				\eIf{$d(\s, \t+\x^\ast)  < d(\s, \t)$}{
-					$t \longleftarrow \t + \x^\ast$\;
-					$bag_c \longleftarrow bag_c \cup \{\x^\ast\}$\;	
-					$improved \longleftarrow true$\;
-				}{
-					$improved \longleftarrow false$\;
-				}
-			}
-			\Return{$bag_c$}
-		}
-	\caption{GreedyAddition(). In practical implementation, the bag of vectors is represented as list of indexes into columns of the embedding vocabulary matrix}
-	\end{function}
+The greedy addition step is characterised by adding the best vector to the bag at each step (see the pseudocode in \Cref{pseudocode:greedyaddition}). At each step, all the vectors in the bag are summed, and each vector in the vocabulary is added in turn to evaluate the new distance the new bag would have from the target, if any of the new bags are closer than the existing bag, then the best of them replaces the existing bag. This continues until there is no option to add any of the vectors without moving the sum away from the target. Greedy addition works surprisingly well on its own, but it is enhanced with a fine tuning step to decrease its greed.
 
-\subsubsection{Step Substitution}
-	\begin{function}[H]
-		\SetAlgoLined
+\begin{algorithm}
+	\SetAlgoLined
 		\KwData{the metric $d$\\the target sum $\s$\\ the vocabulary of vectors $\V$\\The current best bag of vectors $bag_c$: initially $\emptyset$}
 		\KwResult{The modified $bag_c$  which sum to be as close as greedy search can get to the target $\s$, under the metric $d$}
 		\Begin{
-			$\t \longleftarrow \sum\limits_{x_i\in bag_c} x_i$\;
+		$\t \longleftarrow \sum\limits_{x_i\in bag_c} x_i$\;
+
+		\While{true}{
+			$\x^\ast \longleftarrow \argmin\limits_{x_j\in \V} d(\s, \t+\x_j) $\;
 			
-			\Repeat{$\neg improved$}{
-				$\x^\ast \longleftarrow \argmin\limits_{x_j\in \V} d(\s, \t+\x_j) $\;
-				
-				\eIf{$d(\s, \t+\x^\ast)  < d(\s, \t)$}{
-					$t \longleftarrow \t + \x^\ast$\;
-					$bag_c \longleftarrow bag_c \cup \{\x^\ast\}$\;	
-					$improved \longleftarrow true$\;
-				}{
-				$improved \longleftarrow false$\;
+			\eIf{$d(\s, \t+\x^\ast)  < d(\s, \t)$}{
+				$t \longleftarrow \t + \x^\ast$\;
+				$bag_c \longleftarrow bag_c \cup \{\x^\ast\}$\;	
+			}{
+				\tcc{No further improving step found, so done}
+				\Return{$bag_c$} 
 			}
 		}
-		\Return{$bag_c$}
+		
 	}
-	\caption{(1/1)--Sub(). In practical implementation, the bag of vectors is represented as list of indexes into columns of the embedding vocabulary matrix}
-\end{function}
+\caption{GreedyAddition. In practical implementation, the bag of vectors can be represented as list of indexes into columns of the embedding vocabulary matrix}
+\label{pseudocode:greedyaddition}
+\end{algorithm}
+
+
+\subsubsection{n/m--Substitution}
+We define a new substitution based method for fine tuning solutions called n/m--Substitution. It can be described as considering all subbags containing up to $n$ elements, consider replacing them with a new sub-bag of up to size $m$ from the vocabulary, including none at all, if that would result in getting closer to the target $\s$. As this involves $O(V^m)$ operations, with large vocabularies it is only possible to consider 1/1--Substitution, this itself works quiet well. This was done with the brown corpus, where $V\approxeq 40,000$. On other smaller trial corpora, where $V\approxeq 1,000$ 2/2--Substitution was used and found to give an improvement. In general it is possible to use the start with n/m--Substitution, with the overall algorithm, and then if that converges but with a distance from the target beyond some threshold it can be retried, from the best bag found in the previous run, with higher values for n and m.
+
+The reasoning behind performing n/m--substitution is to correct for greedy mistakes. Consider for example the 1 dimensional case where $\V={24,25,50}$ and $\s=98$, $d(x,y)=\left|x-y\right|$. Greedy addition would give  $bag_c=[50,25,24]$ for a distance of $1$, but a better solution (that is found with 1/1 substitution) is $bag_c=[50,24,24]$. This substitution based method can be looked at as re-evaluating past decisions of what to add to the bag in light of the further decisions made after. It is in this way lessening of the greed of the addition step. 
+
+\begin{algorithm}
+	\SetAlgoLined
+	\KwData{the metric $d$\\the target sum $\s$\\ the vocabulary of vectors $\V$\\The current best bag of vectors $bag_c$: initially $\emptyset$}
+	\KwResult{The $bag_n$  which sum to be at least as close as the input $bag_c$ to the target $\s$, under the metric $d$}
+	\Begin{
+		
+		$\t \longleftarrow \sum\limits_{x_i\in bag_c} x_i$\;
+		$bag_n \longleftarrow bag_c$\;
+		\ForAll{$\x_i \in bag_c$}{
+			$\t^\ast \longleftarrow \t - \x_i$\;
+			$bag_c^\ast \longleftarrow bag_c\setminus \{\x_i\}$\;
+			
+			$\x^\ast \longleftarrow \argmin\limits_{x_j\in \V\cup{\tilde{0}}} d(\s, \t^\ast+\x_j) $\;
+			
+			\If{$d(\s, \t^\ast+\x^\ast)  < d(\s, \t)$}{
+				$t \longleftarrow \t^\ast + \x^\ast$\;
+				$bag_n \longleftarrow bag_c^\ast \cup \{\x^\ast\}$\;	
+			}
+		}
+	}
+	\Return{$bag_n$}
+\caption{1/1--Substitution. Note that $\tilde{0}$ is the zero vector, including it with the vocabulary $\V$ is equivalent to considering the option of simply removing the $\x_i$ without replacement.}
+\end{algorithm}
 
 
 
 \section{The Ordering Problem} \label{ordering}
-\begin{figure}
+\begin{figure*}
 	\centering 
-	\includegraphics[scale=0.25]{markov_reordering2}
-	\caption{The Markov graph of possible states in the search through trigrams for the most-likely ordering of the sentence ``Show The Cheapest Flight''.}
+	%\includegraphics[scale=0.5]{markov_reordering1}
+	\includegraphics[scale=0.15]{markov_reordering2}
+	\caption{The Markov graph of possible states in the search through trigrams for the most-likely ordering of the sentence 
+%		``Show cheap flights''.}
+		``Show The Cheapest Flight''.}
 	\label{markov_diagram}
-\end{figure}
+\end{figure*}
 
 In this section a demonstration of the feasibly of solving for the correct word order, given the output of the previous step is shown. This is a stochastic language modelling problem -- to determine the most likely sequence of words, given the constraints that the words are exactly those given by the BOW output from the previous step. The method presented here simply to show its feasibility; the development of efficient technique for use in the ordering problem is left for future work.
 
 
 For purposes of this demonstration a simple Kneser-Ney smoothed trigram model \parencite{kneser1995improved} was used. The language model allows us to evaluate the probability of any given sequence of words using a Markov model.
-A directed acyclic graph of states can be produced for possible sequences of words as shown in \cref{markov_diagram}. The graph is restricted, in that terminal nodes must be followed by the end state, and must also have no words from the input BOW unassigned. The task is then modelled as finding the most-likely path through the graph.
+A directed acyclic graph of states can be produced for possible sequences of words as shown in \Cref{markov_diagram}. The graph is restricted, in that terminal nodes must be followed by the end state, and must also have no words from the input BOW unassigned. The task is then modelled as finding the most-likely path through the graph.
 Beam search was used to search the graph. At each node in the graph only the beam width (in the results following the beam width was five) most likely transitions (using just the a signal step of the trigram) were considered. This search is not complete, nor optimal -- there may be a better ordering that requires a transition that is outside the beam width. The beam-width restriction allows the combinatorial problem to be completed in feasible time. For a BOW with $n$ words, and beam width $b$ (assuming $b<n$) the time complexity is $O(b^{n-b}b!)$, rather than $O(n!)$ for a full search of all possible orderings. Memorization is also used to avoid re-searching known branches; and branches cease to be  if their accumulated probability for the path becomes zero (potentially do to underflow on the 64-bit IEEE floating point numbers).
 
 Even with these techniques to decrease the time taken, running the search over long sentences takes significant amount of time: on the order of 10 seconds for a sentence of length 17. For this reason the ordering step is only carried out for the BOWs corresponding to reference sentences of length 18 or less. 
