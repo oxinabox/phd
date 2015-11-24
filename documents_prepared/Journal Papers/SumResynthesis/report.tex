@@ -9,6 +9,10 @@
 \usepackage{amssymb}
 \usepackage{amsfonts}
 
+\usepackage{algorithm2e}
+
+
+\usepackage[author={Lyndon White}]{pdfcomment}
 
 \makeatletter
 \numberwithin{equation}{section}
@@ -39,7 +43,7 @@
 
 
 %opening
-\title{Resynthesising Sentences from the Sums of their Embeddings}
+\title{Resynthesising Sentences from the Sums of their Embeddings using a Greedy Algorithm}
 \author{Lyndon White}
 \graphicspath{{./figs/}}
 \setlength\itemsep{2mm}
@@ -105,44 +109,116 @@ At the core of this problem is what we will call the Vector Selection Problem, t
 As there is a bijection between word embeddings and their words, solving for the word embeddings used also solves for the words used -- note that practice not two words are similar enough in usage in any reasonable training corpora to have the precise same embedding under current methods
 
 \subsection{Formal Definition: }
-\begin{defn} {The Vector Selection Problem}
+\renewcommand{\c}{\tilde{c}}
+\newcommand{\s}{\tilde{s}}
+\newcommand{\x}{\tilde{x}}
+\renewcommand{\t}{\tilde{t}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\V}{\mathcal{V}}
 
+\begin{defn} {The Vector Selection Problem}
 	
-	The Vector Selection Problem is defined on $(\mathcal{V},\,\tilde{s},\,d)$ for
+
+	The Vector Selection Problem is defined on $(\V, \s,\,d)$ for
 	\begin{itemize}
-		\item A finite vocabulary of vectors $\mathcal{V}$, $\mathcal{V}\subset\mathbb{R}^{n}$
-		\item a target vector $\tilde{s}$, $\tilde{s}\in\mathbb{R}^{n}$
+		\item A finite vocabulary of vectors $\V$, $\V\subset{\R}^{n}$
+		\item a target vector $ \s$, $ \s\in\R^{n}$
 		\item any metric $d$ 
 		
 		by
 		\[
-		\argmin_{\left\{ \forall\tilde{c}\in\mathbb{N}_{0}^{V}\right\} }\:d(\tilde{s},\,\sum_{j=1}^{j=V}\:\tilde{x}_{j}c_{j})
+		\argmin_{\left\{ \forall\tilde{c}\in\N_{0}^{V}\right\} }\:d( \s,\,\sum_{j=1}^{j=V}\:\x_{j}c_{j})
 		\]
 		
 		\medskip{}
 				
-		\item $V$ is size of the vocabulary $\mathcal{V}$. (\textasciitilde{}1300
+		\item $V$ is size of the vocabulary $\V$. (\textasciitilde{}1300
 		for ATIS2, \textasciitilde{}50,000 for Brown, \textasciitilde{}10,000
 		for daily English) 
-		\item $\tilde{x}_{j}$ is the vector embedding for the jth word in the vocabulary
-		$\tilde{x}_{j}\in\mathcal{V}$ 
+		\item $\x_{j}$ is the vector embedding for the jth word in the vocabulary
+		$\x_{j}\in\V$ 
 		
 		\begin{itemize}
-			\item We can express the embedding vocabulary $\mathcal{V}=\{\tilde{x}_{j}\,|\,\forall j\in\mathbb{N}\:\wedge\;1\le j\le V\}\subset\mathbb{R}^{n}$
-			\item If we treat $\mathcal{V}$ as a matrix with vectors $\tilde{x}_{j}$
+			\item We can express the embedding vocabulary $\V=\{\x_{j}\,|\,\forall j\in\N\:\wedge\;1\le j\le V\}\subset\R^{n}$
+			\item If we treat $\V$ as a matrix with vectors $\x_{j}$
 			for rows,(and treat length 1 vectors as scalars) we get the compact
 			notation 
 			\[
-			\argmin_{\left\{ \forall\tilde{c}\in\mathbb{N}_{0}^{J}\right\} }\:d(\tilde{s},\,\sum_{j=1}^{j=V}\:\tilde{x}_{j}c_{j})=\argmin_{\left\{ \forall\tilde{c}\in\mathbb{N}_{0}^{J}\right\} }\:d(\tilde{s},\,\mathcal{V}\,\tilde{c}^{T})
+			\argmin_{\left\{ \forall\tilde{c}\in\N_{0}^{J}\right\} }\:d(\s,\,\sum_{j=1}^{j=V}\:\x_{j}c_{j})=\argmin_{\left\{ \forall\tilde{c}\in\N_{0}^{J}\right\} }\:d(\s,\,\V\,\c^{T})
 			\]
 			
 		\end{itemize}
 		\item $c_{j}$ is the count of how many times the jth word in the vocabulary
-		occurs. $\tilde{c}\in\mathbb{N}_{0}^{V}$, so $c_{j}\in\mathbb{N}_{0}$
+		occurs. $\c\in\N_{0}^{V}$, so $c_{j}\in\N_{0}$
 		\item $n$ is the dimensional of the word vectors, $n=300$ in current trials. \end{itemize}
 \end{defn}
 
+\subsection{Hardness Result}
+The subset sum problem is NP-complete\cite{karp1972reducibility}. Is defined: for some set $\mathcal{S}\subset\mathbb{Z}$, does there exist $\mathcal{L}\subseteq\mathcal{S}$ such that $0=\sum_{l_i}\in L l_i$.  It is possible to reduce from any given instance of a subset sum problem to a vector selection problem. A suitable metric and a set of vectors corresponding to the elements $\mathcal{S}$ can be defined by a bijection; such that solving the vector selection problem will give the vectors corresponding to the closest subset of $\mathcal{S}$ that has the smallest sum. Thus the sum is zero than the subset sum result is true, and if not it is false. A fully detailed proof can be found in the supplementary materials. As the method details that given a solution to the vector selection problem, a subset sum solution could be created taking only linear time additional work, thus it is shown that the vector selection problem is NP-hard.
+
+
+\subsection{Selection Algorithm}
+The algorithm proposed here to solve the selection problem is a greedy search for a path to the targeted sum point $\s$, followed by a correction step; this process is repeated until no change is made to the path. 
+
+\subsubsection{Greedy Addition}
+	\begin{function}[H]
+		\SetAlgoLined
+			\KwData{the metric $d$\\the target sum $\s$\\ the vocabulary of vectors $\V$\\The current best bag of vectors $bag_c$: initially $\emptyset$}
+			\KwResult{The modified $bag_c$  which sum to be as close as greedy search can get to the target $\s$, under the metric $d$}
+			\Begin{
+			$\t \longleftarrow \sum\limits_{x_i\in bag_c} x_i$\;
+	
+			\Repeat{$\neg improved$}{
+				$\x^\ast \longleftarrow \argmin\limits_{x_j\in \V} d(\s, \t+\x_j) $\;
+				
+				\eIf{$d(\s, \t+\x^\ast)  < d(\s, \t)$}{
+					$t \longleftarrow \t + \x^\ast$\;
+					$bag_c \longleftarrow bag_c \cup \{\x^\ast\}$\;	
+					$improved \longleftarrow true$\;
+				}{
+					$improved \longleftarrow false$\;
+				}
+			}
+			\Return{$bag_c$}
+		}
+	\caption{GreedyAddition(). In practical implementation, the bag of vectors is represented as list of indexes into columns of the embedding vocabulary matrix}
+	\end{function}
+
+\subsubsection{Step Substitution}
+	\begin{function}[H]
+		\SetAlgoLined
+		\KwData{the metric $d$\\the target sum $\s$\\ the vocabulary of vectors $\V$\\The current best bag of vectors $bag_c$: initially $\emptyset$}
+		\KwResult{The modified $bag_c$  which sum to be as close as greedy search can get to the target $\s$, under the metric $d$}
+		\Begin{
+			$\t \longleftarrow \sum\limits_{x_i\in bag_c} x_i$\;
+			
+			\Repeat{$\neg improved$}{
+				$\x^\ast \longleftarrow \argmin\limits_{x_j\in \V} d(\s, \t+\x_j) $\;
+				
+				\eIf{$d(\s, \t+\x^\ast)  < d(\s, \t)$}{
+					$t \longleftarrow \t + \x^\ast$\;
+					$bag_c \longleftarrow bag_c \cup \{\x^\ast\}$\;	
+					$improved \longleftarrow true$\;
+				}{
+				$improved \longleftarrow false$\;
+			}
+		}
+		\Return{$bag_c$}
+	}
+	\caption{(1/1)--Sub(). In practical implementation, the bag of vectors is represented as list of indexes into columns of the embedding vocabulary matrix}
+\end{function}
+
+
+
 \section{The Ordering Problem} \label{ordering}
+\begin{figure}
+	\centering 
+	\includegraphics[scale=0.25]{markov_reordering2}
+	\caption{The Markov graph of possible states in the search through trigrams for the most-likely ordering of the sentence ``Show The Cheapest Flight''.}
+	\label{markov_diagram}
+\end{figure}
+
 In this section a demonstration of the feasibly of solving for the correct word order, given the output of the previous step is shown. This is a stochastic language modelling problem -- to determine the most likely sequence of words, given the constraints that the words are exactly those given by the BOW output from the previous step. The method presented here simply to show its feasibility; the development of efficient technique for use in the ordering problem is left for future work.
 
 
@@ -151,20 +227,17 @@ A directed acyclic graph of states can be produced for possible sequences of wor
 Beam search was used to search the graph. At each node in the graph only the beam width (in the results following the beam width was five) most likely transitions (using just the a signal step of the trigram) were considered. This search is not complete, nor optimal -- there may be a better ordering that requires a transition that is outside the beam width. The beam-width restriction allows the combinatorial problem to be completed in feasible time. For a BOW with $n$ words, and beam width $b$ (assuming $b<n$) the time complexity is $O(b^{n-b}b!)$, rather than $O(n!)$ for a full search of all possible orderings. Memorization is also used to avoid re-searching known branches; and branches cease to be  if their accumulated probability for the path becomes zero (potentially do to underflow on the 64-bit IEEE floating point numbers).
 
 Even with these techniques to decrease the time taken, running the search over long sentences takes significant amount of time: on the order of 10 seconds for a sentence of length 17. For this reason the ordering step is only carried out for the BOWs corresponding to reference sentences of length 18 or less. 
+ 
+ 
+Of course, for some sentences the BOW can not always be resolve to the correct ordering -- when some words can be swapped in position and still have a valid and likely sentence. For example "Show me flights from Paris to New York." is just as reasonable as  "Show me flights from New York to Paris". On the other hand often one ordering is far more likely and reasonable than the others, "The dog chased the cat." is much more often correct than "The cat chased the dog.", it is also preferable over "The cat the dog chased." though all three are grammatical. \pdfcomment{It would be good to have an a citation for how often this occurs.}
   
-  
-\begin{figure}
-	\centering 
-	\includegraphics{markov_reordering2}
-	\caption{The Markov graph of possible states in the search through trigrams for the most-likely ordering of the sentence ``Show The Cheapest Flight''.}
-	\label{markov_diagram}
-\end{figure}
 
 
 As the overall problem can be consider a task of translating from a vector to a natural language sentence, the BLEU  score \parencite{Papineni2002} can be used for assessing how well the output sentence matches the input reference.
 
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Where do SOWE type embeddings come from?}
 The most basic place to get a SOWE embedding is by adding up the vectors for the words in a sentence.
@@ -211,26 +284,7 @@ Other sources are more interesting:
 	## Of sentences with 20 or more words only 35.5\% recover all words, however these sentences have a greater problem, in that the ordering taking too long (see next section).
 \end{easylist}
 
-\subsection{Hardness Result}
 
-\subsubsection{{Problem 1 Definition}}
-The problem of determining the bag of word, which has correspondant embedding sum closest to a given vector can be characterised by:
-$$\argmin_{\forall c\in\mathbb{N}_0^J} d(\tilde{s} - \sum_{1\le j\le V}\:\tilde{x}_{j}c_{j})$$
-\begin{easylist}[itemize]
-# Where $d$ is some norm function.
-# $\tilde{s}$ is the target vector,
-# $V$ is size of the vocabulary (~1300 for ATIS2, ~50,000 for Brown, ~10,000 for daily English)
-# $\tilde{x}_j$ is the vector embedding for the jth word in the vocabulary $\tilde{x}_j \in \mathbb{R}^n$
-# $c_j$ is the count of how many times the jth word in the vocabulary occurs.
-# $n$ is the dimensionality of the word vectors, $n = 300$ in current trials.  
-\end{easylist}
-
-\subsubsection{Subset Sum}
-The subset sum problem is well known to be NP-complete.
-It can be defined as for some set $$\mathcal{S}\subset\mathbb{Z}$$, a there exists  $\mathcal{L}\subseteq\mathcal{S}$ such that 
-
-
-We reduce from subset sum to Problem 1 by showing any solution to Problem 1 could be used to solve subset sum with only linear time additional work.
 
 
 
@@ -239,10 +293,6 @@ We reduce from subset sum to Problem 1 by showing any solution to Problem 1 coul
 \subsubsection{Time Complexity}
 The time complexity of the addition step is $O(t \cdot V\tau n)$
 Where $t$ is the maximum number of terms (words) in a sentence that adds up to $S$.
-
-$t$ can be bounded by considering how many times the smallest net vector formed by the smallest some of elements the vocabulary (over all multiplicities) can fit into $S$.
-
-$$t = \min_{\forall 1 \le i \le n}\: \left(\max_{\forall C \in \mathbb{N}_0^V}\: \frac{S_i}{\sum_{1\le j \le V} C_j\: x_{j,i}} \right)$$
 
 Solving the above for $t$ is not feasible. However in practice, $t$ is equal to the length of the longest sentence allowed (Say 55 words for ATIS). Also, due to the degregation in performance of the greedy algorithm, and the time taken in the resconstruction step it has to be limitted anyway. $t$ can be treated as a small constant.
 
