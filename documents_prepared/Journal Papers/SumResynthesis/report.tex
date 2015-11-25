@@ -67,34 +67,11 @@
 	\caption{The process for the regenerating sentences from SOWE-type sentence vectors.}
 	\label{block_diagram}
 \end{figure}
-The task being tackled here is the resynthesise of sentences from vector embeddings.
-In particular it is concerned with the sum of word embeddings type vectors.
+The task being tackled here is the resynthesise of sentences from vector embeddings. In particular it is concerned with generation of sentences from vectors that are the the sum of the word embeddings. The generation task, going from vector to sentence, is quiet challenging.It has not received a lot of attention.
 
-
-The generation task, going from vector to sentence, is quiet challenging.
-It has not received a lot of attention.
-
-
-
-In general sentence embeddings may be described as compositional, or non-compositional.
-The compositional models come from classical linguistics -- taking the hierarchical  break-down of a sentence into clauses, phrases and words, compositional vector models produce vectors by moving up the tree combining (or composing) the vectors in a substructure to find a vector for the substructure. This composition continues until the a vector has been found for the root of the sentence tree. Many successful compositional models have been developed, of particular note have been the recursive neural network based methods of  \cite{socher2010PhraseEmbedding}%,SocherEtAl2011:RAE,SocherEtAl2011:PoolRAE,Socher2011ParsingPhrases,SocherMVRNN,RvNTN,SocherEtAl2013:CVG,Socher2013TensorReasoning}. Compositional embedding models have strong basis from their linguistic underpinnings.
-
-Non-compositional embeddings cover all other embedding techniques. Recently significant attention has come towards  \cite{le2014distributed}, which is a direct augmentation of word embedding creation techniques, with an additional paragraph or sentence vector. Other non-compositional techniques include the classic bag of words (BOW), and the simple sum of word embeddings (SOWE). Non-compositional methods draw a significant criticism for disregarding structure; BOW and SOWE draw additional criticism for also disregarding word order. However these weaknesses, while correct, may be entirely offset by the improved discrimination in other factors -- allowed for some non-compositional methods to be comparable overall. 
-
-
-Recently \cite{White2015SentVecMeaning} found that classifying real word data sentences according to meaning SOWE was a very strong model. \cite{RitterPosition} presents a similar task on spacial-positional meaning, which used carefully constructed artificial data, for which it was believed only compositional models could solve, here also SOWE was found performing comparably and again even out performing the compositional models. Thus simple methods such as SOWE are still worth consideration. SOWE is the basis of the work presented in this paper.
-
-
-To our knowledge only two prior works exist in this area, both concerned with compositional vector embeddings.
-
-\cite{Dinu2014CompositionalGeneration}  extends the models described by \cite{zanzotto2010estimating, Guevara2010} for generation; those models are in turn which are in turn specific cases of the general compositional model described by Mitchell and Lapata\cite{Mitchell2008}. The compositional models used in these works are pre-neural network based techniques used in embeddings today -- though the work Dinu and Baroni does apply to some of today's compositional models in general. While it theoretically generalised to whole sentences Dinu and Baroni's work is quantitatively assessed for very short phrases.
-
-%Dinu and Baroni \cite{Dinu2014CompositionalGeneration} focuses on describing composition as a pair of linear transformations of word vectors, followed by a sum $$f_{comp}\::\:\mathbb{R}^d\times\mathbb{R}^d \to \mathbb{R}^d\::\: (\tilde{u}, \tilde{v})\mapsto W_1\tilde{u}+W_2\tilde{v}$$ where the linear transformations $W_1$,$W_2$ are dependent on the parts of speech.
-
-The work of Iyyer et. al. \cite{iyyer2014generating} is based on an extension of the unfolding recursive autoencoder\cite{SocherEtAl2011:PoolRAE}. It can produce sentences from vectors, if given the structure to decompose the vector into. Theoretically the unfolding recursive auto-encoder could be used in the same way to generate sentences, however that has never been shown. Recursive neural networks are jointly trained for both composing the sentence's words into a vector, and for decomposing that vector into words. This method was demonstrated quantitatively on five examples. There are not currently any large scale quantitative results published for the use of Iyyer et. al.'s technique.
-
-Both Dinu and Baroni \cite{Dinu2014CompositionalGeneration}, and Iyyer et. al. \cite{iyyer2014generating}, require an output structure to be provided for the decomposition.
-The new method proposed here, does not require, or indeed allow, structural information.
+The motivations for this work remain the same as in the first work in the area: \cite{Dinu2014CompositionalGeneration}. The implementation of the theoretical logic that as a sentence encodes it's meaning, and the vector encodes the same meaning, then it must be possible to translate between the natural language and the vector language. Potential practical applications of this often range around such ``translation'' tasks.
+Given suitable bidirectional methods for converting sentence vectors and sentences, the sentence vector space can be employed as a \emph{lingua franca} for translation between various forms of information. The most obvious of which is literal translation; however the use extends beyond. Over the past several years significant work has gone into representing images and sentences in a common vector space (REFS HERE). Most current work uses this to select a suitable caption to be selected from a list of candidates, but with vector to sentence generation a caption can be produced from just the image alone. Some related work to this has been done by \cite{Mao2014GenerateImageDesc}.
+ Another similar use is the replacement of vector based extractive summarisation \cite{KaagebExtractiveSummaristation,yogatamaextractive}, with abstractive summarisation; related work on this has been done by \cite{TarasovGenerateAbstractSummary}.
 
 
 
@@ -105,13 +82,40 @@ The second step is to order that bag of words into a sentence -- a language mode
 This paper will focus on the first part -- the word selection problem. 
 Though a demonstration of the feasibly of solving the second part -- the ordering problem --  is shown in \Cref{ordering}.
 
-\section {The Selection Problem}
 
+\section{Related Work}
+
+\section{Embedding Models}
+In general sentence embeddings models may be described as compositional, or non-compositional.
+The compositional models come from classical linguistics -- taking the hierarchical  break-down of a sentence into clauses, phrases and words, compositional vector models produce vectors by moving up the tree combining (or composing) the vectors in a substructure to find a vector for the substructure. This composition continues until the a vector has been found for the root of the sentence tree. Many successful compositional models have been developed, of particular note have been the recursive neural network based methods of  \cite{socher2010PhraseEmbedding}%,SocherEtAl2011:RAE,SocherEtAl2011:PoolRAE,Socher2011ParsingPhrases,SocherMVRNN,RvNTN,SocherEtAl2013:CVG,Socher2013TensorReasoning}. Compositional embedding models have strong basis from their linguistic underpinnings.
+
+Non-compositional embeddings cover all other embedding techniques. Recently significant attention has come towards  \cite{le2014distributed}, which is a direct augmentation of word embedding creation techniques, with an additional paragraph or sentence vector. Other non-compositional techniques include the classic bag of words (BOW), and the simple sum of word embeddings (SOWE). Non-compositional methods draw a significant criticism for disregarding structure; BOW and SOWE draw additional criticism for also disregarding word order. However these weaknesses, while correct, may be entirely offset by the improved discrimination in other factors -- allowed for some non-compositional methods to be comparable overall. 
+
+
+Recently \cite{White2015SentVecMeaning} found that classifying real word data sentences according to meaning SOWE was a very strong model. \cite{RitterPosition} presents a similar task on spacial-positional meaning, which used carefully constructed artificial data, for which it was believed only compositional models could solve, here also SOWE was found performing comparably and again even out performing the compositional models. Thus simple methods such as SOWE are still worth consideration. SOWE is the basis of the work presented in this paper.
+
+\subsection{Sentence Generation from Vector Embeddings}
+
+To our knowledge only two prior works exist in the area of generation from vectors, both concerned with compositional vector embeddings.
+
+\cite{Dinu2014CompositionalGeneration}  extends the models described by \cite{zanzotto2010estimating, Guevara2010} for generation; those models are in turn which are in turn specific cases of the general compositional model described by Mitchell and Lapata\cite{Mitchell2008}. The compositional models used in these works are pre-neural network based techniques used in embeddings today -- though the work Dinu and Baroni does apply to some of today's compositional models in general. While it theoretically generalised to whole sentences Dinu and Baroni's work is quantitatively assessed for very short phrases.
+
+%Dinu and Baroni \cite{Dinu2014CompositionalGeneration} focuses on describing composition as a pair of linear transformations of word vectors, followed by a sum $$f_{comp}\::\:\mathbb{R}^d\times\mathbb{R}^d \to \mathbb{R}^d\::\: (\tilde{u}, \tilde{v})\mapsto W_1\tilde{u}+W_2\tilde{v}$$ where the linear transformations $W_1$,$W_2$ are dependent on the parts of speech.
+
+The work of Iyyer et. al. \cite{iyyer2014generating} is based on an extension of the unfolding recursive autoencoder\cite{SocherEtAl2011:PoolRAE}. It can produce sentences from vectors, if given the structure to decompose the vector into. Theoretically the unfolding recursive auto-encoder could be used in the same way to generate sentences, however that has never been shown. Recursive neural networks are jointly trained for both composing the sentence's words into a vector, and for decomposing that vector into words. This method was demonstrated quantitatively on five examples. There are not currently any large scale quantitative results published for the use of Iyyer et. al.'s technique.
+
+Both Dinu and Baroni \cite{Dinu2014CompositionalGeneration}, and Iyyer et. al. \cite{iyyer2014generating}, require an output structure to be provided for the decomposition.
+The new method proposed here, does not require, or indeed allow, structural information.
+
+\subsection{Generative Multi-model Recursive Neural Networks}
+An approach for the information domain translation problem which bipasses the \emph{lingua franca} stage of a sentence embedding was developed by \cite{Mao2014GenerateImageDesc}. The method is based on creating a multi-modal recursive neural network, which takes the source document representation and the previous word output, and predicts the next word; note that unlike the reoccurant neural network this is not a compositional model. While Mao et. al. developed the method for generating captions for images it was extended by \cite{TarasovGenerateAbstractSummary} for abstractive summarisation. This related technique has the same applications as the suggested translation to common vector space proposals for the use of vector to sentence generation.
+
+\section{General Framework}
+\subsection{The Selection Problem}
 
 At the core of this problem is what we will call the Vector Selection Problem, to select which word vectors, with option of repetition, are sum to be closest to the target SOWE.
-As there is a bijection between word embeddings and their words, solving for the word embeddings used also solves for the words used -- note that practice not two words are similar enough in usage in any reasonable training corpora to have the precise same embedding under current methods
+As there is a one to one correspondence between the vector word embeddings and their words, solving for the word embeddings used also solves for the words uses. This is reliant on the fact that in practice not two words are similar enough in usage in any reasonable training corpora to have the precise same embedding under current methods, thus the one to one correspondence.
 
-\subsection{Formal Definition: }
 \renewcommand{\c}{\tilde{c}}
 \newcommand{\s}{\tilde{s}}
 \newcommand{\x}{\tilde{x}}
@@ -120,9 +124,7 @@ As there is a bijection between word embeddings and their words, solving for the
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\V}{\mathcal{V}}
 
-\begin{defn} {The Vector Selection Problem}
-	
-
+\begin{defn}{The Vector Selection Problem}
 	The Vector Selection Problem is defined on $(\V, \s,\,d)$ for
 	\begin{itemize}
 		\item A finite vocabulary of vectors $\V$, $\V\subset{\R}^{n}$
@@ -131,7 +133,7 @@ As there is a bijection between word embeddings and their words, solving for the
 		
 		by
 		\[
-		\argmin_{\left\{ \forall\tilde{c}\in\N_{0}^{V}\right\} }\:d( \s,\,\sum_{j=1}^{j=V}\:\x_{j}c_{j})
+		\argmin_{\left\{ \forall\c\in\N_{0}^{V}\right\} }\:d( \s,\,\sum_{j=1}^{j=V}\:\x_{j}c_{j})
 		\]
 		
 		\medskip{}
@@ -157,15 +159,15 @@ As there is a bijection between word embeddings and their words, solving for the
 		\item $n$ is the dimensional of the word vectors, $n=300$ in current trials. \end{itemize}
 \end{defn}
 
-\subsection{Hardness Result}
+\subsubsection{Hardness Result}
 The subset sum problem is NP-complete\cite{karp1972reducibility}. Is defined: for some set $\mathcal{S}\subset\mathbb{Z}$, does there exist $\mathcal{L}\subseteq\mathcal{S}$ such that $0=\sum_{l_i}\in L l_i$.  It is possible to reduce from any given instance of a subset sum problem to a vector selection problem. A suitable metric and a set of vectors corresponding to the elements $\mathcal{S}$ can be defined by a bijection; such that solving the vector selection problem will give the vectors corresponding to the closest subset of $\mathcal{S}$ that has the smallest sum. Thus the sum is zero than the subset sum result is true, and if not it is false. A fully detailed proof can be found in the supplementary materials. As the method details that given a solution to the vector selection problem, a subset sum solution could be created taking only linear time additional work, thus it is shown that the vector selection problem is NP-hard.
 
 
-\subsection{Selection Algorithm}
-The algorithm proposed here to solve the selection problem is a greedy iterative processes that continues to convergence. In each iteratio, first a greedy search (Greedy Addition) for a path to the targeted sum point $\s$ is done, followed by correction with a substitution based step (n/m--substitution). This process is repeated until no change is made to the path. The majority of the selection is done in the Greedy Addition step, the substitution is handles the fine tuning.
+\subsubsection{Selection Algorithm}
+The algorithm proposed here to solve the selection problem is a greedy iterative processes that continues to convergence. In each iteration, first a greedy search (Greedy Addition) for a path to the targeted sum point $\s$ is done, followed by correction with a substitution based step (n/m--substitution). This process is repeated until no change is made to the path. The majority of the selection is done in the Greedy Addition step, the substitution is handles the fine tuning.
 
 \subsubsection{Greedy Addition}
-The greedy addition step is characterised by adding the best vector to the bag at each step (see the pseudocode in \Cref{pseudocode:greedyaddition}). At each step, all the vectors in the bag are summed, and each vector in the vocabulary is added in turn to evaluate the new distance the new bag would have from the target, if any of the new bags are closer than the existing bag, then the best of them replaces the existing bag. This continues until there is no option to add any of the vectors without moving the sum away from the target. Greedy addition works surprisingly well on its own, but it is enhanced with a fine tuning step to decrease its greed.
+The greedy addition step is characterised by adding the best vector to the bag at each step (see the pseudo-code in \Cref{pseudocode:greedyaddition}). At each step, all the vectors in the bag are summed, and each vector in the vocabulary is added in turn to evaluate the new distance the new bag would have from the target, if any of the new bags are closer than the existing bag, then the best of them replaces the existing bag. This continues until there is no option to add any of the vectors without moving the sum away from the target. Greedy addition works surprisingly well on its own, but it is enhanced with a fine tuning step to decrease its greed.
 
 \begin{algorithm}
 	\SetAlgoLined
@@ -223,7 +225,7 @@ The reasoning behind performing n/m--substitution is to correct for greedy mista
 
 
 
-\section{The Ordering Problem} \label{ordering}
+\subsection{The Ordering Problem} \label{ordering}
 \begin{figure*}
 	\centering 
 	%\includegraphics[scale=0.5]{markov_reordering1}
@@ -244,16 +246,23 @@ Beam search was used to search the graph. At each node in the graph only the bea
 Even with these techniques to decrease the time taken, running the search over long sentences takes significant amount of time: on the order of 10 seconds for a sentence of length 17. For this reason the ordering step is only carried out for the BOWs corresponding to reference sentences of length 18 or less. 
  
  
-Of course, for some sentences the BOW can not always be resolve to the correct ordering -- when some words can be swapped in position and still have a valid and likely sentence. For example "Show me flights from Paris to New York." is just as reasonable as  "Show me flights from New York to Paris". On the other hand often one ordering is far more likely and reasonable than the others, "The dog chased the cat." is much more often correct than "The cat chased the dog.", it is also preferable over "The cat the dog chased." though all three are grammatical. \pdfcomment{It would be good to have an a citation for how often this occurs.}
+Of course, for some sentences the BOW can not always be resolve to the correct ordering -- when some words can be swapped in position and still have a valid and likely sentence. For example "Show me flights from Paris to New York." is just as reasonable as  "Show me flights from New York to Paris". On the other hand often one ordering is far more likely and reasonable than the others, "The dog chased the cat." is much more often correct than "The cat chased the dog.", it is also preferable over "The cat the dog chased." though all three are grammatical. It is assumed here that, for most BOWs there is one ordering that is far far more likely to occur than the others, and thus is the correct ordering, the results in the next section suggest this assumption is correct -- at least for the brown corpus. \pdfcomment{It would be good to have an a citation for how often this occurs.}
   
 
 
 As the overall problem can be consider a task of translating from a vector to a natural language sentence, the BLEU  score \parencite{Papineni2002} can be used for assessing how well the output sentence matches the input reference.
 
+\section{Evaluation setting}
+
+\section{Results and Discussion}
+
+It was noted that unlike in the work of \cite{iyyer2014generating}, this processes does not often generate paraphrases, but rather the original sentence. This is due, at least in part, to the method being able to successfully minimising the distance to the original down to zero. Thus resulting in the original bag of words.
+
+\section{Conclusion}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+\appendix 
 \subsection{Where do SOWE type embeddings come from?}
 The most basic place to get a SOWE embedding is by adding up the vectors for the words in a sentence.
 However that is obviously fairly uninteresting -- if the words are already known there is no need to resynthesises them. There may be some uses in this case for say compression.
