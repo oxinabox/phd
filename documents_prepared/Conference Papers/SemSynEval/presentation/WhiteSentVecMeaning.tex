@@ -1,14 +1,19 @@
 \documentclass[12pt,landscape,english]{beamer}
+\usepackage{etex}
 
 
-\usetheme[crossbullets]{uwa}
-%You can remove crossbullets option to have normal beamer bullets etc
+
+
 \usepackage{etoolbox, verbatim}
 
 \graphicspath{{../figs/}}
 
 %%%%%%%%%%%%%%%TIKZ
 \usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.12}
+\usepackage{pgfplotstable}
+
 \usetikzlibrary{positioning, fit,arrows,chains,shapes.geometric}
 \usetikzlibrary{graphs,graphdrawing}
 \usetikzlibrary{petri, shapes}
@@ -26,6 +31,7 @@ bibstyle=ieee,firstinits=true]{biblatex}
 %%%%%%%%%%%%%%%%%
 
 
+\usetheme[crossbullets]{uwa}
 
 \mode<presentation>
 %\setbeameroption{show notes}
@@ -38,20 +44,14 @@ bibstyle=ieee,firstinits=true]{biblatex}
 \title[White et al.]{How Well Sentence Embeddings Capture Meaning}
 \author[White et al.]{Lyndon White \and Roberto Togneri \and Wei Liu \and Mohammed Bennamoun}
 \institute[UWA]{The University of Western Australia}
-\date{\includegraphics[scale=0.4]{ss}}
+\date{}
+\titlegraphic{\hfill\includegraphics[scale=0.4]{ss}}
 
 \begin{frame}[plain]
 	\titlepage
 \end{frame}
 
 
-
-\section{Introduction}
-
-
-\begin{frame}{Vector space should be partioned the same as sentence space}
- \includegraphics[scale=0.6]{equiv}
-\end{frame}
 
 \begin{frame}{When are sentences equivalent?}
 	$A$ and $B$ are semantically equivalent iff $A\models B\:\wedge\:B\models A$
@@ -60,7 +60,7 @@ bibstyle=ieee,firstinits=true]{biblatex}
 			\begin{itemize}
 				\note[item]{ $A$ cannot be true without $B$ also being true}
 				\note[item]{and $B$ cannot be true without $A$ also being true}
-								
+				
 				\item<1-> a bidirectional entailment relationship
 				\note[item]{As bidirectional they must have the same truth value}
 				\item<2> Semantically equivalent sentences are called \alert{paraphrases}
@@ -72,6 +72,139 @@ bibstyle=ieee,firstinits=true]{biblatex}
 		\end{column}
 	\end{columns}
 \end{frame}
+
+
+
+\section{Introduction}
+\begingroup %In these slides the frame title font size will be different
+\setbeamerfont{frametitle}{size=\fontsize{12}{18}}
+\begin{frame}{Sentence embeddings are vector repressentations}
+	\begin{itemize}
+		\item Sentence Embedding
+	\end{itemize}
+\end{frame}
+\endgroup
+
+\begingroup %In these slides the frame title font size will be different
+\setbeamerfont{frametitle}{size=\fontsize{12}{18}}
+\begin{frame}{Sentence partitions should map to vector partitions}
+	\includegraphics[scale=0.6]{equiv}
+\end{frame}
+\endgroup
+
+
+\section{Method}
+\section{Corpus Preparation}
+
+\begin{frame}{The Opinosis Corpus}
+	\begin{itemize}
+		\item Collection of highly redundant opinions
+		\item About \begin{itemize}
+			\item Electronics
+			\item Hotels
+			\item Auto-mobiles
+		\end{itemize}
+		
+		\item Intended for evaluation of Summarisation algorithms
+		\item Required manual partitioning
+	\end{itemize}
+	\footfullcite{ganesan2010opinosis}	
+\end{frame}
+
+
+\begin{frame}{Paraphrase groups from Opinosis}
+	\begin{itemize}
+		\item Collection of highly redundant opinions
+		\item About \begin{itemize}
+			\item Electronics
+			\item Hotels
+			\item Auto-mobiles
+		\end{itemize}
+		
+		\item Intended for evaluation of Summarisation algorithms
+		\item Required manual partitioning
+	\end{itemize}
+	\footfullcite{ganesan2010opinosis}	
+\end{frame}
+
+
+\begin{frame}[fragile]{Paraphrase groups from Opinosis}
+	\begin{itemize}
+		\setbeamercolor{itemize item}{fg=red!50}
+	   	\only<0-1>{\item Perfect Location and Lovely Inn}
+	   	\only<0-2>{\item Great hotel, nice location for everything !}
+	   	\only<0-3>{\item Loved this hotel and location !}
+	   	\only<0-4>{\item A great hotel in a great location}
+	   	\only<0-5>{\item Great Hotel in a Great Location}
+	   	\only<+-+(5)>{\item Overall though, the location was great and the hotel was nice .}
+	   	\only<+-+(5)>{\item Lovely hotel and excellent location .}
+	   	\only<+-+(5)>{\item ...}
+   		\setbeamercolor{itemize item}{fg=green!50}
+	   	\only<+-+(5)>{\item So, the location was awesome .}
+	   	\only<+-+(5)>{\item Again, the location was great !}
+	   	\only<+-+(5)>{\item You cannot beat the location !}
+	   	\only<+-+(5)>{\item The location could not be any better .}
+	   	\only<+-+(5)>{\item In addition, it is location, location, location .}
+	   	\only<+-+(5)>{\item That said, the location is marvelous .}
+	   	\only<+-+(5)>{\item ...}
+   		\setbeamercolor{itemize item}{fg=orange!50}
+	   	\only<+-+(5)>{\item Best location in Fisherman's Wharf .}
+	   	\only<+->{\item This hotel is in a good location on Fisherman's Wharf .}
+	   	\only<+->{\item Perfect location to Fishermans Wharf .}
+	   	\only<+->{\item Perfect Fisherman's Wharf Location}
+	   	\only<+->{\item Perfect location near Fisherman's Wharf .}
+	   	\only<+->{\item The location is great, only 2 blocks from Fisherman's Wharf .}
+	   	\only<+->{\item ...}
+	   
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{The MSRP Corpus}
+	\begin{itemize}
+		\item Microsoft Research Paraphrase Corpus
+		\item gathered from online news
+		\item Pairwise paraphrase detection tests
+		\item Taking transitive and symmetric closures gives paraphrase groups
+		\end{itemize}
+		
+	\footfullcite{ganesan2010opinosis}	
+\end{frame}
+
+\begin{frame}[fragile]{Paraphrase groups from MSRP}
+	\begin{itemize}
+		\setbeamercolor{itemize item}{fg=blue!50!black}
+		\only<1>{\item only intel corp. has a lower dividend yield .}
+		\only<1>{\item only intel 's 0.3 percent yield is lower .}
+		\only<1>{\item only the intel corporation has a lower dividend yield .}
+		\only<1>{\item only intel corp. 's 0.3 percent yield was lower .}
+		
+		\setbeamercolor{itemize item}{fg=green!50!black}
+		\only<2>{\small}
+		\only<2>{\item three such vigilante-style attacks forced the hacker organizer , who identified himself only as \alert{`` eleonora67 , ''} to extend the contest until \color{blue}6 p.m. edt sunday\color{black} .}
+		\only<2>{\item three such vigilante-style attacks forced the hacker organizer , who identified himself only as \alert{`` eleonora [ 67 ] , ''} to extend the contest until \color{blue}7 p.m. est sunday\color{black} .}
+		\only<2>{\item three such vigilante-style attacks forced the hacker organiser , who identified himself only as \alert{`` eleonora67 ] , ''} to extend the contest until \color{blue}8am ( aest ) today\color{black} .}
+		\only<2>{\item three such vigilante-style attacks forced the hacker organizer , who identified himself only as \alert{`` eleonora [ 67 ] , ''} to extend the contest until \color{blue}3 p.m. arizona time sunday\color{black} .}
+		\setbeamercolor{itemize item}{fg=red!50!black}
+		\only<3>{\item belcher said the airport 's conference room was serving as a makeshift shelter for several area families who hiked up the wooded hillside in advance of rising water .}
+		\only<3>{\item belcher said the airport 's conference room became a shelter for several area families who had hiked up wooded hillsides in advance of rising water .}
+		\only<3>{\item belcher said the airport 's conference room became a shelter for several families who had hiked up hillsides ahead of rising water .}
+		
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{MSRP Seems easier}
+	\begin{itemize}
+		\item Often \alert{intra-group} differences only in single word or punctuation.
+		\item Often \alert{inter-group} sentences differs entirely in topic
+		
+	\end{itemize}
+\end{frame}
+
+
+\section{Models}
+
+
+
 
 \begin{frame} {PV DM} 
 	\hskip-1cm
@@ -107,34 +240,76 @@ bibstyle=ieee,firstinits=true]{biblatex}
 \end{frame}
 
 
+\section{Results}
+\pgfplotstableread[col sep=comma]{
+	Name,msrp,opiniosis, void
+	PV--DM, 78, 38.26,0
+	PV--DBOW, 89.93, 32.19,0
+	URAE, 51.14, 20.87,0
+	MOWE, 97.91, 69.30,0
+	SOWE, 98.02, 68.75,0
+	BOW, 98.37, 65.23,0
+	PCA--BOW, 97.96, 54.43,0
+	null,0,0,0
+}\resultstable
 
-
-
-
-\section{Conclusion}
-\begin{frame}{Proposal}
-	\begin{itemize}
-		\item A Method is Proposed
-		\begin{itemize}
-			\item Described In Detail
-			\item as a plan to be carried out
-		\end{itemize}
-		\item The Method is good
-		\begin{itemize}
-			\item Pleasing
-			\item Affordable
-			\begin{itemize}
-				\item in time
-				\item in budget 
-			\end{itemize}
-		\end{itemize}
-		\item There is no other
-	\end{itemize}
+\begin{frame}[fragile]{Semantic Classification Success Rate}
+	\begin{tikzpicture}
+	\pgfplotsset{every axis legend/.append style={at={(0.5,1.025)}, anchor=south,semithick,legend columns=3}}
+	
+	\begin{axis}[  
+	ytick= {0,25,50,75,100},
+	yticklabel=\pgfmathprintnumber{\tick}\,\%,
+	%ybar,
+	ybar interval= 0.7,
+	ymin=0,
+	enlarge x limits=0.025,
+	width=0.95\textwidth,
+	height=0.4\textwidth,
+	xtick=data,
+	xticklabels={PV\\DM,PV\\DBOW,URAE,MOWE,SOWE,BOW,PCA\\BOW},
+	xticklabel pos=upper,
+	xticklabel style={align=center,font = \scriptsize},
+	extra x ticks ={0,1,2,3,4,5,6,7},
+	extra x tick labels={PV\\DM,PV\\DBOW,URAE,MOWE,SOWE,BOW,PCA\\BOW},
+	extra x tick style={grid=major,xticklabel pos = lower},
+	legend style={,font = \scriptsize, at={(0.5,0.32\textwidth)}},
+	transpose legend,
+	%legend pos = outer north east
+	]
+	
+	\only<1->{\addplot[fill=blue!50] table [y=msrp,x expr=\coordindex, meta=Name] {\resultstable};}
+	\only<1>{\addplot[fill=none] table [y=void,x expr=\coordindex]{\resultstable};}
+	\only<2->{\addplot [fill=yellow!50!orange] table [y=opiniosis,x expr=\coordindex]{\resultstable};}
+	\only<1>{\legend{MSRP};}
+	\only<2>{\legend{MSRP, Opinosis};}
+	\end{axis}
+	\end{tikzpicture}
 
 \end{frame}
 
 
 
+
+\section{Conclusion}
+\begin{frame}{Limitations}
+	\begin{itemize}
+	\item Embedding Training corpus distinct from Evaluation Corpus
+	\item URAE playing at disadvantage 
+	\begin{itemize}
+		\item 200 dim to others 300 dim
+	\end{itemize}
+	\item Only linearly separable portioning considered.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Conclusion}
+	\begin{itemize}
+	\item MOWE and SOWE unexpectedly strong
+	\item Word content matters, and must be preserved
+	\item Newer models
+	\end{itemize}
+\end{frame}
 
 
 
