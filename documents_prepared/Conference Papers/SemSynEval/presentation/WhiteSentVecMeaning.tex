@@ -10,7 +10,7 @@
 \pgfplotsset{compat=1.12}
 \usepackage{pgfplotstable}
 
-\usetikzlibrary{positioning, fit,arrows,chains,shapes.geometric}
+\usetikzlibrary{positioning, fit,arrows,chains,shapes.geometric,patterns}
 \usetikzlibrary{graphs,graphdrawing}
 \usetikzlibrary{petri, shapes}
 \usetikzlibrary{calc}
@@ -72,19 +72,24 @@ bibstyle=ieee,firstinits=true]{biblatex}
 \begingroup %In these slides the frame title font size will be different
 \setbeamerfont{frametitle}{size=\fontsize{12}{18}}
 \begin{frame}{Sentence embeddings are vector representations}
-	Extension beyond word embeddings
-	The various models produce embeddings as Bi-products
-	Many sentence embedding methods are generally word sequence embedding methods.
-	Working on some range from short phrase, through sentences, up to paragraphs or documents.
+	\begin{itemize}
+		\item Extension beyond word embeddings
+		\item The various models produce embeddings as bi-products
+		\item As they are bi-products what features are represented is not clear.
+	\end{itemize}
+	
+	
+%	Many sentence embedding methods are generally word sequence embedding methods.
+%	Working on some range from short phrase, through sentences, up to paragraphs or documents.
 \end{frame}
-
-\begin{frame}{What do they represent?}
+\endgroup
+\begin{frame}{What could they represent?}
 	Some combination of
 	\begin{itemize}
 		\item Word content
 		\item Syntactic structure \hfill \emph{(Parsing)}
 		\item Subject \hfill \emph{(Topic Classification)}
-		\item Semantic Polarity \hfill \emph{(Sentiment Analysis)}
+		\item \textbf{Semantic Polarity} \hfill \emph{(Sentiment Analysis)}
 		\item Meaning \note[itemize]{(Semantic Classification)}
 		\item Noise
 		\item other factors
@@ -100,17 +105,53 @@ bibstyle=ieee,firstinits=true]{biblatex}
 	\setblockcolour{uwayellow}
 \end{frame}
 \end{comment}
-\endgroup
 
-\begin{frame}{Gershman}
-	Also mention 
+\begingroup %In these slides the frame title font size will be different
+\setbeamerfont{frametitle}{size=\fontsize{12}{18}}
+\begin{frame}{Comparison to human similarity rankings}
+	\begin{itemize}
+		\item Have humans rank, or score sample sentences on similarity.
+		\item Evaluate embedding methods by looking for correlations.
+		\item On current methods Gershman and Tenenbaum found generally poor results.
+		\note[item]{preneural network evaluations of this form were done by Mitchell and Lapata}
+		\note[item]{This method for evaluation has shownup as a task in this years SemEval challenge}
+	\end{itemize}
+	\footfullcite{gershmanphrase,Mitchell2008}
 \end{frame}
 
-\begin{frame}{Ritter}
-		
+
+\begin{frame}{Classification by positional meaning }
+	\vskip1.5ex
+	\scriptsize
+	\begin{tabular}{cc}
+		Category & Example\\
+		\hline
+		Adhesion to Vertical Surface & There is a magnet on the refrigerator.\\
+		Support by Horizontal Surface & There is an apple on the refrigerator.\\
+		Support from Above & There is an apple on the branch.\\
+		Full Containment & There is an apple in the refrigerator.\\
+		Partial Containment & There is an apple in the water. 
+	\end{tabular}
+	\normalsize
+	\vfill
+	\begin{overprint}
+		\onslide<1>
+		\begin{itemize}
+			\item Categorise sentences based on the positional component of their meaning.
+			%\item This is challenging as it is word overlap independent.
+			\item Ritter et. al. found sum of word embeddings to outperform all more complex models.
+		\end{itemize}
+		\onslide<2>
+		\begin{itemize}
+			\item Our work broadens this to classify on complete sentence meaning
+			\item It also complements it by working with real world sentences -- where overlap does matter.
+		\end{itemize}
+	\end{overprint}
+
+	\footfullcite{RitterPosition}
 \end{frame}
 	
-		
+\endgroup
 
 		
 
@@ -252,12 +293,22 @@ bibstyle=ieee,firstinits=true]{biblatex}
 	\end{itemize}
 \end{frame}
 
-\begin{frame}{MSRP seems easy}
-	\begin{itemize}
-		\item Often \alert{intra-group} differences only in single word or punctuation.
-		\item Often \alert{inter-group} sentences differs entirely in topic
-		
-	\end{itemize}
+\begin{frame}{Issues with MSRP Corpus}
+	\setblockcolour{uwablue}
+	\begin{block}{Difficulty:}	
+		\begin{itemize}
+			\item Often \alert{intra-group} differences only in single word or punctuation.
+			\item Often \alert{inter-group} sentences differs entirely in topic
+		\end{itemize}
+	\end{block}
+	
+	\setblockcolour{uwayellow}
+	\pause
+	\begin{block}{Loose Semantic Equivalence}	
+		``\...the majority of the equivalent pairs in this dataset exhibit \alert{`mostly bidirectional entailments'}, with one sentence containing information `that differs' from or \alert{is not contained
+		in the other}.''
+	\end{block}
+	\footfullcite{msrParapharaCorpus}
 \end{frame}
 
 
@@ -347,7 +398,7 @@ bibstyle=ieee,firstinits=true]{biblatex}
 	\begin{block}{Bag of Words}
 		A vector of word occurrence counts. It's length is equal to the vocabulary size.
 	\end{block}
-	
+	\pause
 	\setblockcolour{uwayellow}
 	\begin{block}{Why Principle Component Analysis?}
 		Unsupervised dimensionality reduction, to test if BOW performance was due to is very large number of dimensions.
@@ -362,8 +413,12 @@ bibstyle=ieee,firstinits=true]{biblatex}
 	\begin{itemize}
 		\item Simply adding up word embeddings
 		\item We used pretrained Google News skip grams
-		\item Abbreviated SOWE, and MOWE respectively.
 	\end{itemize}
+	\setblockcolour{uwablue}
+	\begin{block}{Identical Cosine Similarities}
+	for representations of sentences $A$ and $B$: \\SOWE: $s_A,s_B$ \\ MOWE:, $m_A,m_B$ 
+	 $$d_{cos}(s_A,s_B)=d_{cos}(m_A,m_B)$$
+	\end{block}
 	\footfullcite{mikolovSkip}
 \end{frame}
 
@@ -382,15 +437,20 @@ bibstyle=ieee,firstinits=true]{biblatex}
 	\end{itemize}	
 	\footfullcite{le2014distributed}
 \end{frame}
-
+\endgroup
 
 \begin{frame} {PV--DM} 
-	\hskip-1cm
-	\only<1>{\fullpagetikz{../figs/pvdm/PVDM1.pgf}}
-	\only<2>{\fullpagetikz{../figs/pvdm/PVDM2.pgf}}
-	\only<3>{\fullpagetikz{../figs/pvdm/PVDM3.pgf}}
+
+	\begin{overprint}
+		\onslide<1>
+		\fullpagetikz{../figs/pvdm/PVDM1.pgf}
+		\onslide<2>
+		\fullpagetikz{../figs/pvdm/PVDM2.pgf}
+		\onslide<3>
+		\fullpagetikz{../figs/pvdm/PVDM3.pgf}
+	\end{overprint}
 \end{frame}
-\endgroup
+
 
 \begingroup %In these slides the frame title font size will be different
 \setbeamerfont{frametitle}{size=\fontsize{12}{18}}
@@ -410,9 +470,14 @@ bibstyle=ieee,firstinits=true]{biblatex}
 
 \begin{frame} {PV--DBOW}
 	\centering
-	\only<1>{\fullpagetikz{../figs/pvdbow/PVDBOW1.pgf}}
-	\only<2>{\fullpagetikz{../figs/pvdbow/PVDBOW2.pgf}}
-	\only<3>{\fullpagetikz{../figs/pvdbow/PVDBOW3.pgf}}
+	\begin{overprint}
+		\onslide<1>
+		\fullpagetikz{../figs/pvdbow/PVDBOW1.pgf}
+		\onslide<2>
+		\fullpagetikz{../figs/pvdbow/PVDBOW2.pgf}
+		\onslide<3>
+		\fullpagetikz{../figs/pvdbow/PVDBOW3.pgf}
+	\end{overprint}
 \end{frame}
 
 
@@ -443,8 +508,20 @@ bibstyle=ieee,firstinits=true]{biblatex}
 
 
 \section{Results}
+\begingroup %In these slides the frame title font size will be different
+\setbeamerfont{frametitle}{size=\fontsize{12}{18}}
+\begin{frame}{Experimental Evaluation and Results}
+	\tikzset{corp_prep/.style={thick, fill=uwayellow, fill opacity=0.2}}
+	\tikzset{model_prep/.style={thick, fill=uwablue, fill opacity=0.2}}
+	\tikzset{sem_class/.style={thick, shading=true,left color=uwayellow,right color=uwablue, fill opacity=0.2}}
+	
+	\fullwidthtikz{../figs/block_overview_slides.pgf}
+\end{frame}
+
+\endgroup
+
 \pgfplotstableread[col sep=comma]{
-	Name,msrp,opiniosis, void
+	Name,MSRP,Opiniosis, void
 	PV--DM, 78, 38.26,0
 	PV--DBOW, 89.93, 32.19,0
 	URAE, 51.14, 20.87,0
@@ -481,9 +558,9 @@ bibstyle=ieee,firstinits=true]{biblatex}
 \begin{frame}[fragile]{Semantic Classification Success Rate}
 	\begin{tikzpicture}
 	\begin{axis}[resplot]
-		\only<1->{\addplot[fill=uwayellow] table [y=msrp,x expr=\coordindex, meta=Name] {\resultstable};}
+		\only<1->{\addplot[fill=uwayellow] table [y=MSRP,x expr=\coordindex, meta=Name] {\resultstable};}
 		\only<1>{\addplot[fill=none] table [y=void,x expr=\coordindex]{\resultstable};}
-		\only<2->{\addplot [fill=uwablue] table [y=opiniosis,x expr=\coordindex]{\resultstable};}
+		\only<2->{\addplot [fill=uwablue] table [y=Opiniosis,x expr=\coordindex]{\resultstable};}
 		\only<1>{\legend{MSRP};}
 		\only<2>{\legend{MSRP, Opinosis};}
 	\end{axis}
@@ -506,7 +583,8 @@ bibstyle=ieee,firstinits=true]{biblatex}
 \end{frame}
 
 
-\begin{frame}{Conclusion}
+\begin{frame}[fragile]{Conclusion}
+	\begin{comment}
 	\begin{tikzpicture}
 		\begin{axis}[resplot, 
 		ytick={0,50,100}, 
@@ -514,13 +592,16 @@ bibstyle=ieee,firstinits=true]{biblatex}
 		legend pos = outer north east,
 		legend style={font = \tiny}
 		]
-			\addplot[fill=uwayellow] table [y=msrp,x expr=\coordindex] {\resultstable};
-			\addplot [fill=uwablue] table [y=opiniosis,x expr=\coordindex]{\resultstable};
+			\addplot[fill=uwayellow] table [y=MSRP,x expr=\coordindex] {\resultstable};
+			\addplot [fill=uwablue] table [y=Opiniosis,x expr=\coordindex]{\resultstable};
 			\legend{MSRP, Opinosis};
 		\end{axis}
 	\end{tikzpicture}
+	\end{comment}
 	
 	\begin{itemize}
+	\item Evaluate the vector space partitioning, by semantic equivalence.
+	\item using linear SVM for semantic classification task
 	\item BOW, MOWE and SOWE unexpectedly strong
 	\item Word content matters, and must be preserved
 	\end{itemize}
@@ -528,9 +609,10 @@ bibstyle=ieee,firstinits=true]{biblatex}
 
 
 \begin{frame}{Annex: Exact Results}
-	\centering\pgfplotstabletypeset[columns={Name, msrp, opiniosis}, 
+	\centering\pgfplotstabletypeset[columns={Name, MSRP, Opiniosis}, 
 		every head row/.style={before row=\toprule,after row=\midrule},
-		columns/Name/.style={string type}]{\resultstable}
+		columns/Name/.style={string type},
+		skip rows between index={7}{10}]\resultstable
 \end{frame}
 
 
