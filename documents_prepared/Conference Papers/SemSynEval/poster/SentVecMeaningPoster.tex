@@ -1,14 +1,18 @@
-\documentclass[a0papper, landscape]{tikzposter}
+\documentclass[a0paper, landscape]{tikzposter}
+\usepackage[colalign]{colfix}
+
 \usepackage[utf8]{inputenc}
 \usepackage{adjustbox}
-\usepackage{blindtext}
-\usepackage{comment}
+\usepackage{graphicx}
 
 
 %%%%%%%%%%%%%Bibliography
-\usepackage[backend=bibtex, url=false,
-bibstyle=ieee,firstinits=true]{biblatex}
-\bibliography{master.bib}
+
+\usepackage[backend=bibtex,style=verbose-inote,citestyle=authortitle]{biblatex}
+\usepackage{xpatch}
+\xapptobibmacro{cite}{\setunit{\nametitledelim}\printfield{year}}{}{}
+\addbibresource{master.bib}
+
 %%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%TIKZ
@@ -43,12 +47,27 @@ bibstyle=ieee,firstinits=true]{biblatex}
 \usecolorstyle{Spain}
 
 \renewcommand\familydefault{qag}%{lmss}
+\renewcommand\UrlFont{\color{blue}}
+
+\makeatletter
+
+\settitle{ \centering \vbox{
+		\tikz[remember picture,overlay]\node[anchor=east,xshift=0.62\linewidth,yshift=-2.1em,inner sep=0pt] {%
+					\@titlegraphic
+		};
+		\centering
+		\color{titlefgcolor} {\bfseries \Huge \sc \@title \par}
+		\vspace*{1em}
+		{\huge \@author \par} \vspace*{1em} {\LARGE \@institute}
+	}}
+
 %%%%%%
 
 
 \title{How Well Sentence Embeddings Capture Meaning}
 \author{Lyndon White, Roberto Togneri, Wei Liu, Mohammed Bennamoun}
 \institute{The University of Western Australia}
+\titlegraphic{\includegraphics[scale=0.8]{UWA-Full-Hor-CMYK}}
 \date{}
 
 \graphicspath{{../figs/}}
@@ -60,7 +79,7 @@ bibstyle=ieee,firstinits=true]{biblatex}
 \begin{columns}
     \column{0.33}
     
-    \block{Equivalent Sentences must map to good patitions of the vector space}
+    \block{Equivalent sentences must map to good partitions in vector space}
     {
 		\innerblock{When are sentences equivalent? -- Bidirectional Entailment}
 		{
@@ -69,12 +88,12 @@ bibstyle=ieee,firstinits=true]{biblatex}
  		}
  		\vspace{1.5ex}
 		\begin{tikzfigure}
-			\includegraphics[scale=2]{equiv}				
+			\includegraphics[scale=2]{equiv}							
 		\end{tikzfigure}
 		{\small Above: A symbolic representation of a possible relationship between sentences grouped by meanings and the corresponding partitions of the vector space.}
 		
 		\vspace{2ex}
-       	\innerblock{When is a partion good?}
+       	\innerblock{When is a partition good?}
        	{
        		\begin{description}%[labelsep=1em]
        			\item[Concentrated]\quad All sentences with same meaning go to small area.
@@ -82,7 +101,8 @@ bibstyle=ieee,firstinits=true]{biblatex}
        			\item[Simple]\quad No twists, bulges, holes, jumps etc.      			
        		\end{description}
        		
-			Notice: these are also the conditions for a classifier to work well.
+			Notice: these are also the conditions for a classifier to work well.\\
+			So a classification task can be used to assess the quality of an embedding method.
        	}
        	\vspace{2ex}
  	    \innerblock{Evaluation via a semantic classification task}
@@ -97,7 +117,7 @@ bibstyle=ieee,firstinits=true]{biblatex}
 
     
     \column{0.33}
-	\block{Models for embedding sentences}
+	\block{Methods for embedding sentences}
 	{
 		\innerblock{Bag of Words (with PCA)}
 		{
@@ -113,7 +133,7 @@ bibstyle=ieee,firstinits=true]{biblatex}
 			\begin{itemize}
 				\item Simply adding up skip gram word embeddings
 			\end{itemize}
-		     \small\fullcite{mikolovSkip}
+		     \small\cite{mikolovSkip}
 		}
 
 		\vspace{2ex}
@@ -128,7 +148,12 @@ bibstyle=ieee,firstinits=true]{biblatex}
 			\hfill
 			\begin{adjustbox}{valign=t}
 				\begin{minipage}[t]{0.48\linewidth}
-				 \small\fullcite{le2014distributed}
+				\begin{itemize}
+					\item Input: Embeddings for previous \emph n words, plus per sentence paragraph vector
+					\item Output: predicted next word
+					\item Train the embeddings in the lookup tables to achieve task.
+				\end{itemize}
+				 \small\cite{le2014distributed}
 				\end{minipage}
 			\end{adjustbox}
 		 }
@@ -143,7 +168,13 @@ bibstyle=ieee,firstinits=true]{biblatex}
 			\hfill
 			\begin{adjustbox}{valign=t}
 				\begin{minipage}[t]{0.48\linewidth}
-					\small\fullcite{le2014distributed}
+					\begin{itemize}
+						\item Input: paragraph vector alone representing sentence
+						\item Output: predicted words in sentence
+						\item Train paragraph vectors embeddings in the lookup table to achieve task.
+						\item Does not know word order.
+					\end{itemize}
+					\small\cite{le2014distributed}
 				\end{minipage}
 			\end{adjustbox}
 		}
@@ -158,11 +189,17 @@ bibstyle=ieee,firstinits=true]{biblatex}
 			\hfill
 			\begin{adjustbox}{valign=t}
 				\begin{minipage}[t]{0.48\linewidth}
-					\small\fullcite{SocherEtAl2011:PoolRAE}
+					\begin{itemize}
+						\item Compositional model
+						\item Reusing single layer neural network to pairwise merge input vectors
+						\item Input and Output: Leaf node word embeddings
+						\item Sentence embedding is central bottleneck layer.
+					\end{itemize}
+					\small\cite{SocherEtAl2011:PoolRAE}
 				\end{minipage}
 			\end{adjustbox}
 		}
-	 		
+
 	}
     
     \column{0.33}
@@ -174,9 +211,15 @@ bibstyle=ieee,firstinits=true]{biblatex}
       		\includegraphics[width=0.49\linewidth]{opinosis_hist}
        	\end{tikzfigure}	
 		\begin{itemize}
-			\item Microsoft Research Paraphrase Corpus (MSRP), automatically derived from existing pairwise corpus.
-			\item Opinosis, new manual annotations. Expected to be more difficult task.
+			\item Microsoft Research Paraphrase Corpus (MSRP), automatically derive paraphrase groups from existing annotations.
+			\item Opinosis, new manual paraphrase groups annotations. Expected to be the more difficult task.
 		\end{itemize}
+		
+		\small
+		Corpora are available online \url{http://white.ucc.asn.au/resources/paraphrase_grouped_corpora/}. 
+		\cite{msrParapharaCorpus}
+		\cite{ganesan2010opinosis}
+
     }
     
     
@@ -197,7 +240,7 @@ bibstyle=ieee,firstinits=true]{biblatex}
     		ytick= {0,25,50,75,100},
     		yticklabels={0\%,25\%,50\%,75\%,100\%},%\pgfmathprintnumber{\tick}\,\%,
     		ybar=7pt,% interval= 0.7,
-    		bar width = 1.5cm,
+    		bar width = 1.2cm,
     		ymin=0, ymax=115,
 %    		enlarge y limits=0.2,
     		enlarge x limits=0.1,
@@ -205,11 +248,11 @@ bibstyle=ieee,firstinits=true]{biblatex}
     		height=13cm,
     		xtick=data,
     		xticklabels={PV\\DM,PV\\DBOW,URAE,MOWE,SOWE,BOW,PCA\\BOW},
-    		xticklabel pos=upper,
+    		xticklabel pos=lower,
     		xticklabel style={align=center},
     		extra x ticks ={0,1,2,3,4,5,6,7},
     		extra x tick labels={PV\\DM,PV\\DBOW,URAE,MOWE,SOWE,BOW,PCA\\BOW},
-    		extra x tick style={grid=major,xticklabel pos = lower},
+    		extra x tick style={grid=major,xticklabel pos = upper},
     		legend style={draw=none},
 	    	legend pos = outer north east,
     		transpose legend,
@@ -220,7 +263,7 @@ bibstyle=ieee,firstinits=true]{biblatex}
 
 
     
-    \block{Performance on Semantic Classification Task}
+    \block{Performance on semantic classification task}
     {
 		\begin{tikzpicture}
 		\begin{axis}[resplot]
@@ -232,10 +275,14 @@ bibstyle=ieee,firstinits=true]{biblatex}
     	
     }
     
-    \block{Unexpected Result: Simple models outperform more advanced models}
+    \block{Unexpected result: simple methods outperform more advanced methods}
     {
-	    
-    	
+   		\begin{itemize}
+   			\item SOWE, MOWE, PCA BOW and BOW, all out perform the more complex models
+   			\item The results for SOWE confirm similar recent evaluation by Ritter et. al.
+   			\item Conclusion: capturing word content is paramount in capturing meaning.
+   		\end{itemize}
+		\small\cite{RitterPosition}
     }    
     
 
