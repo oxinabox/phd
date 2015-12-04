@@ -1,33 +1,34 @@
 \documentclass[]{scrartcl}
+\usepackage[author={Lyndon White}]{pdfcomment}
 
 \usepackage[sharp]{easylist}
 \usepackage{graphicx}
 \usepackage{pdfpages}
 \usepackage{pdflscape}
 
+\usepackage{booktabs} % For \toprule, \midrule and \bottomrule
+\usepackage{pgfplotstable} % Generates table from .csv
+
+
+%%%%%%%%%%MATH
 \usepackage{amsthm}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsfonts}
 
-\usepackage{algorithm2e}
-
-
-\usepackage[author={Lyndon White}]{pdfcomment}
-
-\makeatletter
 \numberwithin{equation}{section}
 \numberwithin{figure}{section}
 \theoremstyle{plain}
 \newtheorem{thm}{\protect\theoremname}
 \theoremstyle{definition}
 \newtheorem{defn}[thm]{\protect\definitionname}
-\makeatother
-
 \usepackage{csquotes}
 \usepackage[english]{babel}
 \providecommand{\definitionname}{Definition}
 \providecommand{\theoremname}{Theorem}
+%%%%%%
+
+\usepackage{algorithm2e}
 
 
  
@@ -36,13 +37,28 @@
  bibencoding=ascii,
  maxcitenames=2
 ]{biblatex}
-\bibliography{../../../Resources/master_bibliography/master}
+\bibliography{master}
 \usepackage{cleveref}
 
 %End Packages
 
 
 \DeclareMathOperator*{\argmin}{argmin}
+
+%%%%%%% Tables
+
+\pgfplotstableset{
+	columns/0/.style={
+		string replace={glove50_jaccard}{50d GLoVE},
+		string replace={glove100_jaccard}{100d GLoVE},
+		string replace={glove200_jaccard}{200d GLoVE},
+		string replace={glove300_jaccard}{300d GLoVE},
+		string type,
+		column name = {Model}
+	}	
+} 
+%%%%%%
+
 
 
 %opening
@@ -262,14 +278,19 @@ For word embeddings we make used of the GloVe representations\footnote{Kindly ma
 For simplicity and speed, sentenced from the corpus which use words not found in the vector vocabulary are excluded. Similarly, words which are not used in the corpus at least once are excluded from the vocabulary. In general it is of-course possible to simple to have trained an word vectors with a vocabulary including those words (See also the \Cref{future} for another method to handle them.). 
 
 
-Note that in this work we do not distiguist words from tokens (such as punctuation).
+Note that in this work tokens (such as punctuation) are not distinguished from words.
 
 \subsection{Selection}
 \subsection{Ordering}
 As the overall problem can be consider a task of translating from a vector to a natural language sentence, the BLEU  score \parencite{Papineni2002} can be used for assessing how well the output sentence matches the input reference.
 
-
 \section{Results and Discussion}
+\begin{table}
+	\pgfplotstableread[col sep=comma, header=false]{data/selection_overall_len_scores.csv}\overall
+	\pgfplotstabletranspose[input colnames to=] \overallt \overall
+	\pgfplotstabletypeset[columns/1/.style={column name={Mean Jaccard Index}}]\overallt
+\end{table}
+
 
 It was noted that unlike in the work of \cite{iyyer2014generating}, this processes does not often generate paraphrases, but rather the original sentence. This is due, at least in part, to the method being able to successfully minimising the distance to the original down to zero. Thus resulting in the original bag of words.
 
