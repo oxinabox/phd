@@ -1,0 +1,293 @@
+\documentclass[a0paper, landscape]{tikzposter}
+\usepackage[colalign]{colfix}
+
+\usepackage[utf8]{inputenc}
+\usepackage{adjustbox}
+\usepackage{graphicx}
+
+
+%%%%%%%%%%%%%Bibliography
+
+\usepackage[backend=bibtex,style=verbose-inote,citestyle=authortitle]{biblatex}
+\usepackage{xpatch}
+\xapptobibmacro{cite}{\setunit{\nametitledelim}\printfield{year}}{}{}
+\addbibresource{master.bib}
+
+%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%TIKZ
+\usepackage{tikz}
+\usepackage{booktabs}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.12}
+\usepackage{pgfplotstable}
+
+\usetikzlibrary{positioning, fit,arrows,chains,shapes.geometric,patterns}
+\usetikzlibrary{graphs,graphdrawing}
+\usetikzlibrary{petri, shapes}
+\usetikzlibrary{calc}
+\usegdlibrary{force, layered, trees}
+
+
+\tikzset{/handlers/.provide style/.code={%
+		\pgfkeysifdefined{\pgfkeyscurrentpath/.@cmd}{}%
+		{\pgfkeys {\pgfkeyscurrentpath /.code=\pgfkeysalso {#1}}}%
+	}}
+	
+
+%%%%%%%% Misc
+\newcommand{\widthtikz}[2]{\resizebox{#1\columnwidth}{!}{\input{#2}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%% Style
+\usetheme{Rays}
+\usecolorpalette{GreenGrayViolet}
+\usecolorstyle{Spain}
+
+\renewcommand\familydefault{qag}%{lmss}
+\renewcommand\UrlFont{\color{blue}}
+
+\makeatletter
+
+\settitle{ \centering \vbox{
+		\tikz[remember picture,overlay]\node[anchor=east,xshift=0.62\linewidth,yshift=-2.1em,inner sep=0pt] {%
+					\@titlegraphic
+		};
+		\centering
+		\color{titlefgcolor} {\bfseries \Huge \sc \@title \par}
+		\vspace*{1em}
+		{\huge \@author \par} \vspace*{1em} {\LARGE \@institute}
+	}}
+
+%%%%%%
+
+
+\title{How Well Sentence Embeddings Capture Meaning}
+\author{Lyndon White, Roberto Togneri, Wei Liu, Mohammed Bennamoun}
+\institute{The University of Western Australia}
+\titlegraphic{\includegraphics[scale=0.8]{UWA-Full-Hor-CMYK}}
+\date{}
+
+\graphicspath{{../figs/}}
+
+\begin{document}
+
+\maketitle
+
+\begin{columns}
+    \column{0.33}
+    
+    \block{Equivalent sentences must map to good partitions in vector space}
+    {
+		\innerblock{When are sentences equivalent? -- Bidirectional Entailment}
+		{
+ 			$A$ and $B$ are semantically equivalent iff $$A\models B\:\wedge\:B\models A$$
+ 			and we call $A$ and $B$ paraphrases
+ 		}
+ 		\vspace{1.5ex}
+		\begin{tikzfigure}
+			\includegraphics[scale=2]{equiv}							
+		\end{tikzfigure}
+		{\small Above: A symbolic representation of a possible relationship between sentences grouped by meanings and the corresponding partitions of the vector space.}
+		
+		\vspace{2ex}
+       	\innerblock{When is a partition good?}
+       	{
+       		\begin{description}%[labelsep=1em]
+       			\item[Concentrated]\quad All sentences with same meaning go to small area.
+       			\item[Distinct]\quad Should not overlap, should be separate      			
+       			\item[Simple]\quad No twists, bulges, holes, jumps etc.      			
+       		\end{description}
+       		
+			Notice: these are also the conditions for a classifier to work well.\\
+			So a classification task can be used to assess the quality of an embedding method.
+       	}
+       	\vspace{2ex}
+ 	    \innerblock{Evaluation via a semantic classification task}
+ 	    {	
+   	 		\begin{tikzfigure}
+		     	\includegraphics[width=0.29\textwidth]{block_overview_poster}
+   	 		\end{tikzfigure}
+ 	    }
+ 	}
+
+        
+
+    
+    \column{0.33}
+	\block{Methods for embedding sentences}
+	{
+		\innerblock{Bag of Words (with PCA)}
+		{
+			\begin{itemize}
+				\item Classic model, one dimension per word in vocabulary.
+				\item Cut it down to size with PCA to be fair on sparsity.
+			\end{itemize}
+			\par   	
+		}
+		\vspace{2ex}
+		\innerblock{Sum/Mean of Word Embeddings (SOWE/MOWE)}
+		{
+			\begin{itemize}
+				\item Simply adding up skip gram word embeddings
+			\end{itemize}
+		     \small\cite{mikolovSkip}
+		}
+
+		\vspace{2ex}
+
+		\innerblock{Paragraph Vectors -- Distributed Memory (PV-DM)}
+		{
+			\begin{minipage}[t]{0.48\linewidth}
+			     \begin{tikzfigure}
+				     	\includegraphics[width=\textwidth]{pvdm/PVDM3_poster}
+			     \end{tikzfigure}				
+			\end{minipage}%
+			\hfill
+			\begin{adjustbox}{valign=t}
+				\begin{minipage}[t]{0.48\linewidth}
+				\begin{itemize}
+					\item Input: Embeddings for previous \emph n words, plus per sentence paragraph vector
+					\item Output: predicted next word
+					\item Train the embeddings in the lookup tables to achieve task.
+				\end{itemize}
+				 \small\cite{le2014distributed}
+				\end{minipage}
+			\end{adjustbox}
+		 }
+	  	\vspace{2ex}
+		\innerblock{Paragraph Vectors -- Distributed Bag of Words (PV-DBOW)}
+		{
+			\begin{minipage}[t]{0.48\linewidth}
+				\begin{tikzfigure}
+					\includegraphics[width=\textwidth]{pvdbow/PVDBOW_poster}
+				\end{tikzfigure}				
+			\end{minipage}%
+			\hfill
+			\begin{adjustbox}{valign=t}
+				\begin{minipage}[t]{0.48\linewidth}
+					\begin{itemize}
+						\item Input: paragraph vector alone representing sentence
+						\item Output: predicted words in sentence
+						\item Train paragraph vectors embeddings in the lookup table to achieve task.
+						\item Does not know word order.
+					\end{itemize}
+					\small\cite{le2014distributed}
+				\end{minipage}
+			\end{adjustbox}
+		}
+		\vspace{2ex}
+		\innerblock{Unfolding Recursive Autoencoder (URAE)}
+		{
+			\begin{minipage}[t]{0.48\linewidth}
+				\begin{tikzfigure}
+					\includegraphics[width=\textwidth]{URAE}
+				\end{tikzfigure}				
+			\end{minipage}%
+			\hfill
+			\begin{adjustbox}{valign=t}
+				\begin{minipage}[t]{0.48\linewidth}
+					\begin{itemize}
+						\item Compositional model
+						\item Reusing single layer neural network to pairwise merge input vectors
+						\item Input and Output: Leaf node word embeddings
+						\item Sentence embedding is central bottleneck layer.
+					\end{itemize}
+					\small\cite{SocherEtAl2011:PoolRAE}
+				\end{minipage}
+			\end{adjustbox}
+		}
+
+	}
+    
+    \column{0.33}
+    \block{Corpora}
+    {
+       	\begin{tikzfigure}
+       		\includegraphics[width=0.49\linewidth]{msrp_hist}
+       		\hfill
+      		\includegraphics[width=0.49\linewidth]{opinosis_hist}
+       	\end{tikzfigure}	
+		\begin{itemize}
+			\item Microsoft Research Paraphrase Corpus (MSRP), automatically derive paraphrase groups from existing annotations.
+			\item Opinosis, new manual paraphrase groups annotations. Expected to be the more difficult task.
+		\end{itemize}
+		
+		\small
+		Corpora are available online \url{http://white.ucc.asn.au/resources/paraphrase_grouped_corpora/}. 
+		\cite{msrParapharaCorpus}
+		\cite{ganesan2010opinosis}
+
+    }
+    
+    
+    \pgfplotstableread[col sep=comma]{
+    	Name,MSRP,Opiniosis, void
+    	PV--DM, 78, 38.26,0
+    	PV--DBOW, 89.93, 32.19,0
+    	URAE, 51.14, 20.87,0
+    	MOWE, 97.91, 69.30,0
+    	SOWE, 98.02, 68.75,0
+    	BOW, 98.37, 65.23,0
+    	PCA--BOW, 97.96, 54.43,0
+    }\resultstable
+    
+    \pgfplotsset{resplot/.style = {
+    		nodes near coords, nodes near coords align={vertical},
+    		nodes near coords={\pgfmathprintnumber[precision=0]{\pgfplotspointmeta}},
+    		ytick= {0,25,50,75,100},
+    		yticklabels={0\%,25\%,50\%,75\%,100\%},%\pgfmathprintnumber{\tick}\,\%,
+    		ybar=7pt,% interval= 0.7,
+    		bar width = 1.2cm,
+    		ymin=0, ymax=115,
+%    		enlarge y limits=0.2,
+    		enlarge x limits=0.1,
+    		width=0.235\textwidth,
+    		height=13cm,
+    		xtick=data,
+    		xticklabels={PV\\DM,PV\\DBOW,URAE,MOWE,SOWE,BOW,PCA\\BOW},
+    		xticklabel pos=lower,
+    		xticklabel style={align=center},
+    		extra x ticks ={0,1,2,3,4,5,6,7},
+    		extra x tick labels={PV\\DM,PV\\DBOW,URAE,MOWE,SOWE,BOW,PCA\\BOW},
+    		extra x tick style={grid=major,xticklabel pos = upper},
+    		legend style={draw=none},
+	    	legend pos = outer north east,
+    		transpose legend,
+    		legend image code/.code={%
+    			\draw[#1] (0cm,-0.4cm) rectangle (0.5cm,0.4cm);
+    		}
+    	}}
+
+
+    
+    \block{Performance on semantic classification task}
+    {
+		\begin{tikzpicture}
+		\begin{axis}[resplot]
+				\addplot[fill=notebgcolor] table [y=MSRP,x expr=\coordindex, meta=Name] {\resultstable};
+				\addplot [fill=innerblocktitlebgcolor] table [y=Opiniosis,x expr=\coordindex]{\resultstable};
+				\legend{MSRP, Opinosis};
+		\end{axis}
+		\end{tikzpicture}
+    	
+    }
+    
+    \block{Unexpected result: simple methods outperform more advanced methods}
+    {
+   		\begin{itemize}
+   			\item SOWE, MOWE, PCA BOW and BOW, all out perform the more complex models
+   			\item The results for SOWE confirm similar recent evaluation by Ritter et. al.
+   			\item Conclusion: capturing word content is paramount in capturing meaning.
+   		\end{itemize}
+		\small\cite{RitterPosition}
+    }    
+    
+
+    
+\end{columns}
+
+
+\end{document}

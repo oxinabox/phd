@@ -1,0 +1,109 @@
+\makeatletter
+\tikz@def@grow@tokens{3}{1}{-1}{0}
+\tikz@def@grow@tokens{3}{2}{0}{0}
+\tikz@def@grow@tokens{3}{3}{1}{0}
+
+
+\tikz@def@grow@tokens{5}{1}{-1}{0}
+\tikz@def@grow@tokens{5}{2}{0}{0}
+\tikz@def@grow@tokens{5}{3}{1}{0}
+\tikz@def@grow@tokens{5}{4}{2}{0}
+\tikz@def@grow@tokens{5}{5}{-2}{0}
+
+
+\tikz@def@grow@tokens{7}{1}{-1}{0}
+\tikz@def@grow@tokens{7}{2}{0}{0}
+\tikz@def@grow@tokens{7}{3}{1}{0}
+\tikz@def@grow@tokens{7}{4}{2}{0}
+\tikz@def@grow@tokens{7}{5}{3}{0}
+\tikz@def@grow@tokens{7}{6}{-2}{0}
+\tikz@def@grow@tokens{7}{7}{-3}{0}
+\makeatother
+
+
+\begin{tikzpicture}[word/.style={font=\itshape, label=below:Word Input},
+	rec/.style={draw,rectangle},
+ 	xi/.style = {rec, minimum width=1.6cm},
+   x1/.style = {xi, colored tokens={lightgray,lightgray, gray, lightgray,black}},
+   x2/.style={xi, colored tokens={lightgray,lightgray, black, lightgray,lightgray}},
+   x3/.style={xi, colored tokens={lightgray,gray, lightgray, black, lightgray}},
+   x3_5/.style = {xi, colored tokens={black, gray,lightgray, gray, lightgray}},
+   x4/.style={xi, colored tokens={gray,black, gray, lightgray,gray}},
+   x5/.style={xi, colored tokens={gray,gray, black, lightgray,lightgray}},
+   xp1/.style = {xi, colored tokens={gray,gray, gray, lightgray,gray}},
+   xp2/.style={xi, colored tokens={gray,lightgray, gray, gray,gray}},
+   xp3/.style={xi, colored tokens={gray,gray, lightgray, gray, lightgray}},
+   proc_word/.style={font=\large},
+]
+
+\def\x{\tilde{x}}
+\def\a{\tilde{a}}
+\def\y{\tilde{y}}
+\def\b{\tilde{b}}
+\def\tanh{\mathrm{tanh}}
+
+
+
+
+
+\node  (Iinf) [xi,label=left:$\x_{...}$] {...};
+\node  (I5) [x5,label=left:$\x_{mat}$,below=0pt of Iinf] {};
+\node  (I4) [x4,label=left:$\x_{on}$,below=0pt of I5] {};
+\node  (I3_5) [x3_5,label=left:$\x_{fish}$,below=0pt of I4] {};
+\node  (I3) [x3,label=left:$\x_{sat}$,below =0pt of I3_5] {};
+\node  (I2) [x2,label=left:$\x_{cat}$,below =0pt of I3] {} ;
+\node  (I1)[x1,label=left:$\x_{the}$,below = 0pt of I2] {};
+\node  (I0)[xi,label=left:$\x_{...}$,below = 0pt of I1] {...};
+\node (lookup_lbl)[font=\scriptsize, above = 0pt of Iinf, inner sep=1pt] {Lookup};
+\node[blue, rounded corners, thick, line width=1pt, draw, fit = (I0) (lookup_lbl)] {};
+
+\node  (J1) [x1,above right= 1.5cm of I3,label=left:$\x$] {};
+\node  (J2) [x2,right =0pt of J1] {} ;
+\node  (J3)[x3, right = 0pt of J2] {};
+
+
+\draw[->] (I1.east) edge (J1);
+\draw[->] (I2.east) edge (J2);
+\draw[->] (I3.east) edge (J3);
+
+\node  (W1) [word,below right= 1.5cm of I1] {The};
+\node  (W2) [word, right =1.3cm of W1] {Cat} ;
+\node  (W3) [word, right = 1.3cm of W2] {Sat};
+\draw[->] (W1) edge (I1.east);
+\draw[->] (W2) edge (I2.east);
+\draw[->] (W3) edge (I3.east);
+
+
+
+\node (Output)[rec, above = 2cm of J2,  minimum width=1cm, label=left:$\y$,label=right:Next Word Prediction, 
+							colored tokens={black, lightgray, lightgray}] {};
+\node (pred) [below right = 3pt of Output,font=\itshape] {On};
+
+\draw[->] (J2) to node[left]{$S_m  (W\x+\b )$} (Output);
+
+
+\node (JP) [xp2, right= 0pt of J3,label=right: Concat'd]{};
+\node  (Pinf) [xi,label=right:$\x_{...}$, below right = of JP] {...};
+\node  (P3) [xp3,label=right:$\x_{p3}$,below =0pt of Pinf] {};
+\node  (P2) [xp2,label=right:$\x_{p2}$,below =0pt of P3] {} ;
+\node  (P1)[xp1,label=right:$\x_{p1}$,below = 0pt of P2] {};
+\node  (P0)[xi,label=right:$\x_{...}$,below = 0pt of P1] {...};
+\node (p_lookup_lbl)[font=\scriptsize, above = 0pt of Pinf, inner sep=1pt] {Lookup};
+\node[red, rounded corners, thick, line width=1pt, draw, fit = (P0) (p_lookup_lbl)] {};
+
+\node  (PW) [font=\itshape, label=below:Para. ID, right = 1.3cm of W3] {p2};
+\draw[->] (PW) edge (P2.west);
+\draw[->] (P2.west) edge (JP);
+
+\node(inlbl)[proc_word, below=6cm of lookup_lbl]{\textbf{Process:}};
+\node(wwThe1)[proc_word, right= 2ex of inlbl]{The};
+\node(wwCat)[proc_word,right= 2ex of wwThe1]{Cat};
+\node(wwSat)[proc_word,right= 2exof wwCat]{Sat};
+\node(wwOn)[proc_word,right= 2ex of wwSat]{On};
+\node(wwThe2)[proc_word,right= 2ex of wwOn]{The};
+\node(wwMat)[proc_word,right= 2ex of wwThe2]{Mat};
+\node(window)[draw, fit=(wwThe1)(wwSat), line width=1,green]{};
+\node(pred)[draw, fit=(wwOn), line width=1,purple]{};
+
+
+\end{tikzpicture}

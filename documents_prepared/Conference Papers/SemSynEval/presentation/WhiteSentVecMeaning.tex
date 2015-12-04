@@ -1,0 +1,624 @@
+\documentclass[12pt,landscape,english]{beamer}
+\usepackage{etex, etoolbox, verbatim}
+
+\graphicspath{{../figs/}}
+
+%%%%%%%%%%%%%%%TIKZ
+\usepackage{tikz}
+\usepackage{booktabs}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.12}
+\usepackage{pgfplotstable}
+
+\usetikzlibrary{positioning, fit,arrows,chains,shapes.geometric,patterns}
+\usetikzlibrary{graphs,graphdrawing}
+\usetikzlibrary{petri, shapes}
+\usetikzlibrary{calc}
+\usegdlibrary{force, layered, trees}
+
+
+\tikzset{/handlers/.provide style/.code={%
+		\pgfkeysifdefined{\pgfkeyscurrentpath/.@cmd}{}%
+		{\pgfkeys {\pgfkeyscurrentpath /.code=\pgfkeysalso {#1}}}%
+	}}
+	
+	
+%%%%%%%% Misc
+
+\newcommand{\fullpagetikz}[1]{\resizebox{!}{0.8\textheight}{\input{#1}}}
+\newcommand{\fullwidthtikz}[1]{\resizebox{\textwidth}{!}{\input{#1}}}
+%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%Bibliography
+\usepackage[backend=bibtex, url=false,
+bibstyle=ieee,firstinits=true]{biblatex}
+\bibliography{master.bib}
+\renewcommand*{\thefootnote}{} %No symbol or marker
+\renewcommand{\footnotesize}{\scriptsize}
+%%%%%%%%%%%%%%%%%
+
+
+\usetheme{uwa}
+\setbeamertemplate{itemize items}[square]
+
+\colorlet{uwayellow}{yellow!50!orange}
+\colorlet{uwablue}{blue!50}
+
+\newcommand{\setblockcolour}[1]{
+	\setbeamercolor{block title}{bg=#1,fg=black}
+	\setbeamercolor{block body}{bg=#1!15,fg=black}
+}
+
+\mode<presentation>
+%\setbeameroption{show notes}
+
+
+\begin{document}
+
+% Titlepage info
+
+\title[White et al.]{How Well Sentence Embeddings Capture Meaning}
+\author[White et al.]{Lyndon White \and Roberto Togneri \and Wei Liu \and Mohammed Bennamoun}
+\institute[UWA]{The University of Western Australia}
+\date{}
+\titlegraphic{\hfill\includegraphics[scale=0.4]{ss}}
+
+\begin{frame}
+	\vspace{-0.3\textheight}
+	\titlepage
+\end{frame}
+
+
+
+\section{Introduction}
+\begingroup %In these slides the frame title font size will be different
+\setbeamerfont{frametitle}{size=\fontsize{12}{18}}
+\begin{frame}{Sentence embeddings are vector representations}
+	\begin{itemize}
+		\item Extension beyond word embeddings
+		\item The various models produce embeddings as bi-products
+		\item As they are bi-products what features are represented is not clear.
+	\end{itemize}
+	
+	
+%	Many sentence embedding methods are generally word sequence embedding methods.
+%	Working on some range from short phrase, through sentences, up to paragraphs or documents.
+\end{frame}
+\endgroup
+\begin{frame}{What could they represent?}
+	Some combination of
+	\begin{itemize}
+		\item Word content
+		\item Syntactic structure \hfill \emph{(Parsing)}
+		\item Subject \hfill \emph{(Topic Classification)}
+		\item \textbf{Semantic Polarity} \hfill \emph{(Sentiment Analysis)}
+		\item Meaning \note[itemize]{(Semantic Classification)}
+		\item Noise
+		\item other factors
+	\end{itemize}
+\end{frame}
+
+\begin{comment}
+\begin{frame}{How are they normal evaluated?}
+	\setblockcolour{uwablue}
+	\begin{block}{Sentiment Analysis}
+		Does the sentence expre
+	\end{block}
+	\setblockcolour{uwayellow}
+\end{frame}
+\end{comment}
+
+\begingroup %In these slides the frame title font size will be different
+\setbeamerfont{frametitle}{size=\fontsize{12}{18}}
+\begin{frame}{Comparison to human similarity rankings}
+	\begin{itemize}
+		\item Have humans rank, or score sample sentences on similarity.
+		\item Evaluate embedding methods by looking for correlations.
+		\item On current methods Gershman and Tenenbaum found generally poor results.
+		\note[item]{preneural network evaluations of this form were done by Mitchell and Lapata}
+		\note[item]{This method for evaluation has shownup as a task in this years SemEval challenge}
+	\end{itemize}
+	\footfullcite{gershmanphrase,Mitchell2008}
+\end{frame}
+
+
+\begin{frame}{Classification by positional meaning }
+	\vskip1.5ex
+	\scriptsize
+	\begin{tabular}{cc}
+		Category & Example\\
+		\hline
+		Adhesion to Vertical Surface & There is a magnet on the refrigerator.\\
+		Support by Horizontal Surface & There is an apple on the refrigerator.\\
+		Support from Above & There is an apple on the branch.\\
+		Full Containment & There is an apple in the refrigerator.\\
+		Partial Containment & There is an apple in the water. 
+	\end{tabular}
+	\normalsize
+	\vfill
+	\begin{overprint}
+		\onslide<1>
+		\begin{itemize}
+			\item Categorise sentences based on the positional component of their meaning.
+			%\item This is challenging as it is word overlap independent.
+			\item Ritter et. al. found sum of word embeddings to outperform all more complex models.
+		\end{itemize}
+		\onslide<2>
+		\begin{itemize}
+			\item Our work broadens this to classify on complete sentence meaning
+			\item It also complements it by working with real world sentences -- where overlap does matter.
+		\end{itemize}
+	\end{overprint}
+
+	\footfullcite{RitterPosition}
+\end{frame}
+	
+\endgroup
+
+		
+
+\begin{frame}{When are sentences equivalent?}
+	\setblockcolour{uwablue}
+	\begin{block}{Bidirectional Entailment}
+		$A$ and $B$ are semantically equivalent iff $$A\models B\:\wedge\:B\models A$$
+		and we call $A$ and $B$ \alert{paraphrases}
+	\end{block}
+	
+	\begin{overprint}
+		\onslide<1>
+			\begin{itemize}
+				\setbeamercolor{itemize item}{fg=green!50!black}
+				\item The staff were rude.
+				\item The service was impolite.
+				\item The staff showed no respect.
+				\setbeamercolor{itemize item}{fg=red!80!black}
+				\item It could have been better.
+			\end{itemize}
+		
+		
+		\onslide<2>
+			%\setbeamercolor{block title}{bg=uwayellow,fg=black}
+			%\setbeamercolor{block body}{bg=uwayellow!15,fg=black}
+			\setblockcolour{uwayellow}
+			\begin{block}{Equivelence Relation}
+				This is an equivalence relation, and so gives rise to a partitioning of all sentences by meaning.
+			\end{block}
+		
+	\end{overprint}
+
+\end{frame}
+
+\begingroup %In these slides the frame title font size will be different
+\setbeamerfont{frametitle}{size=\fontsize{12}{18}}
+\begin{frame}{Sentence partitions should map to vector partitions}
+	\includegraphics[scale=0.6]{equiv}
+	
+\end{frame}
+\endgroup
+
+
+\section{Method}
+\begin{frame}{How to Evaluate this?}
+	\begin{itemize}
+		\item Know the partitions in sentence space  
+		\item Examine the partitions in the vector space
+		\note[item]{There is an few small issues with that, to generate the partitions -- finding convex hulls in 300 dimensional space isn't feasible}
+		\item See if they are \alert{good}
+	\end{itemize}
+	\vfill
+	\centering\includegraphics[scale=0.4]{equiv}
+\end{frame}
+
+
+\newcommand{\nitem}[1]{\begin{itemize}
+		\item #1
+	\end{itemize}}
+
+\begin{frame}{What is good?}
+
+	\begin{itemize}
+		\item<1-> Concentrated
+		\only<1->{\nitem{All sentences with same meaning go to small area.}}
+		
+		\item<2-> Distinct
+		\only<2->{\nitem{Should not overlap, should be separate}}
+		
+		\item<3-> Simple 
+		\note[item]{An argument could be made for convex and simply connect}
+		\only<3->{\nitem{No twists, bulges etc in vector spaces}}
+		
+		\note[item]{These are the conditions under which a SVM works well}
+	\end{itemize}
+	\vfill
+	\centering\includegraphics[scale=0.4]{equiv}	
+\end{frame}
+
+\begingroup %In these slides the frame title font size will be different
+\setbeamerfont{frametitle}{size=\fontsize{12}{18}}
+\begin{frame}{Evaluate with a Semantic Classification Task}
+	\fullwidthtikz{../figs/block_overview_slides.pgf}
+\end{frame}
+\endgroup
+
+
+\section{Corpus Preparation}
+\begin{frame}{Corpus Preparation}
+	\tikzset{corp_prep/.style={thick, fill=uwayellow, fill opacity=0.2}}
+	\fullwidthtikz{../figs/block_overview_slides.pgf}
+\end{frame}
+
+
+\begin{frame}{The MSRP Corpus}
+	\begin{columns}
+		\begin{column}{0.5\textwidth}
+			\begin{itemize}
+				\item Microsoft Research Paraphrase Corpus
+				\item gathered from online news sources
+				\item Pairwise paraphrase detection tests
+				\item Take transitive and symmetric closures
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.5\textwidth}
+			\begin{overprint}
+				\onslide<1>
+					\vfill
+					\setblockcolour{uwayellow}
+					\begin{block}{Grouping via closure}
+						If $A$ is a paraphrase of $B$, and $B$ is a paraphrase of $C$,
+						then the paraphrase group $\{A,B,C\}$ exists.
+					\end{block}
+					\vfill						
+				\onslide<2>
+					\vfill
+					\includegraphics[width=\textwidth]{msrp_hist.pdf}\\
+					859 sentences, divided into 273 groups.
+					\vfill
+			\end{overprint}
+		\end{column}
+	\end{columns}
+	\vfill
+
+		
+	\footfullcite{msrParapharaCorpus}
+\end{frame}
+
+\begin{frame}[fragile]{Paraphrase groups from MSRP}
+	\newcommand{\blert}[1]{\color{blue}#1\color{black}}
+	\newcommand{\clert}[1]{\color{green!70!black}#1\color{black}}
+	\begin{itemize}
+		\setbeamercolor{itemize item}{fg=blue!50!black}
+		\only<1>{\item only intel corp. has a lower dividend yield .}
+		\only<1>{\item only intel 's 0.3 percent yield is lower .}
+		\only<1>{\item only the intel corporation has a lower dividend yield .}
+		\only<1>{\item only intel corp. 's 0.3 percent yield was lower .}
+		
+		\setbeamercolor{itemize item}{fg=green!50!black}
+		\only<2>{\small}
+		\only<2>{\item three such vigilante-style attacks forced the hacker organizer , who identified himself only as \alert{`` eleonora67 , ''} to extend the contest until \blert{6 p.m. edt sunday} .}
+		\only<2>{\item three such vigilante-style attacks forced the hacker organizer , who identified himself only as \alert{`` eleonora [ 67 ] , ''} to extend the contest until \blert{7 p.m. est sunday} .}
+		\only<2>{\item three such vigilante-style attacks forced the hacker organiser , who identified himself only as \alert{`` eleonora67 ] , ''} to extend the contest until \blert{8am ( aest ) today} .}
+		\only<2>{\item three such vigilante-style attacks forced the hacker organizer , who identified himself only as \alert{`` eleonora [ 67 ] , ''} to extend the contest until \blert{3 p.m. arizona time sunday} .}
+		
+		\setbeamercolor{itemize item}{fg=red!50!black}
+		\only<3>{\item belcher said the airport 's conference room \blert{was serving as a makeshift } shelter for several \clert{area families } who hiked up the \alert{wooded hillside} in advance of rising water .}
+		\only<3>{\item belcher said the airport 's conference room \blert{became a } shelter for several \clert{area families } who had hiked up \alert{wooded hillsides} in advance of rising water .}
+		\only<3>{\item belcher said the airport 's conference room \blert{became a } shelter for several \clert{families } who had hiked up \alert{hillsides} ahead of rising water .}
+		
+		\note[item]{Notice that strict bidirection entailement is broken here in the addition of wooded.}
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Issues with MSRP Corpus}
+	\setblockcolour{uwablue}
+	\begin{block}{Difficulty:}	
+		\begin{itemize}
+			\item Often \alert{intra-group} differences only in single word or punctuation.
+			\item Often \alert{inter-group} sentences differs entirely in topic
+		\end{itemize}
+	\end{block}
+	
+	\setblockcolour{uwayellow}
+	\pause
+	\begin{block}{Loose Semantic Equivalence}	
+		``\...the majority of the equivalent pairs in this dataset exhibit \alert{`mostly bidirectional entailments'}, with one sentence containing information `that differs' from or \alert{is not contained
+		in the other}.''
+	\end{block}
+	\footfullcite{msrParapharaCorpus}
+\end{frame}
+
+
+\begin{frame}{The Opinosis Corpus}
+	\begin{columns}
+		\begin{column}[T]{0.5\textwidth}
+			\begin{itemize}
+				\item Collection of highly redundant opinions
+				\item Intended for evaluation of Summarisation algorithms
+				\item Required manual partitioning
+			\end{itemize}
+		\end{column}
+		\begin{column}[t]{0.5\textwidth}
+			\\
+			\begin{overprint}
+				\onslide<1>
+				About:
+				\begin{itemize}
+					\item Electronics
+					\item Hotels
+					\item Auto-mobiles
+				\end{itemize}
+				
+				\onslide<2>
+				\includegraphics[width=\textwidth]{opinosis_hist.pdf}\\
+				521 Sentences, divided into 89 groups
+			\end{overprint}
+
+		\end{column}
+	\end{columns}
+	
+	\footfullcite{ganesan2010opinosis}
+\end{frame}
+
+
+
+
+\begin{frame}[fragile]{Paraphrase groups from Opinosis}
+	\begin{itemize}
+		\setbeamercolor{itemize item}{fg=red!50}
+		\only<1>{\item Perfect Location and Lovely Inn}
+		\only<1>{\item Great hotel, nice location for everything !}
+		\only<1>{\item Loved this hotel and location !}
+		\only<1>{\item A great hotel in a great location}
+		\only<1>{\item Great Hotel in a Great Location}
+		\only<1>{\item Overall though, the location was great and the hotel was nice .}
+		\only<1>{\item Lovely hotel and excellent location .}
+		
+		\setbeamercolor{itemize item}{fg=green!50}
+		\only<2>{\item So, the location was awesome .}
+		\only<2>{\item Again, the location was great !}
+		\only<2>{\item You cannot beat the location !}
+		\only<2>{\item The location could not be any better .}
+		\only<2>{\item In addition, it is location, location, location .}
+		\only<2>{\item That said, the location is marvelous .}
+		
+		\setbeamercolor{itemize item}{fg=orange!50}
+		\only<3>{\item Best location in Fisherman's Wharf .}
+		\only<3>{\item Perfect location to Fishermans Wharf .}
+		\only<3>{\item Perfect Fisherman's Wharf Location}
+		\only<3>{\item Perfect location near Fisherman's Wharf .}
+		\only<3>{\item The location is great, only 2 blocks from Fisherman's Wharf .}
+		
+	\end{itemize}
+\end{frame}
+
+\section{Models}
+\begin{frame}{Models and Model Preparation}
+	\tikzset{corp_prep/.style={thick, fill=uwayellow, fill opacity=0.2}}
+	\tikzset{model_prep/.style={thick, fill=uwablue, fill opacity=0.2}}
+	\fullwidthtikz{../figs/block_overview_slides.pgf}
+\end{frame}
+
+\begin{frame}{Bag of Words (BOW / PCA BOW)}
+	\setblockcolour{uwablue}
+	\begin{block}{Bag of Words}
+		A vector of word occurrence counts. It's length is equal to the vocabulary size.
+	\end{block}
+	\pause
+	\setblockcolour{uwayellow}
+	\begin{block}{Why Principle Component Analysis?}
+		Unsupervised dimensionality reduction, to test if BOW performance was due to is very large number of dimensions.
+	\end{block}
+	
+	
+	\footfullcite{hotelling1933analysis}
+\end{frame}
+
+
+\begin{frame}{Sum/Mean of Word Embeddings}
+	\begin{itemize}
+		\item Simply adding up word embeddings
+		\item We used pretrained Google News skip grams
+	\end{itemize}
+	\setblockcolour{uwablue}
+	\begin{block}{Identical Cosine Similarities}
+	for representations of sentences $A$ and $B$: \\SOWE: $s_A,s_B$ \\ MOWE:, $m_A,m_B$ 
+	 $$d_{cos}(s_A,s_B)=d_{cos}(m_A,m_B)$$
+	\end{block}
+	\footfullcite{mikolovSkip}
+\end{frame}
+
+
+\begingroup %In these slides the frame title font size will be different
+\setbeamerfont{frametitle}{size=\fontsize{12}{18}}
+\begin{frame} {{Paragraph Vector -- Distributed Memory}}
+	\vskip1ex
+	\centering\resizebox{!}{0.4\textheight}{\input{../figs/pvdm/PVDM3_no_label.pgf}}
+	\vskip3ex
+	\begin{itemize}
+		
+		\item Similar to CBOW \note{and Bengio 2003 Neural probabilistic Language model.}
+		\item Uses paragraph vector as ``memory'' slot
+		\item Giving an embedding for any word sequence
+	\end{itemize}	
+	\footfullcite{le2014distributed}
+\end{frame}
+\endgroup
+
+\begin{frame} {PV--DM} 
+
+	\begin{overprint}
+		\onslide<1>
+		\fullpagetikz{../figs/pvdm/PVDM1.pgf}
+		\onslide<2>
+		\fullpagetikz{../figs/pvdm/PVDM2.pgf}
+		\onslide<3>
+		\fullpagetikz{../figs/pvdm/PVDM3.pgf}
+	\end{overprint}
+\end{frame}
+
+
+\begingroup %In these slides the frame title font size will be different
+\setbeamerfont{frametitle}{size=\fontsize{12}{18}}
+\begin{frame} {{Paragraph Vector -- Distributed Bag of Words}}
+	\vskip1ex
+	\centering\resizebox{!}{0.4\textheight}{\input{../figs/pvdbow/PVDBOW3_no_label.pgf}}
+	\vskip3ex
+	\begin{itemize}
+		\item Similar to skip grams
+		\item Uses paragraph vector to predict word content
+		\note[item]{Sample a window of words, then train to predict the words in the window given paragraph vector}
+		\item Giving an embedding for any word sequence
+	\end{itemize}	
+	\footfullcite{le2014distributed}
+\end{frame}
+\endgroup
+
+\begin{frame} {PV--DBOW}
+	\centering
+	\begin{overprint}
+		\onslide<1>
+		\fullpagetikz{../figs/pvdbow/PVDBOW1.pgf}
+		\onslide<2>
+		\fullpagetikz{../figs/pvdbow/PVDBOW2.pgf}
+		\onslide<3>
+		\fullpagetikz{../figs/pvdbow/PVDBOW3.pgf}
+	\end{overprint}
+\end{frame}
+
+
+
+
+\begingroup %In these slides the frame title font size will be different
+\setbeamerfont{frametitle}{size=\fontsize{12}{18}}
+\begin{frame} {Unfolding Recursive AutoEncoder}
+	\vskip 2ex
+	\centering\resizebox{!}{0.4\textheight}{\input{../figs/URAE.pgf}}
+	\vskip 3ex
+	\begin{itemize}
+		\item Compositional Model
+		\item Recursive pairwise merging
+		\item Trained to unfold to original.
+	\end{itemize}
+	\footfullcite{SocherEtAl2011:PoolRAE}
+\end{frame}
+\endgroup
+
+
+
+\begin{frame} {URAE}
+	\vskip 2ex
+	\fullpagetikz{../figs/URAE.pgf}
+\end{frame}
+
+
+
+\section{Results}
+\begingroup %In these slides the frame title font size will be different
+\setbeamerfont{frametitle}{size=\fontsize{12}{18}}
+\begin{frame}{Experimental Evaluation and Results}
+	\tikzset{corp_prep/.style={thick, fill=uwayellow, fill opacity=0.2}}
+	\tikzset{model_prep/.style={thick, fill=uwablue, fill opacity=0.2}}
+	\tikzset{sem_class/.style={thick, shading=true,left color=uwayellow,right color=uwablue, fill opacity=0.2}}
+	
+	\fullwidthtikz{../figs/block_overview_slides.pgf}
+\end{frame}
+
+\endgroup
+
+\pgfplotstableread[col sep=comma]{
+	Name,MSRP,Opiniosis, void
+	PV--DM, 78, 38.26,0
+	PV--DBOW, 89.93, 32.19,0
+	URAE, 51.14, 20.87,0
+	MOWE, 97.91, 69.30,0
+	SOWE, 98.02, 68.75,0
+	BOW, 98.37, 65.23,0
+	PCA--BOW, 97.96, 54.43,0
+	null,0,0,0
+}\resultstable
+
+\pgfplotsset{resplot/.style = {
+	ytick= {0,25,50,75,100},
+	yticklabel=\pgfmathprintnumber{\tick}\,\%,
+	%ybar,
+	ybar interval= 0.7,
+	ymin=0,
+	enlarge x limits=0.025,
+	width=0.95\textwidth,
+	height=0.4\textwidth,
+	xtick=data,
+	xticklabels={PV\\DM,PV\\DBOW,URAE,MOWE,SOWE,BOW,PCA\\BOW},
+	xticklabel pos=upper,
+	xticklabel style={align=center,font = \scriptsize},
+	extra x ticks ={0,1,2,3,4,5,6,7},
+	extra x tick labels={PV\\DM,PV\\DBOW,URAE,MOWE,SOWE,BOW,PCA\\BOW},
+	extra x tick style={grid=major,xticklabel pos = lower},
+	legend style={font = \scriptsize, at={(0.5,0.32\textwidth)}},
+	transpose legend,
+		}}
+\pgfplotsset{every axis legend/.append style={at={(0.5,1.025)}, anchor=south,semithick,legend columns=3}}
+	
+\begingroup %In these slides the frame title font size will be different
+\setbeamerfont{frametitle}{size=\fontsize{12}{18}}
+\begin{frame}[fragile]{Semantic Classification Success Rate}
+	\begin{tikzpicture}
+	\begin{axis}[resplot]
+		\only<1->{\addplot[fill=uwayellow] table [y=MSRP,x expr=\coordindex, meta=Name] {\resultstable};}
+		\only<1>{\addplot[fill=none] table [y=void,x expr=\coordindex]{\resultstable};}
+		\only<2->{\addplot [fill=uwablue] table [y=Opiniosis,x expr=\coordindex]{\resultstable};}
+		\only<1>{\legend{MSRP};}
+		\only<2>{\legend{MSRP, Opinosis};}
+	\end{axis}
+	\end{tikzpicture}
+\end{frame}
+\endgroup
+
+
+
+\section{Conclusion}
+\begin{frame}{Limitations}
+	\begin{itemize}
+	\item Embedding Training corpus distinct from Evaluation Corpus
+	\item URAE playing at disadvantage 
+	\begin{itemize}
+		\item 200 dim to others 300 dim
+	\end{itemize}
+	\item Only linearly separable partitioning considered.
+	\end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]{Conclusion}
+	\begin{comment}
+	\begin{tikzpicture}
+		\begin{axis}[resplot, 
+		ytick={0,50,100}, 
+		height= 3cm, width=0.9\textwidth, 
+		legend pos = outer north east,
+		legend style={font = \tiny}
+		]
+			\addplot[fill=uwayellow] table [y=MSRP,x expr=\coordindex] {\resultstable};
+			\addplot [fill=uwablue] table [y=Opiniosis,x expr=\coordindex]{\resultstable};
+			\legend{MSRP, Opinosis};
+		\end{axis}
+	\end{tikzpicture}
+	\end{comment}
+	
+	\begin{itemize}
+	\item Evaluate the vector space partitioning, by semantic equivalence.
+	\item using linear SVM for semantic classification task
+	\item BOW, MOWE and SOWE unexpectedly strong
+	\item Word content matters, and must be preserved
+	\end{itemize}
+\end{frame}
+
+
+\begin{frame}{Annex: Exact Results}
+	\centering\pgfplotstabletypeset[columns={Name, MSRP, Opiniosis}, 
+		every head row/.style={before row=\toprule,after row=\midrule},
+		columns/Name/.style={string type},
+		skip rows between index={7}{10}]\resultstable
+\end{frame}
+
+
+\end{document}
