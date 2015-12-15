@@ -1,13 +1,14 @@
 \documentclass[]{scrartcl}
 \usepackage[author={Lyndon White}]{pdfcomment}
 
+\usepackage{verbatim}
+
 \usepackage[sharp]{easylist}
 \usepackage{graphicx}
 \usepackage{pdfpages}
 \usepackage{pdflscape}
 
-\usepackage{booktabs} % For \toprule, \midrule and \bottomrule
-\usepackage{pgfplotstable} % Generates table from .csv
+\usepackage{booktabs, array, pgfplotstable} % Generates table from .csv
 
 
 %%%%%%%%%%MATH
@@ -46,17 +47,26 @@
 \DeclareMathOperator*{\argmin}{argmin}
 
 %%%%%%% Tables
-
+\newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}
 \pgfplotstableset{
-	columns/0/.style={
-		string replace={glove50_jaccard}{50d GLoVE},
-		string replace={glove100_jaccard}{100d GLoVE},
-		string replace={glove200_jaccard}{200d GLoVE},
-		string replace={glove300_jaccard}{300d GLoVE},
+	columns/Model/.style={
+		string replace={glove50}{50d GLoVE},
+		string replace={glove100}{100d GLoVE},
+		string replace={glove200}{200d GLoVE},
+		string replace={glove300}{300d GLoVE},
 		string type,
-		column name = {Model}
+		column type=C{6em}		
 	}	
 } 
+
+\pgfplotstableset{percent style/.style={%
+		preproc/expr={100*##1},
+		postproc cell content/.append code={\pgfkeysalso{@cell content/.add={}{\%}}
+		}},
+		%
+		every head row/.style={after row=\midrule},
+		}
+
 %%%%%%
 
 
@@ -75,6 +85,7 @@
 \end{abstract}
 
 \section{Introduction}
+
 
 
 \begin{figure}
@@ -214,8 +225,9 @@ The greedy addition step is characterised by adding the best vector to the bag a
 \subsubsection{n/m--Substitution}
 We define a new substitution based method for fine tuning solutions called n/m--Substitution. It can be described as considering all subbags containing up to $n$ elements, consider replacing them with a new sub-bag of up to size $m$ from the vocabulary, including none at all, if that would result in getting closer to the target $\s$. As this involves $O(V^m)$ operations, with large vocabularies it is only possible to consider 1/1--Substitution, this itself works quiet well. This was done with the brown corpus, where $V\approxeq 40,000$. On other smaller trial corpora, where $V\approxeq 1,000$ 2/2--Substitution was used and found to give an improvement. In general it is possible to use the start with n/m--Substitution, with the overall algorithm, and then if that converges but with a distance from the target beyond some threshold it can be retried, from the best bag found in the previous run, with higher values for n and m.
 
-The reasoning behind performing n/m--substitution is to correct for greedy mistakes. Consider for example the 1 dimensional case where $\V={24,25,50}$ and $\s=98$, $d(x,y)=\left|x-y\right|$. Greedy addition would give  $bag_c=[50,25,24]$ for a distance of $1$, but a better solution (that is found with 1/1 substitution) is $bag_c=[50,24,24]$. This substitution based method can be looked at as re-evaluating past decisions of what to add to the bag in light of the further decisions made after. It is in this way lessening of the greed of the addition step. 
+The reasoning behind performing n/m--substitution is to correct for greedy mistakes. Consider the 1 dimensional case where $\V={24,25,50}$ and $\s=98$, $d(x,y)=\left|x-y\right|$. Greedy addition would give  $bag_c=[50,25,24]$ for a distance of $1$, but a better solution (that is found with 1/1 substitution) is $bag_c=[50,24,24]$. This substitution based method can be looked at as re-evaluating past decisions of what to add to the bag in light of the further decisions made after. It is in this way lessening of the greed of the addition step. 
 
+\begin{comment}
 \begin{algorithm}
 	\SetAlgoLined
 	\KwData{the metric $d$\\the target sum $\s$\\ the vocabulary of vectors $\V$\\The current best bag of vectors $bag_c$: initially $\emptyset$}
@@ -239,7 +251,7 @@ The reasoning behind performing n/m--substitution is to correct for greedy mista
 	\Return{$bag_n$}
 \caption{1/1--Substitution. Note that $\tilde{0}$ is the zero vector, including it with the vocabulary $\V$ is equivalent to considering the option of simply removing the $\x_i$ without replacement.}
 \end{algorithm}
-
+\end{comment}
 
 
 \subsection{The Ordering Problem} \label{ordering}
@@ -272,224 +284,84 @@ Of course, for some sentences the BOW can not always be resolve to the correct o
 
 \section{Evaluation Setting}
 
-The evaluation was performed on the  Standard Sample of Present-Day American English -- better known as the Brown Corpus. While the Brown Corpus is the oldest of all corpora it remains a challenging task, due to its broad topical domain and large vocabulary. The sources include a wide variety of fictional and non-fictional works from 1961 \parencite{francis1979brown}. It contains almost 50,000 unique tokens (49,815 to be exact).
-For word embeddings we make used of the GloVe representations\footnote{Kindly made available online at \url{http://nlp.stanford.edu/projects/glove/}} from \cite{pennington2014glove}, pre-trained on 2014 Wikipedia and Gigaword 5. 
+The evaluation was performed on the  Standard Sample of Present-Day American English -- better known as the Brown Corpus. While the Brown Corpus is the oldest of all corpora it remains a challenging task, due to its broad topical domain and large vocabulary. The sources include a wide variety of fictional and non-fictional works from 1961 \parencite{francis1979brown}. It contains almost 50,000 unique tokens (49,815 to be exact). Note that in this work tokens (such as punctuation) are not distinguished from words. For word embeddings we make used of the GloVe representations\footnote{Kindly made available online at \url{http://nlp.stanford.edu/projects/glove/}} from \cite{pennington2014glove}, pre-trained on 2014 Wikipedia and Gigaword 5. 
 
-For simplicity and speed, sentenced from the corpus which use words not found in the vector vocabulary are excluded. Similarly, words which are not used in the corpus at least once are excluded from the vocabulary. In general it is of-course possible to simple to have trained an word vectors with a vocabulary including those words (See also the \Cref{future} for another method to handle them.). 
+For simplicity and speed, sentenced from the corpus which use words not found in the vector vocabulary are excluded. Similarly, words which are not used in the corpus at least once are excluded from the vocabulary. In general it is of-course possible to simply to have trained a set of vocabulary of word vectors including those words (See also the \Cref{future} for another method to handle them.). 
 
 
-Note that in this work tokens (such as punctuation) are not distinguished from words.
+
 
 \subsection{Selection}
 \subsection{Ordering}
 As the overall problem can be consider a task of translating from a vector to a natural language sentence, the BLEU  score \parencite{Papineni2002} can be used for assessing how well the output sentence matches the input reference.
 
 \section{Results and Discussion}
+
 \begin{table}
-	\pgfplotstableread[col sep=comma, header=false]{data/selection_overall_len_scores.csv}\overall
-	\pgfplotstabletranspose[input colnames to=] \overallt \overall
-	\pgfplotstabletypeset[columns/1/.style={column name={Mean Jaccard Index}}]\overallt
+	\pgfplotstabletypeset[col sep=comma,fixed zerofill, precision=3,column type=C{5.5em},
+		columns/Exact Matches/.style={precision=1, percent style},
+		columns/Exact Matches on Shorter Sentences/.style={precision=1, percent style},	
+	]{data/selection_overall_len_scores.csv}
+	\caption{\label{table:overall} The performance of the word selection step. Shorter sentences are those with a true length of 18 or less. This is just over the median sentences length (17) in the Brown Corpus. Only these shorter sentences were considered for the ordering step.}
 \end{table}
+
+\begin{figure}
+	\pgfplotstableread[col sep=comma]{data/selection_len_scores.csv}{\sellenscores}
+	\pgfplotstableread[col sep=comma]{data/selection_cum_len_scores.csv}{\sellenscorescum}
+	\begin{tikzpicture}[scale=0.85]
+	\begin{axis}[xlabel=Ground Truth Sentence Length, ylabel=Mean Jacard Index]
+	\addplot table [y="glove50_jaccard_mean",x="ground_len"]{\sellenscores};
+	\addplot table [y="glove100_jaccard_mean",x="ground_len"]{\sellenscores};
+	\addplot table [y="glove200_jaccard_mean",x="ground_len"]{\sellenscores};
+	\addplot table [y="glove300_jaccard_mean",x="ground_len"]{\sellenscores};
+	\legend{50d GLoVE, 100d GLoVE,200d GLoVE,300d GLoVE}					
+	\end{axis}
+	\end{tikzpicture}
+	\hfill
+	\begin{tikzpicture}[scale=0.85]
+	\begin{axis}[xlabel=Maximum Ground Truth Sentence Length, ylabel=Cumulative Mean Jacard Index]
+	\addplot table [y="glove50_jaccard",x="max_ground_len"]{\sellenscorescum};
+	\addplot table [y="glove100_jaccard",x="max_ground_len"]{\sellenscorescum};
+	\addplot table [y="glove200_jaccard",x="max_ground_len"]{\sellenscorescum};
+	\addplot table [y="glove300_jaccard",x="max_ground_len"]{\sellenscorescum};
+	%\legend{50d GLoVE, 100d GLoVE,200d GLoVE,300d GLoVE}					
+	\end{axis}
+	\end{tikzpicture}
+	
+	\caption{\label{figure:exactlenscore}The mean jaccard index achieved during the word selection step, shown against the ground truth length of the sentence. On the left is the score at each length, and the right is the cumulative score averaged arcoss sentences of up to the indicated length.  Note that the results become noisy for longer sentences, as there are very few long sentences being averaged over -- 75\% of all sentences in the corpus are of length 25 or less. \pdfcomment{Shall I just show a histogram here?}}
+\end{figure}
+
+The overall results for the selection step are presented in \Cref{table:overall}. The results at a fixed ground truth length are shown in \Cref{figure:exactlenscore}. It can be noted that the performance improves the higher the embedding dimentionality, and degrades as the sentence length becomes longer. With high dimensional representations it continues to perform well for sentences of reasonable length for normal use. 
 
 
 It was noted that unlike in the work of \cite{iyyer2014generating}, this processes does not often generate paraphrases, but rather the original sentence. This is due, at least in part, to the method being able to successfully minimising the distance to the original down to zero. Thus resulting in the original bag of words.
 
+
+\begin{table}
+	\pgfplotstabletypeset[col sep=comma,ignore chars={"},fixed zerofill, precision=3,column type=C{5em},
+		columns/Giveups/.style={precision=1, percent style},
+		columns/Exact Ordered Matches/.style={precision=1, percent style},
+		columns/Exact Ordered Matches Excluding Giveups/.style={precision=1, percent style},
+		]{data/ordering_scores.csv}
+	\caption{\label{table:ordering} The performance of the ordering step. Only evaluated on sentences of ground truth length 18 or less. A Giveup occurs when the beam search could not find an ordering with nonzero probability, and so no attempt was made to order the words beyond the order they were found in the selection step.}
+\end{table}
+
+It can be seen from \Cref{table:ordering} that a very significant portion of the failures come from the ordering step "Giving up". A give-up occurs if the beam search failed to find any ordering to which non-zero probability was assigned. This could be because the ordering was outside of the search width, or because no reasonable ordering was possible. The former can be solved with a wider beam search -- or switching to a complete search in general. The later can only be solved with a better language model, or more likely by making less errors in the word selection step. Both issues certainly occur. 
+
+When the sentences which are given-up on are excluded, the ordering performance actually gets worse as the dimensionality increases. This is because the lower dimensional models output invalid word combinations in the selection step
+
+%Need to include Perfect results -- if the selection step was done perfectly.
+
+
 \section{Conclusion}
 
 \subsection{Future Work}\label{future}
-One of the restrictions placed during the evaluation of the technique was that pretrained embeddings must be available for all words, which is reasonable as the embeddings can always be trained to include those words. Another techneque we have been developing is to assign missing words a vector of zero. This results in them never appearing in the generated BOWS. However assuming they do appear in the language model training corpus, they can be inserted during the ordering step. If it is more likely to have that missing word, than to not. This technique showed promising results when used with the \texttt{word2vec} vectors \parencite{mikolovSkip}, which exclude common stop words like "to".
+One of the restrictions placed during the evaluation of the technique was that pretrained embeddings must be available for all words, which is reasonable as the embeddings can always be trained to include those words. Another technique we have been developing is to assign missing words a vector of zero. This results in them never appearing in the generated BOWS. However assuming they do appear in the language model training corpus, they can be inserted during the ordering step. If it is more likely to have that missing word, than to not. This technique showed promising results when used with the \texttt{word2vec} vectors \parencite{mikolovSkip}, which exclude common stop words like "to".
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\appendix 
-\subsection{Where do SOWE type embeddings come from?}
-The most basic place to get a SOWE embedding is by adding up the vectors for the words in a sentence.
-However that is obviously fairly uninteresting -- if the words are already known there is no need to resynthesises them. There may be some uses in this case for say compression.
-
-Other sources are more interesting:
-
-\begin{easylist}[itemize]
-	# Averaging Sentences
-	# Sampling Sentences from near to the SOWE
-	# Transformations from Known Sentence SOWE
-	## For example there is a known (rough) offset vector between Country names and their Capital City names
-	## By adding this vector to sentences, we can transform references to countries into references to their cities
-\end{easylist}
-
-
-\section{Search for Bag of Words used in the Sentence}
-
-\includepdf{./figs/algorithm_flowchart.pdf}
-
-\begin{easylist}[itemize]
-	# Method for finding the words that add up to the sentence vector -- or get as near to it as possible. See diagram
-	#Addition Step:
-	## First Add words to our word set, adding the one which gets us closest first
-	## Til we can't find any words that we can add without moving away
-	# Substitution step:
-	## Consider deleting, or subsituting each word in the
-	## This counters some of the greed in the addition step
-	## But not always, sometimes two (or more) words might be wrong, but changing either of them alone does not move closer to target.
-	# Repeat addition and substitution steps until converges
-	## Can do better by also considering swapping two words
-	### But this has time completity of $O(w^2 v^2)$ where $w$ is current word set size, and $v$ is vocab size.
-	### And it gets word for higher order swaps
-	### Still Double swaps may be worth doing. But it took about 30 seconds to solve one sentence that needed a double swap. and that is with a vocab of just 1300 words.
-\end{easylist}
-
-\subsection{Results}
-\begin{easylist}[itemize]
-	# Performance is near to perfect on ATIS2 and the Doctors Letters as far as getting back words, and also on ordering them (next section)
-	
-	# On a 10\% sample of the Brown corpus (4200 sentences),
-	## Overall 68.8\% of sentences recovered all words.
-	## Of the 2252 sentences from that sample with less than 20 words, 97.5\% recover all words. 
-	## Of sentences with 20 or more words only 35.5\% recover all words, however these sentences have a greater problem, in that the ordering taking too long (see next section).
-\end{easylist}
-
-
-
-
-
-
-
-\subsubsection{Time Complexity}
-The time complexity of the addition step is $O(t \cdot V\tau n)$
-Where $t$ is the maximum number of terms (words) in a sentence that adds up to $S$.
-
-Solving the above for $t$ is not feasible. However in practice, $t$ is equal to the length of the longest sentence allowed (Say 55 words for ATIS). Also, due to the degregation in performance of the greedy algorithm, and the time taken in the resconstruction step it has to be limitted anyway. $t$ can be treated as a small constant.
-
-The time complexity of the swap step is $$O(tVn)$$ also.
-The complexity of the double swap step is $$t^2 V^2 n^2$$
-
-In all these complexities, the Vocabulary size $V$ dominates. and so other terms can be largely ignored.
-
-\section{Search for Best Ordering}
-\begin{easylist}[itemize]
-	# Use classical Language Modelling to find probability of any string of words.
-	# Using Kneser-Ney smoothed trigrams, modelled on 90\% of corpus
-	## Save 10\% for test
-	# Trigram has form $P(W_i\!=\!w_i \mid W_{i-1}\!=\!w_{i-1}, W_{i-2}\!=\!_{i-2})$
-	## Which we will write as $P(w_i \mid w_{i-1}, w_{i-2})$
-	## Have pseudo-words for start and end-states. Added before trigram language model is created.
-	### Thus can always start from known states probability of 1.
-	### And can use the information on words likely to start and end sentences
-	# Language model is a Markov model
-	## State is the last two words
-	### Note this means $P(a,b|b,c)=P(a|b,c)$ as old first word in state always becomes new second word in state
-	## Markov Assumption: the next state is dependent only on the current state
-	##  $P(W_i \mid W_{i-1}, W_{i-2}, W_{i-3}, ...) = P(W_i \mid W_{i-1}, W_{i-2})$
-	# Evaluate Markov Chains to find probability of any given ordering
-	## For example:
-	\begin{equation}
-	\begin{split}
-	P(d,c,b,a) &= P(d|c,b,a) P(c,b,a) \\
-			   &= P(d|c,b) P(c,b,a) \\
-			   &= P(d|c,b) P(c,b|b,a) P(b,a) \\
-			   &=P(d|c,b) P(c|b,a) P(b,a)
-	\end{split}
-	\end{equation}
-	
-	# Finding all paths
-	## We need to find the most likely path through the Markov Directed Acyclic Graph
-	## This means finding probability of all possible paths
-	## When considering multiple paths, many of the sub-probabilities will be reused. Thus Dynamic programming can/must/is be used.
-	## Can save some time by removing suitable ``impossible" paths early
-	### Currently defining this by any single trigram in the path having $P=0$ for what a double-precision floating point value considers zero.
-	
-	# Even with these efficiency's this method takes too long for more than 20 word sentences. 
-	## This doesn't seem particularly problematic:
-	### The finding words is more likely to fail for sentences that long
-	### There are published results shown only for shorter sentences. Eg Socher's Parsing with RNNs was only shown for sentences of length up to 14
-	### We can probably work out a way to solve this. More aggressive pruning. Graph partitioning. Something.
-
-	
-\end{easylist}
-
-\subsection{Results}
-It seems reasonable to evaluate the performance with BLEU score as if we were translating from numbers back to the original text. 
-There 
-\begin{easylist}[itemize]
-	# Performance figures are for the subsets of length less than 20. 
-	# It is on the reconstructed bags of words so can not out perform previous step
-	
-	# On ATIS2: Perfect 85\%,  BLEU >95\%
-	## ATIS2 has a lot of sentences which are ambiguous as to order eg "Show me flights from Denvar to San Francisco"
-	### Most language is not like this -- not this bad at least.
-	
-	# Doctors letters: Perfect 98\%, BLEU>99\%
-	
-	# Brown corpus still running.
-\end{easylist}
- 
-
-\subsection{Freewords}
-\begin{easylist}[itemize]
-# A complication is the possibility of adding "freewords".
-# These are words that can be added during the ordering step, even if they were not in the original.
-# if they increase the probability of a sentence ordering, beyond one that does not have them.
-# Two reasons why they are useful to the think about
-## Some words are missing from the Word Embedding Vocabulary
-### Eg the word \emph{to} is missing from the Google News pretrained skip-grams. 
-### it is one of the most common words in ATIS2. The results reported above for ATIS2 have it inserted as a freeword
-## Not all possitions in SOWE space are grammatical, some freewords can be added to form grammatical sentences 
-### at the cost of potentially distorting meaning
-### But if the right set of free words were chosen eg \emph{and}; this would not be an issue.
-\end{easylist}
-
-
- 
-\newcommand{\mdiagram}[4][0.9]{%
-\begin{landscape}
-	\includepdf[landscape, scale=#1, offset=100 0,pagecommand={
-		\thispagestyle{empty}
-		\subsection{#3}
-		\begin{itemize}
-			\setlength{\itemsep}{-3pt}
-			#4%
-		\end{itemize}
-	}]{./figs/#2.pdf}
-\end{landscape}
-}
-
-\mdiagram[0.5]{markov_reordering1}{Show Cheap Flights}{
-	\item cheap show flights $P=0.0$
-	\item cheap flights show $P=0.0$
-	\item show cheap flights $P=0.0$
-	\item show flights cheap $P=0.0$
-	\item flights cheap show $P=0.0$
-	\item flights show cheap $P=0.0$
-	\item Fails as this is an very poor sentence
-	}
-\mdiagram{markov_reordering2}{Show The Cheapest Flight}{
-	\item show the cheapest flight $P=0.9994768960040612$
-	\item show flight the cheapest $P=0.0005186917031990766$
-	\item show cheapest flight the $P=4.412292739699182\times 10^{-6}$
-	\item show cheapest the flight $P=0.0$
-	\item flight show cheapest the $P=0.0$
-	\item flight the show cheapest $P=0.0$
-	\item ...
-	}
-\mdiagram{markov_reordering3}{Show All The Cheapest Flights}{
-	\item show all the cheapest flights $P=0.9970072382584245$
-	\item all flights show the cheapest $P=0.002394874466709871$
-	\item all the flights show cheapest $P=0.0005588257639594186$
-	\item flights show all the cheapest $P=3.902260703056939\times 10^{-5}$
-	\item cheapest flights show all the $P=3.89038754905346\times 10^{-8}$
-	\item all cheapest flights the show $P=0.0$
-	\item ...
-	}
-\mdiagram{markov_reordering4}{Show Me All The Cheapest Flights}{
-	\item show me all the cheapest flights $P=0.9976611556180363$
-	\item all flights show me the cheapest $P=0.002287767676692731$
-	\item flights show me all the cheapest $P=5.099115447705249\times 10^{-5}$
-	\item cheapest flights show me all the $P=5.0836007018696596\times 10^{-8}$
-	\item all the cheapest flights show me $P=3.4714786951415333\times 10^{-8}$
-	\item show flights all cheapest the me $P=0.0$
-	\item ...
-	}
 	
 \printbibliography
 	
 \end{document}
+
 
