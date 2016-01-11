@@ -1,4 +1,4 @@
-module FixedLengthPriorityQs
+module FixedLengthPriorityQueues
 
 using IntervalHeaps
 using Base.Order
