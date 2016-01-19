@@ -110,20 +110,24 @@
 \maketitle
 
 \begin{abstract}
-Vector representations for sentences have a number of applications.
-Many more applications open up, if the it is possible to move not only from natural language to vectors, but also from vectors back to natural language. We introduce such a method for moving from sum of word embedding representations back to the original sentences. This is done using a greedy algorithm to convert the vector to a bag of words. For demonstration purposes we show how the bag of words can be ordered using simple probabilistic language models to get back the sentence. To our knowledge this is the first work to demonstrate qualitatively the ability to reproduce text from a large corpus based on its sentence embeddings. 
-As well as practical applications for sentence generation, the success of this method has theoretical implications on the degree of information maintained by the sum of embedding representation.
-
+Converting a sentence to a meaningful vector representation has uses in many NLP tasks, however very few methods allow that representation to be restored to a human readable sentence. Being able to generate sentences from the vector representations is expected to open up many new applications. We introduce such a method for moving from sum of word embedding representations back to the original sentences. This is done using a greedy algorithm to convert the vector to a bag of words. We show how the bag of words can be ordered using simple probabilistic language models to get back the sentence. To our knowledge this is the first work to demonstrate qualitatively the ability to reproduce text from a large corpus based on its sentence embeddings. 
+As well as practical applications for sentence generation, the success of this method has theoretical implications on the degree of information maintained by the sum of embeddings representation.
 \end{abstract}
 
 \section{Introduction} \label{intro}
 
 
-The task being tackled here is the resynthesise of sentences from vector embeddings. In particular the generation of sentences from vectors based on the sum of the constituent word's embeddings. The generation task, going from vector to sentence, is quite challenging. It has not received a lot of attention.
+The task being tackled here is the \emph{resynthesis} of sentences from vector embeddings. In particular the generation of sentences from vectors based on the sum of their constituent words' embeddings. The generation task, going from vector to sentence, is quite challenging. It has not received a lot of attention.
 
-The motivations for this work remain the same as in the first work in the area: \textcite{Dinu2014CompositionalGeneration}. From a theoretical perspective given that a sentence encodes its meaning, and the vector encodes the same meaning, then it must be possible to translate in both directions between the natural language and the vector representation. An implementation, such as this, which demonstrates the truth of the theory has its own value. There are also many potential practical applications of this often range around such ``translation'' tasks.
+The motivations for this work remain the same as in the first work in the area: \textcite{Dinu2014CompositionalGeneration}. From a theoretical perspective given that a sentence encodes its meaning, and the vector encodes the same meaning, then it must be possible to translate in both directions between the natural language and the vector representation. An implementation, such as the work reported in this paper, which demonstrates the truth of this dual space theory has its own value. There are also many potential practical applications of such an implementation, often ranging around certain types of ``translation'' tasks.
 
-Given suitable bidirectional methods for converting sentence vectors and sentences, the sentence vector space can be employed as a \emph{lingua franca} for translation between various forms of information. The most obvious of which is literal translation; however the use extends beyond this. Several approaches have been developed for representing images and sentences in a common vector space. This is used this to select a suitable caption to be selected from a list of candidates \parencite{farhadi2010every,socherDTRNN}. With vector to sentence generation a caption can be generated in this way, rather than selected from a list \footnote{There has also been significant recent works incorporating language generation such as \textcite{donahue2014long,Mao2014GenerateImageDesc}. The translation though common space approach suggested may provide a competing or supplementary technique for this task.}. Another similar use is the replacement of vector based extractive summarisation \textcite{KaagebExtractiveSummaristation,yogatamaextractive}, with abstractive summarisation. The promising use of sentence generation for these applications is to have a separate model trained to take the source information (e.g. a picture for image description, or a cluster of sentences for abstract summarisation) as its input and train it to output a sentence vector which can then be used to generate the sentence.
+Given suitable bidirectional methods for converting between sentence vectors and sentences, the sentence vector space can be employed as a \emph{lingua franca} for translation between various forms of information. The most obvious of which is literal translation between different natural languages; however the use extends beyond this.
+
+Several approaches have been developed for representing images and sentences in a common vector space. This is used to select a suitable caption a list of candidates \parencite{farhadi2010every,socherDTRNN}. The caption could instead be generated from the common vector space, through sentence resynthesis -- without any need for a list. There has also been significant recent work on this caption generation task directly using language generation, without the common space step, such as in \textcite{donahue2014long,Mao2014GenerateImageDesc}. The translation though common space approach suggested may provide a competing or supplementary technique for this task.}.
+
+Another similar use is the replacement of vector based extractive summarisation \textcite{KaagebExtractiveSummaristation,yogatamaextractive}, with abstractive summarisation. The promising use of sentence generation for all these applications is to have a separate model trained to take the source information (e.g. a picture for image description, or a cluster of sentences for abstract summarisation) as its input and train it to output a sentence vector which can then be used to generate the sentence.
+
+There are currently three existing methods for regeneration -- each tied to its own overall machine learnt embedding representation. 
 
 
 The method proposed in this paper takes in a sum of word embeddings (SOWE) sentence vector, and outputs the sentence which it corresponds to. This is done in two steps, as shown in \Cref{block_diagram}. The first step is to determine which words are in the sentence -- this converts the SOWE embedding into a bag of words. The second step is to order that bag of words into a sentence -- a language modelling task. This paper will focus on the first part -- the word selection problem. A demonstration of the feasibly of solving the second part -- the ordering problem --  is shown in \Cref{ordering}.
@@ -163,8 +167,7 @@ To our knowledge only three prior works exist in the area of sentence generation
 \newcommand{\p}{\tilde{p}_{1,2}}
 \renewcommand{\u}{\tilde{u}}
 
-\textcite{Dinu2014CompositionalGeneration}  extends the models described by \textcite{zanzotto2010estimating, Guevara2010} for generation. The composition is described as the sum of pair of linear transformations of the input vectors ($\u_1$ and $\u_2$) to get a output vector $\p$. 
-The input and target output vectors are found using single value decomposition on the word (for input) and phrase (for output) co-occurrence matrix for the training data. The composition function is given by:  $$f_{comp}\::\:\mathbb{R}^d\times\mathbb{R}^d \to \mathbb{R}^d\::\: (\u_1, \u_2)\mapsto W_1\u_2+W_2\u_2$$
+\textcite{Dinu2014CompositionalGeneration}  extends the models described by \textcite{zanzotto2010estimating, Guevara2010} for generation. The composition is described as the sum of pair of linear transformations of the input vectors ($\u_1$ and $\u_2$) to get a output vector $\p$. Dinu and Baroni, investigate two sources for the input and target output vectors: word and short-phrase embeddings generated using the \texttt{word2vec} method of \cite{mikolov2013efficient}, and the method used by \textcite{Guevara2010} using single value decomposition on the word and phrase co-occurrence matrix for the training data. The composition function is given by:  $$f_{comp}\::\:\mathbb{R}^d\times\mathbb{R}^d \to \mathbb{R}^d\::\: (\u_1, \u_2)\mapsto W_1\u_2+W_2\u_2$$
 Likewise, decomposition can be described by: $$f_{decomp}\::\:\mathbb{R}^d\to \mathbb{R}^d\times\mathbb{R}^d \::\: \p \mapsto (W^\prime_1\p, W^\prime_2\p)$$.
 During training linear transformation matrices $W_1$,$W_2$ and $W_1^\prime$,$W_2^\prime$ can be solved for using least squares regression.
 While it theoretically generalises to whole sentences, by recursive application of the composition or decomposition functions, Dinu and Baroni's work is quantitatively assessed only for very short phrases.
@@ -187,21 +190,22 @@ Decomposition is handled similarly, following the dependency structure from the 
 %Theoretically, even without the extensions the unfolding recursive auto-encoder could be used in the same way to generate sentences, however this has not been shown.
 
 
-\textcite{Bowman2015SmoothGeneration} is an adaptation on the recurrent neural network language model of \textcite{mikolov2011RnnLM}, which produces and utilises a new type of non-compositional sentence embedding.  While it is a generative model it does not seek to recreate a sentence purely from its vector input, but rather to produce a series of probability distributions on the words in the sentence. These distributions can be evaluated greedily, which the authors used to give three quantitative examples resynthesises (also shown in \Cref{results}). They found the sentence embeddings created were storing largely syntactic and loose topical information. 
+\pdfcomment{The Next paragraph on Bowman has not been rewritten as I Wnat feedback that the current rewritten sections are in the right direction}
+\textcite{Bowman2015SmoothGeneration} is an adaptation on the recurrent neural network language model of \textcite{mikolov2011RnnLM}, which produces and utilises a new type of non-compositional sentence embedding.  While it is a generative model it does not seek to recreate a sentence purely from its vector input, but rather to produce a series of probability distributions on the words in the sentence. These distributions can be evaluated greedily, which the authors used to give three quantitative examples of resynthesis. These examples are also shown in \Cref{results}. They found the sentence embeddings created were storing largely syntactic and loose topical information. 
 
 
 Both \textcite{Dinu2014CompositionalGeneration}, and  \textcite{iyyer2014generating}, require an output structure to be provided for the decomposition. Like the method of  \textcite{Bowman2015SmoothGeneration}, the new method proposed in this paper does not require this structural information.
 
-None of the existing methods have demonstrated recreation of the input close enough to allow for evaluation on a full corpus of sentences. For example they tend to output lose paraphrases, or roughly similar sentences -- itself a slightly distinct and useful task. That is not the case for the method described in the next section, which can with often exactly recreate the sentence after it was convert to a vector back to its original form. 
+None of the existing methods have demonstrated recreation of the input close enough to allow for quantitative evaluation on a full corpus of sentences. They tend to output lose paraphrases, or roughly similar sentences -- itself a slightly distinct and useful task.  That is not the case for our method described in the next section, which can with often exactly recreate the original sentence from its vector representation.
 
 
 \section{General Framework}\label{framework}
-As discussed in \Cref{intro}, and shown in \Cref{block_diagram}, the approach taken to generate the sentences from the vectors comes in two steps. First selecting the words used -- this is done deterministically, based on a search of the embedding space. Followed by ordering them, here demonstrated using classic stochastic language modelling. The separating of the process into two steps is unlike any of the existing methods for sentence generation from vectors. The two subproblems which result from this split resemble more classical computer science problems. The selection problem, of choosing the best word vectors to sum to the target is a knapsack-like problem. The word-ordering problem is a search for the shortest path, through a Markov graph of n-gram probabilities.
+As discussed in \Cref{intro}, and shown in \Cref{block_diagram}, the approach taken to generate the sentences from the vectors comes in two steps. First selecting the words used -- this is done deterministically, based on a search of the embedding space. Followed by ordering them, here demonstrated using a classic stochastic language modelling approach. The separating of the process into two steps is unlike any of the existing methods for sentence generation from vectors. The two subproblems which result from this split resemble more classical computer science problems. The selection problem, of choosing the best word vectors to sum to the target is a knapsack-like problem. The word-ordering problem is a search for the most-likely path through a Markov graph of n-gram probabilities. It may be noted, that both these sub-problems are NP-hard.
 
-\subsection{The Selection Problem}
+\subsection{The Vector Selection Problem}
 
 At the core of this problem is what we will call the Vector Selection Problem, to select which word vectors from the vector vocabulary, with potential repetition, will sum to be closest to the target SOWE.
-As there is a one to one correspondence between the vector word embeddings and their words, solving for the word embeddings used also solves for the words used. This relies on no two words having the same embeddings -- which is true for all current word embedding techniques, which capture the embedding values from the never identical usage in training corpora.
+As there is a one to one correspondence between the vector word embeddings and their words, solving for the word embeddings used provides a unique solution to this. This relies on no two words having exactly the same embeddings -- which is true for all current word embedding techniques.
 
 \renewcommand{\c}{\tilde{c}}
 \newcommand{\s}{\tilde{s}}
@@ -212,7 +216,7 @@ As there is a one to one correspondence between the vector word embeddings and t
 \newcommand{\V}{\mathcal{V}}
 
 \begin{defn}{The Vector Selection Problem}
-	is defined on $(\V, \s,\,d)$ for finite vocabulary of vectors $\V$, $\V\subset{\R}^{n}$, a target vector $ \s$, $ \s\in\R^{n}$ and any metric $d$ by
+	is defined on $(\V, \s,\,d)$ for a finite vocabulary of vectors $\V$, $\V\subset{\R}^{n}$, a target sentence vector $ \s$, $ \s\in\R^{n}$ and any distance metric $d$ by
 		\[
 		\argmin_{\left\{ \forall\c\in\N_{0}^{V}\right\} }\:d( \s,\,\sum_{\x_j\in\V}\:\x_{j}c_{j})
 		\]
@@ -222,14 +226,14 @@ As there is a one to one correspondence between the vector word embeddings and t
 		The selection problem is thus finding the right words with the right multiplicity, such that the sum of their vectors is as close to the input target vector, $\s$, as possible.
 \end{defn}
 
-\subsubsection{Hardness Result}
-The vector selection problem is NP-Hard. It is possible to reduce from any given instance of a subset sum problem to a vector selection problem. The subset sum problem is NP-complete \textcite{karp1972reducibility}. Is defined: for some set of integers ($\mathcal{S}\subset\mathbb{Z}$), does there exist a subset ($\mathcal{L}\subseteq\mathcal{S}$) which sums to zero ($0=\sum_{l_i\in \mathcal{L}} l_i$).  A suitable metric, target vector and  vocabulary of vectors corresponding to the elements $\mathcal{S}$ can be defined by a bijection; such that solving the vector selection problem will give the subset vectors corresponding a subset of $\mathcal{S}$ with the smallest sum; which if zero indicates than the subset sum does exists, and if nonzero indicates that no such subset ($\mathcal{L}$) exists. A fully detailed proof of the reduction from subset sum to the vector selection problem can be found on the first author's website.\footnote{[[URL removed for blinding.]]}
+\subsubsection{NP-Hard Proof}
+The vector selection problem is NP-Hard. It is possible to reduce from any given instance of a \emph{subset sum problem} to a vector selection problem. The \emph{subset sum problem} is NP-complete \parencite{karp1972reducibility}. It is defined: for some set of integers ($\mathcal{S}\subset\mathbb{Z}$), does there exist a subset ($\mathcal{L}\subseteq\mathcal{S}$) which sums to zero ($0=\sum_{l_i\in \mathcal{L}} l_i$).  A suitable metric, target vector and  vocabulary of vectors corresponding to the elements $\mathcal{S}$ can be defined by a bijection; such that solving the vector selection problem will give the subset vectors corresponding a subset of $\mathcal{S}$ with the smallest sum; which if zero indicates that the subset sum does exists, and if nonzero indicates that no such subset ($\mathcal{L}$) exists. A fully detailed proof of the reduction from subset sum to the vector selection problem can be found on the first author's website.\footnote{[[URL removed for blinding.]]}
 
 \subsubsection{Selection Algorithm}
-The algorithm proposed here to solve the selection problem is a greedy iterative processes that continues to convergence. In each iteration, first a greedy search (Greedy Addition) for a path to the targeted sum point $\s$ is done, followed by correction with a substitution based step (n/m--substitution). This process is repeated until no change is made to the path. The majority of the selection is done in the Greedy Addition step, while the substitution is handles fine tuning.
+The algorithm proposed here to solve the selection problem is a greedy iterative processes that continues to convergence. In each iteration, first a greedy search (Greedy Addition) for a path to the targeted sum point $\s$ is done, followed by correction with a substitution based step (n-substitution). This process is repeated until no change is made to the path. The majority of the selection is done in the Greedy Addition step, while the substitution is handles fine tuning.
 
-\subsubsection{Greedy Addition}
-The greedy addition step is characterised by adding the best vector to the bag at each step (see the pseudo-code in \Cref{pseudocode:greedyaddition}). At each step, all the vectors in the bag are summed, and each vector in the vocabulary is added in turn to evaluate the new distance the new bag would have from the target, if any of the new bags are closer than the existing bag, then the best of them replaces the existing bag. This continues until there is no option to add any of the vectors without moving the sum away from the target. Greedy addition works surprisingly well on its own, but it is enhanced with a fine tuning step to decrease its greed.
+\paragraph{Greedy Addition}
+The greedy addition step is characterised by adding the best vector to the bag at each step (see the pseudo-code in \Cref{pseudocode:greedyaddition}). At each step, all the vectors in the bag are summed, and each vector in the vocabulary is added in turn to evaluate the new distance the new bag would have from the target, if any of the new bags are closer than the existing bag, then the best of them replaces the existing bag. This continues until there is no option to add any of the vectors without moving the sum away from the target. Greedy addition works surprisingly well on its own, but it is enhanced with a fine tuning step to decrease its greediness.
 
 \begin{algorithm}
 	\SetAlgoLined
@@ -245,7 +249,7 @@ The greedy addition step is characterised by adding the best vector to the bag a
 				$t \longleftarrow \t + \x^\ast$\;
 				$bag_c \longleftarrow bag_c \cup \{\x^\ast\}$\;	
 			}{
-				\tcc{No further improving step}
+				\tcc{No further improving step found}
 				\Return{$bag_c$} 
 			}
 		}
@@ -256,10 +260,13 @@ The greedy addition step is characterised by adding the best vector to the bag a
 \end{algorithm}
 
 
-\subsubsection{n/m--Substitution}
-We define a new substitution based method for fine tuning solutions called n/m--Substitution. It can be described as considering all subbags containing up to $n$ elements, consider replacing them with a new sub-bag of up to size $m$ from the vocabulary, including none at all, if that would result in getting closer to the target $\s$. As this involves $O(V^m)$ operations, with large vocabularies it is only possible to consider 1/1--Substitution. This was done with the brown corpus, where $V\approxeq 40,000$, in the results below it was found to provide a significant improvement over greedy addition alone. On other smaller trial corpora, where $V\approxeq 1,000$ 2/2--Substitution was used and found to give further improvement. In general it is possible to initially use with 1/1--Substitution, with the overall algorithm, and if the algorithm converges to a poor solution (i.e. nonzero distance to target in the evaluation trials), then the selection algorithm can be retired from the converged solution, using 2/2--substitution and so forth.
+\subsubsection{n-Substitution}
+We define a new substitution based method for fine tuning solutions called n-substitution. It can be described as considering all subbags containing up to $n$ elements, consider replacing them with a new sub-bag of up that size from the vocabulary, including none at all, if that would result in getting closer to the target $\s$. 
 
-The reasoning behind performing n/m--substitution is to correct for greedy mistakes. Consider the 1 dimensional case where $\V={24,25,50}$ and $\s=98$, $d(x,y)=\left|x-y\right|$. Greedy addition would give  $bag_c=[50,25,24]$ for a norm-distance of $1$, but a perfect solution  is $bag_c=[50,24,24]$ which is found using 1/1 substitution. This substitution method can be looked at as re-evaluating past decisions in light of the future decisions. In this way it lessens the greed of the addition step. 
+The reasoning behind performing the n-substitution is to correct for greedy mistakes. Consider the 1 dimensional case where $\V={24,25,50}$ and $\s=98$, $d(x,y)=\left|x-y\right|$. Greedy addition would give  $bag_c=[50,25,24]$ for a norm-distance of $1$, but a perfect solution  is $bag_c=[50,24,24]$ which is found using  substitution. This substitution method can be looked at as re-evaluating past decisions in light of the future decisions. In this way it lessens the greed of the addition step. 
+
+The n-subsitution step has time complexity $O(\binom{C}{n}V^n)$ operations -- for $C=\sum \c$ i.e. current cardinality of $bag_c$. With large vocabularies it is only practical to consider 1-substitution. With the Brown Corpus, where $V\approxeq 40,000$, was found that 1-substitution provides a significant improvement over greedy addition alone. On a smaller trial corpora, where $V\approxeq 1,000$, 2-substitution was used and found to give further improvement. In general it is possible to initially use 1-substitution, with the overall algorithm, and if the algorithm converges to a poor solution (i.e. nonzero distance to target in the evaluation trials), then the selection algorithm can be retired from the converged solution, using 2-substitution and so forth. As $n$ increases the greed decreases; at the limit the overall algorithm is not greedy at all, but is rather an exhaustive search.
+
 
 \begin{comment}
 \begin{algorithm}
@@ -283,7 +290,7 @@ The reasoning behind performing n/m--substitution is to correct for greedy mista
 		}
 	}
 	\Return{$bag_n$}
-\caption{1/1--Substitution. Note that $\tilde{0}$ is the zero vector, including it with the vocabulary $\V$ is equivalent to considering the option of simply removing the $\x_i$ without replacement.}
+\caption{1/1-substitution. Note that $\tilde{0}$ is the zero vector, including it with the vocabulary $\V$ is equivalent to considering the option of simply removing the $\x_i$ without replacement.}
 \end{algorithm}
 \end{comment}
 
@@ -299,6 +306,9 @@ The reasoning behind performing n/m--substitution is to correct for greedy mista
 \end{figure*}
 
 \pdfcomment{Insert citation here for Ordering being NP-Hard. There are esisting papers on this that i need to nail down as this problem occurs in machine transalation.}
+\pdfcomment{after taking negative logs of the probilities, this is a shortest path problem, which has fast soluations that are O(V\^2), for V the number of vertices.
+	However V, is itelf huge relative the the number of words W, V=Sum_{i=0}^W (W-i)! -- I think -- worse than expodential time.
+	}
 
 In this section a demonstration of the feasibly of solving for the correct word order, given the output of the previous step is shown. This is a stochastic language modelling problem -- to determine the most likely sequence of words, given the constraints that the words are exactly those given by the BOW output from the previous step. The method presented here is simply to show its feasibility; the development of efficient technique for use in the ordering problem is left for future work.\pdfcomment{LW: I think this sentence/paragraph can be cut down a lot. RT: I agree, If this is a standard approach (used in ASR?) is there a need to describe the background of the beam seach using tri-gram models. YOu should just state what you implemented (with reference of where the beam search using trigrams is used), provide the parameter details in Section 4 and perhaps move the computational analysis (of all compoenents) into a separate section.}
 
