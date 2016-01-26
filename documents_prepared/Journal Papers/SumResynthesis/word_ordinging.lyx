@@ -625,7 +625,12 @@ Markov State consistency
 \begin_inset Formula $\forall(w_{a},w_{b}),(w_{c},w_{b})\in\mathcal{W}^{2}$
 \end_inset
 
-: if 
+:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+if 
 \begin_inset Formula $w_{b}\ne w_{c}$
 \end_inset
 
@@ -636,7 +641,7 @@ Markov State consistency
  
 \end_layout
 
-\begin_deeper
+\end_deeper
 \begin_layout Itemize
 Leave every city entered (except those at the beginning and end of the journey):
  
@@ -670,104 +675,6 @@ Visit (enter) every country, once.
 \end_inset
 
  
-\end_layout
-
-\end_deeper
-\end_deeper
-\begin_layout Paragraph
-Lazy Subtour Elimination Constraints
-\end_layout
-
-\begin_layout Standard
-The problem as formulated above can be input into the Mixed Integer Linear
- Programming solver.
- However, like similar formulation of the traveling salesman problem, some
- some solutions will have subtours.
- We take the usual method for handling this an use callbacks to impose lazy
- constraints to forbid such solutions at run-time.
- Given a solution 
-\begin_inset Formula $X$
-\end_inset
-
-:
-\end_layout
-
-\begin_layout Itemize
-The selected links in the can be found, by taking the nonzero indexes of
- 
-\begin_inset Formula $X$
-\end_inset
-
-
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-Or more formally: 
-\begin_inset Formula $X_{links}=\{[(w_{a},w_{b}),\,(w_{c},w_{d})]\in\left(\mathcal{W}^{2}\right)^{2}\;\mid\;X[(w_{a},w_{b}),\,(w_{c},w_{d})]\ne0\}$
-\end_inset
-
-
-\end_layout
-
-\begin_layout Itemize
-Form this the core tour -- the one that starts at the beginning and ends
- at the end can be found.
- This is done by following the links from the start node, and accumulating
- them into a set 
-\begin_inset Formula $T\subseteq\mathcal{W}^{2}$
-\end_inset
-
-
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-Or more formally: by taking the transitive closure of 
-\begin_inset Formula $\{[(START1,START2),\,(START2,w_{i})]\in X_{links}\,|\,\forall w_{i}\in\mathcal{W}\}$
-\end_inset
-
- within 
-\begin_inset Formula $X_{links}$
-\end_inset
-
-.
- (Not that set will contain just one element before taking the closure.)
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-From the core tour, the set of words covered is given by 
-\begin_inset Formula $\mathcal{W}_{T}=\{w_{i}\,\mid\,(w_{i},w_{j})\in T\,\}\cup\{END2\}$
-\end_inset
-
-.
- If 
-\begin_inset Formula $\mathcal{W_{T}}=\mathcal{W}$
-\end_inset
-
- then there are no subtours and the core-tour is the full world touring
- journey (and the most likely ordering of the words in the bag).
- Otherwise, there is a subtour to be eliminated.
-\end_layout
-
-\begin_layout Itemize
-If there is a subtour, then to eliminate it, a constraint must be added.
- This constraint is that there must be a connection from at least one of
- the cities in the country covered by the core tour to one of the cities
- in the countries not covered.
-\end_layout
-
-\begin_layout Itemize
-The countries covered by the tour are given by 
-\begin_inset Formula $S_{T}=\bigcup_{w_{t}\in W_{T}}S(w_{t})$
-\end_inset
-
-, and so the subtour elimination constraint is given by 
-\begin_inset Formula $\sum_{(w_{t1},w_{t2})\in S_{T}}\sum_{(w_{a},w_{b})\in\mathcal{W}^{2}\backslash S_{T}}X[(w_{t1},w_{t2}),(w_{a},w_{b})]\ge1$
-\end_inset
-
-
 \end_layout
 
 \end_deeper
@@ -824,6 +731,105 @@ then
  optimal solution in any case, as they have infinitely high cost.
 \end_layout
 
+\begin_layout Paragraph
+Lazy Subtour Elimination Constraints
+\end_layout
+
+\begin_layout Standard
+The problem as formulated above can be input into the Mixed Integer Linear
+ Programming solver.
+ However, like similar formulation of the traveling salesman problem, some
+ some solutions will have subtours.
+ We take the usual method for handling this an use callbacks to impose lazy
+ constraints to forbid such solutions at run-time.
+ Given a solution 
+\begin_inset Formula $X$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Itemize
+The selected links in the can be found, by taking the nonzero indexes of
+ 
+\begin_inset Formula $X$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Or more formally: 
+\begin_inset Formula $X_{links}=\{[(w_{a},w_{b}),\,(w_{c},w_{d})]\in\left(\mathcal{W}^{2}\right)^{2}\;\mid\;X[(w_{a},w_{b}),\,(w_{c},w_{d})]\ne0\}$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Form this the core tour -- the one that starts at the beginning and ends
+ at the end can be found.
+ This is done by following the links from the start node, and accumulating
+ them into a set 
+\begin_inset Formula $T\subseteq\mathcal{W}^{2}$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Or more formally: by taking the transitive closure of 
+\begin_inset Formula $\{[(START1,START2),\,(START2,w_{i})]\in X_{links}\,|\,\forall w_{i}\in\mathcal{W}\}$
+\end_inset
+
+ within 
+\begin_inset Formula $X_{links}$
+\end_inset
+
+.
+ (Not that set will contain just one element before taking the closure.)
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+From the core tour, the set of words covered is given by 
+\begin_inset Formula $\mathcal{W}_{T}=\{w_{i}\,\mid\,(w_{i},w_{j})\in T\,\}\cup\{END2\}$
+\end_inset
+
+.
+ If 
+\begin_inset Formula $\mathcal{W_{T}}=\mathcal{W}$
+\end_inset
+
+ then there are no subtours and the core-tour is the full world touring
+ journey (and the most likely ordering of the words in the bag).
+ Otherwise, there is a subtour to be eliminated.
+\end_layout
+
+\begin_layout Itemize
+If there is a subtour, then to eliminate it, a constraint must be added.
+ This constraint is that there must be a connection from at least one of
+ the cities in the country covered by the core tour to one of the cities
+ in the countries not covered.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+The countries covered by the tour are given by 
+\begin_inset Formula $S_{T}=\bigcup_{w_{t}\in W_{T}}S(w_{t})$
+\end_inset
+
+, and so the subtour elimination constraint is given by 
+\begin_inset Formula $\sum_{(w_{t1},w_{t2})\in S_{T}}\sum_{(w_{a},w_{b})\in\mathcal{W}^{2}\backslash S_{T}}X[(w_{t1},w_{t2}),(w_{a},w_{b})]\ge1$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
 \begin_layout Standard
 \begin_inset space ~
 \end_inset
@@ -1205,7 +1211,7 @@ Solving Time Gurobi (s)
 \end_layout
 
 \begin_layout Plain Layout
-1 core
+1 thread
 \end_layout
 
 \end_inset
@@ -1230,7 +1236,7 @@ Solving Time Gurobi (s)
 \end_layout
 
 \begin_layout Plain Layout
-12 cores
+12 threads
 \end_layout
 
 \end_inset
@@ -1347,9 +1353,13 @@ this is the basis of a fine comedy .
 \begin_inset Text
 
 \begin_layout Plain Layout
+1.5
+\end_layout
+
+\begin_layout Plain Layout
 
 \size footnotesize
-(total )
+(total 2.1)
 \end_layout
 
 \end_inset
@@ -1472,9 +1482,13 @@ this is the basis of a fine comedy .
 \begin_inset Text
 
 \begin_layout Plain Layout
+2.5
+\end_layout
+
+\begin_layout Plain Layout
 
 \size footnotesize
-(total )
+(total 6.7 )
 \end_layout
 
 \end_inset
@@ -1597,9 +1611,13 @@ with one down in the eighth , Marv Throneberry drew a walk and stole second
 \begin_inset Text
 
 \begin_layout Plain Layout
+5.9
+\end_layout
+
+\begin_layout Plain Layout
 
 \size footnotesize
-(total )
+(total 13.2 )
 \end_layout
 
 \end_inset
@@ -1722,7 +1740,11 @@ in 1961 , it is estimated that multiple unit dwellings will account for
 \begin_inset Text
 
 \begin_layout Plain Layout
+8.8
+\end_layout
 
+\begin_layout Plain Layout
+(total 23.5)
 \end_layout
 
 \end_inset
@@ -1731,7 +1753,11 @@ in 1961 , it is estimated that multiple unit dwellings will account for
 \begin_inset Text
 
 \begin_layout Plain Layout
+7.9
+\end_layout
 
+\begin_layout Plain Layout
+(total 22.6)
 \end_layout
 
 \end_inset
@@ -1749,7 +1775,7 @@ in 1961 , it is estimated that multiple unit dwellings will account for
 \begin_inset Text
 
 \begin_layout Plain Layout
-
+Out Of Memory
 \end_layout
 
 \end_inset
