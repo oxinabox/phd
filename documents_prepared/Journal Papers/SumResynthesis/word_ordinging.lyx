@@ -25,9 +25,10 @@
 \bibtex_command default
 \index_command default
 \paperfontsize default
+\spacing single
 \use_hyperref false
 \papersize default
-\use_geometry false
+\use_geometry true
 \use_package amsmath 1
 \use_package amssymb 1
 \use_package cancel 1
@@ -51,6 +52,10 @@
 \shortcut idx
 \color #008000
 \end_index
+\leftmargin 1.5cm
+\topmargin 2.5cm
+\rightmargin 1.5cm
+\bottommargin 2cm
 \secnumdepth 3
 \tocdepth 3
 \paragraph_separation indent
@@ -469,166 +474,43 @@ Each city is given by a
 The total cost, is given by the sum
 \end_layout
 
-\begin_layout Section
-Case Study on Gurbodi vs GLTK for Word Ordering
+\begin_layout Subsection
+Modeling the word ordering problem as a world touring journey
 \end_layout
 
-\begin_layout Standard
-The problem of how to order an unordered bag of words, occurs as part of
- a larger work on computer sentence generation.
- A bag of words is a collection of words without order, for example 
-\begin_inset Quotes eld
-\end_inset
-
-today , ? hello are you how
-\begin_inset Quotes erd
-\end_inset
-
-, is to be ordered into the sentence: 
-\begin_inset Quotes eld
-\end_inset
-
-hello , how are you today ?
-\begin_inset Quotes erd
-\end_inset
-
-.
- This problem can not always be solved to a correct solution -- many sentences
- have different legitimate orders.
- 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "Mitchell2008"
-
-\end_inset
-
- gives the example of "It was not the sales manager who hit the bottle that
- day, but the office worker with the serious drinking problem." which has
- the same word content as "That day the office manager, who was drinking,
- hit the problem sales worker with a bottle, but it was not serious.".
- However , word ordering is often possible.
-\end_layout
-
-\begin_layout Standard
-The problem of determining the likelyhood of any given sequence of words
- is the subject of language modeling.
- A language model is used to determine how likely one ordering is, compaired
- to another, based on the prevelence of subpatterns observed in a training
- corpus.
- For example, we know from past experience that the word 
-\begin_inset Quotes eld
-\end_inset
-
-Baked
-\begin_inset Quotes erd
-\end_inset
-
- is more likely to be followed by 
-\begin_inset Quotes eld
-\end_inset
-
-Potato
-\begin_inset Quotes erd
-\end_inset
-
- than it is to be followed by 
-\begin_inset Quotes eld
-\end_inset
-
-Steak
-\begin_inset Quotes erd
-\end_inset
-
-.
- A particular family of language models, based around this kind of fact
- are the tri-gram language models (and more generally the n-gram language
- models).
-\end_layout
-
-\begin_layout Standard
-A trigram language model estimates the probability of a sequency of words
- as the product of conditional probabilties of each triple of words occuring.
- This makes use of a simplifying assumption, called a Markov assumption,
- that the probability of the current state occuring is only dependant on
- the previous state.
- In this case the state is the previous two words.
- This Markov assumption allows us to use the Baysian chain-rule to find
- the probility of any sequence, as a product of contitional proabilities.
- For example: 
-\begin_inset Formula $P("Hello\,my\,\,old\,friend")=P(Hello\,,\,my)\cdot P(old\,|\,Hello,\,my)\cdot P(friend\,|\,my\,old)$
-\end_inset
-
-.
- An extension to the language is however required to allow us to make uses
- of knowledge about the begining and endings of sentences.
-\end_layout
-
-\begin_layout Standard
-Sentences are often argumented with marker pseudowords to indicated the
- begining and end -- which helps us to use knowledge about what words often
- occur at the beginning or end respectively.
- For example 
-\begin_inset Formula $P("Hello\,my\,friend")=P(Hello|START1,START2)\cdot P(my|START2,Hello)\cdot P(friend|Hello,my)\cdot P(END1|my,friend)\cdot P(END2|friend,END1)$
-\end_inset
-
-.
- Though this method the probability of any sequence can be estimated.
-\end_layout
-
-\begin_layout Standard
-A naive method of finding the most likely order for a bag of words would
- thus be to enumerate all possible order, and evaluate them with the trigram
- language model.
- Then the most likely could be found.
- This works well for short sentences, with just a few words, but its not
- feasible for longer sentences.
- For example, there are there are over 6 quadrillan different possible orders
- for a sentence of length 18 -- which is a typical length sentence according
- to 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "BrownAnalysis"
-
-\end_inset
-
-.
- So the naive method will not do -- a more sensible way of search the space
- of possible orderings is required.
-\end_layout
-
-\begin_layout Standard
-The word ordering problem can be expressed as, what we will call, the world
- touring journey problem -- a variation on the well known set travelling
- sales man problem.
- The world touring journey problem is as follows: On the way from my start
- city to my destination city, I wish to visit every country in the world,
- but I don't care which airports in the country I visit; though I only want
- to visit each country onces.
- The goal of the world touring journey problem is to select an ordering
- of airports that will allow the tour to be completed on the way, at the
- lowest total cost.
- Not all airports go to all other airports however.
- In the word ordering problem, trigram states replace airports, and uses
- of a word replace countries.
+\begin_layout Subsubsection
+Notation
 \end_layout
 
 \begin_layout Standard
 To model the word ordering problem as a world touring journey, the following
- notation is used:
+ notation is used.
 \end_layout
 
 \begin_layout Itemize
-Each city is a pair of words -- a Markov state, consisting of word and its
- predecessor word.
- This is writen as 
+For 
+\begin_inset Formula $\mathcal{W}$
+\end_inset
+
+ is the bag of words to be ordered, plus the start and end pseudo-words.
+ 
+\begin_inset Formula $S(w_{j})\subseteq\mathcal{W}^{2}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Each city is a pair of words (an element of 
+\begin_inset Formula $\mathcal{W}^{2}$
+\end_inset
+
+) -- a Markov state, consisting of word and its predecessor word.
+ This is written as 
 \begin_inset Formula $(w_{n-1},w_{n})$
 \end_inset
 
-, Where 
-\begin_inset Formula $w_{i}$
-\end_inset
-
- are the words to be orderd with arbiratily ascibed subscripts.
+ with arbitrarily assigned subscripts.
 \end_layout
 
 \begin_layout Itemize
@@ -659,11 +541,15 @@ The countries are given by the sets of all cities that have a given word
 \end_inset
 
 .
- where 
-\begin_inset Formula $\mathcal{W}$
-\end_inset
+ 
+\end_layout
 
- is the bag of words to be ordered, plus the start and end pseudowords.
+\begin_layout Subsubsection
+Transitions and Cost Model
+\end_layout
+
+\begin_layout Standard
+The journey and its costs are models by:
 \end_layout
 
 \begin_layout Itemize
@@ -681,9 +567,10 @@ Each city is given by a
 \end_inset
 
 .
- The expression in terms of negitive log likelyhood makes this problem linear
- costed, rather than having a product of probilitys, it is just a sum of
- there negitive log likelyhood.
+ The expression in terms of negative log likelihood makes this problem linear,
+ rather than having a product of probability, it is just a sum of these
+ negative log likelihood.
+ 
 \end_layout
 
 \begin_layout Itemize
@@ -702,81 +589,1203 @@ The table of transitions is given by
 \end_layout
 
 \begin_layout Itemize
-This table of tranistions is a binary variable to be optimised
+This table of transitions is the set binary variables to be optimized --
+ making this a mixed integer linear programming problem.
 \end_layout
 
 \begin_layout Itemize
-The total cost, is the sum of all costs of transitions taken.
+The total fitness, is the sum of all finesses of transitions taken.
  It is given by 
 \begin_inset Formula $C_{total}(X)=\sum_{w_{a},w_{b},w_{c},w_{d}}X[(w_{a},w_{b}),\,(w_{c},w_{d})]\cdot C[(w_{a},w_{b}),\,(w_{c},w_{d})]$
 \end_inset
 
-
+.
+ This cost must be minimized
 \end_layout
 
 \begin_layout Itemize
-The probability of a particular journey (ie of a partular ordering) is thus
- given by 
+The probability of a particular journey (ie of a particular ordering) is
+ thus given by 
 \begin_inset Formula $P(X)=e^{-C_{total}(X)}$
 \end_inset
 
 
 \end_layout
 
-\begin_layout Itemize
-The requirements of the problem place various constraints on to X
+\begin_layout Subsubsection
+Constraints
 \end_layout
 
-\begin_deeper
+\begin_layout Standard
+The requirements of the problem, place various constraints on to X:
+\end_layout
+
 \begin_layout Itemize
-Markov State consitency if 
+Markov State consistency 
+\begin_inset Formula $\forall(w_{a},w_{b}),(w_{c},w_{b})\in\mathcal{W}^{2}$
+\end_inset
+
+: if 
 \begin_inset Formula $w_{b}\ne w_{c}$
 \end_inset
 
- then
+ then 
 \begin_inset Formula $X[(w_{a},w_{b}),\,(w_{c},w_{d})]=0$
 \end_inset
 
  
 \end_layout
 
+\begin_deeper
 \begin_layout Itemize
-Leave every city entered 
+Leave every city entered (except those at the beginning and end of the journey):
+ 
+\begin_inset Formula $\forall(w_{i},w_{j})\in\mathcal{W}^{2}\backslash\{(START1,START2),(END1,END2)\}$
+\end_inset
+
+:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
 \begin_inset Formula $\sum_{(w_{a},w_{b})\in\mathcal{W}^{2}}X[(w_{a},w_{b}),\,(w_{i},w_{j})]=\sum_{(w_{c},w_{d})\in\mathcal{W}^{2}}X[(w_{i},w_{j}),\,(w_{c},w_{d})]$
 \end_inset
 
 .
 \end_layout
 
-\begin_deeper
+\end_deeper
 \begin_layout Itemize
-With the eception of the start city and end city, ie 
-\begin_inset Formula $(w_{i},w_{j})\ne(START1,START2)$
+Visit (enter) every country, once.
+ 
+\begin_inset Formula $\forall w_{j}\in\mathcal{W}\backslash\{START1,START2\}$
 \end_inset
 
- and 
-\begin_inset Formula $(w_{i},w_{j})\ne(END1,END2)$
+:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+\begin_inset Formula $\sum_{(w_{i},w_{j})\in S(w_{j})}\sum_{(w_{a},w_{b})\in\mathcal{W}^{2}}X[(w_{a},w_{b}),\,(w_{i},w_{j})]=1$
 \end_inset
 
  
 \end_layout
 
 \end_deeper
+\end_deeper
+\begin_layout Paragraph
+Lazy Subtour Elimination Constraints
+\end_layout
+
+\begin_layout Standard
+The problem as formulated above can be input into the Mixed Integer Linear
+ Programming solver.
+ However, like similar formulation of the traveling salesman problem, some
+ some solutions will have subtours.
+ We take the usual method for handling this an use callbacks to impose lazy
+ constraints to forbid such solutions at run-time.
+ Given a solution 
+\begin_inset Formula $X$
+\end_inset
+
+:
+\end_layout
+
 \begin_layout Itemize
-Visit every country: 
+The selected links in the can be found, by taking the nonzero indexes of
+ 
+\begin_inset Formula $X$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Or more formally: 
+\begin_inset Formula $X_{links}=\{[(w_{a},w_{b}),\,(w_{c},w_{d})]\in\left(\mathcal{W}^{2}\right)^{2}\;\mid\;X[(w_{a},w_{b}),\,(w_{c},w_{d})]\ne0\}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Form this the core tour -- the one that starts at the beginning and ends
+ at the end can be found.
+ This is done by following the links from the start node, and accumulating
+ them into a set 
+\begin_inset Formula $T\subseteq\mathcal{W}^{2}$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Or more formally: by taking the transitive closure of 
+\begin_inset Formula $\{[(START1,START2),\,(START2,w_{i})]\in X_{links}\,|\,\forall w_{i}\in\mathcal{W}\}$
+\end_inset
+
+ within 
+\begin_inset Formula $X_{links}$
+\end_inset
+
+.
+ (Not that set will contain just one element before taking the closure.)
 \end_layout
 
 \end_deeper
+\begin_layout Itemize
+From the core tour, the set of words covered is given by 
+\begin_inset Formula $\mathcal{W}_{T}=\{w_{i}\,\mid\,(w_{i},w_{j})\in T\,\}\cup\{END2\}$
+\end_inset
+
+.
+ If 
+\begin_inset Formula $\mathcal{W_{T}}=\mathcal{W}$
+\end_inset
+
+ then there are no subtours and the core-tour is the full world touring
+ journey (and the most likely ordering of the words in the bag).
+ Otherwise, there is a subtour to be eliminated.
+\end_layout
+
+\begin_layout Itemize
+If there is a subtour, then to eliminate it, a constraint must be added.
+ This constraint is that there must be a connection from at least one of
+ the cities in the country covered by the core tour to one of the cities
+ in the countries not covered.
+\end_layout
+
+\begin_layout Itemize
+The countries covered by the tour are given by 
+\begin_inset Formula $S_{T}=\bigcup_{w_{t}\in W_{T}}S(w_{t})$
+\end_inset
+
+, and so the subtour elimination constraint is given by 
+\begin_inset Formula $\sum_{(w_{t1},w_{t2})\in S_{T}}\sum_{(w_{a},w_{b})\in\mathcal{W}^{2}\backslash S_{T}}X[(w_{t1},w_{t2}),(w_{a},w_{b})]\ge1$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+To allow the feasibility checker to detect if ordering the words is impossible,
+ transitions of zero probability are forbidden.
+ i.e.
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+ if 
+\begin_inset Formula $P(w_{n}|w_{n-2},w_{n-1})=0$
+\end_inset
+
+
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+ 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+then 
+\begin_inset Formula $X[(w_{n-2},w_{n-1}),(w_{n-1},w_{n})]=0$
+\end_inset
+
+.
+ These transitions, if not expressly forbidden, would never occur in an
+ optimal solution in any case, as they have infinitely high cost.
+\end_layout
+
 \begin_layout Standard
-\begin_inset CommandInset bibtex
-LatexCommand bibtex
-bibfiles "master"
-options "plainnat"
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Case Study on Gurbodi vs GLTK for Word Ordering
+\end_layout
+
+\begin_layout Standard
+The problem of how to order an unordered bag of words, occurs as part of
+ a larger work on computer sentence generation.
+ A bag of words is a collection of words without order, for example 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+today , ? hello are you how
+\begin_inset Quotes erd
+\end_inset
+
+
+\emph default
+, is to be ordered into the sentence: 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+hello , how are you today ?
+\begin_inset Quotes erd
+\end_inset
+
+
+\emph default
+.
+ This problem can not always be solved to a correct solution -- many sentences
+ have different legitimate orders.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Mitchell2008"
+
+\end_inset
+
+ gives the example of 
+\emph on
+"It was not the sales manager who hit the bottle that day, but the office
+ worker with the serious drinking problem."
+\emph default
+ which has the same word content as 
+\emph on
+"That day the office manager, who was drinking, hit the problem sales worker
+ with a bottle, but it was not serious."
+\emph default
+.
+ However, while a unique ordering can not be guaranteed, finding the most
+ likely word ordering is possible.
+\end_layout
+
+\begin_layout Standard
+The problem of determining the likelihood of any given sequence of words
+ is the subject of language modeling.
+ A language model is used to determine how likely one ordering is, com paired
+ to another, based on the prevalence of sub-patterns observed in a training
+ corpus.
+ For example, we know from past experience that the word 
+\begin_inset Quotes eld
+\end_inset
+
+Baked
+\begin_inset Quotes erd
+\end_inset
+
+ is more likely to be followed by 
+\begin_inset Quotes eld
+\end_inset
+
+Potato
+\begin_inset Quotes erd
+\end_inset
+
+ than it is to be followed by 
+\begin_inset Quotes eld
+\end_inset
+
+Steak
+\begin_inset Quotes erd
+\end_inset
+
+.
+ A particular family of language models, based around this kind of fact
+ are the trigram language models (and more generally the n-gram language
+ models).
+\end_layout
+
+\begin_layout Standard
+A trigram language model estimates the probability of a sequence of words
+ as the product of conditional probabilities of each triple of words occurring.
+ This makes use of a simplifying assumption, called a Markov assumption,
+ that the probability of the current state occurring is only dependent on
+ the previous state.
+ In this case the state is the previous two words.
+ This Markov assumption allows us to use the Bayesian chain-rule to find
+ the probability of any sequence, as a product of conditional probabilities.
+ For example: 
+\begin_inset Formula $P("Hello\,my\,\,old\,friend")=P(Hello\,,\,my)\cdot P(old\,|\,Hello,\,my)\cdot P(friend\,|\,my\,old)$
+\end_inset
+
+.
+ An extension to the language is however required to allow us to make uses
+ of knowledge about the beginning and endings of sentences.
+\end_layout
+
+\begin_layout Standard
+Sentences are often augmented with marker pseudo-words to indicated the
+ beginning and end -- which allows knowledge about which words often occur
+ at each sentence boundary.
+ For example 
+\begin_inset Formula $P("Hello\,my\,friend")=P(Hello|START1,START2)\cdot P(my|START2,Hello)\cdot P(friend|Hello,my)\cdot P(END1|my,friend)\cdot P(END2|friend,END1)$
+\end_inset
+
+.
+ Though this method the probability of any sequence can be estimated.
+\end_layout
+
+\begin_layout Standard
+A naive method of finding the most likely order for a bag of words would
+ thus be to enumerate all possible order, and evaluate them with the trigram
+ language model.
+ Then the most likely could be found.
+ This works well for short sentences, with just a few words, but its not
+ feasible for longer sentences.
+ For example, there are there are over 6 quadrillion different possible
+ orders for a sentence of length 18 -- which is a typical sentence length
+ according to 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "BrownAnalysis"
+
+\end_inset
+
+.
+ So the naive method will not do -- a more sensible way of search the space
+ of possible orderings is required.
+\end_layout
+
+\begin_layout Standard
+The word ordering problem can be expressed as, what we will call, the world
+ touring journey problem -- a variation on known 
+\emph on
+Neighborhood Traveling Salesman Problem
+\emph default
+
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+This strongly suggests that the word ordering problem is NP-Hard.
+\end_layout
+
+\end_inset
+
+.
+ The world touring journey problem is as follows: On the way from my start
+ city to my destination city, I wish to visit every country in the world,
+ but I don't care which airports in the country I visit; though I only want
+ to visit each country once.
+ The goal of the world touring journey problem is to select an ordering
+ of airports that will allow the tour to be completed on the way, at the
+ lowest total cost.
+ Not all airports go to all other airports however.
+ In the word ordering problem, trigram states replace airports, and uses
+ of a word replace countries.
+ A moderately complex set of constraints and optimization criteria are required
+ for the expression.
+\end_layout
+
+\begin_layout Standard
+Once word ordering has been expressed as this world touring journey it can,
+ like the Travelling Salesman Problem, be solved with linear Mixed Integer
+ Programming (MIP).
+ As MIP is a well researched field within operations research, sophisticated
+ and fast computerized solvers exist for it.
+ These solvers use branch and bound techniques, as well as switching between
+ the dual and prime problem, and several methods of simplification, to rapidly
+ solve the problem.
+ We have found this method to be faster than graph searches -- including
+ incomplete heuristic searches such as a narrow beam-search.
+ We have experimented with two solvers on the word ordering problem.
+\end_layout
+
+\begin_layout Standard
+JuMP (
+\begin_inset CommandInset citation
+LatexCommand cite
+key "jump"
+
+\end_inset
+
+) is a domain specific modeling language for the Julia programming language
+ (
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Julia"
+
+\end_inset
+
+).
+ It allows the problem to be described in a solver independent fashion.
+ JuMP supports several solvers which are suitable for solving MIPs problems,
+ such as the world touring journey problem.
+ Two of those are the open-source GNU Linear Programming Kit (GLPK), and
+ the commercial Gurobi solver.
+ The different solves incorporate different techniques and so run in different
+ amounts of time.
+ We investigate with a few examples how long the solvers took.
+\end_layout
+
+\begin_layout Standard
+In these preliminary results we found the Gurobi solver to be much faster
+ than GLPK.
+ The results are shown in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:times"
+
+\end_inset
+
+.
+ For comparison a the time taken to do a best-first search is shown -- which
+ is the traditional approach, given the problem has an admissible heuristic.
+ In general we find that Gurobi is several orders of magnitude faster.
+ GLPK in-fact performs worse than the best-first search.
+ These results are inline with the more rigorous evaluation of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "meindl2012analysis"
+
+\end_inset
+
+.
+ Our small case study agrees with the conclusion of Meindl and Teml, that
+ GLPK is not suitable for large scale problems.
+ Open source solvers are not currently mature enough for this domain.
+ 
+\end_layout
+
+\begin_layout Standard
+The several orders of improvement when solving with Gurobi, over the the
+ best-first search does show that tranforming the word ordering problem
+ into a linear mixed integer programming problem does yield significant
+ speedups.
+ 
+\end_layout
+
+\begin_layout Standard
+Gurobi is a multithreaded application.
+ GLPK and the Best-First Search are not.
+ These evaluations were performed on NeCTAR virtual machine with 12 cores
+ and 48Gb of RAM.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Tabular
+<lyxtabular version="3" rows="5" columns="10">
+<features rotate="0" tabularvalignment="middle">
+<column alignment="center" valignment="top" width="15text%">
+<column alignment="center" valignment="top" width="5text%">
+<column alignment="center" valignment="top" width="8text%">
+<column alignment="center" valignment="top" width="7text%">
+<column alignment="center" valignment="top" width="7text%">
+<column alignment="center" valignment="top" width="7text%">
+<column alignment="center" valignment="top" width="9.5text%">
+<column alignment="center" valignment="top" width="9.5text%">
+<column alignment="center" valignment="top" width="9.5text%">
+<column alignment="center" valignment="top" width="7text%">
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+Sentence
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+Words
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+Variables
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+Non-Fixed Variables
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+Nonlazy Constraints
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset space \thinspace{}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\size footnotesize
+Model Definition Time (s)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\begin_inset space \thinspace{}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\series bold
+\size footnotesize
+Solving Time Gurobi (s)
+\end_layout
+
+\begin_layout Plain Layout
+1 core
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\begin_inset space \thinspace{}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\series bold
+\size footnotesize
+Solving Time Gurobi (s)
+\end_layout
+
+\begin_layout Plain Layout
+12 cores
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\begin_inset space \thinspace{}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\series bold
+\size footnotesize
+Solving Time GLPK (s)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+\size footnotesize
+Solving Time
+\end_layout
+
+\begin_layout Plain Layout
+
+\series bold
+\size footnotesize
+Best-First Search (s)
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+this is the basis of a fine comedy .
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+9
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+10,609
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+219
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+10,502
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+0.6
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+(total )
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+0.6
+\end_layout
+
+\begin_layout Plain Layout
+
+\size footnotesize
+(total 1.2)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+5.3
+\end_layout
+
+\begin_layout Plain Layout
+
+\size footnotesize
+(total 5.9)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+2.0
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+`` in this light we need 1,000 churches in illinois , where we have 200
+ ; ;
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+17
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+106,929
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+1,015
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+106,258
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+4.2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+(total )
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+3.1
+\end_layout
+
+\begin_layout Plain Layout
+
+\size footnotesize
+(total 7.3)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+569.9
+\end_layout
+
+\begin_layout Plain Layout
+
+\size footnotesize
+(total 574.1)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+480.0
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+with one down in the eighth , Marv Throneberry drew a walk and stole second
+ as Hyde fanned Tuttle .
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+20
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+197,136
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+1,241
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+196,359
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+7.3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+(total )
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+9.6
+\end_layout
+
+\begin_layout Plain Layout
+
+\size footnotesize
+(total 16.9)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+2,029.6
+\end_layout
+
+\begin_layout Plain Layout
+
+\size footnotesize
+(total 2036.9)
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+354.1
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+in 1961 , it is estimated that multiple unit dwellings will account for
+ nearly 30 per cent of the starts in residential construction ."
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+24
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+394,384
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+2,672
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+392,364
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\size footnotesize
+14.7
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
 
 \end_inset
 
 
-\begin_inset space ~
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "tab:times"
+
+\end_inset
+
+Three examples of the time taken using the Gurobi and GLTK solvers, as well
+ as a best first search on the word ordering problem.
+ Note that the best first search defines the model as it goes, where as
+ to find the total time for GLTK and Gurobi, the Model Definition time must
+ be added.
+ The table also shows the problem paramaters, in terms of the number of
+ words, variables, and constraints.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \end_inset
 
 
