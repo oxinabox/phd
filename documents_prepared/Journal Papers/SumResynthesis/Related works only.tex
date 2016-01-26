@@ -1,0 +1,182 @@
+\documentclass[11pt]{article}
+
+\usepackage[boxed]{algorithm2e}
+
+\usepackage{acl2012}
+\usepackage{times}
+\usepackage{latexsym}
+
+\usepackage[final]{microtype}
+\usepackage{flushend}
+
+\usepackage[author={Lyndon White}]{pdfcomment}
+
+
+\usepackage{verbatim}
+\usepackage{grffile}
+%\usepackage[draft]{graphicx}
+
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.12}
+\usepackage{booktabs, array} % Generates table from .csv
+\usepackage{pgfplotstable}
+
+
+%%%%%%%%%%MATH
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+
+\theoremstyle{plain}
+\newtheorem{thm}{\protect\theoremname}
+\theoremstyle{definition}
+\newtheorem{defn}[thm]{\protect\definitionname}
+\usepackage{csquotes}
+\usepackage[english]{babel}
+\providecommand{\definitionname}{Definition}
+\providecommand{\theoremname}{Theorem}
+%%%%%
+
+
+
+%\hypersetup{draft} %Avoid hyperef causing issuse when links broken over pages by disabling hyperref
+
+\usepackage[backend=bibtex,
+ style=authoryear-icomp,
+ bibencoding=ascii,
+ maxcitenames=2,
+ url=false,
+ hyperref=false
+]{biblatex}
+\bibliography{master}
+
+\usepackage{cleveref}
+
+
+%End Packages
+
+%%%%%%%%%%%%%%%%%%%%%% Magic Float Layer Fix Settings 
+\renewcommand{\topfraction}{.85}
+\renewcommand{\bottomfraction}{.7}
+\renewcommand{\textfraction}{.15}
+\renewcommand{\floatpagefraction}{.66}
+\renewcommand{\dbltopfraction}{.66}
+\renewcommand{\dblfloatpagefraction}{.66}
+\setcounter{topnumber}{9}
+\setcounter{bottomnumber}{9}
+\setcounter{totalnumber}{20}
+\setcounter{dbltopnumber}{9}
+
+%%%%%%%%%%%%%%%%%
+
+
+
+\DeclareMathOperator*{\argmin}{argmin}
+
+%%%%%%% Tables
+\newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}
+\pgfplotstableset{
+	columns/Model/.style={
+		string replace={glove50}{50d GLoVE},
+		string replace={glove100}{100d GLoVE},
+		string replace={glove200}{200d GLoVE},
+		string replace={glove300}{300d GLoVE},
+		string type,
+		column type=C{5.5em}		
+	}	
+} 
+
+\pgfplotstableset{percent style/.style={%
+		preproc/expr={100*##1},
+		postproc cell content/.append code={\pgfkeysalso{@cell content/.add={}{\%}}
+		}},
+		%
+		%
+		every head row/.style={after row=\midrule},
+	}
+
+%%%%%%
+
+
+
+%opening
+\title{Generating Sentences from the Sums of their Embeddings using a Greedy Algorithm}
+\author{}
+\graphicspath{{./figs/}}
+\setlength\itemsep{2mm}
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Converting a sentence to a meaningful vector representation has uses in many NLP tasks, however very few methods allow that representation to be restored to a human readable sentence. Being able to generate sentences from the vector representations is expected to open up many new applications. We introduce such a method for moving from sum of word embedding representations back to the original sentences. This is done using a greedy algorithm to convert the vector to a bag of words. We show how the bag of words can be ordered using simple probabilistic language models to get back the sentence. To our knowledge this is the first work to demonstrate qualitatively the ability to reproduce text from a large corpus based on its sentence embeddings. 
+As well as practical applications for sentence generation, the success of this method has theoretical implications on the degree of information maintained by the sum of embeddings representation.
+
+\end{abstract}
+  
+
+\section{Related Works}\label{relwork}
+
+\subsection{Embedding Models}
+In general sentence embeddings models may be described as compositional, or non-compositional. 
+%Compositional models combine word embeddings to produce embeddings for larger substructure embeddings which are in turn combined, for larger still substructure, and so forth until the final embedding for the whole sentence is found. 
+
+The compositional models come from classical linguistics -- taking the hierarchical  break-down of a sentence into clauses, phrases and words, compositional vector models produce vectors by moving up the tree combining (or ``composing'') the vectors for elements within a substructure to find the substructure's vector. This composition continues until the a vector has been found for the root of the sentence tree. The original work in this area is \textcite{Mitchell2008}. A variety of recursive neural network based methods were developed during the thesis of \textcite{socher2014recursive}. Compositional methods continue to improve, with newer methods as in \textcite{TACL15CompVector}, focusing on capturing with more efficiency and precision how words interact to control the meaning of their superstructures. 
+
+
+ %\textcite{socher2010PhraseEmbedding}%,SocherEtAl2011:RAE,SocherEtAl2011:PoolRAE,Socher2011ParsingPhrases,SocherMVRNN,RvNTN,SocherEtAl2013:CVG,Socher2013TensorReasoning}. Compositional embedding models have strong basis from their linguistic underpinnings.
+
+Non-compositional embeddings allowing each word to more directly affect the overall sentence vector, rather than doing so through intermediate substructure vectors. This is a broad category covering all other embedding techniques. From the classic bag of words (BOW), and the simple sum of word embeddings (SOWE); to more complex approaches augmenting windowed language modelling neural networks with an addition sentence memory \parencite{le2014distributed}.  Non-compositional methods draw significant criticism for disregarding structure; BOW and SOWE draw additional criticism for entirely disregarding word order. However these weaknesses, while valid, may be offset by the improved discrimination allowed through words directly affecting the sentence vector -- without the potential lose in the repeated composing steps. This allows some non-compositional methods to be comparable overall to the more linguistically consistent compositional embeddings. 
+
+
+Recently \textcite{White2015SentVecMeaning} found that when classifying real-world sentences into groups of semantically equivalent paraphrases, that using SOWE as the input resulted in very accurate classifications. In that work White et. al. partitioned the sentences into groups of paraphrases, then evaluated how well a linear SVM could classify unseen sentences into the class given by its meaning. They tested this using a variety of different sentence embeddings techniques as input to the classifier. They found that the classification accuracy when using SOWE as the input very similar to that of the best performing methods -- less that 0.6\% worse on the harder task. From this they concluded that the mapping from the space of sentence meaning to the vector space of the SOWE, resulted in sentences with the same meaning going to distinct areas of the vector space.
+
+\textcite{RitterPosition} presents a similar task on spacial-positional meaning, which used carefully constructed artificial data, for which the meanings of the words interacted non-simply -- thus favouring the compositional models. In their evaluation the task was classification with a Naive Bayes classifier into one of five categories of different spatial relationships. Here also SOWE was found performing comparably and again even out performing the compositional models. The best of the SOWE models they evaluated, outperformed the next best model (compositional or otherwise) by over 5\%. Thus this simple method is still worth consideration. SOWE is the basis of the work presented in this paper.
+
+\subsection{Sentence Generation from Vector Embeddings}
+
+To our knowledge only three prior works exist in the area of sentence generation from vectors. The first two of which are based on compositional embeddings, while the most recent work, at the time of this writing, is based on a non-compositional approach.
+
+\newcommand{\p}{\tilde{p}_{1,2}}
+\renewcommand{\u}{\tilde{u}}
+
+
+\textcite{Dinu2014CompositionalGeneration}  extends the models described by \textcite{zanzotto2010estimating, Guevara2010} for generation. The composition is described as the sum of pair of linear transformations of the input vectors ($\u_1$ and $\u_2$) to get a output vector $\p$. Dinu and Baroni, investigate two sources for the input and target output vectors: word and short-phrase embeddings generated using the continuous bag of words method of \cite{mikolov2013efficient}, and the method used by \textcite{Guevara2010} using single value decomposition on the word and phrase co-occurrence matrix for the training data. The composition function is given by:  $$f_{comp}\::\:\mathbb{R}^d\times\mathbb{R}^d \to \mathbb{R}^d\::\: (\u_1, \u_2)\mapsto W_1\u_2+W_2\u_2$$
+Likewise, decomposition can be described by: $$f_{decomp}\::\:\mathbb{R}^d\to \mathbb{R}^d\times\mathbb{R}^d \::\: \p \mapsto (W^\prime_1\p, W^\prime_2\p)$$.
+During training linear transformation matrices $W_1$,$W_2$ and $W_1^\prime$,$W_2^\prime$ can be solved for using least squares regression.
+While it theoretically generalises to whole sentences, by recursive application of the composition or decomposition functions, Dinu and Baroni's work is quantitatively assessed only on direct reconstruction only for decomposing Preposition-Noun and Adjective-Noun 2 word phrases. In the case where the  where the decomposition function was trained on vectors generated using the compositional function they were able to get perfect reconstruction on the word embedding based inputs.
+% -- though as they note, this is not extremely difficult as it is fitting linear transformation to invert a linear transformation.
+
+\renewcommand{\p}{\tilde{p}}
+
+The work of \textcite{iyyer2014generating} is based on an extension of the unfolding recursive autoencoder \textcite{SocherEtAl2011:PoolRAE}. Recursive neural networks are jointly trained for both composing the sentence's words into a vector, and for decomposing that vector into words. This composition and decomposition is done by reusing a composition neural network at each vertex the  dependency tree structure with different weight matrices for each dependency relation. The total network is trained based on its accuracy to reproduce its input word vectors, through back-propagation. Through just using the top decomposing half of the network, from the sentence embedding up, it can be used to regenerate the words. This method was demonstrated quantitatively on five examples, shown in \Cref{results}; they show the generated sentences of \textcite{iyyer2014generating} to be loosely semantically similar to the originals.
+
+ 
+%$$g_{comp}\:: (u_i)^N_{i=1} \mapsto \sigma(\sum_{i=1}^N W_i\u_i+\tilde{b})$$
+%$$g_{decomp} \p \mapsto  (\sigma(W^\prime_i\p+\tilde{b}^\prime+W_{sib}\u^\prime_j)^N_{i=1}$$
+%$\u^\prime_j$ is $g_{decomp}(p)_j$ if $j$ is the left most sibling of $i$ with the same dependancy relation to the parent as $i$ if one exists, or the zero vector otherwith
+%Here $W_i$ and $W^\prime_i$ vary not by order, but by the dependency tree part of speech of the $i$th element.
+%$\tilde{b}$ and $\tilde{b}^\prime$ are the biases.
+%$\sigma$ is a nonlinear activation function, such as the sigmoid or the hyperbolic tangent functions. It is this nonlinearity that prevents the values being solved by any kind of least squares.
+ 
+%Theoretically, even without the extensions the unfolding recursive auto-encoder could be used in the same way to generate sentences, however this has not been shown.
+
+
+\pdfcomment{The Next paragraph on Bowman has not been rewritten as I Wnat feedback that the current rewritten sections are in the right direction}
+\textcite{Bowman2015SmoothGeneration} is an adaptation on the recurrent neural network language model of \textcite{mikolov2011RnnLM}, which produces and utilises a new type of non-compositional sentence embedding.  While it is a generative model it does not seek to recreate a sentence purely from its vector input, but rather to produce a series of probability distributions on the words in the sentence. These distributions can be evaluated greedily, which the authors used to give three quantitative examples resynthesises (also shown in \Cref{results}). They found the sentence embeddings created were storing largely syntactic and loose topical information. 
+
+
+Both \textcite{Dinu2014CompositionalGeneration}, and  \textcite{iyyer2014generating}, require an output structure to be provided for the decomposition. Like the method of  \textcite{Bowman2015SmoothGeneration}, the new method proposed in this paper does not require this structural information.
+
+None of the existing methods have demonstrated recreation of the input close enough to allow for quantitative evaluation on a full corpus of sentences. They tend to output lose paraphrases, or roughly similar sentences -- itself a slightly distinct and useful task.  That is not the case for our method described in the next section, which can with often exactly recreate the original sentence from its vector representation.
+
+
+
+
+
+\printbibliography
+	
+\end{document}
+
+
