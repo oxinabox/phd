@@ -332,6 +332,8 @@ The RvNTN does much better.},
   Annote                   = {Focus is on generating smooth sentences, using RNN-Language models.
 
 Preprint, under review for ICLR 2016},
+
+  __markedentry            = {[20361362:6]},
   Owner                    = {20361362},
   Timestamp                = {2015.11.26},
   Url                      = {http://arxiv.org/pdf/1511.06349.pdf}
@@ -638,6 +640,11 @@ I vaguely know the author online.},
   Author                   = {Dinu, Georgiana and Baroni, Marco},
   Booktitle                = {Proceedings of ACL},
   Year                     = {2014},
+  Annote                   = {\textcite{Dinu2014CompositionalGeneration} extends the models described by \textcite{zanzotto2010estimating, Guevara2010} for generation. The composition is described as the sum of pair of linear transformations of the input vectors ($\u_1$ and $\u_2$) to get a output vector $\p$. 
+The input and target output vectors are found using single value decomposition on the word (for input) and phrase (for output) co-occurrence matrix for the training data. The composition function is given by: $$f_{comp}\::\:\mathbb{R}^d\times\mathbb{R}^d \to \mathbb{R}^d\::\: (\u_1, \u_2)\mapsto W_1\u_2+W_2\u_2$$
+Likewise, decomposition can be described by: $$f_{decomp}\::\:\mathbb{R}^d\to \mathbb{R}^d\times\mathbb{R}^d \::\: \p \mapsto (W^\prime_1\p, W^\prime_2\p)$$.
+During training linear transformation matrices $W_1$,$W_2$ and $W_1^\prime$,$W_2^\prime$ can be solved for using least squares regression.
+While it theoretically generalises to whole sentences, by recursive application of the composition or decomposition functions, Dinu and Baroni's work is quantitatively assessed only for very short phrases.},
   Pages                    = {624--633},
 
   Owner                    = {20361362},
@@ -1058,7 +1065,7 @@ poor languages.},
 
   Owner                    = {20361362},
   Timestamp                = {2015.11.19},
-  Url                      = {http://delivery.acm.org/10.1145/1880000/1870521/p33-guevara.pdf?ip=130.95.149.38&id=1870521&acc=OPEN&key=65D80644F295BC0D.05ACB6DAA5D75F76.4D4702B0C3E38B35.6D218144511F3437&CFID=731492669&CFTOKEN=13805100&__acm__=1447925103_2488d40f2cbd8cdba8b3f5c0ca6dd498}
+  Url                      = {http://www.aclweb.org/anthology/W10-28#page=43}
 }
 
 @Article{Gupta2010,
@@ -1200,7 +1207,21 @@ They had human annotators manually},
   Year                     = {2014},
   Annote                   = {Uses a variation of Unfolding RAE,
 uses Dependecy Parse Trees, rather than thre Constituency-tree used in the original.
- Calls it a DT-RAE Also makes use of a different weight matrix for each of the relations eg NN NSUB CCOMP.},
+ Calls it a DT-RAE Also makes use of a different weight matrix for each of the relations eg NN NSUB CCOMP.
+
+
+The work of \textcite{iyyer2014generating} is based on an extension of the unfolding recursive autoencoder \textcite{SocherEtAl2011:PoolRAE}. Recursive neural networks are jointly trained for both composing the sentence's words into a vector, and for decomposing that vector into words. They learn, the mapping network weights, and fine tunee the word embeddings during training, and produce the sentence embeddings through the central bottleneck of the recursive auto-encoder. This composition and decomposition is done by reusing a composition neural network at each vertex the dependency tree structure with different weight matrices for each dependency relation. Multiple inputs to the same vertex are handled by summing after multiplication by the weight matrix. 
+Decomposition is handled similarly, following the dependency structure from the root (sentence) out to the leaves (words), with a neural network reused at each branch, with decomposition matrices. It is further augmented to encode the order of identically related siblings, through the addition of a sibling weight matrix. The total network is trained based on its accuracy for to reproduce its input word vectors, through back-propagation. Through just using the top decomposing half of the network, from the sentence embedding up, it can be used to regenerate the words. This method was demonstrated quantitatively on five examples, shown in \Cref{results}. There are not currently any large scale quantitative results published for the use of Iyyer et. al.'s technique.
+
+ 
+%$$g_{comp}\:: (u_i)^N_{i=1} \mapsto \sigma(\sum_{i=1}^N W_i\u_i+\tilde{b})$$
+%$$g_{decomp} \p \mapsto (\sigma(W^\prime_i\p+\tilde{b}^\prime+W_{sib}\u^\prime_j)^N_{i=1}$$
+%$\u^\prime_j$ is $g_{decomp}(p)_j$ if $j$ is the left most sibling of $i$ with the same dependancy relation to the parent as $i$ if one exists, or the zero vector otherwith
+%Here $W_i$ and $W^\prime_i$ vary not by order, but by the dependency tree part of speech of the $i$th element.
+%$\tilde{b}$ and $\tilde{b}^\prime$ are the biases.
+%$\sigma$ is a nonlinear activation function, such as the sigmoid or the hyperbolic tangent functions. It is this nonlinearity that prevents the values being solved by any kind of least squares.
+ 
+%Theoretically, even without the extensions the unfolding recursive auto-encoder could be used in the same way to generate sentences, however this has not been shown.},
 
   Keywords                 = {phrase-embeddings},
   Owner                    = {20361362},
@@ -1360,21 +1381,6 @@ This paper has interesting footnotes.},
   Owner                    = {20361362},
   Timestamp                = {2015.04.21},
   Url                      = {http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.180.5642&rep=rep1&type=pdf}
-}
-
-@Article{Kiros2015,
-  Title                    = {Skip-Thought Vectors},
-  Author                   = {Ryan Kiros and Yukun Zhu and Ruslan Salakhutdinov and Richard S. Zemel and Antonio Torralba and Raquel Urtasun and Sanja Fidler},
-  Year                     = {2015},
-  Month                    = jun,
-  Abstract                 = {We describe an approach for unsupervised learning of a generic, distributed sentence encoder. Using the continuity of text from books, we train an encoder-decoder model that tries to reconstruct the surrounding sentences of an encoded passage. Sentences that share semantic and syntactic properties are thus mapped to similar vector representations. We next introduce a simple vocabulary expansion method to encode words that were not seen as part of training, allowing us to expand our vocabulary to a million words. After training our model, we extract and evaluate our vectors with linear models on 8 tasks: semantic relatedness, paraphrase detection, image-sentence ranking, question-type classification and 4 benchmark sentiment and subjectivity datasets. The end result is an off-the-shelf encoder that can produce highly generic sentence representations that are robust and perform well in practice. We will make our encoder publicly available.},
-  Comments                 = {11 pages},
-  Eprint                   = {1506.06726},
-  Keywords                 = {sentence-vectors},
-  Oai2identifier           = {1506.06726},
-  Owner                    = {20361362},
-  Timestamp                = {2016.01.07},
-  Url                      = {http://arxiv.org/pdf/1506.06726v1.pdf}
 }
 
 @Inproceedings{kneser1995improved,
@@ -1802,6 +1808,22 @@ Hard:
   Url                      = {sci2s.ugr.es/keel/pdf/algorithm/classification-algorithm/Maron1961.pdf}
 }
 
+@Article{10.2307/1263890,
+  Author                   = {George V. Maverick},
+  Journal                  = {International Journal of American Linguistics},
+  Year                     = {1969},
+  Number                   = {1},
+  Pages                    = {71-75},
+  Volume                   = {35},
+
+  ISSN                     = {00207071, 15457001},
+  Owner                    = {20361362},
+  Publisher                = {The University of Chicago Press},
+  Reviewed-author          = {Henry Kučera, W. Nelson Francis},
+  Timestamp                = {2015.11.26},
+  Url                      = {http://www.jstor.org/stable/1263890}
+}
+
 @Article{McKevitt1992,
   Title                    = {Approaches to natural language discourse processing},
   Author                   = {Mc Kevitt, Paul and Partridge, Derek and Wilks, Yorick},
@@ -2182,22 +2204,6 @@ It is a incomplete work, available online under creative commons.},
   Url                      = {http://neuralnetworksanddeeplearning.com/chap2.html}
 }
 
-@Article{Ozsoy2016,
-  Title                    = {From Word Embeddings to Item Recommendation},
-  Author                   = {Ozsoy, Makbule Gulcin},
-  Journal                  = {arXiv preprint arXiv:1601.01356},
-  Year                     = {2016},
-
-  Annote                   = {Uses Skipgrams, but not on words,  but on FourSquare check-in locations.
-To make recommendations for other places the person might like to visit.
-This is a cool idea.},
-
-  __markedentry            = {[20361362:6]},
-  Owner                    = {20361362},
-  Timestamp                = {2016.01.13},
-  Url                      = {http://arxiv.org/pdf/1601.01356.pdf}
-}
-
 @Inproceedings{pang2005seeing,
   Title                    = {Seeing stars: Exploiting class relationships for sentiment categorization with respect to rating scales},
   Author                   = {Pang, Bo and Lee, Lillian},
@@ -2221,6 +2227,7 @@ This is a cool idea.},
   Organization             = {Association for Computational Linguistics},
   Pages                    = {311--318},
 
+  __markedentry            = {[20361362:]},
   Owner                    = {20361362},
   Timestamp                = {2015.11.20},
   Url                      = {http://aclweb.org/anthology/P/P02/P02-1040.pdf}
@@ -2843,6 +2850,7 @@ It does not example the max-margin method well (but reference a baper that does)
 @Inbook{tengi1998design,
   Title                    = {WordNet: an electronic lexical database, The MIT Press, Cambridge, Massachusetts},
   Author                   = {Tengi, Randee I},
+  Chapter                  = {Design and implementation of the WordNet lexical database and searching software},
   Editor                   = {Fellbaum, Christiane (r{\'e}d.),},
   Pages                    = {105},
   Year                     = {1998},
@@ -2850,7 +2858,6 @@ It does not example the max-margin method well (but reference a baper that does)
 This is the source for things like wordnet only contains lemmas.
 Kind of. Uses the phrase "base word form"},
 
-  Chapter                  = {Design and implementation of the WordNet lexical database and searching software},
   Journal                  = {Fellbaum, Christiane (r{\'e}d.), WordNet: an electronic lexical database, The MIT Press, Cambridge, Massachusetts},
   Owner                    = {20361362},
   Timestamp                = {2015.07.27}
@@ -3285,30 +3292,6 @@ Via convolutoional neural network with many layers.},
   Owner                    = {20361362},
   Timestamp                = {2015.08.31},
   Url                      = {http://arxiv.org/abs/1502.01710}
-}
-
-@Article{DBLP:journals/corr/ZhuKZSUTF15,
-  Title                    = {Aligning Books and Movies: Towards Story-like Visual Explanations
- by Watching Movies and Reading Books},
-  Author                   = {Yukun Zhu and
- Ryan Kiros and
- Richard S. Zemel and
- Ruslan Salakhutdinov and
- Raquel Urtasun and
- Antonio Torralba and
- Sanja Fidler},
-  Journal                  = {CoRR},
-  Year                     = {2015},
-
-  Annote                   = {Source for the Books Corpus: \url{http://www.cs.toronto.edu/~mbweb/}},
-  Volume                   = {abs/1506.06724},
-
-  Bibsource                = {dblp computer science bibliography, http://dblp.org},
-  Biburl                   = {http://dblp.uni-trier.de/rec/bib/journals/corr/ZhuKZSUTF15},
-  Keywords                 = {corpora},
-  Owner                    = {20361362},
-  Timestamp                = {Wed, 01 Jul 2015 15:10:24 +0200},
-  Url                      = {http://arxiv.org/abs/1506.06724}
 }
 
 @Inproceedings{zou2013bilingual,
