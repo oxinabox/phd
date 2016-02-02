@@ -3,6 +3,27 @@
 \begin_document
 \begin_header
 \textclass article
+\begin_preamble
+
+%http://www-rohan.sdsu.edu/~aty/bibliog/latex/floats.html
+% Alter some LaTeX defaults for better treatment of figures:
+    % See p.105 of "TeX Unbound" for suggested values.
+    % See pp. 199-200 of Lamport's "LaTeX" book for details.
+    %   General parameters, for ALL pages:
+    \renewcommand{\topfraction}{0.9}	% max fraction of floats at top
+    \renewcommand{\bottomfraction}{0.8}	% max fraction of floats at bottom
+    %   Parameters for TEXT pages (not float pages):
+    \setcounter{topnumber}{2}
+    \setcounter{bottomnumber}{2}
+    \setcounter{totalnumber}{4}     % 2 may work better
+    \setcounter{dbltopnumber}{2}    % for 2-column pages
+    \renewcommand{\dbltopfraction}{0.9}	% fit big float above 2-col. text
+    \renewcommand{\textfraction}{0.07}	% allow minimal text w. figs
+    %   Parameters for FLOAT pages (not text pages):
+    \renewcommand{\floatpagefraction}{0.7}	% require fuller float pages
+% N.B.: floatpagefraction MUST be less than topfraction !!
+    \renewcommand{\dblfloatpagefraction}{0.7}	% require fuller float pages
+\end_preamble
 \use_default_options true
 \maintain_unincluded_children false
 \language english
@@ -847,14 +868,35 @@ The countries covered by the tour are given by
 
 \end_layout
 
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Case Study on Gurbodi vs GLTK for Word Ordering
 \end_layout
 
 \begin_layout Standard
-The problem of how to order an unordered bag of words, occurs as part of
- a larger work on computer sentence generation.
- A bag of words is a collection of words without order, for example 
+Vector embeddings have revolutionized natural language processing over the
+ last 5 years.
+ These techniques convert sentences into vectors of numbers, which can be
+ worked with computationally.
+ A limitation of the current techniques is that it is not generally possible
+ to convect the vector back into a sentence at the end.
+ We are currently investigating a method to do so.
+ 
+\end_layout
+
+\begin_layout Standard
+One way to break up the problem of how to generate a sentence from a vector,
+ is the split the task into two parts: selecting the words used, and then
+ ordering them.
+ In this case study, we focus on the ordering part of that problem.
+ Once an unordered bag of words is found how can it be ordered? For example
+ 
 \emph on
 
 \begin_inset Quotes eld
@@ -906,10 +948,12 @@ key "Mitchell2008"
 \begin_layout Standard
 The problem of determining the likelihood of any given sequence of words
  is the subject of language modeling.
- A language model is used to determine how likely one ordering is, com paired
+ A language model is used to determine how likely one ordering is, compared
  to another, based on the prevalence of sub-patterns observed in a training
  corpus.
  For example, we know from past experience that the word 
+\emph on
+
 \begin_inset Quotes eld
 \end_inset
 
@@ -917,7 +961,11 @@ Baked
 \begin_inset Quotes erd
 \end_inset
 
+
+\emph default
  is more likely to be followed by 
+\emph on
+
 \begin_inset Quotes eld
 \end_inset
 
@@ -925,7 +973,11 @@ Potato
 \begin_inset Quotes erd
 \end_inset
 
+
+\emph default
  than it is to be followed by 
+\emph on
+
 \begin_inset Quotes eld
 \end_inset
 
@@ -933,6 +985,8 @@ Steak
 \begin_inset Quotes erd
 \end_inset
 
+
+\emph default
 .
  A particular family of language models, based around this kind of fact
  are the trigram language models (and more generally the n-gram language
@@ -945,27 +999,9 @@ A trigram language model estimates the probability of a sequence of words
  This makes use of a simplifying assumption, called a Markov assumption,
  that the probability of the current state occurring is only dependent on
  the previous state.
- In this case the state is the previous two words.
- This Markov assumption allows us to use the Bayesian chain-rule to find
- the probability of any sequence, as a product of conditional probabilities.
- For example: 
-\begin_inset Formula $P("Hello\,my\,\,old\,friend")=P(Hello\,,\,my)\cdot P(old\,|\,Hello,\,my)\cdot P(friend\,|\,my\,old)$
-\end_inset
-
-.
- An extension to the language is however required to allow us to make uses
- of knowledge about the beginning and endings of sentences.
-\end_layout
-
-\begin_layout Standard
-Sentences are often augmented with marker pseudo-words to indicated the
- beginning and end -- which allows knowledge about which words often occur
- at each sentence boundary.
- For example 
-\begin_inset Formula $P("Hello\,my\,friend")=P(Hello|START1,START2)\cdot P(my|START2,Hello)\cdot P(friend|Hello,my)\cdot P(END1|my,friend)\cdot P(END2|friend,END1)$
-\end_inset
-
-.
+ In this case the state is defined by the previous two words.This Markov
+ assumption allows us to use the Bayesian chain-rule to find the probability
+ of any sequence, as a product of conditional probabilities.
  Though this method the probability of any sequence can be estimated.
 \end_layout
 
@@ -988,6 +1024,21 @@ key "BrownAnalysis"
 .
  So the naive method will not do -- a more sensible way of search the space
  of possible orderings is required.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+The classical method to handle this kind of problem is to express it as
+ a graph and use a graph search algorithm.
+ The nodes of the graph corresponding to the word states
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -1017,8 +1068,10 @@ This strongly suggests that the word ordering problem is NP-Hard.
  Not all airports go to all other airports however.
  In the word ordering problem, trigram states replace airports, and uses
  of a word replace countries.
- A moderately complex set of constraints and optimization criteria are required
- for the expression.
+ You must visit a set of trigram states (airports), such that each word
+ (countries) is used (visited) once.
+ A set of mathematical constraints and optimization criteria can be written
+ to express the problem in this form.
 \end_layout
 
 \begin_layout Standard
@@ -1063,51 +1116,6 @@ key "Julia"
 \end_layout
 
 \begin_layout Standard
-In these preliminary results we found the Gurobi solver to be much faster
- than GLPK.
- The results are shown in 
-\begin_inset CommandInset ref
-LatexCommand formatted
-reference "tab:times"
-
-\end_inset
-
-.
- For comparison a the time taken to do a best-first search is shown -- which
- is the traditional approach, given the problem has an admissible heuristic.
- In general we find that Gurobi is several orders of magnitude faster.
- GLPK in-fact performs worse than the best-first search.
- These results are inline with the more rigorous evaluation of 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "meindl2012analysis"
-
-\end_inset
-
-.
- Our small case study agrees with the conclusion of Meindl and Teml, that
- GLPK is not suitable for large scale problems.
- Open source solvers are not currently mature enough for this domain.
- 
-\end_layout
-
-\begin_layout Standard
-The several orders of improvement when solving with Gurobi, over the the
- best-first search does show that transforming the word ordering problem
- into a linear mixed integer programming problem does yield significant
- speedups.
- 
-\end_layout
-
-\begin_layout Standard
-Gurobi is a multithreaded application.
- GLPK and the Best-First Search are not.
- These evaluations were performed on NeCTAR virtual machine with 12 cores
- and 48Gb of RAM.
- 
-\end_layout
-
-\begin_layout Standard
 \begin_inset Float table
 wide false
 sideways false
@@ -1115,18 +1123,17 @@ status open
 
 \begin_layout Plain Layout
 \begin_inset Tabular
-<lyxtabular version="3" rows="6" columns="10">
+<lyxtabular version="3" rows="6" columns="9">
 <features rotate="0" tabularvalignment="middle">
-<column alignment="center" valignment="top" width="11text%">
-<column alignment="center" valignment="top" width="4text%">
-<column alignment="center" valignment="top" width="8text%">
-<column alignment="center" valignment="top" width="7text%">
-<column alignment="center" valignment="top" width="7text%">
-<column alignment="center" valignment="top" width="7text%">
-<column alignment="center" valignment="top" width="9.5text%">
-<column alignment="center" valignment="top" width="9.5text%">
-<column alignment="center" valignment="top" width="9.5text%">
-<column alignment="center" valignment="top" width="7text%">
+<column alignment="center" valignment="middle" width="16text%">
+<column alignment="center" valignment="middle" width="4text%">
+<column alignment="center" valignment="middle" width="8text%">
+<column alignment="center" valignment="middle" width="7text%">
+<column alignment="center" valignment="middle" width="7text%">
+<column alignment="center" valignment="middle" width="9.5text%">
+<column alignment="center" valignment="middle" width="9.5text%">
+<column alignment="center" valignment="middle" width="9.5text%">
+<column alignment="center" valignment="middle" width="7text%">
 <row>
 <cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
@@ -1172,7 +1179,7 @@ Non-Fixed Variables
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1185,33 +1192,6 @@ Nonlazy Constraints
 </cell>
 <cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset space \thinspace{}
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-
-\size footnotesize
-Model Definition Time (s)
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-\begin_inset space \thinspace{}
-\end_inset
-
-
-\end_layout
 
 \begin_layout Plain Layout
 
@@ -1232,15 +1212,6 @@ Solving Time Gurobi (s)
 \begin_layout Plain Layout
 
 \series bold
-\begin_inset space \thinspace{}
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-
-\series bold
 \size footnotesize
 Solving Time Gurobi (s)
 \end_layout
@@ -1251,17 +1222,8 @@ Solving Time Gurobi (s)
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-\begin_inset space \thinspace{}
-\end_inset
-
-
-\end_layout
 
 \begin_layout Plain Layout
 
@@ -1272,7 +1234,7 @@ Solving Time GLPK (s)
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1293,13 +1255,27 @@ Best-First Search (s)
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 
 \size tiny
 this is the basis of a fine comedy .
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\size tiny
+
+\backslash
+par
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -1354,7 +1330,7 @@ this is the basis of a fine comedy .
 \begin_layout Plain Layout
 
 \size footnotesize
-0.6
+2.1
 \end_layout
 
 \end_inset
@@ -1365,30 +1341,7 @@ this is the basis of a fine comedy .
 \begin_layout Plain Layout
 
 \size footnotesize
-1.5
-\end_layout
-
-\begin_layout Plain Layout
-
-\size footnotesize
-(total 2.1)
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\size footnotesize
-0.6
-\end_layout
-
-\begin_layout Plain Layout
-
-\size footnotesize
-(total 1.2)
+1.2
 \end_layout
 
 \end_inset
@@ -1399,13 +1352,7 @@ this is the basis of a fine comedy .
 \begin_layout Plain Layout
 
 \size footnotesize
-5.3
-\end_layout
-
-\begin_layout Plain Layout
-
-\size footnotesize
-(total 5.9)
+5.9
 \end_layout
 
 \end_inset
@@ -1423,7 +1370,7 @@ this is the basis of a fine comedy .
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1431,6 +1378,20 @@ this is the basis of a fine comedy .
 \size tiny
 `` in this light we need 1,000 churches in illinois , where we have 200
  ; ;
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\size tiny
+
+\backslash
+par
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -1485,7 +1446,7 @@ this is the basis of a fine comedy .
 \begin_layout Plain Layout
 
 \size footnotesize
-4.2
+6.7
 \end_layout
 
 \end_inset
@@ -1496,30 +1457,7 @@ this is the basis of a fine comedy .
 \begin_layout Plain Layout
 
 \size footnotesize
-2.5
-\end_layout
-
-\begin_layout Plain Layout
-
-\size footnotesize
-(total 6.7 )
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\size footnotesize
-3.1
-\end_layout
-
-\begin_layout Plain Layout
-
-\size footnotesize
-(total 7.3)
+7.3
 \end_layout
 
 \end_inset
@@ -1530,13 +1468,7 @@ this is the basis of a fine comedy .
 \begin_layout Plain Layout
 
 \size footnotesize
-569.9
-\end_layout
-
-\begin_layout Plain Layout
-
-\size footnotesize
-(total 574.1)
+574.1
 \end_layout
 
 \end_inset
@@ -1554,7 +1486,7 @@ this is the basis of a fine comedy .
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1562,6 +1494,20 @@ this is the basis of a fine comedy .
 \size tiny
 with one down in the eighth , Marv Throneberry drew a walk and stole second
  as Hyde fanned Tuttle .
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\size tiny
+
+\backslash
+par
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -1616,7 +1562,7 @@ with one down in the eighth , Marv Throneberry drew a walk and stole second
 \begin_layout Plain Layout
 
 \size footnotesize
-7.3
+13.2
 \end_layout
 
 \end_inset
@@ -1627,30 +1573,7 @@ with one down in the eighth , Marv Throneberry drew a walk and stole second
 \begin_layout Plain Layout
 
 \size footnotesize
-5.9
-\end_layout
-
-\begin_layout Plain Layout
-
-\size footnotesize
-(total 13.2 )
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\size footnotesize
-9.6
-\end_layout
-
-\begin_layout Plain Layout
-
-\size footnotesize
-(total 16.9)
+16.9
 \end_layout
 
 \end_inset
@@ -1661,13 +1584,7 @@ with one down in the eighth , Marv Throneberry drew a walk and stole second
 \begin_layout Plain Layout
 
 \size footnotesize
-2,029.6
-\end_layout
-
-\begin_layout Plain Layout
-
-\size footnotesize
-(total 2036.9)
+2036.9
 \end_layout
 
 \end_inset
@@ -1685,7 +1602,7 @@ with one down in the eighth , Marv Throneberry drew a walk and stole second
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1693,6 +1610,20 @@ with one down in the eighth , Marv Throneberry drew a walk and stole second
 \size tiny
 in 1961 , it is estimated that multiple unit dwellings will account for
  nearly 30 per cent of the starts in residential construction .
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\size tiny
+
+\backslash
+par
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -1747,7 +1678,7 @@ in 1961 , it is estimated that multiple unit dwellings will account for
 \begin_layout Plain Layout
 
 \size footnotesize
-14.7
+23.5
 \end_layout
 
 \end_inset
@@ -1758,30 +1689,7 @@ in 1961 , it is estimated that multiple unit dwellings will account for
 \begin_layout Plain Layout
 
 \size footnotesize
-8.8
-\end_layout
-
-\begin_layout Plain Layout
-
-\size footnotesize
-(total 23.5)
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\size footnotesize
-7.9
-\end_layout
-
-\begin_layout Plain Layout
-
-\size footnotesize
-(total 22.6)
+22.6
 \end_layout
 
 \end_inset
@@ -1792,13 +1700,7 @@ in 1961 , it is estimated that multiple unit dwellings will account for
 \begin_layout Plain Layout
 
 \size footnotesize
-11,690.9
-\end_layout
-
-\begin_layout Plain Layout
-
-\size footnotesize
-(total 11,705.6)
+11,705.6
 \end_layout
 
 \end_inset
@@ -1825,6 +1727,20 @@ Out Of Memory
 the jury said it found the court `` has incorporated into its operating
  procedures the recommendations '' of two previous grand juries , the atlanta
  bar association and an interim citizens committee .
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+\size tiny
+
+\backslash
+par
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -1879,7 +1795,7 @@ the jury said it found the court `` has incorporated into its operating
 \begin_layout Plain Layout
 
 \size footnotesize
-49.9
+80.1
 \end_layout
 
 \end_inset
@@ -1890,30 +1806,7 @@ the jury said it found the court `` has incorporated into its operating
 \begin_layout Plain Layout
 
 \size footnotesize
-30.2
-\end_layout
-
-\begin_layout Plain Layout
-
-\size footnotesize
-(total 80.1)
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\size footnotesize
-28.3
-\end_layout
-
-\begin_layout Plain Layout
-
-\size footnotesize
-(total 78.2)
+78.2
 \end_layout
 
 \end_inset
@@ -1958,13 +1851,10 @@ name "tab:times"
 
 \end_inset
 
-Three examples of the time taken using the Gurobi and GLTK solvers, as well
+Four examples of the time taken using the Gurobi and GLTK solvers, as well
  as a best first search on the word ordering problem.
- Note that the best first search defines the model as it goes, where as
- to find the total time for GLTK and Gurobi, the Model Definition time must
- be added.
- The table also shows the problem paramaters, in terms of the number of
- words, variables, and constraints.
+ The table also shows the MIP problem parameters, in terms of the number
+ of words, variables, and constraints.
 \end_layout
 
 \end_inset
@@ -1975,6 +1865,74 @@ Three examples of the time taken using the Gurobi and GLTK solvers, as well
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+In these preliminary results we found the Gurobi solver to be much faster
+ than GLPK and the best-first search.
+ The results are shown in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "tab:times"
+
+\end_inset
+
+.
+ In general, we find that Gurobi is several orders of magnitude faster.
+ GLPK in-fact performs worse than the best-first search.
+ These results are inline with the more rigorous evaluation of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "meindl2012analysis"
+
+\end_inset
+
+.
+ Our small case study agrees with the conclusion of Meindl and Teml, that
+ GLPK is not suitable for large scale problems.
+ Open source solvers are not currently mature enough for this domain.
+ 
+\end_layout
+
+\begin_layout Standard
+The several orders of improvement when solving with Gurobi, over the the
+ best-first search does show that transforming the word ordering problem
+ into a linear mixed integer programming problem does yield significant
+ speedups.
+ As is expected of the NP-Hard MIP problem, the time of all methods increases
+ exponentially with the number of words.
+ However the absolute rate of increase when using Gurobi is slow enough
+ that it is viable for use on most sentences.
+ This is not true of the other methods.
+\end_layout
+
+\begin_layout Standard
+Gurobi is a multithreaded application.
+ GLPK and the Best-First Search are not.
+ These evaluations were performed on NeCTAR virtual machine with 12 cores
+ and 48Gb of RAM.
+ It can be noted that restricting Gurobi to one thread in some cases improved
+ performance.
+ This is inline with the Gurobi manual, which suggests that for problems
+ with few feasible solutions, contention often worsens performance.
+ For the purposes of our greater research, single threaded operation to
+ allow multiple distinct sentences to be ordered simultaneously is preferable.
+ This allows a large number of sentences to be evaluated to judge the quality
+ of the overall sentence generation system.
+\end_layout
+
+\begin_layout Standard
+The world touring journey implementation of the word ordering problem allows
+ for optimal solutions to be found in reasonable time.
+ When the problem is expressed in this way, commercial mixed integer programming
+ solver, such as Gurobi, can solve the problem in tens of seconds for most
+ sentences.
+ This compares to hundreds of seconds taken by traditional best first graph
+ search based approaches.
+ However, the open source solver, GLTK, did not perform as well, taking
+ similar time to the graph search approach.
+ We conclude that given access to a fast solver, the world touring journey/MIP
+ based method of ordering words is the superior method.
 \end_layout
 
 \end_body
