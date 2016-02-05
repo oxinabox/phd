@@ -94,6 +94,34 @@
 
 \begin_body
 
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\s}{\blacktriangleright}
+\end_inset
+
+
+\begin_inset FormulaMacro
+\newcommand{\ss}{\triangleright}
+\end_inset
+
+
+\begin_inset FormulaMacro
+\newcommand{\e}{\triangleleft}
+\end_inset
+
+
+\begin_inset FormulaMacro
+\newcommand{\ee}{\blacktriangleleft}
+\end_inset
+
+
+\begin_inset FormulaMacro
+\newcommand{\W}{\mathcal{W}}
+\end_inset
+
+
+\end_layout
+
 \begin_layout Subsection
 Introduction: ordering a bag of words
 \end_layout
@@ -226,7 +254,7 @@ we can use these trigrams to calculate the probaility of any sequence of
 
 \begin_layout Standard
 the (unnormalised) probability of a sequence of words: 
-\begin_inset Formula $\mathcal{W}=[w_{1},w_{2},w_{3},w_{4}]$
+\begin_inset Formula $\W=[w_{1},w_{2},w_{3},w_{4}]$
 \end_inset
 
 
@@ -234,7 +262,7 @@ the (unnormalised) probability of a sequence of words:
 
 \begin_layout Standard
 is 
-\begin_inset Formula $P(\mathcal{W})=P(w_{1},w_{2})P(w_{3}|w_{1},w_{2})P(w_{4}|w_{2},w_{3})$
+\begin_inset Formula $P(\W)=P(w_{1},w_{2})P(w_{3}|w_{1},w_{2})P(w_{4}|w_{2},w_{3})$
 \end_inset
 
 
@@ -251,19 +279,19 @@ We can augment our language model with the addition of pseudowords:
 \end_layout
 
 \begin_layout Standard
-\begin_inset Formula $w_{S1}=\mathrm{“START1”},$
+\begin_inset Formula $w_{S1}=\mathrm{\s},$
 \end_inset
 
 
-\begin_inset Formula $w_{S2}=\mathrm{“START2"},$
+\begin_inset Formula $w_{S2}=\mathrm{“\ss"},$
 \end_inset
 
  and 
-\begin_inset Formula $w_{E1}=\mathrm{“END1”},$
+\begin_inset Formula $w_{E1}=\mathrm{“\e”},$
 \end_inset
 
 
-\begin_inset Formula $w_{E2}=\mathrm{\text{“}END2\text{”}}$
+\begin_inset Formula $w_{E2}=\mathrm{\text{“}\ee\text{”}}$
 \end_inset
 
 
@@ -310,7 +338,7 @@ We also know that
 
 \begin_layout Standard
 And can write 
-\begin_inset Formula $P(\mathcal{W})=P(w_{S1},w_{S2})P(w_{1}|w_{S1},w_{S2})P(w_{2}|w_{S2},w_{1})P(w_{3}|w_{1},w_{2})P(w_{4}|w_{2},w_{3})P(w_{E1}|w_{3},w_{4})P(w_{E2}|w_{4},w_{E1})$
+\begin_inset Formula $P(\W)=P(w_{S1},w_{S2})P(w_{1}|w_{S1},w_{S2})P(w_{2}|w_{S2},w_{1})P(w_{3}|w_{1},w_{2})P(w_{4}|w_{2},w_{3})P(w_{E1}|w_{3},w_{4})P(w_{E2}|w_{4},w_{E1})$
 \end_inset
 
 
@@ -322,7 +350,7 @@ Which given the afformantion constant probailities of 1
 
 \begin_layout Standard
 simplifies to 
-\begin_inset Formula $P(\mathcal{W})=P(w_{1}|w_{S1},w_{S2})P(w_{2}|w_{S2},w_{1})P(w_{3}|w_{1},w_{2})P(w_{4}|w_{2},w_{3})P(w_{E1}|w_{3},w_{4})$
+\begin_inset Formula $P(\W)=P(w_{1}|w_{S1},w_{S2})P(w_{2}|w_{S2},w_{1})P(w_{3}|w_{1},w_{2})P(w_{4}|w_{2},w_{3})P(w_{E1}|w_{3},w_{4})$
 \end_inset
 
 
@@ -456,7 +484,7 @@ The countries are given by the sets of all cities that have a given word
 \end_inset
 
  is given by 
-\begin_inset Formula $S_{i}=\{(w_{i},w_{j})\,\mid\,w_{i}\ne w_{j}\,\wedge w_{i}\in\{START1,START2,END1\}\cup Bag\,of\,words\}$
+\begin_inset Formula $S_{i}=\{(w_{i},w_{j})\,\mid\,w_{i}\ne w_{j}\,\wedge w_{i}\in\{START1,\ss,\e\}\cup Bag\,of\,words\}$
 \end_inset
 
 .
@@ -464,11 +492,11 @@ The countries are given by the sets of all cities that have a given word
 
 \begin_layout Standard
 The Start city is the 
-\begin_inset Formula $(START1,START2)$
+\begin_inset Formula $(START1,\ss)$
 \end_inset
 
 , the End city is the state 
-\begin_inset Formula $(END1,END2)$
+\begin_inset Formula $(\e,\ee)$
 \end_inset
 
 .
@@ -517,37 +545,40 @@ To model the word ordering problem as a world touring journey, the following
 
 \begin_layout Itemize
 For 
-\begin_inset Formula $\mathcal{W}$
+\begin_inset Formula $\W$
 \end_inset
 
- is the bag of words to be ordered, plus the start and end pseudo-words.
+ the bag of words to be ordered, plus the start and end pseudo-words.
  
-\begin_inset Formula $S(w_{j})\subseteq\mathcal{W}^{2}$
-\end_inset
-
-
 \end_layout
 
 \begin_layout Itemize
-Each city is a pair of words (an element of 
-\begin_inset Formula $\mathcal{W}^{2}$
+We will write 
+\begin_inset Formula $w_{i}\in\W$
 \end_inset
 
-) -- a Markov state, consisting of word and its predecessor word.
+ to represent a word from the bag, with arbitrarily assigned subscripts.
+ Where a word occurs with multiplicity greater than 1, it is assigned multiple
+ subscripts, and each is treated as a distinct word.
+\end_layout
+
+\begin_layout Itemize
+Each city is a sequence of two words -- a Markov state, consisting of a
+ word and its predecessor word.
  This is written as 
-\begin_inset Formula $(w_{n-1},w_{n})$
+\begin_inset Formula $\langle w_{i},w_{j}\rangle\in\W^{2}$
 \end_inset
 
- with arbitrarily assigned subscripts.
+
 \end_layout
 
 \begin_layout Itemize
-The Start city is the 
-\begin_inset Formula $(START1,START2)$
+The Start city is given by the state 
+\begin_inset Formula $\langle\s,\ss\rangle$
 \end_inset
 
 , the End city is the state 
-\begin_inset Formula $(END1,END2)$
+\begin_inset Formula $\langle\e,\ee\rangle$
 \end_inset
 
 .
@@ -556,16 +587,16 @@ The Start city is the
 \begin_layout Itemize
 The countries are given by the sets of all cities that have a given word
  in the second position.
- So the country (
-\begin_inset Formula $S_{j}$
+ So the country 
+\begin_inset Formula $S(w_{j})\subseteq\W^{2}$
 \end_inset
 
-)for word 
+, for word 
 \begin_inset Formula $w_{j}$
 \end_inset
 
  is given by 
-\begin_inset Formula $S(w_{j})=\{(w_{i},w_{j})\,\mid\,w_{i}\ne w_{j}\,\wedge w_{i}\in\mathcal{W}\}$
+\begin_inset Formula $S(w_{j})=\{\langle w_{i},w_{j}\rangle\,\mid\,w_{i}\ne w_{j}\,\wedge w_{i}\in\W\}$
 \end_inset
 
 .
@@ -577,38 +608,47 @@ Transitions and Cost Model
 \end_layout
 
 \begin_layout Standard
-The journey and its costs are models by:
+The journey and its costs are modeled by:
 \end_layout
 
 \begin_layout Itemize
 Each city is given by a 
-\begin_inset Formula $(w_{n-2},w_{n-1})$
+\begin_inset Formula $\langle w_{i},w_{j}\rangle$
 \end_inset
 
  and is allowed to transition only to cities 
-\begin_inset Formula $(w_{n-1},w_{n})$
+\begin_inset Formula $\langle w_{j},w_{k}\rangle$
 \end_inset
 
 .
- Such transitions has cost 
-\begin_inset Formula $C[(w_{n-2},w_{n-1}),(w_{n-1},w_{n})]=-\log\left(P(w_{n}|w_{n-2},w_{n-1})\right)$
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Such transitions has cost 
+\begin_inset Formula $C[\langle w_{i},w_{j}\rangle,\langle w_{j},w_{k}\rangle]=-\log\left(P(w_{k}|w_{i},w_{j}\rangle\right)$
 \end_inset
 
 .
- The expression in terms of negative log likelihood makes this problem linear,
+ 
+\end_layout
+
+\begin_layout Itemize
+The expression in terms of negative log likelihood makes this problem linear,
  rather than having a product of probability, it is just a sum of these
  negative log likelihood.
  
 \end_layout
 
+\end_deeper
 \begin_layout Itemize
 The table of transitions is given by 
 \begin_inset Formula $X$
 \end_inset
 
 , where 
-\begin_inset Formula $X[(w_{a},w_{b}),\,(w_{c},w_{d})]\begin{cases}
-1 & \mathrm{if\,transition\,from\,(w_{a},w_{b}),to\,(w_{c},w_{d})\,occurs}\\
+\begin_inset Formula $\tau[\langle w_{a},w_{b}\rangle,\,\langle w_{c},w_{d}\rangle]=\begin{cases}
+1 & \mathrm{if\,transition\,from\,\langle w_{a},w_{b}\rangle,to\,\langle w_{c},w_{d}\rangle\,occurs}\\
 0 & \mathrm{otherwise}
 \end{cases}$
 \end_inset
@@ -622,24 +662,59 @@ This table of transitions is the set binary variables to be optimized --
 \end_layout
 
 \begin_layout Itemize
-The total fitness, is the sum of all finesses of transitions taken.
- It is given by 
-\begin_inset Formula $C_{total}(X)=\sum_{w_{a},w_{b},w_{c},w_{d}}X[(w_{a},w_{b}),\,(w_{c},w_{d})]\cdot C[(w_{a},w_{b}),\,(w_{c},w_{d})]$
+The total cost to be minimized, is given by 
+\begin_inset Formula $C_{total}(\tau)=\sum_{\left[\langle w_{a},w_{b}\rangle,\langle w_{c},w_{d}\rangle\right]\in\left(\W^{2}\right)^{2}}\;\tau[\langle w_{a},w_{b}\rangle,\,\langle w_{c},w_{d}\rangle]\cdot C[\langle w_{a},w_{b}\rangle,\,\langle w_{c},w_{d}\rangle]$
 \end_inset
 
 .
- This cost must be minimized
+ 
 \end_layout
 
 \begin_layout Itemize
 The probability of a particular journey (ie of a particular ordering) is
  thus given by 
-\begin_inset Formula $P(X)=e^{-C_{total}(X)}$
+\begin_inset Formula $P(\tau)=e^{-C_{total}(\tau)}$
 \end_inset
 
 
 \end_layout
 
+\begin_layout Itemize
+The word order can be found by following the links, 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+\begin_inset Formula $f(n,\tau)=\begin{cases}
+\{w_{a}\mid\tau[\langle\s,\ss\rangle,\langle\ss,w_{a}\rangle]=1\}_{1} & n=1\\
+\{w_{b}\mid\tau[\langle\ss,f(1,\tau)\rangle,\langle f(1,\tau),w_{b}\rangle]=1\}_{1} & n=2\\
+\{w_{c}\mid\tau[\langle f(n-2,\tau),f(n-1,\tau)\rangle,\langle f(n-1,\tau),w_{c}\rangle]=1\}_{1} & n\ge3
+\end{cases}$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Itemize
+(if 
+\begin_inset Formula $\tau$
+\end_inset
+
+ is valid then, the set is a singleton, 
+\begin_inset Formula $\{\}_{1}$
+\end_inset
+
+indicates taking the only element)
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $f(\langle w_{i},w_{j}\rangle,\tau)=\{\langle w_{i},w_{j}\rangle,\langle w_{j},w_{k}\rangle=1\}$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
 \begin_layout Subsubsection
 Constraints
 \end_layout
@@ -650,7 +725,7 @@ The requirements of the problem, place various constraints on to X:
 
 \begin_layout Itemize
 Markov State consistency 
-\begin_inset Formula $\forall(w_{a},w_{b}),(w_{c},w_{b})\in\mathcal{W}^{2}$
+\begin_inset Formula $\forall\langle w_{a},w_{b}\rangle,\langle w_{c},w_{b}\rangle\in\W^{2}$
 \end_inset
 
 :
@@ -663,7 +738,7 @@ if
 \end_inset
 
  then 
-\begin_inset Formula $X[(w_{a},w_{b}),\,(w_{c},w_{d})]=0$
+\begin_inset Formula $\tau[\langle w_{a},w_{b}\rangle,\,\langle w_{c},w_{d}\rangle]=0$
 \end_inset
 
  
@@ -676,7 +751,7 @@ Leave every city entered (except those at the beginning and end):
 \end_inset
 
 
-\begin_inset Formula $\forall(w_{i},w_{j})\in\mathcal{W}^{2}\backslash\{(START1,START2),(END1,END2)\}$
+\begin_inset Formula $\forall\langle w_{i},w_{j}\rangle\in\W^{2}\backslash\{\langle\s,\ss\rangle,\langle\e,\ee\rangle\}$
 \end_inset
 
 :
@@ -684,7 +759,7 @@ Leave every city entered (except those at the beginning and end):
 
 \begin_deeper
 \begin_layout Itemize
-\begin_inset Formula $\sum_{(w_{a},w_{b})\in\mathcal{W}^{2}}X[(w_{a},w_{b}),\,(w_{i},w_{j})]=\sum_{(w_{c},w_{d})\in\mathcal{W}^{2}}X[(w_{i},w_{j}),\,(w_{c},w_{d})]$
+\begin_inset Formula $\sum_{\langle w_{a},w_{b}\rangle\in\W^{2}}\tau[\langle w_{a},w_{b}\rangle,\,\langle w_{i},w_{j}\rangle]=\sum_{\langle w_{c},w_{d}\rangle\in\W^{2}}\tau[\langle w_{i},w_{j}\rangle,\,\langle w_{c},w_{d}\rangle]$
 \end_inset
 
 .
@@ -694,7 +769,7 @@ Leave every city entered (except those at the beginning and end):
 \begin_layout Itemize
 Visit (enter) every country, once.
  
-\begin_inset Formula $\forall w_{j}\in\mathcal{W}\backslash\{START1,START2\}$
+\begin_inset Formula $\forall w_{j}\in\W\backslash\{\s,\ss\}$
 \end_inset
 
 :
@@ -702,7 +777,7 @@ Visit (enter) every country, once.
 
 \begin_deeper
 \begin_layout Itemize
-\begin_inset Formula $\sum_{(w_{i},w_{j})\in S(w_{j})}\sum_{(w_{a},w_{b})\in\mathcal{W}^{2}}X[(w_{a},w_{b}),\,(w_{i},w_{j})]=1$
+\begin_inset Formula $\sum_{\langle w_{i},w_{j}\rangle\in S(w_{j}\rangle}\sum_{\langle w_{a},w_{b}\rangle\in\W^{2}}\tau[\langle w_{a},w_{b}\rangle,\,\langle w_{i},w_{j}\rangle]=1$
 \end_inset
 
  
@@ -754,7 +829,7 @@ To allow the feasibility checker to detect if ordering the words is impossible,
 \noun off
 \color none
 then 
-\begin_inset Formula $X[(w_{n-2},w_{n-1}),(w_{n-1},w_{n})]=0$
+\begin_inset Formula $\tau[\langle w_{n-2},w_{n-1}\rangle,\langle w_{n-1},w_{n}\rangle]=0$
 \end_inset
 
 .
@@ -774,16 +849,49 @@ The problem as formulated above can be input into the Mixed Integer Linear
  We take the usual method for handling this an use callbacks to impose lazy
  constraints to forbid such solutions at run-time.
  Given a solution 
-\begin_inset Formula $X$
+\begin_inset Formula $\tau$
 \end_inset
 
 :
 \end_layout
 
 \begin_layout Itemize
-The selected links in the can be found, by taking the nonzero indexes of
- 
-\begin_inset Formula $X$
+The core tour -- which starts at the beginning 
+\begin_inset Formula $\langle\s,\ss\rangle$
+\end_inset
+
+ and ends at 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $\langle\e,\ee\rangle$
+\end_inset
+
+
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+the end can be found.
+ This is done by practically following the links from the start node, and
+ accumulating them into a set 
+\begin_inset Formula $T\subseteq\W^{2}$
 \end_inset
 
 
@@ -791,52 +899,47 @@ The selected links in the can be found, by taking the nonzero indexes of
 
 \begin_deeper
 \begin_layout Itemize
-Or more formally: 
-\begin_inset Formula $X_{links}=\{[(w_{a},w_{b}),\,(w_{c},w_{d})]\in\left(\mathcal{W}^{2}\right)^{2}\;\mid\;X[(w_{a},w_{b}),\,(w_{c},w_{d})]\ne0\}$
+The selected links found: 
+\begin_inset Formula $l(\tau)=\{[\langle w_{i},w_{j}\rangle,\,\langle w_{j},w_{k}\rangle]\in\left(\W^{2}\right)^{2}\;\mid\;\tau[\langle w_{i},w_{j}\rangle,\,\langle w_{j},w_{k}\rangle]\ne0\}$
 \end_inset
 
 
 \end_layout
 
-\end_deeper
-\begin_layout Itemize
-Form this the core tour -- the one that starts at the beginning and ends
- at the end can be found.
- This is done by following the links from the start node, and accumulating
- them into a set 
-\begin_inset Formula $T\subseteq\mathcal{W}^{2}$
-\end_inset
-
-
-\end_layout
-
-\begin_deeper
 \begin_layout Itemize
 Or more formally: by taking the transitive closure of 
-\begin_inset Formula $\{[(START1,START2),\,(START2,w_{i})]\in X_{links}\,|\,\forall w_{i}\in\mathcal{W}\}$
+\begin_inset Formula $\{[\langle\s,\ss\rangle,\,\langle\ss,w_{i}\rangle]\in l(\tau)\,|\,\forall w_{i}\in\W\}$
 \end_inset
 
  within 
-\begin_inset Formula $X_{links}$
+\begin_inset Formula $\tau_{links}$
 \end_inset
 
 .
- (Not that set will contain just one element before taking the closure.)
+ (Not that set is initially a singleton before taking the closure.
+\begin_inset Formula $\rangle$
+\end_inset
+
+
 \end_layout
 
 \end_deeper
 \begin_layout Itemize
 From the core tour, the set of words covered is given by 
-\begin_inset Formula $\mathcal{W}_{T}=\{w_{i}\,\mid\,(w_{i},w_{j})\in T\,\}\cup\{END2\}$
+\begin_inset Formula $\W_{T}=\{w_{i}\,\mid\,\langle w_{i},w_{j}\rangle\in T\,\}\cup\{\ee\}$
 \end_inset
 
 .
  If 
-\begin_inset Formula $\mathcal{W_{T}}=\mathcal{W}$
+\begin_inset Formula $\mathcal{W_{T}}=\W$
 \end_inset
 
  then there are no subtours and the core-tour is the full world touring
- journey (and the most likely ordering of the words in the bag).
+ journey (and the most likely ordering of the words in the bag
+\begin_inset Formula $\rangle$
+\end_inset
+
+.
  Otherwise, there is a subtour to be eliminated.
 \end_layout
 
@@ -854,10 +957,17 @@ The countries covered by the tour are given by
 \end_inset
 
 , and so the subtour elimination constraint is given by 
-\begin_inset Formula $\sum_{(w_{t1},w_{t2})\in S_{T}}\sum_{(w_{a},w_{b})\in\mathcal{W}^{2}\backslash S_{T}}X[(w_{t1},w_{t2}),(w_{a},w_{b})]\ge1$
+\begin_inset Formula $\sum_{\langle w_{t1},w_{t2}\rangle\in S_{T}}\sum_{\langle w_{a},w_{b}\rangle\in\W^{2}\backslash S_{T}}\tau[\langle w_{t1},w_{t2}\rangle,\langle w_{a},w_{b}\rangle]\ge1$
 \end_inset
 
 
+\end_layout
+
+\begin_layout Itemize
+i.e.
+ There must be a transition from one of the nodes of the word-classes covered
+ by the core-tour, to one of the nodes of a word-class not covered by the
+ core tour.
 \end_layout
 
 \end_deeper
