@@ -1,0 +1,11 @@
+#!/bin/sh
+
+cd SOURCE;
+
+rmdir ../2_PREPROCESSED_INPUT
+mv ../OLD_2_PREPROCESSED_INPUT ../2_PREPROCESSED_INPUT;
+rmdir ../3_OUTPUT;
+mv ../OLD_3_OUTPUT ../3_OUTPUT;
+
+rmdir ../4_RESULTS;
+mv ../OLD_4_RESULTS/ ../4_RESULTS;
