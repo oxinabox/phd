@@ -2,7 +2,6 @@
 
 \documentclass[]{beamer}
 \usepackage{standalone}
-\usepackage{booktabs}
 \usepackage{graphicx}
 \graphicspath{{../figs/}}
 
@@ -67,7 +66,9 @@ bibstyle=ieee,firstinits=true]{biblatex}
 
 \newcommand{\topline}{%
   \tikz[remember picture,overlay] {%
-    \draw[brown,ultra thick] ([yshift=-1.6cm]current page.north west)-- ([yshift=-1.6cm,xshift=\paperwidth]current page.north west);}}
+    \draw[brown,ultra thick] ([yshift=-1.6cm]current page.north west)-- ([yshift=-1.6cm,xshift=\paperwidth]current page.north west);} }
+
+\renewcommand{\topline}{}
 
 \setbeamertemplate{frametitle}{\begin{minipage}[b][1.6cm][c]{\textwidth}%
 	\centering%
@@ -215,7 +216,7 @@ bibstyle=ieee,firstinits=true]{biblatex}
 		\item<1-> Similarities to Knapsack family of problems.
 		\item<2-> Very high dimensionality of selection vector\begin{itemize}
 			\item $n$ is given by vocabulary size ($n=|\V|$)
-			\item $\approx40,000$ for Brown Corpus\hfill $\approx160,000$ for Books Corpus\hspace{1em}
+			\item $\approx40,000$ for Brown Corpus\hfill $\approx170,000$ for Books Corpus\hspace{1em}
 			\end{itemize}
 		\item<3-> A Greedy Algorithm is linear time in $n$ 
 	\end{itemize}
@@ -314,6 +315,42 @@ bibstyle=ieee,firstinits=true]{biblatex}
 			
 	\end{tikzpicture}
 		\vfill
+\end{frame}
+
+\begin{frame}{Experimental Setup: Preprocess corpora to only use known words.}
+	\begin{itemize}
+		\item<1-> For word embeddings, we use pretrained GloVe \footfullcite{pennington2014glove}
+		\item<2-> Restrict Vector vocab to only words used in corpora
+		\item<2-> Preprocess Corpora to remove sentences with words not found in vocabulary.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Experimental Setup: we used the Brown, and the Books Corpus}
+	\footfullcite{francis1979brown}
+	\footfullcite{moviebook}
+				
+	\begin{columns}[T]
+		\begin{column}{0.5\textwidth}
+			\textbf{Brown}
+			\begin{itemize}
+				\item 40,485 unique words
+				\item 42,004 sentences
+				\item Sentence Length Q3: \\\hfill 25 words
+				\item Extracts from 500 varied works from 1961
+			\end{itemize} 
+		\end{column}
+		\begin{column}{0.5\textwidth}
+			\pause
+			\textbf{Books}
+			\begin{itemize}
+				\item 178,694 unique words
+				\item 66,464 sentences 
+				\item Sentence Length Q3: \\\hfill 17 words
+				\item 11,038 unpublished novels, we use just a small random subset
+			\end{itemize}
+		\end{column}
+	\end{columns}
+
 \end{frame}
 
 \begin{frame}{Results: The more dimentions used in the word performance, the better the recovery.}
@@ -416,6 +453,17 @@ bibstyle=ieee,firstinits=true]{biblatex}
 	\end{itemize}
 \end{frame}
 
+\begin{frame}{Experimental Setup: Language Modeling}
+	\begin{itemize}
+		\item<1-> Preliminary Investigation on 10\% of the books corpus used in previous investigation ~6000 sentences.
+		\item<1-> Further subset to length 18 or less
+		\vfill
+		\item<2-> Language model trained on ~6 million sentences.
+		\item<2-> Use Kneser Ney Smoothing. \footfullcite{kneser1995improved}
+		
+	\end{itemize}
+\end{frame}
+
 \begin{frame}{Results: This seems to work alright, for short sentences.}
 	\begin{table}
 		\pgfplotstabletypeset[col sep=comma, fixed zerofill, precision=3,column type=C{3em},
@@ -432,16 +480,41 @@ bibstyle=ieee,firstinits=true]{biblatex}
 	\vfill
 \end{frame}
 
-\begin{frame}{Result: The longer the sentence, the worse recovery}
 
-	\pgfplotstableread[col sep=comma,header=has colnames]{../data/prelim_ordering_len_scores.csv}{\ordlenscores}
-	
+
+\pgfplotstableread[col sep=comma,header=has colnames]{../data/prelim_ordering_len_scores.csv}{\ordlenscores}
+\pgfplotstableread[col sep=comma,header=has colnames]{../data/prelim_ordering_len_scores_oracle.csv}{\ordlenscoresoracle}
+
+\begin{frame}{Result: The longer the sentence, the worse recovery of order.}
+
 	\begin{tikzpicture}
 	\begin{axis}[xlabel=Ground Truth Sentence Length,
 	ylabel=Portion Exactly Matched,
 	width=0.9\textwidth,height=0.5\textwidth,cycle list name=exotic]
 	\addplot table [y=Exact_Matches,x=ground_length]{\ordlenscores};
-	\legend{Generated BOWS}
+	\addplot table [y=Exact_Matches,x=ground_length]{\ordlenscoresoracle};
+	\legend{Generated BOWS, Oracle BOWS}
+	\end{axis}
+	\end{tikzpicture}	
+\end{frame}
+
+\begin{frame}{The overall performance is tolerable, particularly for short sentences}
+	\begin{itemize}
+		\item 0.75 BLEU is very good, 62\% perfect recreation is usable.
+		\item This does come from most sentences being short though.
+		\item This is the first work to present quantitative results for sentence generation based on any sentence vector representation.
+		
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{As expected, expodential time taken for ordering}
+	\begin{tikzpicture}
+	\begin{axis}[xlabel=Ground Truth Sentence Length,
+	ylabel=Time Taken (s),
+	width=0.9\textwidth,height=0.5\textwidth,cycle list name=exotic]
+	\addplot table [y=Time_taken,x=ground_length]{\ordlenscores};
+	\addplot table [y=Time_taken,x=ground_length]{\ordlenscoresoracle};
+	%\legend{Generated BOWS, Oracle BOWS}
 	\end{axis}
 	\end{tikzpicture}	
 \end{frame}
@@ -454,8 +527,20 @@ bibstyle=ieee,firstinits=true]{biblatex}
 \begin{frame}{Conclusion: Split the sentence generation into selection then ordering.}
 	\begin{itemize}
 		\item<1->Selection: Greedy Method
+		\begin{itemize}
+			\item Broad generalisation of Knapsack Problem
+			\item Input: vector
+			\item Greedy Addition + 1-Substitution til converge
+			\item Output: BOW
+		\end{itemize}
 		\vfill
-		\item<2->Ordering: GA-TSP, over log-likelyhoods.
+		\item<2->Ordering: most likely order over log-likelyhoods 3grams.
+		\begin{itemize}
+			\item Variation of Traveling Salesman
+			\item Input: BOW
+			\item Rewrite as GA-TSP, then as MIP
+			\item Output: Most likely order of words
+		\end{itemize}
 	\end{itemize}
 \end{frame}
 
