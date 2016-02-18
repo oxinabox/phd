@@ -114,7 +114,7 @@
 \maketitle
 
 \begin{abstract}
-Converting a sentence to a meaningful vector representation has uses in many NLP tasks, however very few methods allow that representation to be restored to a human readable sentence. Being able to generate sentences from the vector representations is expected to open up many new applications. We introduce such a method for moving from sum of word embedding representations back to the original sentences. This is done using a greedy algorithm to convert the vector to a bag of words. We show how the bag of words can be ordered using simple probabilistic language models to get back the sentence. To our knowledge this is the first work to demonstrate qualitatively the ability to reproduce text from a large corpus based on its sentence embeddings. 
+Converting a sentence to a meaningful vector representation has uses in many NLP tasks, however very few methods allow that representation to be restored to a human readable sentence. Being able to generate sentences from the vector representations is expected to open up many new applications. We introduce such a method for moving from sum of word embedding representations back to the original sentences. This is done using a greedy algorithm to convert the vector to a bag of words. We then show how the bag of words can be ordered using simple probabilistic language models to get back the sentence. To our knowledge this is the first work to demonstrate qualitatively the ability to reproduce text from a large corpus based on its sentence embeddings. 
 As well as practical applications for sentence generation, the success of this method has theoretical implications on the degree of information maintained by the sum of embeddings representation.
 \end{abstract}
 
@@ -127,19 +127,13 @@ The motivations for this work remain the same as in the first work in the area: 
 
 Given suitable bidirectional methods for converting between sentence vectors and sentences, the sentence vector space can be employed as a \emph{lingua franca} for translation between various forms of information. The most obvious of which is literal translation between different natural languages; however the use extends beyond this.
 
-<<<<<<< HEAD
-Several approaches have been developed for representing images and sentences in a common vector space. This is used to select a suitable caption a list of candidates \parencite{farhadi2010every,socherDTRNN}. The caption could instead be generated from the common vector space, through sentence resynthesis -- without any need for a list. There has also been significant recent work on this caption generation task directly using language generation, without the common space step, such as in \textcite{donahue2014long,Mao2014GenerateImageDesc}. The translation though common space approach suggested may provide a competing or supplementary technique for this task.}.
-
-Another similar use is the replacement of vector based extractive summarisation \textcite{KaagebExtractiveSummaristation,yogatamaextractive}, with abstractive summarisation. The promising use of sentence generation for all these applications is to have a separate model trained to take the source information (e.g. a picture for image description, or a cluster of sentences for abstract summarisation) as its input and train it to output a sentence vector which can then be used to generate the sentence.
-
-There are currently three existing methods for regeneration -- each tied to its own overall machine learnt embedding representation. 
-=======
 Several approaches have been developed for representing images and sentences in a common vector space. This is used to select a suitable caption a list of candidates \parencite{farhadi2010every,socherDTRNN}. The caption could instead be generated from the common vector space, through sentence resynthesis -- without any need for a list. There has also been significant recent work on this caption generation task directly using language generation, without the common space step, such as in \textcite{donahue2014long,Mao2014GenerateImageDesc}. The translation though common space approach suggested may provide a competing or supplementary technique for this task.
 
 Another similar use is the replacement of vector based extractive summarisation \textcite{KaagebExtractiveSummaristation,yogatamaextractive}, with abstractive summarisation. The promising use of sentence generation for all these applications is to have a separate model trained to take the source information (e.g. a picture for image description, or a cluster of sentences for abstract summarisation) as its input and train it to output a sentence vector which can then be used to generate the sentence.
->>>>>>> 23afad100b0a4695fd7a79240776ab69a92c836a
 
-The current state of the art for full sentence generation are the works of \cite{iyyer2014generating} and \cite{Bowman2015SmoothGeneration}. Beyond the original work in the area of \cite{Dinu2014CompositionalGeneration} which is only theorised to extend beyond short phrases, both produce full sentences. These sentences are qualitatively shown to be loosely similar in meaning to the original sentences. Neither works has produced quantitative evaluation, making it hard to determine between them. Both are detailed further in the next.
+There are currently three existing methods for regeneration -- each tied to different machine learnt embedding representation. 
+The current state of the art for full sentence generation are the works of \cite{iyyer2014generating} and \cite{Bowman2015SmoothGeneration}. 
+Both these advance beyond the original work in the area of \cite{Dinu2014CompositionalGeneration} which is only theorised to extend beyond short phrases, both produce full sentences. These sentences are qualitatively shown to be loosely similar in meaning to the original sentences. Neither works has produced quantitative evaluation, making it hard to determine between them. Both are detailed further in the next.
 
 
 The method proposed in this paper takes in a sum of word embeddings (SOWE) sentence vector, and outputs the sentence which it corresponds to. The input is a vector for example $\tilde{s}=[0.11, 0.57,-0.21,...,1.29]$, which approximates a SOWE vector, and outputs a sentence: for example "The boy was happy.". That input vector could come direct as the SOWE representation of a reference sentence (as is the case for the evaluation of our method presented in this paper). More practically it could come as the output of some other process; for example a machine learnt mapping from an image to the vector representation of its textual description. This vector representation is transformed through our process into a human readable sentence.
@@ -157,28 +151,11 @@ The rest of the paper is organized into the following sections. \Cref{relwork} i
 
 
 \section{Related Works}\label{relwork}
-<<<<<<< HEAD
-
-=======
->>>>>>> 23afad100b0a4695fd7a79240776ab69a92c836a
 \subsection{Embedding Models}
-In general sentence embeddings models may be described as compositional, or non-compositional. 
-%Compositional models combine word embeddings to produce embeddings for larger substructure embeddings which are in turn combined, for larger still substructure, and so forth until the final embedding for the whole sentence is found. 
-
-<<<<<<< HEAD
-The compositional models come from classical linguistics -- taking the hierarchical  break-down of a sentence into clauses, phrases and words, compositional vector models produce vectors by moving up the tree combining (or ``composing'') the vectors for elements within a substructure to find the vector for the substructure. This composition continues until the a vector has been found for the root of the sentence tree. The original work in this area is \textcite{Mitchell2008}. A variety of recursive neural network based methods were developed during the thesis of \textcite{socher2014recursive}. Compositional methods continue to improve, with newer methods as in \textcite{TACL15CompVector}, focusing on capturing with more efficiency and precision how words interact to control the meaning of their superstructures. 
 
 
- %\textcite{socher2010PhraseEmbedding}%,SocherEtAl2011:RAE,SocherEtAl2011:PoolRAE,Socher2011ParsingPhrases,SocherMVRNN,RvNTN,SocherEtAl2013:CVG,Socher2013TensorReasoning}. Compositional embedding models have strong basis from their linguistic underpinnings.
 
-Non-compositional embeddings avoid this challenge by allowing each word to more directly affect the overall sentence vector, rather than doing so through intermediate substructure vectors. This is a broad category covering all other embedding techniques. From the classic bag of words (BOW), and the simple sum of word embeddings (SOWE); to more complex approaches augmenting windowed language modelling neural networks with an addition sentence memory \parencite{le2014distributed}.  Non-compositional methods draw significant criticism for disregarding structure; BOW and SOWE draw additional criticism for entirely disregarding word order. However these weaknesses, while correct, may be offset by the improved discrimination allowed through words directly affecting the sentence vector -- without the potential lose in the repeated composing steps. This allows some non-compositional methods to be comparable overall to the more linguistically consistent compositional embeddings. 
-
-
-Recently \textcite{White2015SentVecMeaning} found that when classifying real-world sentences into groups of semantically equivalent paraphrases, that the SOWE made for very accurate classifications. In that work White et. al. partitioned the sentences into groups of paraphrases, then evaluated how well a linear SVM could classify unseen sentences into the class given by its meaning. They tested this using a variety of different sentence embeddings techniques as input to the classifier. They found that the classification accuracy when using SOWE as the input very similar to that of the best performing methods -- less that 0.6\% worse on the harder task. From this they concluded that the mapping from the space of sentence meaning to the vector space of the SOWE, resulted in sentences with the same meaning going to distinct areas of the vector space.
-
-=======
 The compositional models come from classical linguistics -- based on the hierarchical  break-down of a sentence into clauses, phrases and words. Compositional vector models produce vectors by moving up the hierarchical tree combining (or ``composing'') the vectors for elements within a substructure to find the substructure's vector. This composition continues until the a vector has been found for the root of the sentence tree. The original work in this area is \textcite{Mitchell2008}. A variety of recursive neural network based methods were developed during the thesis of \textcite{socher2014recursive}. Compositional methods continue to improve, with newer methods as in \textcite{TACL15CompVector}, focusing on capturing with more efficiency and precision how words interact to control the meaning of their superstructures. 
-
 
 %\textcite{socher2010PhraseEmbedding}%,SocherEtAl2011:RAE,SocherEtAl2011:PoolRAE,Socher2011ParsingPhrases,SocherMVRNN,RvNTN,SocherEtAl2013:CVG,Socher2013TensorReasoning}. Compositional embedding models have strong basis from their linguistic underpinnings.
 
@@ -187,48 +164,15 @@ Non-compositional embeddings allowing each word to more directly affect the over
 
 Recently \textcite{White2015SentVecMeaning} found that when classifying real-world sentences into groups of semantically equivalent paraphrases, that using SOWE as the input resulted in very accurate classifications. In that work White et. al. partitioned the sentences into groups of paraphrases, then evaluated how well a linear SVM could classify unseen sentences into the class given by its meaning. They tested this using a variety of different sentence embeddings techniques as input to the classifier. They found that the classification accuracy when using SOWE as the input very similar to that of the best performing methods -- less that 0.6\% worse on the harder task. From this they concluded that the mapping from the space of sentence meaning to the vector space of the SOWE, resulted in sentences with the same meaning going to distinct areas of the vector space.
 
->>>>>>> 23afad100b0a4695fd7a79240776ab69a92c836a
-\textcite{RitterPosition} presents a similar task on spacial-positional meaning, which used carefully constructed artificial data, for which the meanings of the words interacted non-simply -- thus favouring the compositional models. In their evaluation the task was classification with a Naive Bayes classifier into one of five categories of different spatial relationships. Here also SOWE was found performing comparably and again even out performing the compositional models. The best of the SOWE models they evaluated, outperformed the next best model (compositional or otherwise) by over 5\%. Thus this simple method is still worth consideration. SOWE is the basis of the work presented in this paper.
+\textcite{RitterPosition} presents a similar task on spacial-positional meaning, which used carefully constructed artificial data, for which the meanings of the words interacted non-simply -- thus favouring the compositional models. In their evaluation the task was classification with a Naive Bayes classifier into one of five categories of different spatial relationships. Here also SOWE was found performing comparably and again even out performing the compositional models. The best of the SOWE models they evaluated, outperformed the next best model (compositional or otherwise) by over 5\%. These results suggest this simple method is still worth consideration. SOWE is the basis of the work presented in this paper.
 
 \subsection{Sentence Generation from Vector Embeddings}
 
-To our knowledge only three prior works exist in the area of sentence generation from vectors. The first two of which are based on compositional embeddings, while the most recent work, at the time of this writing, is based on a non-compositional approach.
+To our knowledge only three prior works exist in the area of sentence generation from vectors. The first two of which are based on compositional embeddings, while the most recent work at the time of this writing, is based on a non-compositional approach.
 
 \newcommand{\p}{\tilde{p}_{1,2}}
 \renewcommand{\u}{\tilde{u}}
 
-<<<<<<< HEAD
-\textcite{Dinu2014CompositionalGeneration}  extends the models described by \textcite{zanzotto2010estimating, Guevara2010} for generation. The composition is described as the sum of pair of linear transformations of the input vectors ($\u_1$ and $\u_2$) to get a output vector $\p$. Dinu and Baroni, investigate two sources for the input and target output vectors: word and short-phrase embeddings generated using the \texttt{word2vec} method of \cite{mikolov2013efficient}, and the method used by \textcite{Guevara2010} using single value decomposition on the word and phrase co-occurrence matrix for the training data. The composition function is given by:  $$f_{comp}\::\:\mathbb{R}^d\times\mathbb{R}^d \to \mathbb{R}^d\::\: (\u_1, \u_2)\mapsto W_1\u_2+W_2\u_2$$
-Likewise, decomposition can be described by: $$f_{decomp}\::\:\mathbb{R}^d\to \mathbb{R}^d\times\mathbb{R}^d \::\: \p \mapsto (W^\prime_1\p, W^\prime_2\p)$$.
-During training linear transformation matrices $W_1$,$W_2$ and $W_1^\prime$,$W_2^\prime$ can be solved for using least squares regression.
-While it theoretically generalises to whole sentences, by recursive application of the composition or decomposition functions, Dinu and Baroni's work is quantitatively assessed only for very short phrases.
-
-
-\renewcommand{\p}{\tilde{p}}
-
-
-The work of \textcite{iyyer2014generating} is based on an extension of the unfolding recursive autoencoder \textcite{SocherEtAl2011:PoolRAE}. Recursive neural networks are jointly trained for both composing the sentence's words into a vector, and for decomposing that vector into words. They learn, the mapping network weights, and fine tunee the word embeddings during training, and produce the sentence embeddings through the central bottleneck of the recursive auto-encoder. This composition and decomposition is done by reusing a composition neural network at each vertex the  dependency tree structure with different weight matrices for each dependency relation. Multiple inputs to the same vertex are handled by summing after multiplication by the weight matrix. 
-Decomposition is handled similarly, following the dependency structure from the root (sentence) out to the leaves (words), with a neural network reused at each branch, with decomposition matrices. It is further augmented to encode the order of identically related siblings, through the addition of a sibling weight matrix. The total network is trained based on its accuracy for to reproduce its input word vectors, through back-propagation. Through just using the top decomposing half of the network, from the sentence embedding up, it can be used to regenerate the words. This method was demonstrated quantitatively on five examples, shown in \Cref{results}. There are not currently any large scale quantitative results published for the use of Iyyer et. al.'s technique.
-
- 
-%$$g_{comp}\:: (u_i)^N_{i=1} \mapsto \sigma(\sum_{i=1}^N W_i\u_i+\tilde{b})$$
-%$$g_{decomp} \p \mapsto  (\sigma(W^\prime_i\p+\tilde{b}^\prime+W_{sib}\u^\prime_j)^N_{i=1}$$
-%$\u^\prime_j$ is $g_{decomp}(p)_j$ if $j$ is the left most sibling of $i$ with the same dependancy relation to the parent as $i$ if one exists, or the zero vector otherwith
-%Here $W_i$ and $W^\prime_i$ vary not by order, but by the dependency tree part of speech of the $i$th element.
-%$\tilde{b}$ and $\tilde{b}^\prime$ are the biases.
-%$\sigma$ is a nonlinear activation function, such as the sigmoid or the hyperbolic tangent functions. It is this nonlinearity that prevents the values being solved by any kind of least squares.
- 
-%Theoretically, even without the extensions the unfolding recursive auto-encoder could be used in the same way to generate sentences, however this has not been shown.
-
-
-\pdfcomment{The Next paragraph on Bowman has not been rewritten as I Wnat feedback that the current rewritten sections are in the right direction}
-\textcite{Bowman2015SmoothGeneration} is an adaptation on the recurrent neural network language model of \textcite{mikolov2011RnnLM}, which produces and utilises a new type of non-compositional sentence embedding.  While it is a generative model it does not seek to recreate a sentence purely from its vector input, but rather to produce a series of probability distributions on the words in the sentence. These distributions can be evaluated greedily, which the authors used to give three quantitative examples of resynthesis. These examples are also shown in \Cref{results}. They found the sentence embeddings created were storing largely syntactic and loose topical information. 
-
-
-Both \textcite{Dinu2014CompositionalGeneration}, and  \textcite{iyyer2014generating}, require an output structure to be provided for the decomposition. Like the method of  \textcite{Bowman2015SmoothGeneration}, the new method proposed in this paper does not require this structural information.
-
-None of the existing methods have demonstrated recreation of the input close enough to allow for quantitative evaluation on a full corpus of sentences. They tend to output lose paraphrases, or roughly similar sentences -- itself a slightly distinct and useful task.  That is not the case for our method described in the next section, which can with often exactly recreate the original sentence from its vector representation.
-=======
 
 \textcite{Dinu2014CompositionalGeneration}  extends the models described by \textcite{zanzotto2010estimating, Guevara2010} for generation. The composition is described as the sum of pair of linear transformations of the input vectors ($\u_1$ and $\u_2$) to get a output vector $\p$. Dinu and Baroni, investigate two sources for the input and target output vectors: word and short-phrase embeddings generated using the continuous bag of words method of \cite{mikolov2013efficient}, and the method used by \textcite{Guevara2010} using single value decomposition on the word and phrase co-occurrence matrix for the training data. The composition function is given by:  $$f_{comp}\::\:\mathbb{R}^d\times\mathbb{R}^d \to \mathbb{R}^d\::\: (\u_1, \u_2)\mapsto W_1\u_2+W_2\u_2$$
 Likewise, decomposition can be described by: $$f_{decomp}\::\:\mathbb{R}^d\to \mathbb{R}^d\times\mathbb{R}^d \::\: \p \mapsto (W^\prime_1\p, W^\prime_2\p)$$.
@@ -239,8 +183,6 @@ While it theoretically generalises to whole sentences, by recursive application 
 \renewcommand{\p}{\tilde{p}}
 
 The work of \textcite{iyyer2014generating} is based on an extension of the unfolding recursive autoencoder \textcite{SocherEtAl2011:PoolRAE}. Recursive neural networks are jointly trained for both composing the sentence's words into a vector, and for decomposing that vector into words. This composition and decomposition is done by reusing a composition neural network at each vertex the  dependency tree structure with different weight matrices for each dependency relation. The total network is trained based on its accuracy to reproduce its input word vectors, through back-propagation. Through just using the top decomposing half of the network, from the sentence embedding up, it can be used to regenerate the words. This method was demonstrated quantitatively on five examples, shown in \Cref{results}; they show the generated sentences of \textcite{iyyer2014generating} to be loosely semantically similar to the originals.
-
->>>>>>> 23afad100b0a4695fd7a79240776ab69a92c836a
 
 %$$g_{comp}\:: (u_i)^N_{i=1} \mapsto \sigma(\sum_{i=1}^N W_i\u_i+\tilde{b})$$
 %$$g_{decomp} \p \mapsto  (\sigma(W^\prime_i\p+\tilde{b}^\prime+W_{sib}\u^\prime_j)^N_{i=1}$$
@@ -253,13 +195,12 @@ The work of \textcite{iyyer2014generating} is based on an extension of the unfol
 
 
 \textcite{Bowman2015SmoothGeneration} is an adaptation on the recurrent neural network language model of \textcite{mikolov2011RnnLM}, to produces and utilise a new type of non-compositional sentence embedding. Bowman et. al. devised a modification of the variational autoencoder  \parencite{kingma2013auto} with natural language inputs and outputs, to learn the sentence representations. These input and output stages are performed using long short-term memory recurrent neural networks \parencite{hochreiter1997long}. They demonstrate a number of uses of this technique, only one of which is sentence generation, in the sense of this paper.
-
 While it is a generative model it does not seek to recreate a sentence purely from its vector input, but rather to produce a series of probability distributions on the words in the sentence. These distributions can be evaluated greedily, which the authors used to give three quantitative examples resynthesis (also shown in \Cref{results}). They found the sentence embeddings created were storing largely syntactic and loose topical information. 
 
 
 Both \textcite{Dinu2014CompositionalGeneration}, and  \textcite{iyyer2014generating}, require an output structure to be provided for the decomposition. Like the method of  \textcite{Bowman2015SmoothGeneration}, the new method proposed in this paper does not require this structural information.
 
-None of the existing methods have demonstrated recreation of the input close enough to allow for quantitative evaluation on a full corpus of sentences. They tend to output lose paraphrases, or roughly similar sentences -- itself a slightly distinct and useful task.  That is not the case for our method described in the next section, which can with often exactly recreate the original sentence from its vector representation.
+None of the existing methods have demonstrated recreation of the full sentence input close enough to allow for quantitative evaluation on a full corpus. They tend to output lose paraphrases, or roughly similar sentences -- itself a slightly distinct and useful task.  That is not the case for our method described in the next section, which can often exactly recreate the original sentence from its vector representation.
 
 \section{General Framework}\label{framework}
 As discussed in \Cref{intro}, and shown in \Cref{block_diagram}, the approach taken to generate the sentences from the vectors comes in two steps. First selecting the words used -- this is done deterministically, based on a search of the embedding space. Followed by ordering them, here demonstrated using a classic stochastic language modelling approach. The separating of the process into two steps is unlike any of the existing methods for sentence generation from vectors. The two subproblems which result from this split resemble more classical computer science problems. The selection problem, of choosing the best word vectors to sum to the target is a knapsack-like problem. The word-ordering problem is a search for the most-likely path through a Markov graph of n-gram probabilities. It may be noted, that both these sub-problems are NP-hard.
@@ -358,24 +299,31 @@ The n-subsitution step has time complexity $O(\binom{C}{n}V^n)$ operations -- fo
 
 
 \subsection{The Ordering Problem} \label{ordering}
-\begin{figure*}
-	\centering 
-	\includegraphics[scale=0.15]{markov_reordering2}
-	\caption{The Markov graph of possible states in the search through trigrams for the most-likely ordering of the sentence 
-%		``Show cheap flights''.}
-		``Show The Cheapest Flight''.}
-	\label{markov_diagram}
-\end{figure*}
 
 \pdfcomment{Insert citation here for Ordering being NP-Hard. There are esisting papers on this that i need to nail down as this problem occurs in machine transalation.}
-\pdfcomment{after taking negative logs of the probilities, this is a shortest path problem, which has fast soluations that are O(V\^2), for V the number of vertices.
-<<<<<<< HEAD
-	However V, is itelf huge relative the the number of words W, V=Sum_{i=0}^W (W-i)! -- I think -- worse than expodential time.
-=======
-	However V, is itelf huge relative the the number of words W, V=Sum{i=0}^W (W-i)! -- I think -- worse than expodential time.
->>>>>>> 23afad100b0a4695fd7a79240776ab69a92c836a
-	}
+\pdfcomment{after taking negative logs of the probilities, this is a shortest path problem, which has fast soluations that are O(V\^2), for V the number of vertices.	However V, is itelf huge relative the the number of words W, V=Sum_{i=0}^W (W-i)! -- I think -- worse than expodential time.
+}
 
+After the bag of words has been generated by the previous step, it must be ordered. For example “are how , today hello ? you”, is to be ordered into the sentence: “hello , how are you today ?”. This problem can not always be solved to a single correct solution. \textcite{Mitchell2008}  gives the example of "It was not the sales manager who hit the bottle that day, but the office worker with the serious drinking problem." which has the same word content (though not punctuation) as "That day the office manager, who was drinking, hit the problem sales worker with a bottle, but it was not serious.". However, while a unique ordering can not be guaranteed, finding the most likely word ordering is possible.
+
+Our method for word ordering is to formulate the problem as a linear mixed order programming problem (MIP). This lets us take advantage of the efficient existing solvers for this problem. As in the work of \textcite{Horvat2014} we expressed the problem in terms of a generalised asymmetrical travelling salesman problem (TSP). Beyond this, we went on to express the problem further into a MIP form. This meant the use with a a MIP solver, rather than a TSP solver. This direct expression allowed us to vary the problem, with the potential for small optimisations.
+
+Normally, for a problem with known start and end vertices to be considered as a travelling salesman problem, the vertices are connected with a zero cost link. As there are exactly one Start and End pseudo-word states we simply special case them in the MIP definition as not requiring incoming or outgoing connections, respectively. We also made direct use of the knowledge that the Start and End states must to always occur in every tour, to simplify the sub-tour elimination. 
+
+When the travelling salesman problem is solved as a MIP,  some potential solutions contain non-connected subtours. These are eliminated by adding new "lazy" constraints are added, each time such a solution is suggested. For the normal TSP, subtours are eliminated with the constraint that every subtour must have an additional outgoing connection to one of the other subtours. This is more complex in case of the generalised asymmetrical TSP: for each subtour there must an outgoing connection from the nodes of the neighbours covered by it, to one of the nodes in the union of the neighbourhoods covered by the other subtours. Finding these unions takes a non-negligible amount of time; but only one of them is needed to eliminate this subtour. When multiple subtours are common adding multiple constraints cause more to be eliminated; however we've found that subtours are rare in the word ordering problems, and multiple subtours even more so -- as such, pre-emptively adding constraints to eliminate them is not efficient computationally. We can quickly find the core tour, by following the path from the Start to the End pseudo-word states. Then we add only the requirement that there is an outgoing connection from the nodes in neighbourhoods covered by the core tour, to one or more of the nodes outside that set. Preliminary testing found this to give a marginal speed-up.
+
+
+
+\begin{comment}
+We first formulate the problem into a Markov graph of states (each correspond to potential subsequences of two words), with edges weighted according to the log of the trigram possibility of the transitions between them 
+
+The probability of any sequence of words can be found using a trigram language model. We can express all possible orderings as a graph between Markov states of the last two words, connected to allowable following words by edged weighted by the negative log of the trigram probability. 
+ with edges weighted with the logThis language model can be used to 
+
+
+The problem for ordering is assign an map between 
+
+The problem can be expressed in terms of a Markov  chain
 In this section a demonstration of the feasibly of solving for the correct word order, given the output of the previous step is shown. This is a stochastic language modelling problem -- to determine the most likely sequence of words, given the constraints that the words are exactly those given by the BOW output from the previous step. The method presented here is simply to show its feasibility; the development of efficient technique for use in the ordering problem is left for future work.\pdfcomment{LW: I think this sentence/paragraph can be cut down a lot. RT: I agree, If this is a standard approach (used in ASR?) is there a need to describe the background of the beam seach using tri-gram models. YOu should just state what you implemented (with reference of where the beam search using trigrams is used), provide the parameter details in Section 4 and perhaps move the computational analysis (of all compoenents) into a separate section.}
 
 For purposes of this demonstration a simple Kneser-Ney smoothed trigram model \parencite{kneser1995improved} was used. The language model allows us to evaluate the probability of any given sequence of words using a Markov model.
@@ -389,7 +337,7 @@ Of course, for some sentences the BOW can not always be resolved to the correct 
 
 %\pdfcomment{The next paragraph would benefit from being merged into the former. Or perhaps being made a footnote? Or deleted}
 %\textcite{Mitchell2008} gives  example of  "It was not the sales manager who  hit  the bottle that day, but the office worker with the serious drinking problem." and "That day the office manager,   who was drinking, hit the problem sales worker with a bottle, but it was not serious.". It  can be argued that this example is synthetic and that more natural phrasing would have resulted in sentences with different wordings. A second issue is the differing numbers if commas in the texts. Though certainly some sentenced where this is not true must exist, work with the assumption they are rare.
-  
+\end{comment}
 
 
 
@@ -454,20 +402,20 @@ The Julia programming language \parencite{Julia}, was used to create the impleme
 	\pgfplotstableread[col sep=comma]{data/selection_cum_len_scores.csv}{\sellenscorescum}
 	\begin{tikzpicture}[scale=0.85]
 	\begin{axis}[xlabel=Ground Truth Sentence Length, ylabel=Mean Jacard Index]
-	\addplot table [y="glove50_jaccard_mean",x="ground_len"]{\sellenscores};
-	\addplot table [y="glove100_jaccard_mean",x="ground_len"]{\sellenscores};
-	\addplot table [y="glove200_jaccard_mean",x="ground_len"]{\sellenscores};
-	\addplot table [y="glove300_jaccard_mean",x="ground_len"]{\sellenscores};
+%	\addplot table [y="glove50_jaccard_mean",x="ground_len"]{\sellenscores};
+%	\addplot table [y="glove100_jaccard_mean",x="ground_len"]{\sellenscores};
+%	\addplot table [y="glove200_jaccard_mean",x="ground_len"]{\sellenscores};
+%	\addplot table [y="glove300_jaccard_mean",x="ground_len"]{\sellenscores};
 	\legend{50d GLoVE, 100d GLoVE,200d GLoVE,300d GLoVE}					
 	\end{axis}
 	\end{tikzpicture}
 	\hfill
 	\begin{tikzpicture}[scale=0.85]
 	\begin{axis}[xlabel=Maximum Ground Truth Sentence Length, ylabel=Cumulative Mean Jacard Index]
-	\addplot table [y="glove50_jaccard",x="max_ground_len"]{\sellenscorescum};
-	\addplot table [y="glove100_jaccard",x="max_ground_len"]{\sellenscorescum};
-	\addplot table [y="glove200_jaccard",x="max_ground_len"]{\sellenscorescum};
-	\addplot table [y="glove300_jaccard",x="max_ground_len"]{\sellenscorescum};
+%	\addplot table [y="glove50_jaccard",x="max_ground_len"]{\sellenscorescum};
+%	\addplot table [y="glove100_jaccard",x="max_ground_len"]{\sellenscorescum};
+%	\addplot table [y="glove200_jaccard",x="max_ground_len"]{\sellenscorescum};
+%	\addplot table [y="glove300_jaccard",x="max_ground_len"]{\sellenscorescum};
 	%\legend{50d GLoVE, 100d GLoVE,200d GLoVE,300d GLoVE}					
 	\end{axis}
 	\end{tikzpicture}
