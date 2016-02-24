@@ -337,38 +337,36 @@ The Julia programming language \parencite{Julia}, was used to create the impleme
 
 
 \begin{figure}
-	\pgfplotstableread[col sep=comma]{data/selection_len_scores.csv}{\sellenscores}
-	\pgfplotstableread[col sep=comma]{data/selection_cum_len_scores.csv}{\sellenscorescum}
-	\begin{tikzpicture}[scale=0.85]
-	\begin{axis}[xlabel=Ground Truth Sentence Length, ylabel=Mean Jacard Index]
-%	\addplot table [y="glove50_jaccard_mean",x="ground_len"]{\sellenscores};
-%	\addplot table [y="glove100_jaccard_mean",x="ground_len"]{\sellenscores};
-%	\addplot table [y="glove200_jaccard_mean",x="ground_len"]{\sellenscores};
-%	\addplot table [y="glove300_jaccard_mean",x="ground_len"]{\sellenscores};
-	\legend{50d GLoVE, 100d GLoVE,200d GLoVE,300d GLoVE}					
-	\end{axis}
+	\pgfplotstableread[col sep=comma,ignore chars={"}]{data/ordering_length_scores.csv}{\ordlenscores}
+	\pgfplotstableread[col sep=comma,ignore chars={"}]{data/ordering_length_scores_oracle.csv}{\ordlenscoresoracle}
+	\pgfplotstableread[col sep=comma,header=has colnames]{data/selection_len_scores.csv}{\sellenscores}
+	\begin{tikzpicture}
+		\begin{axis}[
+			xmin=0,xmax=20, xtick={0,2,4,6,8,10,12,14,16,18},
+			xlabel=Ground Truth Sentence Length,
+			ylabel=BLEU Score,
+			width=0.5\textwidth, height=0.5\textwidth,
+			cycle list name=exotic]
+		\addplot table [y=BLEU Score,x=ground_length]{\ordlenscores};
+		\addplot table [y=BLEU Score,x=ground_length]{\ordlenscoresoracle};
+		
+		\addplot table [y=books_0_01_glove300_precision_mean,x=ground_len]{\sellenscores};
+		\legend{Generated BOWS, Oracle BOWS}
+		\end{axis}
 	\end{tikzpicture}
-	\hfill
-	\begin{tikzpicture}[scale=0.85]
-	\begin{axis}[xlabel=Maximum Ground Truth Sentence Length, ylabel=Cumulative Mean Jacard Index]
-%	\addplot table [y="glove50_jaccard",x="max_ground_len"]{\sellenscorescum};
-%	\addplot table [y="glove100_jaccard",x="max_ground_len"]{\sellenscorescum};
-%	\addplot table [y="glove200_jaccard",x="max_ground_len"]{\sellenscorescum};
-%	\addplot table [y="glove300_jaccard",x="max_ground_len"]{\sellenscorescum};
-	%\legend{50d GLoVE, 100d GLoVE,200d GLoVE,300d GLoVE}					
-	\end{axis}
-	\end{tikzpicture}
-	
-	\caption{The mean Jaccard index achieved during the word selection step, shown against the ground truth length of the sentence. On the left is the score at each length, and the right is the cumulative score averaged across sentences of up to the indicated length.  Note that the results become noisy for longer sentences, as there are very few long sentences being averaged over -- 75\% of all sentences in the corpus are of length 25 or less. \pdfcomment{LW: Shall I just show a histogram here? RT: Depends on what you want to show. If the sentence distribution is important then you should, but you have indirectly provided this from the current information (in the caption and text) so perhaps not necessary.}}
 	\label{figure:exactlenscore}
 \end{figure}
+
 \begin{table*}[t!]
 	\centering
-	\pgfplotstabletypeset[col sep=comma,ignore chars={"},fixed zerofill, precision=3,column type=C{4em},
-	columns/Giveups/.style={precision=1, percent style},
-	columns/Exact Ordered Matches/.style={precision=1, percent style},
-	columns/Exact Ordered Matches Excluding Giveups/.style={precision=1, percent style},
-	]{data/ordering_scores.csv}
+	\pgfplotstabletypeset[col sep=comma, ignore chars={"}, fixed zerofill, precision=3,column type=C{4em},
+	columns/Input/.style={string type},
+	columns/Portion Perfect/.style={percent style, precision=1},
+	columns/Portion Perfect (Feasible Only)/.style={percent style, precision=1},
+	columns/Portion Feasible/.style={percent style, precision=1},
+	every head row/.style={
+		after row=\midrule
+	}]{data/ordering_scores.csv}
 	\caption{ The overall round-trip performance, including the ordering step with various embedding dimensionalities. Only evaluated on sentences of ground truth length 18 or less. A Giveup occurs when the beam search could not find an ordering with nonzero probability, and so no attempt was made to order the words beyond the order they were found in the selection step. The right hand columns exclude these Giveup cases where ordering failed -- they show only the accuracy when the ordering step suggested it produced a valid ordering at all; the left hand columns are more significant as to the overall performance of the method. The Oracle BOW bypasses the selection step, by providing to the ordering step randomly shuffled reference sentences. It is presented for comparison of the best possible performance using the ordering method.}
 	\label{table:ordering}
 \end{table*}
