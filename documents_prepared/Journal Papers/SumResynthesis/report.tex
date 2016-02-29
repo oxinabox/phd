@@ -44,10 +44,6 @@
 \providecommand{\theoremname}{Theorem}
 %%%%%
 
-
-
-%\hypersetup{draft} %Avoid hyperef causing issuse when links broken over pages by disabling hyperref
-
 \usepackage[backend=bibtex,
  style=authoryear-icomp,
  bibencoding=ascii,
@@ -77,28 +73,15 @@
 %%%%%%%%%%%%%%%%%
 
 
-
 \DeclareMathOperator*{\argmin}{argmin}
 
 %%%%%%% Tables
 \newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}
-\pgfplotstableset{
-	columns/Model/.style={
-		string replace={glove50}{50d GLoVE},
-		string replace={glove100}{100d GLoVE},
-		string replace={glove200}{200d GLoVE},
-		string replace={glove300}{300d GLoVE},
-		string type,
-		column type=C{5.5em}		
-	}	
-} 
 
 \pgfplotstableset{percent style/.style={%
 		preproc/expr={100*##1},
 		postproc cell content/.append code={\pgfkeysalso{@cell content/.add={}{\%}}
 		}},
-		%
-		%
 		every head row/.style={after row=\midrule},
 	}
 
@@ -107,7 +90,7 @@
 
 
 %opening
-\title{Generating Sentences from the Sums of their Embeddings using a Greedy Algorithm}
+\title{A Two Step Process for Generating Sentences from the Sums of their Embeddings}
 \author{}
 \graphicspath{{./figs/}}
 \setlength\itemsep{2mm}
@@ -121,32 +104,28 @@ As well as practical applications for sentence generation, the success of this m
 \end{abstract}
 
 \section{Introduction} \label{intro}
-The task being tackled here is the \emph{resynthesis} of sentences from vector embeddings. In particular the generation of sentences from vectors based on the sum of their constituent words' embeddings. The generation task, going from vector to sentence, is quite challenging. It has not received a lot of attention.
+We present a method for generating sentences based on vector representations of the sum of their word embeddings. The generation task, going from any vector representation back to a sentence, is quite challenging. It has not received a lot of attention.
 
-The motivations for this work remain the same as in the first work in the area: \textcite{Dinu2014CompositionalGeneration}. From a theoretical perspective given that a sentence encodes its meaning, and the vector encodes the same meaning, then it must be possible to translate in both directions between the natural language and the vector representation. An implementation, such as the work reported in this paper, which demonstrates the truth of this dual space theory has its own value. There are also many potential practical applications of such an implementation, often ranging around certain types of ``translation'' tasks.
+\textcite{Dinu2014CompositionalGeneration} motivates this work from a theoretical perspective given that a sentence encodes its meaning, and the vector encodes the same meaning, then it must be possible to translate in both directions between the natural language and the vector representation. An implementation, such as the work reported in this paper, which demonstrates the truth of this dual space theory has its own value. There are also many potential practical applications of such an implementation, often ranging around certain types of ``translation'' tasks.
 
-Given suitable bidirectional methods for converting between sentence vectors and sentences, the sentence vector space can be employed as a \emph{lingua franca} for translation between various forms of information. The most obvious of which is literal translation between different natural languages; however the use extends beyond this.
+There are a number of techniques for learning to associate various media and sentences to a common vector space. Such as  \textcite{farhadi2010every,socherDTRNN} for images; \textcite{KaagebExtractiveSummaristation,yogatamaextractive} for multi-document summaries, and \textcite{zhang2014BRAE} for sentences in multiple languages. However all of these techniques are tied to being able to use the vector space to compare the sentences and other media for similarities. With appropriate generative models for sentence vectors, these ``extractive'' tasks -- that can find the most similar sentence; become ``abstractive'' tasks -- that can generate a new sentence.
 
-Several approaches have been developed for representing images and sentences in a common vector space. This is used to select a suitable caption a list of candidates \parencite{farhadi2010every,socherDTRNN}. The caption could instead be generated from the common vector space, through sentence resynthesis -- without any need for a list. There has also been significant recent work on this caption generation task directly using language generation, without the common space step, such as in \textcite{donahue2014long,Mao2014GenerateImageDesc}. The translation though common space approach suggested may provide a competing or supplementary technique for this task.
-
-Another similar use is the replacement of vector based extractive summarisation \textcite{KaagebExtractiveSummaristation,yogatamaextractive}, with abstractive summarisation. The promising use of sentence generation for all these applications is to have a separate model trained to take the source information (e.g. a picture for image description, or a cluster of sentences for abstract summarisation) as its input and train it to output a sentence vector which can then be used to generate the sentence.
-
-There are currently three existing methods for regeneration -- each tied to different machine learnt embedding representation. 
+There are currently three existing methods for sentence regeneration -- each tied to different machine learnt embedding representation. 
 The current state of the art for full sentence generation are the works of \cite{iyyer2014generating} and \cite{Bowman2015SmoothGeneration}. 
-Both these advance beyond the original work in the area of \cite{Dinu2014CompositionalGeneration} which is only theorised to extend beyond short phrases, both produce full sentences. These sentences are qualitatively shown to be loosely similar in meaning to the original sentences. Neither works has produced quantitative evaluation, making it hard to determine between them. Both are detailed further in the next.
+Both these advance beyond the original work in the area of \cite{Dinu2014CompositionalGeneration} which is only theorised to extend beyond short phrases, both produce full sentences. These sentences are qualitatively shown to be loosely similar in meaning to the original sentences. Neither works has produced quantitative evaluation, making it hard to determine between them. Both are detailed further in the next section.
 
 
 The method proposed in this paper takes in a sum of word embeddings (SOWE) sentence vector, and outputs the sentence which it corresponds to. The input is a vector for example $\tilde{s}=[0.11, 0.57,-0.21,...,1.29]$, which approximates a SOWE vector, and outputs a sentence: for example "The boy was happy.". That input vector could come direct as the SOWE representation of a reference sentence (as is the case for the evaluation of our method presented in this paper). More practically it could come as the output of some other process; for example a machine learnt mapping from an image to the vector representation of its textual description. This vector representation is transformed through our process into a human readable sentence.
 
-We extend the work of \textcite{White2015BOWgen}, which uses a greedy algorithm to generate bags of words (BOW), to generating sentences. This is done performing adding a word ordering step, after their selection step, as shown in \Cref{block_diagram}. The vector selection step is used to determine which words are in the sentence -- this converts the SOWE embedding into a bag of words. The new second step we propose is to order that bag of words into a sentence using a language modelling task. The second step is based on a variation of the Traveling Salesman based approach of \cite{Horvat2014}, implemented as a mixed integer programming (MIP) optimisation problem. The overall two step approach can generate proper sentences from SOWE vectors.
+Our method performs the sentence generation in two steps, as shown in \Cref{block_diagram}. It combines the work of \textcite{White2015BOWgen} on generating bags of words (BOW) from SOWE; with the work of \textcite{Horvat2014} on ordering BOW into sentences. The first step is word selection directly using the work of \textcite{White2015BOWgen}, which uses a greedy algorithm to generate bags of words (BOW). After preforming this Word Selection step, we use a Word Ordering step based on a variation of the graphical approach presented by \textcite{Horvat2014}. The overall two step approach can generate proper sentences from SOWE vectors.
 \begin{figure}
 	\centering 
 	\input{figs/block_diagram.tex}
-	\caption{The process for the regenerating sentences from SOWE-type sentence vectors. \pdfcomment{Update diagram to refer to the input as the target vector}}
+	\caption{The Two Step process for the regenerating sentences from SOWE-type sentence vectors.}
 	\label{block_diagram}
 \end{figure}
 
-The rest of the paper is organized into the following sections. \Cref{relwork} introduces the area, discussing in general sentence models, and prior work on generation. \Cref{framework} explains the problem in detail and our algorithm for solving it. \Cref{evalsettings} described the settings used for evaluation. \Cref{results} presents the results on this evaluation. The paper concluded with \Cref{conclusion} and a discussion of future work on this problem.
+The rest of the paper is organized into the following sections. \Cref{relwork} introduces the area, discussing in general sentence models, and prior work on generation. \Cref{framework} explains the problem in detail and how the Two Step method is used to solving it. \Cref{evalsettings} described the settings used for evaluation. \Cref{results} presents the results on this evaluation. The paper concluded with \Cref{conclusion} and a discussion of future work on this problem.
 
 
 \section{Related Works}\label{relwork}
@@ -376,33 +355,41 @@ Processing was done on a 12 core AMD Opteron 6300 virtual machine with 45Gb of R
 	\label{figure:exactlenscore}
 \end{figure}
 
-\begin{table*}	
+\begin{table}	
 	\centering
-	\pgfplotstabletypeset[skip rows between index={0}{4},
-	col sep=comma,fixed zerofill, precision=3,column type=C{4em},
-	columns/Portion Perfect/.style={percent style, precision=1},
-	every head row/.style={after row=\midrule},
-	create on use/Process/.style={create col/set list={0,0,0,0,Word Selection}},
-	columns/Process/.style = {string type,column type=C{7em}},
-	columns={Process, [index]2,[index]3,[index]4,[index]5,[index]6}
-	]{data/selection_overall_len_scores.csv}
+	\resizebox{\linewidth}{!}{
+		\setlength{\tabcolsep}{3pt}
+		\pgfplotstabletypeset[skip rows between index={0}{4},
+		col sep=comma,fixed zerofill, precision=3,column type=C{4em},
+		columns/Portion Perfect/.style={percent style, precision=1},
+		every head row/.style={after row=\midrule},
+		create on use/Process/.style={create col/set list={0,0,0,0,Word Selection}},
+		columns/Process/.style = {string type,column type=C{6.5em}},
+		%columns={Process, [index]2,[index]3,[index]4,[index]5,[index]6}
+		columns={Process, Portion Perfect, Mean Precision,Mean Jaccard Score}
+		]{data/selection_overall_len_scores.csv}
+	}
 	\caption{ The performance of the word selection step, on the Books corpus. Note that the performance of the word selection step, bounds the overall performance shown in \Cref{table:overall}. This table shows a subset of the results reported by \textcite{White2015BOWgen}.}
 	\label{table:wordselection}
-\end{table*}
+\end{table}
 
-\begin{table*}[t!]
+\begin{table}[t!]
 	\centering
-	\pgfplotstabletypeset[col sep=comma, ignore chars={"}, fixed zerofill, precision=3,column type=C{5em},
-	columns/Process/.style={string type,column type=C{7em}},
-	columns/Portion Perfect/.style={percent style, precision=1},
-	columns/Portion Perfect (Feasible Only)/.style={percent style, precision=1},
-	columns/Portion Feasible/.style={percent style, precision=1},
-	every head row/.style={
-		after row=\midrule
-	}]{data/ordering_scores.csv}
+	\resizebox{\linewidth}{!}{
+		\setlength{\tabcolsep}{3pt}
+		\pgfplotstabletypeset[col sep=comma, ignore chars={"}, fixed zerofill, precision=3,column type=C{4em},
+		columns/Process/.style={string type,column type=C{6.5em}},
+		columns/Portion Perfect/.style={percent style, precision=1},
+		columns/Portion Perfect (Feasible Only)/.style={percent style, precision=1},
+		columns/Portion Feasible/.style={percent style, precision=1},
+		every head row/.style={
+			after row=\midrule
+		},
+		columns={Process, Portion Perfect, BLEU Score, Portion Feasible}
+	]{data/ordering_scores.csv}}
 	\caption{The overall performance of the Two Step sentence generation process when evaluated on the Books corpus. The Input column indicates whether the bag of words input to the ordering step was generated using the word selection process, or if it was provided an by an Oracle word sector. }
 	\label{table:overall}
-\end{table*}
+\end{table}
 
 \input{example_sents.tex}
 
