@@ -2,10 +2,11 @@
 \usepackage[subpreambles=true]{standalone}
 
 \usepackage{acl2012}
-\usepackage{times}
 \usepackage{latexsym}
 \usepackage{fontspec}
+\usepackage{times}
 \usepackage[final]{microtype}
+
 \usepackage{flushend}
 
 
@@ -318,16 +319,7 @@ Processing was done on a 12 core AMD Opteron 6300 virtual machine with 45Gb of R
 
 \section{Results and Discussion} \label{results}
 
-\begin{table}		\pgfplotstabletypeset[col sep=comma,fixed zerofill, precision=3,column type=C{3em},
-	columns/Corpus/.style={string type},
-	columns/Word Embedding Dimensions/.style={string type},
-	columns/Portion Perfect/.style={percent style, precision=1},
-	every head row/.style={
-		after row=\midrule
-	}]{data/selection_overall_len_scores.csv}
-	\caption{ The performance of the word selection step. Shorter sentences are those with a reference length of 18 or less. This is just over the median sentences length (17) in the corpus. Only these shorter sentences were considered for the ordering step.}
-	\label{table:overall}
-\end{table}
+
 
 
 \begin{figure}
@@ -350,9 +342,20 @@ Processing was done on a 12 core AMD Opteron 6300 virtual machine with 45Gb of R
 	\label{figure:exactlenscore}
 \end{figure}
 
+\begin{table*}		\pgfplotstabletypeset[columns={[index]2,[index]3,[index]4,[index]5,[index]6},
+	skip rows between index={0}{4},
+	col sep=comma,fixed zerofill, precision=3,column type=C{4em},
+	columns/Portion Perfect/.style={percent style, precision=1},
+	every head row/.style={
+		after row=\midrule
+	}]{data/selection_overall_len_scores.csv}
+	\caption{ The performance of the word selection step, on the Books corpus. Note that the performance of the word selection step, bounds the overall performance shown in \Cref{table:ordering}}. This table shows a subset of the results reported by \textcite{White2015BOWgen}.
+	\label{table:wordselection}
+\end{table*}
+
 \begin{table*}[t!]
 	\centering
-	\pgfplotstabletypeset[col sep=comma, ignore chars={"}, fixed zerofill, precision=3,column type=C{4em},
+	\pgfplotstabletypeset[col sep=comma, ignore chars={"}, fixed zerofill, precision=3,column type=C{5em},
 	columns/Input/.style={string type},
 	columns/Portion Perfect/.style={percent style, precision=1},
 	columns/Portion Perfect (Feasible Only)/.style={percent style, precision=1},
@@ -360,20 +363,18 @@ Processing was done on a 12 core AMD Opteron 6300 virtual machine with 45Gb of R
 	every head row/.style={
 		after row=\midrule
 	}]{data/ordering_scores.csv}
-	\caption{ The overall round-trip performance, including the ordering step with various embedding dimensionalities. Only evaluated on sentences of ground truth length 18 or less. A Giveup occurs when the beam search could not find an ordering with nonzero probability, and so no attempt was made to order the words beyond the order they were found in the selection step. The right hand columns exclude these Giveup cases where ordering failed -- they show only the accuracy when the ordering step suggested it produced a valid ordering at all; the left hand columns are more significant as to the overall performance of the method. The Oracle BOW bypasses the selection step, by providing to the ordering step randomly shuffled reference sentences. It is presented for comparison of the best possible performance using the ordering method.}
-	\label{table:ordering}
+	\caption{The overall performance of the Two Step sentence generation process when evaluated on the Books corpus. The Input column indicates whether the bag of words input to the ordering step was generated using the word selection process, or if it was provided an by an Oracle word sector. }
+	\label{table:overall}
 \end{table*}
 
-\begin{table*}[t!]
-	\centering
-	INSERT TABLE OF EXAMPLES HERE
-	
-	\caption{Examples of  }
-	\label{table:examples}
-\end{table*}
+\input{example_sents.tex}
+
+The overall results the Two Step sentence generation are shown in \Cref{table:overall}.
+This can be contrasted with the results of \textcite{White2015BOWgen} for the word selection step, on the same corpus -- which was first half of the Two Step process. The accurasy of the Word Selection (i.e. the BOW generation) bounds the performance of the of the overall process. No matter how good the word ordering method is, it can not recreate perfectly accurate sentences with imperfect words. For this reason the Portion Perfect of word selection is a strict upper bound to the Portion Perfect of the overall. It can be seen that the additional errors made during ordering caused an imperfections in a further 13.4\% of sentences. Less straight-forward is the bounding of overall BLEU score, by word selection Precision.
+
+ The table also includes Oracle results, which only assess the ordering (without assessing the section) The Oracle bypasses the selection step, by providing to the ordering step randomly shuffled reference sentences. It is presented for comparison of the best possible performance using the ordering method -- assuming the word selection step could be done perfectly.
 
 
-The overall results for the selection step are presented in \Cref{table:overall}. The results plotted against the ground truth sentence length are shown in \Cref{figure:exactlenscore}. It can be noted that the performance improves the higher the embedding dimensionality, and degrades as the sentence length becomes longer. With high dimensional representations it continues to perform well for sentences of reasonable length.
 
 
 The method is shown to be able to often exactly reproduce sentences based on their embeddings.  Due to its exact and near exact resynthesis of whole sentences it is possible to assess it on a whole corpus, rather than having to demonstrate it only on a few examples. For comparison, results on the examples from \textcite{Bowman2015SmoothGeneration,iyyer2014generating} are shown in \Cref{table:examples}.
