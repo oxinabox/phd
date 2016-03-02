@@ -1,19 +1,16 @@
 \documentclass[11pt]{article}
 \usepackage[subpreambles=true]{standalone}
-
 \usepackage{acl2012}
+
 \usepackage{latexsym}
-\usepackage{fontspec}
+%\usepackage{fontspec}
 \usepackage{times}
-\usepackage[final]{microtype}
+\usepackage{microtype}
 
 \usepackage{flushend}
 
 
 \usepackage[author={Lyndon White}]{pdfcomment}
-
-\usepackage[boxed]{algorithm2e}
-
 
 \usepackage{verbatim}
 \usepackage{grffile}
@@ -32,7 +29,7 @@
 \usepackage{amsthm}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{amsfonts}
+%\usepackage{amsfonts}
 
 \theoremstyle{plain}
 \newtheorem{thm}{\protect\theoremname}
@@ -44,14 +41,22 @@
 \providecommand{\theoremname}{Theorem}
 %%%%%
 
-\usepackage[backend=bibtex,
- style=authoryear-icomp,
- bibencoding=ascii,
- maxcitenames=2,
- url=false,
- hyperref=false
-]{biblatex}
-\bibliography{master}
+%\usepackage[backend=bibtex,
+% style=authoryear-icomp,
+% bibencoding=ascii,
+% maxcitenames=2,
+% url=false,
+% hyperref=false
+%]{biblatex}
+
+%Plain Bibtex way, with the BST
+\bibliographystyle{acl2012}
+\newcommand{\parencite}{\protect\cite}
+\newcommand{\textcite}{\protect\newcite}
+
+
+
+
 
 \usepackage{cleveref}
 
@@ -108,16 +113,16 @@ We present a method for generating sentences based on vector representations of 
 
 \textcite{Dinu2014CompositionalGeneration} motivates this work from a theoretical perspective given that a sentence encodes its meaning, and the vector encodes the same meaning, then it must be possible to translate in both directions between the natural language and the vector representation. An implementation, such as the work reported in this paper, which demonstrates the truth of this dual space theory has its own value. There are also many potential practical applications of such an implementation, often ranging around certain types of ``translation'' tasks.
 
-There are a number of techniques for learning to associate various media and sentences to a common vector space. Such as  \textcite{farhadi2010every,socherDTRNN} for images; \textcite{KaagebExtractiveSummaristation,yogatamaextractive} for multi-document summaries, and \textcite{zhang2014BRAE} for sentences in multiple languages. However all of these techniques are tied to being able to use the vector space to compare the sentences and other media for similarities. With appropriate generative models for sentence vectors, these ``extractive'' tasks -- that can find the most similar sentence; become ``abstractive'' tasks -- that can generate a new sentence.
+There are a number of techniques for learning to associate various media and sentences to a common vector space. Such as  \textcite{farhadi2010every} and \textcite{socherDTRNN} for images; \textcite{KaagebExtractiveSummaristation} and \textcite{yogatamaextractive} for multi-document summaries, and \textcite{zhang2014BRAE} for sentences in multiple languages. However all of these techniques are tied to being able to use the vector space to compare the sentences and other media for similarities. With appropriate generative models for sentence vectors, these ``extractive'' tasks -- that can find the most similar sentence; become ``abstractive'' tasks -- that can generate a new sentence.
 
 There are currently three existing methods for sentence regeneration -- each tied to different machine learnt embedding representation. 
-The current state of the art for full sentence generation are the works of \cite{iyyer2014generating} and \cite{Bowman2015SmoothGeneration}. 
-Both these advance beyond the original work in the area of \cite{Dinu2014CompositionalGeneration} which is only theorised to extend beyond short phrases, both produce full sentences. These sentences are qualitatively shown to be loosely similar in meaning to the original sentences. Neither works has produced quantitative evaluation, making it hard to determine between them. Both are detailed further in the next section.
+The current state of the art for full sentence generation are the works of \textcite{iyyer2014generating} and \textcite{Bowman2015SmoothGeneration}. 
+Both these advance beyond the original work in the area of \textcite{Dinu2014CompositionalGeneration} which is only theorised to extend beyond short phrases, both produce full sentences. These sentences are qualitatively shown to be loosely similar in meaning to the original sentences. Neither works has produced quantitative evaluation, making it hard to determine between them. Both are detailed further in the next section.
 
 
-The method proposed in this paper takes in a sum of word embeddings (SOWE) sentence vector, and outputs the sentence which it corresponds to. The input is a vector for example $\tilde{s}=[0.11, 0.57,-0.21,...,1.29]$, which approximates a SOWE vector, and outputs a sentence: for example "The boy was happy.". That input vector could come direct as the SOWE representation of a reference sentence (as is the case for the evaluation of our method presented in this paper). More practically it could come as the output of some other process; for example a machine learnt mapping from an image to the vector representation of its textual description. This vector representation is transformed through our process into a human readable sentence.
+The two step method proposed in this paper takes in a sum of word embeddings (SOWE) sentence vector, and outputs the sentence which it corresponds to. The input is a vector for example $\tilde{s}=[0.11, 0.57,-0.21,...,1.29]$, which approximates a SOWE vector, and outputs a sentence: for example "The boy was happy.". That input vector could come direct as the SOWE representation of a reference sentence (as is the case for the evaluation presented here). More practically it could come as the output of some other process; for example a machine learnt mapping from an image to the vector representation of its textual description. This vector representation is transformed through our process into a human readable sentence.
 
-Our method performs the sentence generation in two steps, as shown in \Cref{block_diagram}. It combines the work of \textcite{White2015BOWgen} on generating bags of words (BOW) from SOWE; with the work of \textcite{Horvat2014} on ordering BOW into sentences. The first step is word selection directly using the work of \textcite{White2015BOWgen}, which uses a greedy algorithm to generate bags of words (BOW). After preforming this Word Selection step, we use a Word Ordering step based on a variation of the graphical approach presented by \textcite{Horvat2014}. The overall two step approach can generate proper sentences from SOWE vectors.
+Our method performs the sentence generation in two steps, as shown in \Cref{block_diagram}. It combines the work of \textcite{White2015BOWgen} on generating bags of words (BOW) from SOWE (Word Selection); with the work of \textcite{Horvat2014} on ordering BOW into sentences (Word ordering). The overall two step approach can generate proper sentences from SOWE vectors.
 \begin{figure}
 	\centering 
 	\input{figs/block_diagram.tex}
@@ -130,13 +135,11 @@ The rest of the paper is organized into the following sections. \Cref{relwork} i
 
 \section{Related Works}\label{relwork}
 \subsection{Embedding Models}
+Embedding models can be considered as compositional, and non-compositional models. 
 
-The compositional models come from classical linguistics -- based on the hierarchical  break-down of a sentence into clauses, phrases and words. Compositional vector models produce vectors by moving up the hierarchical tree combining (or ``composing'') the vectors for elements within a substructure to find the substructure's vector. This composition continues until the a vector has been found for the root of the sentence tree. The original work in this area is \textcite{Mitchell2008}. A variety of recursive neural network based methods were developed during the thesis of \textcite{socher2014recursive}. Compositional methods continue to improve, with newer methods as in \textcite{TACL15CompVector}, focusing on capturing with more efficiency and precision how words interact to control the meaning of their superstructures. 
+Compositional modules use a hierarchical  break-down of a sentence into clauses, phrases and words. Compositional models produce embeddings for each component which then composed (merged) produce the embeddings for its super component and so forth up the syntactic tree. Compositional models include the works of \textcite{Mitchell2008}, \textcite{socher2014recursive} and \textcite{TACL15CompVector}, and in the generative sense \textcite{Dinu2014CompositionalGeneration} and \textcite{iyyer2014generating}. They use inherent structure of the sentence to produce embeddings. This structure is disregarded by most non-compositional models.
 
-%\textcite{socher2010PhraseEmbedding}%,SocherEtAl2011:RAE,SocherEtAl2011:PoolRAE,Socher2011ParsingPhrases,SocherMVRNN,RvNTN,SocherEtAl2013:CVG,Socher2013TensorReasoning}. Compositional embedding models have strong basis from their linguistic underpinnings.
-
-Non-compositional embeddings allowing each word to more directly affect the overall sentence vector, rather than doing so through intermediate substructure vectors. This is a broad category covering all other embedding techniques. From the classic bag of words (BOW), and the simple sum of word embeddings (SOWE); to more complex approaches augmenting windowed language modelling neural networks with an addition sentence memory \parencite{le2014distributed}.  Non-compositional methods draw significant criticism for disregarding structure; BOW and SOWE draw additional criticism for entirely disregarding word order. However these weaknesses, while valid, may be offset by the improved discrimination allowed through words directly affecting the sentence vector -- without the potential lose in the repeated composing steps. This allows some non-compositional methods to be comparable overall to the more linguistically consistent compositional embeddings. 
-
+Non-compositional models do not combine substructure embeddings to produce a sentence embeddings. This is a wide and varied class. It includes simple methods like the bag of words (BOW), and the sum of word embeddings (SOWE). It also includes the more advanced methods of \textcite{le2014distributed}, and the generative method of \textcite{Bowman2015SmoothGeneration}. By disregarding structure, there is less indirection in the transfer of information from words vectors to sentence vectors. Even though some information is lost -- e.g. all word order in the case of BOW and SOWE -- overall they can perform better than the compositional models.
 
 Recently the works of \textcite{RitterPosition} and \textcite{White2015SentVecMeaning} found that when classifying sentences into a categories according to meaning, simple SOWE outperformed more complex models. Both works used sentence embeddings as the input to classifiers. \textcite{RitterPosition} classified challenging artificial sentences into categories based on the positional relationship described using Naïve Bayes. \textcite{White2015SentVecMeaning} classified real-world sentences into groups of semantically equivalent paraphrases. In both cases, they found the best SOWE-type sentence embeddings to be amongst the highest performing representations. In the case of \textcite{RitterPosition} it outperformed the next best representation by over 5\%. In the case of \textcite{White2015SentVecMeaning} it was within a margin of 1\% from the very best performing method. These results suggest there is a lot of consistency in the relationship between a point in the SOWE space, and the meaning of the sentence. Thus that this simple method is still worth consideration. SOWE is the basis of the work presented in this paper.
 
@@ -148,15 +151,13 @@ To our knowledge only three prior works exist in the area of sentence generation
 \renewcommand{\u}{\tilde{u}}
 
 
-\textcite{Dinu2014CompositionalGeneration}  extends the models described by \textcite{zanzotto2010estimating, Guevara2010} for generation. The composition is described as the sum of pair of linear transformations of the input vectors ($\u_1$ and $\u_2$) to get a output vector $\p$. Dinu and Baroni, investigate two sources for the input and target output vectors: word and short-phrase embeddings generated using the continuous bag of words method of \cite{mikolov2013efficient}, and the method used by \textcite{Guevara2010} using single value decomposition on the word and phrase co-occurrence matrix for the training data. The composition function is given by:  $$f_{comp}\::\:\mathbb{R}^d\times\mathbb{R}^d \to \mathbb{R}^d\::\: (\u_1, \u_2)\mapsto W_1\u_2+W_2\u_2$$
-Likewise, decomposition can be described by: $$f_{decomp}\::\:\mathbb{R}^d\to \mathbb{R}^d\times\mathbb{R}^d \::\: \p \mapsto (W^\prime_1\p, W^\prime_2\p)$$.
-During training linear transformation matrices $W_1$,$W_2$ and $W_1^\prime$,$W_2^\prime$ can be solved for using least squares regression.
-While it theoretically generalises to whole sentences, by recursive application of the composition or decomposition functions, Dinu and Baroni's work is quantitatively assessed only on direct reconstruction only for decomposing Preposition-Noun and Adjective-Noun 2 word phrases. In the case where the  where the decomposition function was trained on vectors generated using the compositional function they were able to get perfect reconstruction on the word embedding based inputs.
+\textcite{Dinu2014CompositionalGeneration}  extends the models described by \textcite{zanzotto2010estimating} and \textcite{Guevara2010} for generation. The composition is described as the sum of pair of linear transformations of the input word vectors to get a output vector, and another pair to reverse the composition reconstructing the input. The linear transformation matrices are solved for using least squares. This method of composing, can be applied recursively from words to phrases to clauses and so forth.
+It theoretically generalises to whole sentences, by recursive application of the composition or decomposition functions, however in Dinu and Baroni's work is quantitatively assessed only on direct reconstruction only for decomposing Preposition-Noun and Adjective-Noun 2 word phrases. In the case where the  where the decomposition function was trained on vectors generated using the compositional function they were able to get perfect reconstruction on the word embedding based inputs.
 % -- though as they note, this is not extremely difficult as it is fitting linear transformation to invert a linear transformation.
 
 \renewcommand{\p}{\tilde{p}}
 
-The work of \textcite{iyyer2014generating} is based on an extension of the unfolding recursive autoencoder \textcite{SocherEtAl2011:PoolRAE}. Recursive neural networks are jointly trained for both composing the sentence's words into a vector, and for decomposing that vector into words. This composition and decomposition is done by reusing a composition neural network at each vertex the  dependency tree structure with different weight matrices for each dependency relation. The total network is trained based on its accuracy to reproduce its input word vectors, through back-propagation. Through just using the top decomposing half of the network, from the sentence embedding up, it can be used to regenerate the words. This method was demonstrated quantitatively on five examples, shown in \Cref{results}; they show the generated sentences of \textcite{iyyer2014generating} to be loosely semantically similar to the originals.
+The work of \textcite{iyyer2014generating} extends the work of \textcite{SocherEtAl2011:PoolRAE} defining a unfolding recursive dependency-tree recursive autoencoder (DT-RAE) . Recursive neural networks are jointly trained for both composing the sentence's words into a vector, and for decomposing that vector into words. This composition and decomposition is done by reusing a composition neural network at each vertex the  dependency tree structure with different weight matrices for each dependency relation. The total network is trained based on its accuracy to reproduce its input word vectors, through back-propagation. It can be used to generate sentences, if a dependency tree structure for the output is provided. This method was demonstrated quantitatively on five examples (shown in \Cref{egiyyer}); they found generated sentences of to be loosely semantically similar to the originals.
 
 %$$g_{comp}\:: (u_i)^N_{i=1} \mapsto \sigma(\sum_{i=1}^N W_i\u_i+\tilde{b})$$
 %$$g_{decomp} \p \mapsto  (\sigma(W^\prime_i\p+\tilde{b}^\prime+W_{sib}\u^\prime_j)^N_{i=1}$$
@@ -168,16 +169,20 @@ The work of \textcite{iyyer2014generating} is based on an extension of the unfol
 %Theoretically, even without the extensions the unfolding recursive auto-encoder could be used in the same way to generate sentences, however this has not been shown.
 
 
-\textcite{Bowman2015SmoothGeneration} is an adaptation on the recurrent neural network language model of \textcite{mikolov2011RnnLM}, to produces and utilise a new type of non-compositional sentence embedding. Bowman et. al. devised a modification of the variational autoencoder  \parencite{kingma2013auto} with natural language inputs and outputs, to learn the sentence representations. These input and output stages are performed using long short-term memory recurrent neural networks \parencite{hochreiter1997long}. They demonstrate a number of uses of this technique, only one of which is sentence generation, in the sense of this paper.
-While it is a generative model it does not seek to recreate a sentence purely from its vector input, but rather to produce a series of probability distributions on the words in the sentence. These distributions can be evaluated greedily, which the authors used to give three quantitative examples resynthesis (also shown in \Cref{results}). They found the sentence embeddings created were storing largely syntactic and loose topical information. 
+\textcite{Bowman2015SmoothGeneration} uses a a modification of the variational autoencoder (VAE) \parencite{kingma2013auto} with natural language inputs and outputs, to learn the sentence representations. These input and output stages are performed using long short-term memory recurrent neural networks \parencite{hochreiter1997long}. They demonstrate a number of uses of this technique, only one of which is sentence generation, in the sense of this paper.
+While it is a generative model it does not seek to recreate a sentence purely from its vector input, but rather to produce a series of probability distributions on the words in the sentence. These distributions can be evaluated greedily, which the authors used to give three quantitative examples resynthesis (also shown in \Cref{egbowman}). They found the sentence embeddings created were storing largely syntactic and loose topical information. 
+
+None of the existing methods have demonstrated recreation of the full sentence input close enough to allow for quantitative evaluation on a full corpus. They tend to output lose paraphrases, or roughly similar sentences -- itself a separately useful achievement.  That is not the case for our method described in the next section, which can often exactly recreate the original sentence from its vector representation.
+
+Unlike current sentence generation methods, the BOW generation method of \textcite{White2015BOWgen} generally outputs a BOW very close to the reference for that sentence -- albeit at the cost of loosing all word order information. It is because of this accuracy that we base our method upon it (It is detailed in \Cref{selection}). The Word Selection step we used is directly based on their greedy BOW generation method. We improve it for sentence generation by composing with a word ordering step to create the two step sentence generation process.
 
 
-Both \textcite{Dinu2014CompositionalGeneration}, and  \textcite{iyyer2014generating}, require an output structure to be provided for the decomposition. Like the method of  \textcite{Bowman2015SmoothGeneration}, the new method proposed in this paper does not require this structural information.
+\section{General Framework: Two Step Generation}\label{framework}
+As discussed in \Cref{intro}, and shown in \Cref{block_diagram}, the approach taken to generate the sentences from the vectors comes in two steps. First selecting the words used -- this is done deterministically, based on a search of the embedding space. Second is to order them, which we solve by finding the most likely sequence according to a stochastic language model. The separating of the process into two steps is unlike any of the existing methods for sentence generation from vectors. The two subproblems which result from this split resemble more classical NP-Hard computer science problems; thus variations on known techniques can be used to solve them.
+% The selection problem, of choosing the word vectors to sum be closest to the target is a knapsack-like problem. The word-ordering problem is a search for the most-likely path through a Markov graph of n-gram probabilities -- a variation on the travelling salesman problem. It may be noted, that both these sub-problems are NP-hard.
 
-None of the existing methods have demonstrated recreation of the full sentence input close enough to allow for quantitative evaluation on a full corpus. They tend to output lose paraphrases, or roughly similar sentences -- itself a slightly distinct and useful task.  That is not the case for our method described in the next section, which can often exactly recreate the original sentence from its vector representation.
 
-
-\subsection{Vector Selection}
+\subsection{Word Selection} \label{selection}
 \renewcommand{\c}{\tilde{c}}
 \newcommand{\s}{\tilde{s}}
 \newcommand{\x}{\tilde{x}}
@@ -185,25 +190,18 @@ None of the existing methods have demonstrated recreation of the full sentence i
 \newcommand{\N}{\mathbb{N}}
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\V}{\mathcal{V}}
-\renewcommand{\B}{\mathcal{B}}
+\newcommand{\B}{\mathcal{B}}
 
-Unlike current sentence generator models, the BOW generation method of \textcite{White2015BOWgen} generally outputs a BOW very close to the reference for that sentence -- albeit at the cost of loosing all word order information. It is because of this accuracy that we base our method upon it. We improve it for sentence generator by composing with a word ordering step. Without the word ordering them Vector Selection step we used is directly based on the greedy BOW generation method.
-
-\textcite{White2015BOWgen} solves the BOW generation problem, by solving what they call the vector selection problem -- selecting the vectors that sum up closest to a given vectors. They formally define the vector selection problem is formally defined as:
+\textcite{White2015BOWgen} solves the BOW generation problem, by solving what they call the vector selection problem -- selecting the vectors that sum up closest to a given vectors. This is related to the knapsack and subset sum problems. They formally define the vector selection problem is formally defined as:
 \[
 (\s,\V,\,d) \mapsto \argmin_{\left\{ \forall\c\in\N_{0}^{V}\right\} }\:d( \s,\,\sum_{\x_j\in\V}\:\x_{j}c_{j})
 \]
 to find the bag of vectors selected from the vocabulary set $\V$ which when summed is closest to the target vector $\s$. Closeness is assessed with distance metric $d$. $\c$ is the indicator function for that multi-set of vectors. As there is a one to one correspondence between word embeddings and their words, finding the vectors results in finding the words. \textcite{White2015BOWgen} propose a greedy solution to the problem.
- 
+
 The principle part of algorithm of \textcite{White2015BOWgen} is greedy addition. Using this process they greedy add vectors to a partial solution building towards a complete bag. They start with a empty bag of word embeddings, and at each step add the vector which when added to the current partial solution, results in minimal distance to the target -- when compared to other vectors from the vocabulary. They continue repeating this step, until there is no vectors in the vocabulary that can be added without moving away from the solution. Then they use a fine-tuning method called n-substitution to avoid some greedy mistakes.
 
 The n-substitution method avoids mistakes by examining partial solutions (bags of vectors) and seeing if it is possible to find a better solution by removing n elements and replacing them with up-to n different elements. The replacement search is exhaustive over the n-ary cartesian product of the vocabulary. Only for $n=1$ is it current feasible for practical implementation outside of highly restricted vocabularies. Never-the-less even 1-substitution can be seen as lessening the greed of the algorithm, though allowing early decisions (of which vectors to being include) to be reconsidered in the full context of the partial solution. The algorithm does remain greedy, but many simple mistakes are avoided by n-substitution. \textcite{White2015BOWgen} repeat greedy addition and n-substitution until the solution converges.
 
-
-
-
-\section{General Framework}\label{framework}
-As discussed in \Cref{intro}, and shown in \Cref{block_diagram}, the approach taken to generate the sentences from the vectors comes in two steps. First selecting the words used -- this is done deterministically, based on a search of the embedding space. Followed by ordering them, here demonstrated using a classic stochastic language modelling approach. The separating of the process into two steps is unlike any of the existing methods for sentence generation from vectors. The two subproblems which result from this split resemble more classical computer science problems. The selection problem, of choosing the word vectors to sum be closest to the target is a knapsack-like problem. The word-ordering problem is a search for the most-likely path through a Markov graph of n-gram probabilities -- a variation on the travelling salesman problem. It may be noted, that both these sub-problems are NP-hard.
 
 
 \subsection{The Ordering Problem} \label{ordering}
@@ -216,15 +214,13 @@ As discussed in \Cref{intro}, and shown in \Cref{block_diagram}, the approach ta
 
 After the bag of words has been generated by the previous step, it must be ordered. For example “are how , today hello ? you”, is to be ordered into the sentence: “hello , how are you today ?”. This problem can not always be solved to a single correct solution. \textcite{Mitchell2008}  gives the example of "It was not the sales manager who hit the bottle that day, but the office worker with the serious drinking problem." which has the same word content (though not punctuation) as "That day the office manager, who was drinking, hit the problem sales worker with a bottle, but it was not serious.". However, while a unique ordering can not be guaranteed, finding the most likely word ordering is possible.
 
-Our method for word ordering is to formulate the problem as a linear mixed order programming problem (MIP). This lets us take advantage of the efficient existing solvers for this problem. Extending the work of \textcite{Horvat2014} we expressed the problem in a variation of a generalised asymmetrical travelling salesman problem (GA-TSP) -- which we then express as a MIP. 
+Word ordering was reformulated as a linear mixed integer programming problem (MIP). This lets us take advantage of the efficient existing solvers for this problem. Extending the work of \textcite{Horvat2014} we expressed the problem in a variation of a generalised asymmetrical travelling salesman problem (GA-TSP) -- which we then express as a MIP. 
 
 The each word in the BOW is ascribed an arbitrary index. For words occurring with multiplicity greater than 1, they are ascribed a multiple indices, and treated as per differing words. The sentences are supplemented with pseudowords, with two placed a the beginning (represented by $w_\triangleright$ and $w_\blacktriangleright$)) and end (represented by ($w_\triangleleft$ and $w_\blacktriangleleft$)) of the sentences. These pseudowords allow the trigram language model to indicate information about the words which occur near the sentence boundaries. We then use the language model probabilities of word subsequence to express the problem as a graph.
 
 The word-ordering problem is expressed as a GA-TSP, by mapping trigram states, to nodes, transition probabilities to edge costs, and words to districts. A diagram for the ordering of a BOW of size five is shown in \Cref{fig:ordergraph}. Each node corresponds to a pair of words, corresponding to the previous two words before the edge. This is the Markov state for the trigram language model. Each edge is a transition between these states and has cost given by the language model. $w_aw_b\to w_bw_c$ has cost given by $-\log(P(w_c\:|\:w_aw_b)$. Each district, is a group of nodes sharing a common word in the second first position (it could be defined equivalently with districts from second position). Every district must be visited exactly once, this is one of the constants on the optimisation problem.
 
-
-The districts constraint is the defining difference of the generalised TSP. It is sometime for this reason known as the Neighbourhood TSP, the Multiple Choice TSP, the Covering Salemans Problem and the One-of-a-Set TSP \parencite{Gudmundsson1999}. In this case the districts correspond to having a word in the state. Every word ($w_i$), must be used once. This means the for district two shown in \Cref{fig:ordergraph}, one of the nodes: ${w_2w_\triangleright, w_2w_w,w_2w_3,w_2w_4, w_2w_5, w_2,w_\triangleleft}$ must be visited.
-However, these terms are more often used to refer to TSP in the plane, the assymetical part of the generalised asymmetrical TSP, refers to these nodes not having symmetric edges -- indeed all edges with finite weight, have the reverse transition forbidden (infinite weight).
+The districts constraint is the defining difference of the generalised TSP. It is sometime for this reason known as the Neighbourhood TSP, the Multiple Choice TSP, the Covering Salemans Problem and the One-of-a-Set TSP \parencite{Gudmundsson1999}. In this case the districts correspond to having a word in the state. Every word ($w_i$), must be used once. This means the for district two shown in \Cref{fig:ordergraph}, one of the nodes: ${w_2w_\triangleright, w_2w_w,w_2w_3,w_2w_4, w_2w_5, w_2,w_\triangleleft}$ must be visited. It those these districts are not spatially located -- we are not working with TSP in the plane, but over a non-complete directed graph.
 
 The connections between nodes, are constrained to ensure consistency of the Markov state. As the second element of the state is the word before the transition, and the first element the word before that, then the state transitioned to must maintain that state. For example no edge can exist between $w_2w_3$ and $w_4w_5$, but one could exist between $w_2w_3$ and $w_3w_5$. Similar to the Markov consistency constraint is the path constraint.
 
@@ -237,11 +233,11 @@ Once the problem is expressed as a GA-TSP we went on to express the problem furt
 
 Normally, for a problem with known start and end vertices to be considered as a travelling salesman problem, the vertices are connected with a zero cost link. As there are exactly one Start and End pseudo-word states we simply special case them in the MIP definition as not requiring incoming or outgoing connections, respectively. We also made direct use of the knowledge that the Start and End states must to always occur in every tour, to simplify the sub-tour elimination. 
 
-When the travelling salesman problem is solved as a MIP,  some potential solutions contain non-connected subtours. These are eliminated by adding new "lazy" constraints are added, each time such a solution is suggested. For the normal TSP, subtours are eliminated with the constraint that every subtour must have an additional outgoing connection to one of the other subtours. This is more complex in case of the generalised asymmetrical TSP: for each subtour there must an outgoing connection from the nodes of the neighbours covered by it, to one of the nodes in the union of the neighbourhoods covered by the other subtours. Finding these unions takes a non-negligible amount of time; but only one of them is needed to eliminate this subtour. When multiple subtours are common adding multiple constraints cause more to be eliminated; however we've found that subtours are rare in the word ordering problems, and multiple subtours even more so -- as such, pre-emptively adding constraints to eliminate them is not efficient computationally. We can quickly find the core tour, by following the path from the Start to the End pseudo-word states. Then we add only the requirement that there is an outgoing connection from the nodes in neighbourhoods covered by the core tour, to one or more of the nodes outside that set. Preliminary testing found this to give a marginal speed-up.
+When the travelling salesman problem is solved as a MIP,  some potential solutions contain non-connected subtours. These are eliminated by adding new "lazy" constraints are added, each time such a solution is suggested. For the normal TSP, subtours are eliminated with the constraint that every subtour must have an additional outgoing connection to one of the other subtours. This is more complex in case of the generalised asymmetrical TSP: for each subtour there must an outgoing connection from the nodes of the neighbours covered by it, to one of the nodes in the union of the neighbourhoods covered by the other subtours. Finding these unions takes a non-negligible amount of time; but only one of them is needed to eliminate this subtour. When multiple subtours are common adding multiple constraints cause more to be eliminated; however we've found that subtours are rare in the word ordering problems, and multiple subtours even more so -- as such, pre-emptively adding constraints to eliminate them is not efficient computationally. We can quickly find the core tour, by following the path from the Start to the End pseudo-word states. Then we add only the requirement that there is an outgoing connection from the nodes in neighbourhoods covered by the core tour, to one or more of the nodes outside that set. Preliminary testing found this to give a marginal (~10\%) speed-up.
 
 In going forward, expressing the problem directly as a MIP rather than a GA-TSP opens several avenues. It is simple to get the second, third and so forth best solution, by adding a standard MIPs constraint to disallow the better solutions. It also is open to relaxation of constraints. 
 
-When the constraints on the MIP problem render no solution feasible, this prevent an solution being found. For example, there is no possible ordering of most BOW that do not contain a period, question mark, or exclamation mark. Adjustments can be made to the MIPs model to detect this being that cause of the infeasibility (using irreducible inconsistent subsystem methods), this would then allow for suitable relaxations to the constraints to be applied to generate solutions to the problem.
+When the constraints on the MIP problem render no solution feasible, this prevent an solution being found. For example, there is no possible ordering of most BOW that do not contain a period, question mark, or exclamation mark, most tokens other than these have a zero probability of appearing at the end of the sentence. Adjustments can be made to the MIPs model to detect the cause of the infeasibility (using irreducible inconsistent subsystem methods), and them apply suitable constraint relaxations.
 
 
 
@@ -289,8 +285,7 @@ Note that the books corpus contains many duplicate common sentences, as well as 
  
 
 \subsection{Mixed Integer Programming}
-During evaluation we used Gurobi MIP solver version 6.5.0. During preliminary testing we found Gurobi to be significantly faster than the open source GLTK. Particularly for longer sentences, we found two orders of magnitude difference in speed for sentences of length 18. This is inline with the more extensive evaluations of \textcite{meindl2012analysis}. It was run under default settings, except that restricted to a single thread.
-Restricting the solver to a single thread allowed for parallel processing.
+During evaluation we used Gurobi MIP solver version 6.5.0. During preliminary testing we found Gurobi to be significantly faster than the open source GLTK. Particularly for longer sentences, we found two orders of magnitude difference in speed for sentences of length 18. This is inline with the more extensive evaluations of \textcite{meindl2012analysis}. It was run under default settings, other than being restricted to a single thread. Restricting the solver to a single thread allowed for parallel processing.
 
 Processing was done on a 12 core AMD Opteron 6300 virtual machine with 45Gb of RAM. Implementation was done in the Julia programming language \parencite{Julia}. The MIP solver was invoked though the JuMP library \parencite{jump}. The implementation, and non-summarised results are available for download online.\footnote{[[URL Blinded for Review]]}
 
@@ -396,18 +391,16 @@ The overall results the Two Step sentence generation are shown in \Cref{table:ov
 
 It can be noted that the ordering step results, and the indeed the overall two step results are significantly better than the best results reported by \textcite{Horvat2014}, on any dataset. We attribute this to Horvat and Byrne preprocessing the evaluation corpora to remove the easy sentences of with 4 or less words. As we would like to evaluate general capacity of the two step sentence generation process, we did not remove real short sentences from the corpus. The performance on on these sentences was very high, thus bring up the overall results on ordering.
 
-The resynthesis of the two step process degrades as the sentence length increases. It can be seen from the \label{figure:exactlenscore} that this is more significantly due to errors in the Ordering step, than in the selection step. Though the selection failures are responsible for the drop in performance of the Two Step processes below that of the Word Order of the reference sentences. The drop due to failed selection is much smaller than drop off, which indicated that many of the sentences which failed the word selection step, also would have failed the ordering step even if the words were perfectly selected.
-
-%A significant part of the failure is the zero probability of bigrams the do not occur in the data used to fit the trigram model. The Kneser-Ney back-off, is only for backing off from trigram to bigrams. Where the bigrams do not occur at all then the probability of that transition is zero, and thus will not occur in a legal path through the word ordering graph. Thus the much lower
+The resynthesis of the two step process degrades as the sentence length increases. It can be seen from the \Cref{figure:exactlenscore} that this is more significantly due to errors in the Ordering step, than in the selection step. Though the selection failures are responsible for the drop in performance of the Two Step processes below that of the Word Order of the reference sentences. The drop due to failed selection is much smaller than drop off, which indicated that many of the sentences which failed the word selection step, also would have failed the ordering step even if the words were perfectly selected.
 
 
-The method is shown to be able to often exactly reproduce sentences based on their embeddings.  Due to its exact and near exact resynthesis of whole sentences it is possible to assess it on a whole corpus, rather than having to demonstrate it only on a few examples. For comparison, results on the examples from \textcite{iyyer2014generating,Bowman2015SmoothGeneration} are shown in \Cref{egiyyer} and \Cref{egbowmnan} respectively. \Cref{egordered} shows two new examples.
+The method is shown to be able to often exactly reproduce sentences based on their embeddings.  Due to its exact and near exact resynthesis of whole sentences it is possible to assess it on a whole corpus, rather than having to demonstrate it only on a few examples. For comparison, results on the examples from \textcite{iyyer2014generating} and \textcite{Bowman2015SmoothGeneration} are shown in \Cref{egiyyer} and \Cref{egbowman} respectively. \Cref{egordered} shows two new examples.
 
-The examples shown in \Cref{egordered} highlight sentences where the order is ambiguous. In both cases the Word Selection performs perfectly, but the ordering is varied. In the first example, the Ordering only output sentence and the overall Two Step sentence differ. This is because under the trigram language model both sentences have exactly identical probabilities, so it comes down to the small non-deterministic factor in the MIP solver as to which solution is found first. In the second the word order is switched -- ``from paris to london'' vs ``to London from paris'', which has the same meaning. But, it could also reasonably have switch to ``from london to paris''. In cases like this where two orderings are reasonable, the ordering method is certain to fail consistently for one of the orderings. Though it is possible to have the method output the second (and third etc.) more probably orderings, which does ameliorate the failure somewhat.
+The examples shown in \Cref{egordered} highlight sentences where the order is ambiguous. In both cases the Word Selection performs perfectly, but the ordering is varied. In the first example, the Ordering only output sentence and the overall Two Step sentence differ. This is because under the trigram language model both sentences have exactly identical probabilities, so it comes to which solution is found first. In the second the word order is switched -- ``from paris to london'' vs ``to London from paris'', which has the same meaning. But, it could also reasonably have switch to ``from london to paris''. In cases like this where two orderings are reasonable, the ordering method is certain to fail consistently for one of the orderings. Though it is possible to output the second (and third etc.) most probable ordering, which does ameliorate the failure somewhat.
 
 The sentences in \Cref{egiyyer} are difficult. Of the five only two have a valid ordering found during the word ordering step -- one of which was perfect, and the other of is garbled. Of the three failures, two had imperfections in the during the word selection step. The other fails only in ordering. Part of the difficulty in ordering these sentences can be associated with the large number of proper nouns -- which are very sparse in any training corpus for language modelling. The large portion of the difficultly though can be attributed to length.
 
-The sentences in \Cref{egbowmnan}, are short and easy to resynthesis. Of the three there were two exact match's and one near match. The near match in interesting, as it is not commonly produced by the Two Step process. In the near mean instead of "How are you doing ?" the sentence "How 're do well ?" was produced, this in interesting as normally mistakes in the word selection step result in an unorderable sentence. This sentence while garbled does convey the original meaning, however we attribute this ultimately to coincidence. The rigidity which allows for the exact reproduction is a limitation, where failures are likely to be ungrammatical e.g. missing conjunctions -- which would cause finding a reasonable ordering to be impossible. This is not a problem for the methods of  \textcite{iyyer2014generating} or \textcite{Bowman2015SmoothGeneration}.
+The sentences in \Cref{egbowman}, are short and easy to resynthesis. Of the three there were two exact match's and one near match. The near match in interesting, as it is not commonly produced by the Two Step process. In the near mean instead of "How are you doing ?" the sentence "How 're do well ?" was produced, this in interesting as normally mistakes in the word selection step result in an unorderable sentence. This sentence while garbled does convey the original meaning, however we attribute this ultimately to coincidence. The rigidity which allows for the exact reproduction is a limitation, where failures are likely to be ungrammatical e.g. missing conjunctions -- which would cause finding a reasonable ordering to be impossible. This is not a problem for the methods of  \textcite{iyyer2014generating} or \textcite{Bowman2015SmoothGeneration}.
 
 \textcite{iyyer2014generating} guarantees grammatical correctness, as the syntax tree must be provided at an input for resynthesis. \textcite{Bowman2015SmoothGeneration} on the other hand integrates the language model with the sentence embedding so that every point in the vector space includes information about word order. In general, it seems clear that incorporating knowledge about order, or at least co-occurrence probabilities, should be certain to improve the selection step. The simplicity of the two step approach, and capacity to get exact reproductions are clear.
 
@@ -420,15 +413,14 @@ The first part of the two step method was the word selection problem, of going f
 
 Word ordering was carried out by defining a task of finding the most likely sequence of trigrams. This was expressed as a MIP problem. This method was an extension to the work of \textcite{Horvat2014}, which expressed the word ordering problem as a GA-TSP. It was demonstrated that a probabilistic language model can be used to order the bag of words output to regenerate the original sentences; though it is certainly impossible to do this perfectly in every case, for many sentences the most likely ordering is correct.
 
-Resynthesis degraded as sentence length increased. \textcite{White2015BOWgen} showed that the word selection degrades with sentence length, and improves with higher dimensional embeddings. Due to their findings, we only evaluated embeddings of 300 dimensions. It was found as expected that the accuracy of ordering also decreases
-
-, but remained strong with higher dimensional models up to reasonable length. The technique was only evaluated on sentences with up to 18 words (inclusive), due to computational time limitations. On these it performed quite well achieving perfect recreation in 62.2\% of cases. This is to the authors knowledge the first method to report exact recreation of a substantive corpus. Performances, both accuracy and running time, is expected to worsen were longer sentences considered. With that said, 18 words is sufficient for many uses.
+Resynthesis degraded as sentence length increased. \textcite{White2015BOWgen} showed that the word selection degrades with sentence length, and improves with higher dimensional embeddings. Due to their findings, we only evaluated embeddings of 300 dimensions. It was found as expected that the accuracy of ordering also decreases, but remained strong with higher dimensional models up to reasonable length. The technique was only evaluated on sentences with up to 18 words (inclusive), due to computational time limitations. On these it performed quite well achieving perfect recreation in 62.2\% of cases. This is to the authors knowledge the first method to report exact recreation of a substantive corpus. Performances, both accuracy and running time worsens as  longer sentences were considered. With that said, short sentences are sufficient for many practical uses.
 
 From a theoretical basis the resolvability of the selection problem shows that adding up the word vectors does preserve the information on which words were used; particularly for higher dimensional embeddings. This shows clearly that collisions do not occur (at least with frequency) such that two unrelated sentences do not end up with the same SOWE representation. 
 
 
-\printbibliography
-	
+\bibliography{master}
+%\printbibliography
+
 \end{document}
 
 
