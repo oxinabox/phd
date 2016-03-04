@@ -96,22 +96,22 @@
 
 \begin_layout Standard
 \begin_inset FormulaMacro
-\newcommand{\s}{\blacktriangleright}
+\newcommand{\s}{w_{\blacktriangleright}}
 \end_inset
 
 
 \begin_inset FormulaMacro
-\newcommand{\ss}{\triangleright}
+\newcommand{\ss}{w_{\triangleright}}
 \end_inset
 
 
 \begin_inset FormulaMacro
-\newcommand{\e}{\triangleleft}
+\newcommand{\e}{w_{\triangleleft}}
 \end_inset
 
 
 \begin_inset FormulaMacro
-\newcommand{\ee}{\blacktriangleleft}
+\newcommand{\ee}{w_{\blacktriangleleft}}
 \end_inset
 
 
@@ -131,8 +131,7 @@ Notation
 \end_layout
 
 \begin_layout Standard
-To model the word ordering problem as a world touring journey, the following
- notation is used.
+The following notion is used
 \end_layout
 
 \begin_layout Itemize
@@ -140,8 +139,23 @@ For
 \begin_inset Formula $\W$
 \end_inset
 
- the bag of words to be ordered, plus the start and end pseudo-words.
- 
+ the bag of words to be ordered, including the start (
+\begin_inset Formula $\s$
+\end_inset
+
+,
+\begin_inset Formula $\ss$
+\end_inset
+
+) and end pseudo-words.(
+\begin_inset Formula $\e$
+\end_inset
+
+, 
+\begin_inset Formula $\ee$
+\end_inset
+
+)
 \end_layout
 
 \begin_layout Itemize
@@ -155,21 +169,21 @@ We will write
 \end_layout
 
 \begin_layout Itemize
-Each city is a sequence of two words -- a Markov state, consisting of a
- word and its predecessor word.
- This is written as 
+Each vertex is a sequence of two words, 
 \begin_inset Formula $\langle w_{i},w_{j}\rangle\in\W^{2}$
 \end_inset
 
-
+.
+ This is a Markov state, consisting of a word and its predecessor word.
+ 
 \end_layout
 
 \begin_layout Itemize
-The Start city is given by the state 
+The Start vertex is given by 
 \begin_inset Formula $\langle\s,\ss\rangle$
 \end_inset
 
-, the End city is the state 
+, the end by
 \begin_inset Formula $\langle\e,\ee\rangle$
 \end_inset
 
@@ -177,17 +191,17 @@ The Start city is given by the state
 \end_layout
 
 \begin_layout Itemize
-The countries are given by the sets of all cities that have a given word
- in the second position.
- So the country 
-\begin_inset Formula $S(w_{j})\subseteq\W^{2}$
-\end_inset
-
-, for word 
+The GA-TSP districts are given by the sets of all states that have a given
+ word in the second position.
+ The district for word 
 \begin_inset Formula $w_{j}$
 \end_inset
 
  is given by 
+\begin_inset Formula $S(w_{j})\subseteq\W^{2}$
+\end_inset
+
+, defined as 
 \begin_inset Formula $S(w_{j})=\{\langle w_{i},w_{j}\rangle\,\mid\,w_{i}\ne w_{j}\,\wedge w_{i}\in\W\}$
 \end_inset
 
@@ -195,8 +209,12 @@ The countries are given by the sets of all cities that have a given word
  
 \end_layout
 
+\begin_layout Itemize
+Each edge represents a transition from one trigram state to another.
+\end_layout
+
 \begin_layout Subsubsection
-Transitions and Cost Model
+Optimization Model
 \end_layout
 
 \begin_layout Standard
@@ -204,20 +222,15 @@ The journey and its costs are modeled by:
 \end_layout
 
 \begin_layout Itemize
-Each city is given by a 
+A transition from 
 \begin_inset Formula $\langle w_{i},w_{j}\rangle$
 \end_inset
 
- and is allowed to transition only to cities 
+ to 
 \begin_inset Formula $\langle w_{j},w_{k}\rangle$
 \end_inset
 
-.
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-Such transitions has cost 
+ transitions has cost 
 \begin_inset Formula $C[\langle w_{i},w_{j}\rangle,\langle w_{j},w_{k}\rangle]=-\log\left(P(w_{k}|w_{i},w_{j}\rangle\right)$
 \end_inset
 
@@ -226,19 +239,14 @@ Such transitions has cost
 \end_layout
 
 \begin_layout Itemize
-The expression in terms of negative log likelihood makes this problem linear,
- rather than having a product of probability, it is just a sum of these
- negative log likelihood.
- 
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-The table of transitions is given by 
+The table of transitions to be optimized is given by 
 \begin_inset Formula $\tau$
 \end_inset
 
-, where 
+
+\end_layout
+
+\begin_layout Itemize
 \begin_inset Formula $\tau[\langle w_{a},w_{b}\rangle,\,\langle w_{c},w_{d}\rangle]=\begin{cases}
 1 & \mathrm{if\,transition\,from\,\langle w_{a},w_{b}\rangle,to\,\langle w_{c},w_{d}\rangle\,occurs}\\
 0 & \mathrm{otherwise}
@@ -246,11 +254,6 @@ The table of transitions is given by
 \end_inset
 
 
-\end_layout
-
-\begin_layout Itemize
-This table of transitions is the set binary variables to be optimized --
- making this a mixed integer linear programming problem.
 \end_layout
 
 \begin_layout Itemize
@@ -263,8 +266,8 @@ The total cost to be minimized, is given by
 \end_layout
 
 \begin_layout Itemize
-The probability of a particular journey (ie of a particular ordering) is
- thus given by 
+The probability of a particular path (i.e.
+ of a particular ordering) is thus given by 
 \begin_inset Formula $P(\tau)=e^{-C_{total}(\tau)}$
 \end_inset
 
@@ -272,7 +275,7 @@ The probability of a particular journey (ie of a particular ordering) is
 \end_layout
 
 \begin_layout Itemize
-The word order can be found by following the links, 
+The word order can be found by following the links,
 \end_layout
 
 \begin_deeper
@@ -288,22 +291,31 @@ The word order can be found by following the links,
 \end_layout
 
 \begin_layout Itemize
-(if 
+if 
 \begin_inset Formula $\tau$
 \end_inset
 
- is valid then, the set is a singleton, 
+ follows the constraints that follow then valid then, then each set is a
+ singleton, 
 \begin_inset Formula $\{\}_{1}$
 \end_inset
 
-indicates taking the only element)
+indicates taking the only element.
 \end_layout
 
 \begin_layout Itemize
-\begin_inset Formula $f(\langle w_{i},w_{j}\rangle,\tau)=\{\langle w_{i},w_{j}\rangle,\langle w_{j},w_{k}\rangle=1\}$
+\begin_inset Formula $f(n,\tau)$
 \end_inset
 
+ gives the word that, according to 
+\begin_inset Formula $\tau$
+\end_inset
 
+ occurs in the 
+\begin_inset Formula $n$
+\end_inset
+
+th position.
 \end_layout
 
 \end_deeper
@@ -338,7 +350,7 @@ if
 
 \end_deeper
 \begin_layout Itemize
-Leave every city entered (except those at the beginning and end):
+Leave every vertex entered (except those at the beginning and end):
 \begin_inset Newline linebreak
 \end_inset
 
@@ -448,7 +460,7 @@ The problem as formulated above can be input into the Mixed Integer Linear
 \end_layout
 
 \begin_layout Itemize
-The core tour -- which starts at the beginning 
+The core path -- which starts at the beginning 
 \begin_inset Formula $\langle\s,\ss\rangle$
 \end_inset
 
@@ -489,35 +501,8 @@ the end can be found.
 
 \end_layout
 
-\begin_deeper
 \begin_layout Itemize
-The selected links found: 
-\begin_inset Formula $l(\tau)=\{[\langle w_{i},w_{j}\rangle,\,\langle w_{j},w_{k}\rangle]\in\left(\W^{2}\right)^{2}\;\mid\;\tau[\langle w_{i},w_{j}\rangle,\,\langle w_{j},w_{k}\rangle]\ne0\}$
-\end_inset
-
-
-\end_layout
-
-\begin_layout Itemize
-Or more formally: by taking the transitive closure of 
-\begin_inset Formula $\{[\langle\s,\ss\rangle,\,\langle\ss,w_{i}\rangle]\in l(\tau)\,|\,\forall w_{i}\in\W\}$
-\end_inset
-
- within 
-\begin_inset Formula $\tau_{links}$
-\end_inset
-
-.
- (Not that set is initially a singleton before taking the closure.
-\begin_inset Formula $\rangle$
-\end_inset
-
-
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-From the core tour, the set of words covered is given by 
+From the core path, the set of words covered is given by 
 \begin_inset Formula $\W_{T}=\{w_{i}\,\mid\,\langle w_{i},w_{j}\rangle\in T\,\}\cup\{\ee\}$
 \end_inset
 
@@ -526,25 +511,20 @@ From the core tour, the set of words covered is given by
 \begin_inset Formula $\mathcal{W_{T}}=\W$
 \end_inset
 
- then there are no subtours and the core-tour is the full world touring
- journey (and the most likely ordering of the words in the bag
-\begin_inset Formula $\rangle$
-\end_inset
-
-.
+ then there are no subtours and the core-path is the full.
  Otherwise, there is a subtour to be eliminated.
 \end_layout
 
 \begin_layout Itemize
 If there is a subtour, then to eliminate it, a constraint must be added.
  This constraint is that there must be a connection from at least one of
- the cities in the country covered by the core tour to one of the cities
- in the countries not covered.
+ the nodes in the district covered by the core path to one of the nodes
+ in the districts not covered.
 \end_layout
 
 \begin_deeper
 \begin_layout Itemize
-The countries covered by the tour are given by 
+The districts covered by the tour are given by 
 \begin_inset Formula $S_{T}=\bigcup_{w_{t}\in W_{T}}S(w_{t})$
 \end_inset
 
@@ -557,9 +537,9 @@ The countries covered by the tour are given by
 
 \begin_layout Itemize
 i.e.
- There must be a transition from one of the nodes of the word-classes covered
- by the core-tour, to one of the nodes of a word-class not covered by the
- core tour.
+ There must be a transition from one of the states featuring a word that
+ is in the core path, to one of the states featuring a word not converted
+ by the core path.
 \end_layout
 
 \end_deeper
