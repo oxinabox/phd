@@ -25,7 +25,7 @@
 \pgfplotsset{compat=1.12}
 \usepackage{booktabs, array} % Generates table from .csv
 \usepackage{pgfplotstable}
-\newcolumntype{H}{>{\setbox0=\hbox\bgroup}c<{\egroup}@{}}
+
 
 \usepackage{tikz}
 \usetikzlibrary{positioning}
@@ -76,9 +76,9 @@
 \renewcommand{\topfraction}{.85}
 \renewcommand{\bottomfraction}{.7}
 \renewcommand{\textfraction}{.15}
-\renewcommand{\floatpagefraction}{.66}
+\renewcommand{\floatpagefraction}{.8}
 \renewcommand{\dbltopfraction}{.66}
-\renewcommand{\dblfloatpagefraction}{.66}
+\renewcommand{\dblfloatpagefraction}{.8}
 \setcounter{topnumber}{9}
 \setcounter{bottomnumber}{9}
 \setcounter{totalnumber}{20}
@@ -90,6 +90,14 @@
 
 
 \DeclareMathOperator*{\argmin}{argmin}
+%%%%%%%%%% Plots
+\newcolumntype{H}{>{\setbox0=\hbox\bgroup}c<{\egroup}@{}}
+
+\pgfplotsset{resplot/.style = {%
+		xlabel=Ground Truth Sentence Length,
+		xmin=0,xmax=20, xtick={0,2,4,6,8,10,12,14,16,18},
+		width=0.95\columnwidth, height=0.8\columnwidth}}
+
 
 %%%%%%% Tables
 \newcolumntype{C}[1]{>{\centering\arraybackslash}m{#1}}
@@ -110,12 +118,13 @@
 %%%%%%%%%
 %Consistency in naming 
 \newcommand{\oracletitle}{Ref.~BOW+Ord.}
+\newcommand{\selectiontitle}{Sel.~BOW~Only}
 \newcommand{\twosteptitle}{Sel.~BOW+Ord.}
 
 %%%%%%%%
 
 %opening
-\title{A Two Step Process for Generating Sentences from the Sums of their Embeddings}
+\title{A \twosteptitle{} Process for Generating Sentences from the Sums of their Embeddings}
 \author{}
 \graphicspath{{./figs/}}
 \setlength\itemsep{2mm}
@@ -148,11 +157,11 @@ Our method performs the sentence generation in two steps, as shown in \Cref{bloc
 \begin{figure}
 	\centering 
 	\input{figs/block_diagram.tex}
-	\caption{The Two Step process for the regenerating sentences from SOWE-type sentence vectors.}
+	\caption{The \twosteptitle{} process for the regenerating sentences from SOWE-type sentence vectors.}
 	\label{block_diagram}
 \end{figure}
 
-The rest of the paper is organized into the following sections. \Cref{relwork} introduces the area, discussing in general sentence models, and prior work on generation. \Cref{framework} explains the problem in detail and how the Two Step method is used to solving it. \Cref{evalsettings} describes the settings used for evaluation. \Cref{results} presents the results on this evaluation. The paper concludes with \Cref{conclusion} and a discussion of future work on this problem.
+The rest of the paper is organized into the following sections. \Cref{relwork} introduces the area, discussing in general sentence models, and prior work on generation. \Cref{framework} explains the problem in detail and how the \twosteptitle{} method is used to solving it. \Cref{evalsettings} describes the settings used for evaluation. \Cref{results} presents the results on this evaluation. The paper concludes with \Cref{conclusion} and a discussion of future work on this problem.
 
 
 \section{Related Works}\label{relwork}
@@ -199,7 +208,7 @@ None of the existing methods have demonstrated recreation of the full sentence i
 Unlike current sentence generation methods, the BOW generation method of \textcite{White2015BOWgen} generally outputs a BOW very close to the reference for that sentence -- albeit at the cost of loosing all word order information. It is because of this accuracy that we base our method on it (as detailed in \Cref{selection}). The Word Selection step we used is directly based on their greedy BOW generation method. We improve it for sentence generation by composing with a word ordering step to create the two step sentence generation process.
 
 
-\section{General Framework: Two Step Generation}\label{framework}
+\section{General Framework: \twosteptitle{} Generation}\label{framework}
 As discussed in \Cref{intro}, and shown in \Cref{block_diagram}, the approach taken to generate the sentences from the vectors comes in two steps. First selecting the words used -- this is done deterministically, based on a search of the embedding space. Second is to order them, which we solve by finding the most likely sequence according to a stochastic language model. The separating of the process into two steps is unlike any of the existing methods for sentence generation from vectors. The two subproblems which result from this split resemble more classical NP-Hard computer science problems; thus variations on known techniques can be used to solve them.
 % The selection problem, of choosing the word vectors to sum be closest to the target is a knapsack-like problem. The word-ordering problem is a search for the most-likely path through a Markov graph of n-gram probabilities -- a variation on the travelling salesman problem. It may be noted, that both these sub-problems are NP-hard.
 
@@ -225,7 +234,7 @@ to find the bag of vectors selected from the vocabulary set $\V$ which when summ
 
 The key approach proposed by \textcite{White2015BOWgen} is greedy addition. The idea is to greedy add vectors to a partial solution building towards a complete bag. This starts with an empty bag of word embeddings, and at each step the embedding space is searched for the vector which when added to the current partial solution results in the minimal distance to the target -- when compared to other vectors from the vocabulary. This step is repeated until there are no vectors in the vocabulary that can be added without moving away from the solution. Then a fine-tuning step, n-substitution, is used to avoid some simpler greedy mistakes.
 
-The n-substitution method avoids mistakes by examining partial solutions (bags of vectors) and seeing if it is possible to find a better solution by removing n elements and replacing them with up-to n different elements. The replacement search is exhaustive over the n-ary cartesian product of the vocabulary. Only for $n=1$ is it currently feasible for practical implementation outside of highly restricted vocabularies. Never-the-less even 1-substitution can be seen as lessening the greed of the algorithm, though allowing early decisions (of which vectors to being include) to be reconsidered in the full context of the partial solution. The algorithm does remain greedy, but many simple mistakes are avoided by n-substitution. The greedy addition and n-substitution processes are repeated until the solution converges.
+The n-substitution method avoids mistakes by examining partial solutions (bags of vectors) and seeing if it is possible to find a better solution by removing n elements and replacing them with up-to n different elements. The replacement search is exhaustive over the n-ary cartesian product of the vocabulary. Only for $n=1$ is it currently feasible for practical implementation outside of highly restricted vocabularies. Never-the-less even 1-substitution can be seen as lessening the greed of the algorithm, through allowing early decisions to be reconsidered in the full context of the partial solution. The algorithm does remain greedy, but many simple mistakes are avoided by n-substitution. The greedy addition and n-substitution processes are repeated until the solution converges.
 
 
 
@@ -240,7 +249,7 @@ The n-substitution method avoids mistakes by examining partial solutions (bags o
 After the bag of words has been generated by the previous step, it must be ordered. For example ``are how , today hello ? you'', is to be ordered into the sentence: ``hello , how are you today ?''. This problem can not always be solved to a single correct solution. \textcite{Mitchell2008}  gives the example of "It was not the sales manager who hit the bottle that day, but the office worker with the serious drinking problem." which has the same word content (though not punctuation) as "That day the office manager, who was drinking, hit the problem sales worker with a bottle, but it was not serious.". However, while a unique ordering can not be guaranteed, finding the most likely word ordering is possible.
 
 \textcite{Horvat2014} formulated the word ordering problem an a generalised asymmetrical travelling salesman problem (GA-TSP). \Cref{fig:ordergraph} shows an example of the connected graph for ordering five words. We extend beyond the approach of \textcite{Horvat2014} by reformulated the problem as a linear mixed integer programming problem (MIP). This lets us take advantage of the efficient existing solvers for this problem. 
-Beyond the GA-TSP approach, direct MIP formulation allows for increased descriptive flexibility and opens the way for further enhancement. The description is freed of some of the constraints of a TSP. For example, word ordering does have distinct and known start and end nodes (as shall be detailed in the next section). To formulate it as a GA-TSP it must be a tour without beginning or end. \textcite{Horvat2014} solve this by simply connecting the start to the end with a zero cost link. This is not needed if formulating as a MIP problem, the start and end nodes can be treated as a special case. Being able to special case them as nodes known always to occur allows some simplification in the subtour elimination step (as will follow). The formulation to mixed integer programming is otherwise reasonably standard.
+Beyond the GA-TSP approach, direct MIP formulation allows for increased descriptive flexibility and opens the way for further enhancement. The description is freed of some of the constraints of a TSP. For example, word ordering does have distinct and known start and end nodes (as shall be detailed in the next section). To formulate it as a GA-TSP it must be a tour without beginning or end. \textcite{Horvat2014} solve this by simply connecting the start to the end with a zero cost link. This is not needed if formulating this as a MIP problem, the start and end nodes can be treated as a special case. Being able to special case them as nodes known always to occur allows some simplification in the subtour elimination step. The formulation to mixed integer programming is otherwise reasonably standard.
 
 
 
@@ -300,42 +309,38 @@ Of course, for some sentences the BOW can not always be resolved to the correct 
 
 
 \section{Experimental Setup and Evaluations} \label{evalsettings}
-
-
-This experimental data used in this evaluation was obtained from the data released with .
-
+This experimental data used in this evaluation was
+obtained from the data released with \textcite{White2015BOWgen}. \pdfcomment{Need to add link here}
 \subsection{Word Embeddings}
-GloVe representations of words are used in our evaluations \parencite{pennington2014glove}. There are many varieties of word embeddings which function with our algorithm. GloVe was chosen simply become of the availability of a large pre-trained vocabulary of vectors. The representations used for evaluation were pretrained on pre-trained on 2014 Wikipedia and Gigaword 5\footnote{Kindly made available online at \url{http://nlp.stanford.edu/projects/glove/}}.  Other vector representations are presumed to function similarly.
+GloVe representations of words are used in our evaluations \parencite{pennington2014glove}. There are many varieties of word embeddings which function with our algorithm. GloVe was chosen become of the availability of a large pre-trained vocabulary of vectors. The representations used for evaluation were pretrained on 2014 Wikipedia and Gigaword 5\footnote{Available online at \url{http://nlp.stanford.edu/projects/glove/}}.  Other vector representations are presumed to function similarly.
 
-\subsection{Corpus}
+\subsection{Corpus and Language Modelling}
 \begin{figure}
-	
+	\centering
 	\begin{tikzpicture}
-	\begin{axis}[
-	ybar, ymin=0,
-	xmin=0,xmax=20, xtick={0,2,4,6,8,10,12,14,16,18},
-	xlabel=Ground Truth Sentence Length,
+	\begin{axis}[resplot,
+	ybar, ymin=0, ytick={0,1000,2000, 3000,4000,5000},
+	bar width=1,
 	ylabel=Number of Sentences,
-	width=0.5\textwidth, height=0.5\textwidth,
 	]
 	\addplot table [y=Instances,x=ground_length]{\ordlenscores};
 	
 	\end{axis}
 	\end{tikzpicture}
-	\caption{\label{fig:corpus} the distribution of the evaluation corpus after preprocessing.}
+	\caption{\label{fig:corpus} The distribution of the evaluation corpus after preprocessing.}
 \end{figure}
 
-The evaluation was performed on a subset of the Books Corpus \parencite{moviebook}. The corpus was preprocessed as per in the work of \textcite{White2015BOWgen}. This meant removing any sentences which use words not found in the embedding vocabulary.
+The evaluation was performed on a subset of the Books Corpus \parencite{moviebook}. The corpus was preprocessed as per in the work of \textcite{White2015BOWgen}. This meant removing any sentences which used words not found in the embedding vocabulary.
 
-After preprocessing, the base corpus, was split 90:10. 90\% (59,694,016 sentences) of the corpus was used to find a trigram model. The remaining 10\% of the corpus was kept in reserve. From the 10\%, 1\% (66,464 sentences) were taken for testing. From this any sentences with length over 18 words were discarded -- the time taken to evaluated longer sentences is too long to be feasible. This left a final test set of 53,055 sentences. \Cref{fig:corpus} shows the distribution of the evaluation corpus in terms of sentence length.
+After preprocessing, the base corpus, was split 90:10. 90\% (59,694,016 sentences) of the corpus was used to fit a trigram model. This trigram language model was smoothed with Knesler-Ney back-off \parencite{kneser1995improved}. The remaining 10\% of the corpus was kept in reserve. From the 10\%, 1\% (66,464 sentences) were taken for testing. From this any sentences with length over 18 words were discarded -- the time taken to evaluated longer sentences is too long to be feasible. This left a final test set of 53,055 sentences. \Cref{fig:corpus} shows the distribution of the evaluation corpus in terms of sentence length.
  
-Note that the books corpus contains many duplicate common sentences, as well as many duplicate books: according to the distribution site \footnote{\url{http://www.cs.toronto.edu/~mbweb/}} only 7,087 out of 11,038 original books in the corpus are unique. We did not perform any further deduplication, which means there is a strong chance of a small overlap between the test set, and the set used to fit the trigrams.
+Note that the Books corpus contains many duplicate common sentences, as well as many duplicate books: according to the distribution site \footnote{\url{http://www.cs.toronto.edu/~mbweb/}} only 7,087 out of 11,038 original books in the corpus are unique. We did not remove any further duplicates, which means there is a strong chance of a small overlap between the test set, and the set used to fit the trigrams.
  
 
 \subsection{Mixed Integer Programming}
 During evaluation we used Gurobi MIP solver version 6.5.0. During preliminary testing we found Gurobi to be significantly faster than the open source GLTK. Particularly for longer sentences, we found two orders of magnitude difference in speed for sentences of length 18. This is inline with the more extensive evaluations of \textcite{meindl2012analysis}. It was run under default settings, other than being restricted to a single thread. Restricting the solver to a single thread allowed for parallel processing.
 
-Processing was done on a 12 core AMD Opteron 6300 virtual machine with 45Gb of RAM. Implementation was done in the Julia programming language \parencite{Julia}. The MIP solver was invoked though the JuMP library \parencite{jump}. The implementation, and non-summarised results are available for download online.\footnote{[[URL Blinded for Review]]}
+Processing was carried out on a 12 core AMD Opteron 6300 virtual machine with 45Gb of RAM. Implementation was done in the Julia programming language \parencite{Julia}. The MIP solver was invoked though the JuMP library \parencite{jump}. The implementation, and non-summarised results are available for download online.\footnote{[[URL Blinded for Review]]}
 
 
 
@@ -374,22 +379,19 @@ Processing was done on a 12 core AMD Opteron 6300 virtual machine with 45Gb of R
 		},
 		columns={Process, Portion Perfect, BLEU Score, Portion Feasible}
 		]{data/ordering_scores.csv}}
-	\caption{The overall performance of the Two Step sentence generation process when evaluated on the Books corpus. The Input column indicates whether the bag of words input to the ordering step was generated using the word selection process, or if it was provided an by an Oracle word sector. }
+	\caption{The overall performance of the \twosteptitle{} sentence generation process when evaluated on the Books corpus. The Input column indicates whether the bag of words input to the ordering step was generated using the word selection process, or if it was provided an by an Oracle word sector. }
 	\label{table:overall}
 \end{table}
 
 
 \begin{figure}
-
-	
+	\centering
 	%\pgfplotstablecreatecol[copy column from table={\sellenscores}{books_0_01_glove300_precision_mean}] {select error} {\ordlenscoresoracle}
 	\begin{tikzpicture}
 		\begin{axis}[
-			xmin=0,xmax=20, xtick={0,2,4,6,8,10,12,14,16,18},
-			legend style={at={(0.02,0.02)},anchor=south west},
-			xlabel=Ground Truth Sentence Length,
+			resplot,
+			legend style={at={(0.02,0.02)},anchor=south west},	
 			ylabel=BLEU Score,
-			width=0.5\textwidth, height=0.5\textwidth,
 			cycle list name=exotic]
 		\addplot table [y=BLEU Score,x=ground_length]{\ordlenscores};
 		\addplot table [y=BLEU Score,x=ground_length]{\ordlenscoresoracle};
@@ -397,7 +399,7 @@ Processing was done on a 12 core AMD Opteron 6300 virtual machine with 45Gb of R
 		%	,x=ground_length]{\ordlenscoresoracle};
 		
 		%\addplot table [y=books_0_01_glove300_precision_mean,x=ground_len]{\sellenscores};
-		\legend{\twosteptitle{}, \oracletitle{}}
+		\legend{\twosteptitle{} , \oracletitle{}}
 		\end{axis}
 	\end{tikzpicture}
 	\caption{\label{figure:bleulenscore} the BLEU score of the entire two step process, vs just the ordering step (with reference BOW).}
@@ -405,14 +407,13 @@ Processing was done on a 12 core AMD Opteron 6300 virtual machine with 45Gb of R
 
 
 \begin{figure}
+	\centering
 	\pgfplotstablecreatecol[copy column from table={\sellenscores}{books_0_01_glove300_perfect_mean}] {select error} {\ordlenscoresoracle}
 	\begin{tikzpicture}
-	\begin{axis}[
+	\begin{axis}[resplot,
 	legend style={at={(0.02,0.02)},anchor=south west},
 	xmin=0,xmax=20, xtick={0,2,4,6,8,10,12,14,16,18},
-	xlabel=Ground Truth Sentence Length,
 	ylabel=Portion Perfect,
-	width=0.5\textwidth, height=0.5\textwidth,
 	cycle list name=exotic]
 	\addplot table [y=Portion Perfect,x=ground_length]{\ordlenscores};
 	\addplot table [y=Portion Perfect,x=ground_length]{\ordlenscoresoracle};
@@ -420,39 +421,39 @@ Processing was done on a 12 core AMD Opteron 6300 virtual machine with 45Gb of R
 					skip coords between index={18}{1000}, 		
 	]{\sellenscores};
 	
-	\legend{\twosteptitle{}, \oracletitle{}, Sel. BOW. Only}
+	\legend{\twosteptitle{} , \oracletitle{}, Sel. BOW. Only}
 	\end{axis}
 	\end{tikzpicture}
-	\caption{The portion of sentences reconstructed perfectly by the Two Step process. Shown also is the results on ordering only, which orders the reference BOWS, and the results from the Word Selection Step only (the input to the ordering step).}
+	\caption{The portion of sentences reconstructed perfectly by the \twosteptitle{} process. Shown also is the results on ordering only, which orders the reference BOWS, and the results from the Word Selection Step only (the input to the ordering step).}
 	\label{figure:exactlenscore}
 \end{figure}
 
 
 \input{example_sents.tex}
 
-The overall results the Two Step sentence generation are shown in \Cref{table:overall}. It includes further break down showing the Ordering step only results. \Cref{table:wordselection} shows the results for the Word Selection step only. Both these results place an upper bound on the performance of the overall. The Ordering step only results show the best performance the ordering step can attain if given the reference BOW. The Word Selection results bound the over accuracy as no matter how good the word ordering method is, it can not recreate perfectly accurate sentences with imperfect words.
+The overall results for the \twosteptitle{} sentence generation are shown in \Cref{table:overall}. It includes further break down showing the Ordering step only results. \Cref{table:wordselection} shows the results for the Word Selection step only. Both these results place an upper bound on the performance of the overall. The Ordering step only results show the best performance the ordering step can attain if given the reference BOW. The Word Selection results bound the over accuracy as no matter how good the word ordering method is, it can not recreate perfectly accurate sentences with imperfect words.
 
 
-It can be noted that the ordering step results, and indeed the overall two step results were significantly better than the best results reported by \textcite{Horvat2014}, on any dataset. We attribute this to Horvat and Byrne preprocessing the evaluation corpora to remove the easy sentences of with 4 or less words. We did not remove short sentences from the corpus. The performance on these sentences was very high, thus bring up the overall results on ordering.
+It can be noted that the ordering step results, and indeed the overall two step results were significantly better than the best results reported by \textcite{Horvat2014}, on any dataset. We attribute this to Horvat and Byrne preprocessing the evaluation corpora to remove the easy sentences with 4 or less words. We did not remove short sentences from the corpus. The performance on these sentences was very high, thus bring up the overall results on ordering.
 
-The resynthesis of the two step process degrades as the sentence length increases. It can be seen from the \Cref{figure:exactlenscore} that this is more significantly due to errors in the Ordering step, than in the selection step. Though the selection failures are responsible for the drop in performance of the Two Step processes below that of the Word Order of the reference sentences. The drop due to failed selection is much smaller than drop off, which indicated that many of the sentences which failed the word selection step, also would have failed the ordering step even if the words were perfectly selected.
+The resynthesis of the two step process degrades as the sentence length increases. It can be seen from the \Cref{figure:exactlenscore} that this is more significantly due to errors in the Ordering step, than in the selection step. Though the selection failures are responsible for the drop in performance of the \twosteptitle{} processes below that of the Word Order of the reference sentences, this decrease is much less than the number of errors in that occur in \selectiontitle{} at that word length. This indicates that many of the sentences which failed the word selection step, also would have failed the ordering step even if the words were perfectly selected.
 
 
 The method is shown to be able to often exactly reproduce sentences based on their embeddings.  Due to its exact and near exact resynthesis of whole sentences it is possible to assess it on a whole corpus, rather than having to demonstrate it only on a few examples. For comparison, results on the examples from \textcite{iyyer2014generating} and \textcite{Bowman2015SmoothGeneration} are shown in \Cref{egiyyer} and \Cref{egbowman} respectively. \Cref{egordered} shows two new examples.
 
 The examples shown in \Cref{egordered} highlight sentences where the order is ambiguous. In both cases the Word Selection performs perfectly, but the ordering is varied. In the 5A, the \oracletitle{} only sentence and the overall \twosteptitle sentence differ in order but not word content. This is because under the trigram language model both sentences have exactly identical probabilities, so it comes to which solution is found first. This is the only situation where this method is non-deterministic.
-In the 5B the word order is switched -- ``from paris to london'' vs ``to london from paris'', which has the same meaning. But, it could also switched the place names. In cases like this where two orderings are reasonable, the ordering method is certain to fail consistently for one of the orderings. Though it is possible to output the second (and third etc.) most probable ordering, which does ameliorate the failure somewhat.
+In the 5B the word order is switched -- ``from paris to london'' vs ``to london from paris'', which has the same meaning. But, it could also have switched the place names. In cases like this where two orderings are reasonable, the ordering method is certain to fail consistently for one of the orderings. Though it is possible to output the second (and third etc.) most probable ordering, which does ameliorate the failure somewhat.
 
-The sentences from \Cref{egiyyer}, showing in \Cref{egiyyer}, are difficult. It features long complex sentences, which are high in proper nouns. Only 3C is completed perfectly. Of the remainder the MIP word ordering problem has no solutions, except for in 3D, where it is wrong, but does produce an ordered sentence. In all the others the language model has indicated that there is no way to order them. This failure may be attributed in a large part to the proper nouns.  Proper nouns are very sparse in any training corpus for language modelling. The Kneser-Ney smoothed trigram only back-off down to bigrams, so if the words of the bigrams from the training corpus never appear adjunctly in the training corpus, ordering fails. This is largely the case for very rare words. The other significant factor is the length.
+The sentences from \Cref{egiyyer}, showing in \Cref{egiyyer}, are difficult. It features long complex sentences, which are high in proper nouns. Only 3C is completed perfectly. Of the remainder the MIP word ordering problem has no solutions, except for in 3D, where it is wrong, but does produce an ordered sentence. In all the others the language model has indicated that there is no way to order them. This failure may be attributed in a large part to the proper nouns.  Proper nouns are very sparse in any training corpus for language modelling. The Kneser-Ney smoothed trigram only back-off down to bigrams, so if the words of the bigrams from the training corpus never appear adjunctly in the training corpus, ordering fails. This is largely the case for very rare words. The other significant factor is the sentence length.
 
-The sentences in \Cref{egbowman}, are short and common words, they are easy to resynthesis. Of the three there were two exact match's and one near match. The near match in interesting, as it is not commonly produced by the Two Step process. In the near match was interesting as normally mistakes in the word selection step result in an unorderable sentence. This sentence while extremely garbled does convey the original meaning. Succeeding at producing a meaningful ordering at all when the section step fails is unlikely. The rigidity which allows for the exact reproduction is a limitation, where failures are likely to be ungrammatical e.g. missing conjunctions -- which would cause finding a reasonable ordering to be impossible. This is not a problem for methods that incorperate finding the order and the words into a single step.
+The sentences in \Cref{egbowman}, are short and use common words -- they are easy to resynthesis. Of the three there were two exact match's and one near match. The near match is interesting, as they are not commonly produced by the \twosteptitle{} process. Normally mistakes made in the word selection step result in an unorderable sentence. This sentence, while extremely garbled, does convey the original meaning. Succeeding at producing a meaningful ordering at all when the section step fails is unlikely. Failures in selection are likely to result in BOW that can not be grammatically combined e.g. missing conjunctions. This results in no feasible solutions to the word ordering problem. This is not a problem for methods that incorporate finding the order and the words into a single step.
 
-The two step method breaks the selecting the words and ordering them into separate steps. This means that unorderable words can be selected. This is not a problem for the existing methods of \textcite{iyyer2014generating} and of \textcite{Bowman2015SmoothGeneration}. \textcite{iyyer2014generating} guarantees grammatical correctness, as the syntax tree must be provided at an input for resynthesis -- thus key ordering information is indirectly provided and it is generated into. \textcite{Bowman2015SmoothGeneration} on the other hand integrates the language model with the sentence embedding so that every point in the vector space includes information about word order. In general, it seems clear that incorporating knowledge about order, or at least co-occurrence probabilities, should be certain to improve the selection step. The simplicity of our two step approach, and capacity to get exact reproductions are clear.
+The two step method breaks the selecting the words and ordering them into separate steps. This means that unorderable words can be selected. This is not a problem for the existing methods of \textcite{iyyer2014generating} and of \textcite{Bowman2015SmoothGeneration}. \textcite{iyyer2014generating} guarantees grammatical correctness, as the syntax tree must be provided at an input for resynthesis -- thus key ordering information is indirectly provided and it is generated into. \textcite{Bowman2015SmoothGeneration} on the other hand integrates the language model with the sentence embedding so that every point in the vector space includes information about word order. In general, it seems clear that incorporating knowledge about order, or at least co-occurrence probabilities, should be certain to improve the selection step. Even so the current simple two step approach have strong capacity to get exact reproductions, without such enhancement.
 
 
 
 \section{Conclusion} \label{conclusion}
-A two step method was presented for how to regenerate sentences, from the sum of a sentence's word embeddings. 
+A two step method was presented for regenerating sentences, from the sum of a sentence's word embeddings. 
 
 The first part of the two step method was the word selection problem, of going from the sum of embeddings to a bag of words. To solve this we utilised the method presented in \textcite{White2015BOWgen}. White et. al. presented a greedy algorithm that was found to perform well at regenerating BOW. We extended that method with a second step, to order the words.
 

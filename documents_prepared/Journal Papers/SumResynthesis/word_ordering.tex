@@ -8,7 +8,7 @@
 \usepackage{multirow}
 
 \begin{document}
-\newcommand{\s}{w_{\blacktriangleright}}
+\renewcommand{\s}{w_{\blacktriangleright}}
 \renewcommand{\ss}{w_{\triangleright}}
 \newcommand{\e}{w_{\triangleleft}}
 \newcommand{\ee}{w_{\blacktriangleleft}}
@@ -19,10 +19,7 @@
 
 The following notion is used:
 
-For $\W$ the bag of words to be ordered, including the start ($\s$,$\ss$)
-and end pseudo-words.($\e$, $\ee$)
-
-We will write $w_{i}\in\W$ to represent a word from the bag, with
+We will write $w_{i}$ to represent a word from the bag \textbf{$\W$}, with
 arbitrarily assigned subscripts. Where a word occurs with multiplicity
 greater than 1, it is assigned multiple subscripts, and each is treated
 as a distinct word.
@@ -30,28 +27,26 @@ as a distinct word.
 Each vertex is a sequence of two words, $\langle w_{i},w_{j}\rangle\in\W^{2}$.
 This is a Markov state, consisting of a word and its predecessor word. \\
 Each edge between two vertices represents a transition from one trigram state to another.
-The Start vertex is given by $\langle\s,\ss\rangle$, and the end by $\langle\e,\ee\rangle$.
+The start vertex is given by $\langle\s,\ss\rangle$, and the end by $\langle\e,\ee\rangle$.
 
 The GA-TSP districts are given by the sets of all states that have
-a given word in the second position. The district for word $w_{j}$
-is given by $S(w_{j})\subseteq\W^{2}$, defined as $S(w_{j})=\{\langle w_{i},w_{j}\rangle\,\mid\,w_{i}\ne w_{j}\,\wedge w_{i}\in\W\}$. It is required to visit every district, thus it is required to use every word.
-
-
+a given word in the first position. The district for word $w_{i}$
+is given by $S(w_{i})\subseteq\W^{2}$, defined as $S(w_{i})=\{\langle w_{i},w_{j}\rangle\,\mid\,w_{i}\ne w_{j}\,\wedge w_{j}\in\W\}$. It is required to visit every district, thus it is required to use every word.
+With this description, the problem can be formulated as a MIP optimisation problem.
 
 
 \subsubsection{Optimization Model}
-
-The path and its costs are modelled by:
+Every MIP problem has set of variables to optimise, and a cost function that assesses how optimal a given choice of values for that variable is. The cost function for the word ordering problem must represent how unlikely a particular order is. The variables must represent to order taken. This is does by a table indicating whether a particular transition between states is taken.
 
 A transition from $\langle w_{i},w_{j}\rangle$ to $\langle w_{j},w_{k}\rangle$
-transitions has cost $$C[\langle w_{i},w_{j}\rangle,\langle w_{j},w_{k}\rangle]=-\log\left(P(w_{k}|w_{i},w_{j}\rangle\right)$$ 
+ has cost $$C[\langle w_{i},w_{j}\rangle,\langle w_{j},w_{k}\rangle]=-\log\left(P(w_{k}|w_{i},w_{j}\rangle\right)$$ 
 The table of transitions to be optimized is
 \begin{multline*}
  \tau[\langle w_{a},w_{b}\rangle,\,\langle w_{c},w_{d}\rangle] = \\
  \begin{cases}
-	 \multirow{3}{*}{1} & \mathrm{if\,transition\,from} \\
-	 	                & \langle w_{a},w_{b}\rangle \to \langle w_{c},w_{d}\rangle\\
-	 	                & \mathrm{occurs} \\
+	 \multirow{2}{*}{1} & \mathrm{if\,transition\,from} \\
+	 	                & \langle w_{a},w_{b}\rangle \to \langle w_{c},w_{d}\rangle
+	 	                   \;\mathrm{ occurs} \\
                      0  & \mathrm{otherwise}
   \end{cases}
 \end{multline*}
@@ -94,8 +89,8 @@ f(n,\tau)= \\
 
 %\pdfcomment{I think maybe the overlarge equation is best replaced with some kind of wordy description}
 
-Note that if $\tau$ follows the constraints that follow then valid then, then
-each set is a singleton, $\{\}_{1}$ indicates taking the singleton set's only element.
+Note that if $\tau$ follows the constraints, that follow in the next section, then
+each set is a singleton. The notation $\{\cdot\}_{1}$ indicates taking the singleton set's only element.
 
 
 
@@ -109,17 +104,17 @@ The Markov state must be maintained: $\forall\langle w_{a},w_{b}\rangle,\langle 
 w_{b}\ne w_{c} \implies \tau[\langle w_{a},w_{b}\rangle,\,\langle w_{c},w_{d}\rangle]=0
 \end{equation*}
 
-Every node entered must also be left -- except those at the beginning and end.
+Every node entered must also be exited -- except those at the beginning and end.
 \begin{multline*}
 \forall\langle w_{i},w_{j}\rangle\in\W^{2}\backslash\{\langle\s,\ss\rangle,\langle\e,\ee\rangle\}: \\
- \sum_{\mathrlap{\!\!\!\!\forall\langle w_{a},w_{b}\rangle\in\W^{2}}}\tau[\langle w_{a},w_{b}\rangle,\,\langle w_{i},w_{j}\rangle]
-=\sum_{\mathrlap{\!\!\!\!\forall\langle w_{c},w_{d}\rangle\in\W^{2}}}\tau[\langle w_{i},w_{j}\rangle,\,\langle w_{c},w_{d}\rangle]
+ \sum_{\mathrlap{\!\!\!\!\forall\langle w_{a},w_{b}\rangle\in\W^{2}}}\tau[\langle w_{a},w_{b}\rangle,\langle w_{i},w_{j}\rangle]
+=\sum_{\mathrlap{\!\!\!\!\forall\langle w_{c},w_{d}\rangle\in\W^{2}}}\tau[\langle w_{i},w_{j}\rangle,\langle w_{c},w_{d}\rangle]
 \end{multline*}
 
 Visit (enter) every district exactly once. i.e. use every word exactly once.
 \begin{multline*}
-\forall w_{j}\in\W\backslash\{\s,\ss\}: \\
-\sum_{\mathclap{\forall\langle w_{i},w_{j}\rangle\in S(w_{j}\rangle}}
+\forall w_{i}\in\W\backslash\{\s,\ee\}: \\
+\sum_{\mathclap{\forall\langle w_{i},w_{j}\rangle\in S(w_{i}\rangle}}
 \sum_{\mathclap{\substack{\; \\ \;\\ \forall\langle w_{a},w_{b}\rangle\in\W^{2}}}}
 \tau[\langle w_{a},w_{b}\rangle,\,\langle w_{i},w_{j}\rangle]=1
 \end{multline*}
@@ -133,38 +128,42 @@ an optimal solution in any case, as they have infinitely high cost.
 
 \paragraph{Lazy Subtour Elimination Constraints}
 
-The problem as formulated above can be input into the MIPS solver. However, like similar formulation of the
-travelling salesman problem, some some solutions will have subtours.
-We take the usual method for handling this an use callbacks to impose
+The problem as formulated above can be input into the MIPS solver. However, like similar formulations of the
+travelling salesman problem, some solutions will have subtours.
+We take the usual method for handling this; we use callbacks to impose
 lazy constraints to forbid such solutions at run-time.  
-However the actual formulation of those constraints are different to a typical GA-TSP.
+However, the actual formulation of those constraints are different to a typical GA-TSP.
 
 Given a potential solution $\tau$ meeting all other constraints:
-\begin{itemize}
-\item The core path -- which starts at the beginning $\langle\s,\ss\rangle$
-and ends at $\langle\e,\ee\rangle$the end can be found. This is done
+
+The core path -- which starts at $\langle\s,\ss\rangle$
+and ends at $\langle\e,\ee\rangle$ can be found. This is done
 by practically following the links from the start node, and accumulating
 them into a set $T\subseteq\W^{2}$
-\item From the core path, the set of words covered is given by $\W_{T}=\{w_{i}\,\mid\,\forall\langle w_{i},w_{j}\rangle\in T\,\}\cup\{\ee\}$.
+
+From the core path, the set of words covered is given by $\W_{T}=\{w_{i}\,\mid\,\forall\langle w_{i},w_{j}\rangle\in T\,\}\cup\{\ee\}$.
 If $\mathcal{W_{T}}=\W$ then there are no subtours and the core-path
-is the full. Otherwise, there is a subtour to be eliminated.
-\item If there is a subtour, then to eliminate it, a constraint must be
+is the complete path. Otherwise, there is a subtour to be eliminated.
+
+If there is a subtour, then to eliminate it, a constraint must be
 added. This constraint is that there must be a connection from at
 least one of the nodes in the district covered by the core path to
 one of the nodes in the districts not covered.
-\item The districts covered by the tour are given by $S_{T}=\bigcup_{w_{t}\in W_{T}}S(w_{t})$,
-\item subtour elimination constraint is given by 
+
+The districts covered by the tour are given by $S_{T}=\bigcup_{w_{t}\in \W_{T}}S(w_{t})$,
+
+The subtour elimination constraint is given by 
 \begin{equation*}
   \sum_{\mathclap{\forall\langle w_{t1},w_{t2}\rangle\in S_{T}}}
   \sum_{\mathclap{\substack{\; \\ \;\\ \forall\langle w_{a},w_{b}\rangle\in\W^{2}\backslash S_{T}}}}
   \tau[\langle w_{t1},w_{t2}\rangle,\langle w_{a},w_{b}\rangle]\ge1
 \end{equation*}
-\item i.e. There must be a transition from one of the states featuring a
+i.e. There must be a transition from one of the states featuring a
 word that is in the core path, to one of the states featuring a word
 not converted by the core path.
 
-\end{itemize}
-It is the formulation around the notion of a core-path that differs this from typical subtour elimination in a GA-TSP. True GA-TSP problems are not guaranteed to have any nodes which must occur. However every word ordering problem is guaranteed to have such a node -- the start and end nodes. This thus makes it possible to identify what is generally the path that requires the least modification to get to a complete solution, as the path to require changes on. Other heuristics, and subtour elimination constraints do exist however.
+
+It is the formulation around the notion of a core-path that differs this from typical subtour elimination in a GA-TSP. GA-TSP problems are not generally guaranteed to have any nodes which must occur. However every word ordering problem is guaranteed to have such a node -- the start and end nodes. Being able to identify the core path allows for reasonably simple subtour elimination constraint definition. Other subtour elimination constraints do exist however.
 
 
 \end{document}
