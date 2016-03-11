@@ -1,0 +1,934 @@
+%% LyX 2.1.4 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[oneside,english]{amsart}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{luainputenc}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2cm,lmargin=1.5cm,rmargin=1.5cm}
+\usepackage{refstyle}
+\usepackage{enumitem}
+\usepackage{amsthm}
+\usepackage{amssymb}
+
+\makeatletter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
+
+\AtBeginDocument{\providecommand\claimref[1]{\ref{claim:#1}}}
+\RS@ifundefined{subref}
+  {\def\RSsubtxt{section~}\newref{sub}{name = \RSsubtxt}}
+  {}
+\RS@ifundefined{thmref}
+  {\def\RSthmtxt{theorem~}\newref{thm}{name = \RSthmtxt}}
+  {}
+\RS@ifundefined{lemref}
+  {\def\RSlemtxt{lemma~}\newref{lem}{name = \RSlemtxt}}
+  {}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Textclass specific LaTeX commands.
+\numberwithin{equation}{section}
+\numberwithin{figure}{section}
+\theoremstyle{plain}
+\newtheorem{thm}{\protect\theoremname}
+  \theoremstyle{definition}
+  \newtheorem{defn}[thm]{\protect\definitionname}
+  \theoremstyle{remark}
+  \newtheorem{claim}[thm]{\protect\claimname}
+ \newlist{casenv}{enumerate}{4}
+ \setlist[casenv]{leftmargin=*,align=left,widest={iiii}}
+ \setlist[casenv,1]{label={{\itshape\ \casename} \arabic*.},ref=\arabic*}
+ \setlist[casenv,2]{label={{\itshape\ \casename} \roman*.},ref=\roman*}
+ \setlist[casenv,3]{label={{\itshape\ \casename\ \alph*.}},ref=\alph*}
+ \setlist[casenv,4]{label={{\itshape\ \casename} \arabic*.},ref=\arabic*}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+\usepackage{url}
+
+\makeatother
+
+\usepackage{babel}
+  \providecommand{\claimname}{Claim}
+  \providecommand{\definitionname}{Definition}
+ \providecommand{\casename}{Case}
+\providecommand{\theoremname}{Theorem}
+
+\begin{document}
+
+\section{The Vector Selection Problem}
+
+\global\long\def\argmin{\operatorname*{argmin}}
+
+
+\global\long\def\argmax{\operatorname*{argmax}}
+
+\begin{defn}
+The Vector Selection problem
+
+Vector Selection problem is defined on $(\mathcal{V},\,\tilde{s},\,d)$
+for
+\begin{itemize}
+\item A finite vocabulary of vectors $\mathcal{V}$, $\mathcal{V}\subset\mathbb{R}^{n}$
+\item a target vector $\tilde{s}$, $\tilde{s}\in\mathbb{R}^{n}$
+\item any metric $d$ 
+
+
+by
+\[
+\argmin_{\left\{ \forall\tilde{c}\in\mathbb{N}_{0}^{V}\right\} }\:d(\tilde{s},\,\sum_{j=1}^{j=V}\:\tilde{x}_{j}c_{j})
+\]
+
+
+
+\medskip{}
+
+
+\item $V$ is size of the vocabulary $\mathcal{V}$. (\textasciitilde{}1300
+for ATIS2, \textasciitilde{}50,000 for Brown, \textasciitilde{}10,000
+for daily English) 
+\item $\tilde{x}_{j}$ is the vector embedding for the jth word in the vocabulary
+$\tilde{x}_{j}\in\mathcal{V}$ 
+
+\begin{itemize}
+\item We can express the embedding vocabulary $\mathcal{V}=\{\tilde{x}_{j}\,|\,\forall j\in\mathbb{N}\:\wedge\;1\le j\le V\}\subset\mathbb{R}^{n}$
+\item If we treat $\mathcal{V}$ as a matrix with vectors $\tilde{x}_{j}$
+for rows,(and treat length 1 vectors as scalars) we get the compact
+notation 
+\[
+\argmin_{\left\{ \forall\tilde{c}\in\mathbb{N}_{0}^{J}\right\} }\:d(\tilde{s},\,\sum_{j=1}^{j=V}\:\tilde{x}_{j}c_{j})=\argmin_{\left\{ \forall\tilde{c}\in\mathbb{N}_{0}^{J}\right\} }\:d(\tilde{s},\,\mathcal{V}\,\tilde{c}^{T})
+\]
+
+\end{itemize}
+\item $c_{j}$ is the count of how many times the jth word in the vocabulary
+occurs. $\tilde{c}\in\mathbb{N}_{0}^{V}$, so $c_{j}\in\mathbb{N}_{0}$
+\item $n$ is the dimensional of the word vectors, $n=300$ in current trials. 
+\end{itemize}
+\end{defn}
+
+\subsection{An Analogy for the problem}
+
+(which may or may not help)
+
+Imaging you are in a tile shop which as a variety of rectangular (2D)
+tiles. They have many copies of each tile (an unlimited number in-fact),
+but only a finite number of different sizes. This tiles have connectors
+on them, like jigsaw pieces, such that you can attach a North/South
+side to another North/South side even on a tile of different size,
+and similar for the East/West sides. But you can't attach a North/South
+side to a East/West side. Ie You can not rotated the tiles.
+
+You have 2 lengths given as your target when choosing tiles: a North/South
+length, and a East/West length.
+
+Your task is to select a collection of tiles from the store, such
+that when connected on the north/south and east/west the total length
+in those directions is as close as possible to those to targets.
+
+A formula is given for how your solution will be judged. It takes
+the form of some distance metric. E.g it might be the your distance
+from the target east/west length with your connected tiles, plus your
+distance from the target north/south length. Or maybe accuracy on
+north/south is twice as important as east/west. Or north/south difference
+squared etc. Your task it to minimize that score.
+
+For example, if the store had 3 types of tiles. $4.1\times4.1$,$1.5\times5.0$
+and $100\times1$, and your targets were $13.1$ and $20.0$, and
+the scoring was Manhattan.
+
+you might choose one $4.1\times4.1$ tiles and three $1.5\times5.0$
+tiles, giving you length totals $8.6$ and $19.1$ and a score of
+$5.4$
+
+Had you chosen to take an extra $4.1\times4.1$ tile though given
+totals of $12.7$ and $23.2$ giving a better score of $4.5$
+
+Now generalize it from 2D tiles to hyperblocks of some arbitrary dimensionality.
+
+
+\subsection{Reduction from Subset sum}
+
+The subset sum problem is well known to be NP-complete. First shown
+in by Karp under the name ``Knapsack''\cite{karp1972reducibility}
+which has since come to be used for the more general problem.
+
+It can be defined with the question: for a given set $\mathcal{S}\subset\mathbb{Z}$,
+does there exists $\mathcal{L}\subseteq\mathcal{S}$ such that $\sum_{l_{i}\in\mathcal{L}}\;l_{i}=0$?
+
+We reduce from subset sum to Problem 1 by showing any general solution
+to Problem 1 could be used to solve subset sum with only linear time
+additional work.
+\begin{claim}
+\label{claim:method}Any method which can solve Problem 1 will allow
+Subset sum to be completed with only linear time additional operations
+\begin{itemize}
+\item Let $\mathcal{S}=\{w_{1},w_{2},...,w_{m}\}$
+\item Let $\Omega=2m\left(\max_{i\in[1,m]}\,|w_{i}|+1\right)$ and thus
+larger than the largest possible sum of elements of $\mathcal{S}$.
+
+\begin{itemize}
+\item Finding this is a linear time operation, the only such operation in
+this method.
+\end{itemize}
+\item Let $\omega=\frac{1}{2m}$ and thus smaller than any element of $\mathcal{S}$,
+except if $0\in\mathcal{S}$
+\item then we can define an embedding vocabulary $\mathcal{V}_{s}$ from
+based on $\mathcal{S}$ by
+\[
+\mathcal{V}_{s}=\{\left[\left[w_{i},\,1\right];\:\hat{e}_{i}\right]\,:\,w_{i}\in\mathcal{S}\}
+\]
+
+
+\begin{itemize}
+\item By imposing some arbitrary total ordering on $\mathcal{S}$.
+\item where $;$ is the concatenation operator,
+\item and $\hat{e}_{i}$ is the elementary basis unit vector for dimension
+$i$. ie a vector with all zeros, except at index $i$, where it is
+$1$.
+\item i.e. we take the image of $\mathcal{S}$ into $\mathcal{V}_{S}$,
+by the function: 
+\[
+w_{i}\mapsto\left[\begin{array}{c}
+w_{i}\\
+1\\
+0\\
+\vdots\\
+0
+\end{array}\right]+\hat{e}_{i+2}
+\]
+
+\item In doing so we map each integer $w_{i}$ in $\mathcal{S}$ to a point
+in $\mathbb{R}^{m+1}$ where
+
+\begin{itemize}
+\item the first index is the integer, $w_{i}$,
+\item the second a term is used to force a solution that is nonempty to
+be better than an empty solution -- all other things being equal;
+\item the remaining $m$ terms are used to force a solution which uses the
+same element more than once to be worse than one which uses it once
+or zero times.
+\end{itemize}
+\item Note that $\mathcal{V}_{S}\subset\mathbb{R}^{m+2}$
+\end{itemize}
+\item we define the target vector by $\tilde{s_{s}}=\left[\left[0,m\right];\:0.5\sum_{j=1}^{j=m}\;\hat{e}_{j}\right]=\left(\begin{array}{c}
+0\\
+m\\
+0.5\\
+\vdots\\
+0.5
+\end{array}\right)$
+\item we define the distance metric being given by a weighed Manhattan distance
+(i.e. weighted L1 Norm).
+\[
+d_{s}\left(\left[\begin{array}{c}
+x_{1}\\
+x_{2}\\
+\vdots\\
+x_{n}
+\end{array}\right],\left[\begin{array}{c}
+y_{1}\\
+y_{2}\\
+\vdots\\
+y_{n}
+\end{array}\right]\right)=\left|x_{1}-y_{1}\right|+\omega\left|x_{2}-y_{2}\right|+\Omega\sum_{j=3}^{j=n}\:\left|x_{j}-y_{j}\right|
+\]
+
+
+\begin{itemize}
+\item We will prove that $d_{s}$ is a metric below.
+\end{itemize}
+\item The procedure for using these once defined to solve subset sum is:
+
+\begin{itemize}
+\item Problem 1 for $(\mathcal{V}_{s},\tilde{s}_{s},d_{s})$ is solved getting
+back $\tilde{c}^{\star}$
+\item if $\tilde{c}^{\star}=\mathbf{0}$, or $\sum_{j=1}^{j=m}\:\tilde{x}_{j,1}c_{j}^{\star}\neq0$
+then no such solution exists, otherwise:
+\item such a subset $\mathcal{L}\subset\mathcal{S}$ does exist, and is
+given by $\mathcal{L}=\{w_{i}\in\mathcal{S}\::\:c_{i}^{\star}\ge1\}$. 
+\item Note that it does not matter if $c_{i}^{\star}>1$ as for such cases
+clipping it to multiplicity 1 is just as optimal. Which we will prove
+below.
+\end{itemize}
+\end{itemize}
+\end{claim}
+\begin{proof}
+$d_{s}$ is a metric
+
+The $d_{s}$ is a special case of 
+\[
+d\left(\left[\begin{array}{c}
+x_{1}\\
+x_{2}\\
+\vdots\\
+x_{n}
+\end{array}\right],\left[\begin{array}{c}
+y_{1}\\
+y_{2}\\
+\vdots\\
+y_{n}
+\end{array}\right]\right)=\sum_{1\le j\le n}\:\omega_{i}\,d{}^{\prime}\left(x_{j},y_{j}\right)
+\]
+
+
+for $d{}^{\prime}$ a metric defined on scalars and $\forall i$ where
+$\omega_{i},x_{i},w_{i}\in\mathbb{R}$ and $\omega_{i}>0$
+
+\medskip{}
+
+
+Below it is shown that that this is always a metric, and thus $d_{s}$
+is a metric, by showing it meets the 3 requirements: of the coincidence
+axiom, being symmetric, and of the triangle inequality. The following
+properties hold for all $\tilde{a},\tilde{b},\tilde{c}\in\mathbb{R}^{n}$.
+
+\medskip{}
+
+
+If $d$ follows the coincidence axiom: $d(x,y)=0\iff x=y$. This is
+shown by:
+
+if $\tilde{a}=\tilde{b}$ then $\forall j\in[1,n]$~$d{}^{\prime}(a_{j},b_{j})=0$
+thus $d(\tilde{a},\tilde{b})=0$.
+
+and if $d(\tilde{a},\tilde{b})=0$ then as all $\forall j\in[1,n]$
+$w_{j}>0$, therefore $d{}^{\prime}(a_{j},b_{j})=0$.
+
+\medskip{}
+
+
+If $d$ is symmetric then $d(x,y)=d(y,x)$. Shown by:
+
+\[
+d(\tilde{a},\tilde{b})=\sum_{j=1}^{j=n}\:\omega_{i}\,d{}^{\prime}\left(a_{j},b_{j}\right)=\sum_{j=1}^{j=n}\:\:\omega_{i}\,d{}^{\prime}\left(b_{j},a_{j}\right)=d(\tilde{b},\tilde{a})
+\]
+
+
+Thus $d$ is symmetric 
+
+\medskip{}
+
+
+if $d$ follows the triangle inequality then $d(x,z)\le d(x,y)+d(y,z)$. 
+
+making use of $d{}^{\prime}\left(a_{j},b_{j}\right)+\,d{}^{\prime}\left(b_{j},c_{j}\right)\ge d{}^{\prime}(a_{j},c_{j})$,
+It is shown:
+
+\begin{align*}
+d(\tilde{a},\tilde{b})+d(\tilde{b},\tilde{c}) & =\sum_{1\le j\le n}\:\omega_{i}\,d{}^{\prime}\left(a_{j},b_{j}\right)+\sum_{1\le j\le n}\:\omega_{i}\,d{}^{\prime}\left(b_{j},c_{j}\right)\\
+d(\tilde{a},\tilde{b})+d(\tilde{b},\tilde{c}) & =\sum_{1\le j\le n}\:\omega_{i}\left(\,d{}^{\prime}\left(a_{j},b_{j}\right)+\,d{}^{\prime}\left(b_{j},c_{j}\right)\right)\\
+d(\tilde{a},\tilde{b})+d(\tilde{b},\tilde{c}) & \le\sum_{1\le j\le n}\:\omega_{i}\left(d{}^{\prime}(a_{j},c_{j})\right)\\
+d(\tilde{a},\tilde{b})+d(\tilde{b},\tilde{c}) & \le d(\tilde{a},\tilde{b})
+\end{align*}
+
+
+\medskip{}
+
+
+Thus $d$ is a metric, and so $d_{s}$ is a metric.
+\end{proof}
+\medskip{}
+
+\begin{proof}
+Show for $c_{j}\notin\{0,1\}$ a better or at least equally good solution
+can be found for $c_{j}^{alt}\in\{0,1\}$
+
+For a proof by contraction, we assume the existence of some optimal
+solution Problem 1, $c^{\ast}$ where for at least one index $i$,$c_{i}^{\ast}\ge2$. 
+
+Consider also some alternative count vector (which by our assumption,
+can not be more optimal)
+
+\[
+c^{\prime}=c^{\ast}-\hat{e_{i}}
+\]
+
+
+That is, $c^{\prime}$ is the same as $c^{\ast}$except that there
+is one less count for $c_{i}^{\ast}$
+
+recalling $\tilde{s}_{s}=\left(\begin{array}{c}
+0\\
+m\\
+0.5\\
+\vdots\\
+0.5
+\end{array}\right)$
+
+we define the optimal sum of vectors by $\tilde{t}^{\ast}$ 
+
+\[
+\tilde{t}^{\ast}=\sum_{j=1}^{j=V}\:\tilde{x}_{j}c_{j}^{\ast}=\left[\begin{array}{c}
+\left(\sum_{j=1}^{j=m}w_{j}c_{j}^{*}\right)\\
+\left(\sum_{j=1}^{j=m}w_{j}c_{j}^{*}\right)\\
+c_{1}^{*}\\
+\vdots\\
+c_{n}^{*}
+\end{array}\right]
+\]
+
+
+we define the alternative sum of vectors by $\tilde{t}^{\prime}$
+
+\[
+\tilde{t}^{\prime}=\sum_{j=1}^{j=V}\:\tilde{x}_{j}c_{j}^{\prime}=\left(\sum_{j=1}^{j=V}\:\tilde{x}_{j}c_{j}^{*}\right)-\tilde{x}_{i}=\left[\begin{array}{c}
+\left(\sum_{j=1}^{j=m}w_{j}c_{j}^{*}\right)-w_{i}\\
+\left(\sum_{j=1}^{j=m}w_{j}c_{j}^{*}\right)-1\\
+c_{1}^{*}\\
+\vdots\\
+c_{i-1}^{*}\\
+c_{i}^{*}-1\\
+c_{i+1}^{*}\\
+\vdots\\
+c_{n}^{*}
+\end{array}\right]
+\]
+
+
+We note:
+
+
+
+Note: we know that $c_{i}^{\ast}>0.5$ as $c_{i}^{\ast}\ge2$. Similarly
+we know $c_{i}^{\prime}\ge0.5$ for the as $c_{i}^{\prime}=c_{i}^{\ast}-1$
+
+\[
+d_{s}(\tilde{s}_{s},\tilde{t}^{\ast})=\begin{array}{cc}
+ & \left(\sum_{j=1}^{j=m}w_{j}c_{j}^{*}\right)\\
+_{+} & \omega\left|\left(\sum_{j=1}^{j=m}c_{j}^{*}\right)-m\right|\\
++ & \Omega\left|c_{1}^{*}-0.5\right|\\
+ & \vdots\\
++ & \Omega\left|c_{i-1}^{*}-0.5\right|\\
++ & \Omega(c_{i}^{*}-0.5)\\
++ & \Omega\left|c_{i+1}^{*}-0.5\right|\\
+ & \vdots\\
++ & \Omega\left|c_{n}^{*}-0.5\right|
+\end{array}
+\]
+
+
+and
+
+\[
+d_{s}(\tilde{s}_{s},\tilde{t}^{\prime})=\begin{array}{cc}
+ & \left(\sum_{j=1}^{j=m}w_{j}c_{j}^{*}\right)-w_{i}\\
+_{+} & \omega\left|\left(\sum_{j=1}^{j=m}c_{j}^{*}\right)-1-m\right|\\
++ & \Omega\left|c_{1}^{*}-0.5\right|\\
+ & \vdots\\
++ & \Omega\left|c_{i-1}^{*}-0.5\right|\\
++ & \Omega(c_{i}^{*}-0.5-1)\\
++ & \Omega\left|c_{i+1}^{*}-0.5\right|\\
+ & \vdots\\
++ & \Omega\left|c_{n}^{*}-0.5\right|
+\end{array}
+\]
+
+
+Since $\tilde{t}^{\ast}$ from the more optimal solution: $d_{s}(\tilde{s}_{s},\tilde{t}^{\prime})-d_{s}(\tilde{s}_{s},\tilde{t}^{\ast})\ge0$
+
+$\begin{array}{cc}
+ & \left(\sum_{j=1}^{j=m}w_{j}c_{j}^{*}\right)-w_{i}\\
+_{+} & \omega\left|\left(\sum_{j=1}^{j=m}c_{j}^{*}\right)-1-m\right|\\
++ & \Omega\left|c_{1}^{*}-0.5\right|\\
+ & \vdots\\
++ & \Omega\left|c_{i-1}^{*}-0.5\right|\\
++ & \Omega(c_{i+1}^{*}-0.5-1)\\
++ & \Omega\left|c_{i+1}^{*}-0.5\right|\\
+ & \vdots\\
++ & \Omega\left|c_{n}^{*}-0.5\right|
+\end{array}-\begin{array}{cc}
+ & \left(\sum_{j=1}^{j=m}w_{j}c_{j}^{*}\right)\\
+_{+} & \omega\left|\left(\sum_{j=1}^{j=m}c_{j}^{*}\right)-m\right|\\
++ & \Omega\left|c_{1}^{*}-0.5\right|\\
+ & \vdots\\
++ & \Omega\left|c_{i-1}^{*}-0.5\right|\\
++ & \Omega(c_{i+1}^{*}-0.5)\\
++ & \Omega\left|c_{i+1}^{*}-0.5\right|\\
++ & \vdots\\
++ & \Omega\left|c_{n}^{*}-0.5\right|
+\end{array}\ge0$
+
+And after canceling terms:
+
+\[
+-w_{i}+\omega\left(\left|\left(\sum_{j=1}^{j=m}c_{j}^{*}\right)-1-m\right|-\left|\left(\sum_{j=1}^{j=m}c_{j}^{*}\right)-m\right|\right)-\Omega\ge0
+\]
+
+
+let $K=\left(\sum_{j=1}^{j=m}c_{j}^{*}\right)-m$
+
+\[
+-w_{i}+\omega\left(\left|K-1\right|-\left|K\right|\right)-\Omega\ge0
+\]
+
+
+The largest value $\left|K-1\right|-\left|K\right|$ can take is 1.
+(The other cases are 0, and -1, both of which result in the contradiction
+of the sum of 2 and 3 negative values respectively being greater than
+or equal to zero)
+
+\[
+-w_{i}+\omega-\Omega\ge-w_{i}+\omega\left(\left|K-1\right|-\left|K\right|\right)-\Omega\ge0
+\]
+
+
+\[
+w_{i}+\Omega\le\omega
+\]
+
+
+Substituting in the values from the definitions:
+
+$\Omega=2m\left(\max_{j\in[1,m]}\,|w_{j}|+1\right)$ and $\omega=\frac{1}{2m}$ 
+
+\[
+w_{i}+2m\left(\max_{j\in[1,m]}\,|w_{j}|\right)+2m\le\frac{1}{2m}
+\]
+
+
+\[
+2mw_{i}+4m^{2}\left(\max_{j\in[1,m]}\,|w_{j}|\right)+4m^{2}\le1
+\]
+
+
+Assume $w_{i}$ takes the most negative value possible: $w_{i}=-\left(\max_{j\in[1,m]}\,|w_{j}|\right)$
+giving:
+
+ 
+\[
+\left(4m^{2}-2m\right)\left(\max_{j\in[1,m]}\,|w_{j}|\right)+4m^{2}\le2mw_{i}+4m^{2}\left(\max_{j\in[1,m]}\,|w_{j}|\right)+4m^{2}\le1
+\]
+
+
+As $m\ge1,$ consider it taking that the smallest value it can take
+(so $m=1$)
+
+$2\left(\max_{j\in[1,m]}\,|w_{j}|\right)+4\le\left(4m^{2}-2m\right)\left(\max_{j\in[1,m]}\,|w_{j}|\right)+4m^{2}\le1$
+
+requiring, $\max_{j\in[1,m]}\,|w_{j}|\le-\dfrac{3}{2}$
+
+Which is impossible as the absolute value of an integer is always
+non-negative.
+
+Thus a contradiction.
+
+Thus $c^{\prime}$ is at least as optimal as $c^{\ast}$.
+
+We may apply this proof to all claimed optimal solutions with a $c_{i}>1$
+to show that an equally optimal (or more so), solution has that $c_{i}$
+at 1 lower.
+
+Thus if some solution with any count $c_{i}>1$ is found, it can be
+transformed into a solution that is equally (or more so) optimal,
+by clipping all counts $c_{i}$ at one. 
+\end{proof}
+A finer proof could be developed showing strict inequality and that
+$c^{\prime}$ yields a strictly better solution that $c^{\ast}$
+\begin{proof}
+Proof of Correctness
+
+let $\tilde{c}^{\prime}$ be the solution to problem 1 on $(\mathcal{V}_{s},\tilde{s}_{s},d_{s})$
+
+As it was shown above that for any $c_{i}^{\prime}>1$ an equally
+optimal solution can be created by clipping $c_{i}^{\prime}$to 1.
+
+We will thus assume $c_{i}^{\prime}\in\{0,1\}$.
+
+let $L^{\prime}=\{w_{i}\in\mathcal{S}\::\:c_{i}^{\prime}=1\}$
+\begin{casenv}
+\item Subset Sum Exists, but Problem 1 based method says it does not
+
+
+We assume for a proof by contradiction that the Problem 1 based method
+states that no such subset sub exists,
+
+
+however it is incorrect and such a subset does and is given by $L^{\ast}\subseteq\mathcal{S}$.
+
+
+\medskip{}
+Then $\mathcal{L^{\ast}}$defines a indicator vector $c^{\ast}\in\{0,1\}^{m}$,
+given by $c_{j}^{\ast}=\begin{cases}
+1 & w_{j}\in\mathcal{L}^{\ast}\\
+0 & w_{j}\notin\mathcal{L}^{\ast}
+\end{cases}$, where $w_{j}$ is the $j$th element of $\mathcal{S}$.
+
+
+so $\sum_{j=1}^{j=m}\,w_{j}c_{j}^{\ast}=0$. 
+
+
+Note also as $\mathcal{L^{\ast}}\neq\emptyset$ (by definition of
+subset sum) $\exists i\in[1,m]$ such that $c_{i}^{\ast}=1$. 
+
+
+we define $\tilde{t}^{\ast}$ to be the sum of the vectors which correspond
+to $c_{j}^{\ast}$ by
+
+
+\[
+\tilde{t}^{\ast}=\sum_{j=1}^{j=V}\:\tilde{x}_{j}c_{j}^{\ast}=\left[\begin{array}{c}
+\sum_{j=1}^{j=m}w_{j}c_{j}^{\ast}\\
+\sum_{j=1}^{j=m}c_{j}^{\ast}\\
+c_{1}^{\ast}\\
+\vdots\\
+c_{m}^{\ast}
+\end{array}\right]=\left[\begin{array}{c}
+0\\
+\sum_{j=1}^{j=m}c_{j}^{\ast}\\
+c_{1}^{\ast}\\
+\vdots\\
+c_{m}^{\ast}
+\end{array}\right]
+\]
+
+
+
+and so 
+
+
+$d_{s}(\tilde{s},\,\tilde{t}^{\ast})=d_{s}\left(\left[\begin{array}{c}
+0\\
+m\\
+0.5\\
+\vdots\\
+0.5\\
+\vdots\\
+0.5
+\end{array}\right],\left[\begin{array}{c}
+0\\
+\sum_{j=1}^{j=m}c_{j}^{\ast}\\
+c_{1}^{\ast}\\
+\vdots\\
+c_{m}^{\ast}
+\end{array}\right]\right)=\begin{array}{cc}
+ & 0\\
+_{+} & \omega\left|\left(\sum_{j=1}^{j=m}c_{j}^{\ast}\right)-m\right|\\
++ & \Omega\left|c_{1}^{\ast}-0.5\right|\\
+ & \vdots\\
++ & \Omega\left|c_{n}^{\ast}-0.5\right|
+\end{array}=\omega\left|\left(\sum_{j=1}^{j=m}c_{j}^{\ast}\right)-m\right|+0.5m\Omega$
+
+
+since $0<\sum_{j=1}^{j=m}c_{j}^{\ast}\le m$ as it is sum of $m$
+variables $0\le c_{j}^{\ast}\le1$ and not all $c_{j}^{\ast}=0$,
+we can that to simplify to
+
+
+\[
+d_{s}(\tilde{s},\,\tilde{t}^{\ast})=\omega\left(m-\sum_{j=1}^{j=m}c_{j}^{\ast}\right)+0.5m\Omega
+\]
+
+
+
+Now then consider the cases when the method (incorrectly) reports
+no such subset exists:
+\begin{casenv}
+\item $\tilde{c}^{\prime}=\left[0,...,0\right]$ (the zero vector)
+
+
+We define the total sum of vectors given by $\tilde{t}^{\prime}$
+
+
+\[
+\tilde{t}^{\prime}=\sum_{j=1}^{j=V}\:\tilde{x}_{j}c_{j}^{\prime}=\left[\begin{array}{c}
+\sum_{j=1}^{j=m}w_{j}c_{j}^{\prime}\\
+\sum_{j=1}^{j=m}c_{j}^{\prime}\\
+c_{1}^{\prime}\\
+\vdots\\
+c_{m}^{\prime}
+\end{array}\right]=\left[\begin{array}{c}
+0\\
+0\\
+0\\
+\vdots\\
+0
+\end{array}\right]
+\]
+
+
+
+So find
+
+
+\[
+d_{s}(\tilde{s},\,\tilde{t}^{\prime})=Multidimentionald_{s}\left(\left[\begin{array}{c}
+0\\
+m\\
+0.5\\
+\vdots\\
+0.5\\
+\vdots\\
+0.5
+\end{array}\right],\left[\begin{array}{c}
+0\\
+0\\
+0\\
+\vdots\\
+0
+\end{array}\right]\right)=\omega m+0.5m\Omega
+\]
+
+
+
+thus $d_{s}(\tilde{s},\,\tilde{t}^{\ast})<d_{s}(\tilde{s},\,\tilde{t}^{\prime})$
+and so $c^{\prime}=\left[0,...,0\right]$ could not have been the
+solution returned for solving Problem 1 as it is not the correct selection
+for the argmax. Thus a contradiction.
+
+\item $\tilde{c}^{\prime}\neq\mathbf{0}$ thus $\sum_{j=1}^{j=m}\:\tilde{x}_{j,1}c_{j}^{\prime}=k$
+for $k\neq0$
+
+
+So thus the method reports that there is no nonempty subset which
+sums to zero; (the closest it can get is summing to $k$.
+
+
+We redefine $\tilde{t}^{\prime}$ for this case to be 
+
+
+\[
+\tilde{t}^{\prime}=\sum_{j=1}^{j=V}\:\tilde{x}_{j}c_{j}^{\prime}=\left[\begin{array}{c}
+\sum_{j=1}^{j=m}w_{j}c_{j}^{\prime}\\
+\sum_{j=1}^{j=m}c_{j}^{\prime}\\
+c_{1}^{\prime}\\
+\vdots\\
+c_{m}^{\prime}
+\end{array}\right]=\left[\begin{array}{c}
+k\\
+\sum_{j=1}^{j=m}c_{j}^{\prime}\\
+c_{1}^{\prime}\\
+\vdots\\
+c_{m}^{\prime}
+\end{array}\right]
+\]
+
+
+
+and so
+
+
+\[
+d_{s}(\tilde{s},\,\tilde{t}^{\prime})=d_{s}(\left[\begin{array}{c}
+0\\
+m\\
+0.5\\
+\vdots\\
+0.5\\
+\vdots\\
+0.5
+\end{array}\right],\left[\begin{array}{c}
+k\\
+\sum_{j=1}^{j=m}c_{j}^{\prime}\\
+c_{1}^{\prime}\\
+\vdots\\
+c_{m}^{\prime}
+\end{array}\right])=\begin{array}{cc}
+ & \left|k\right|\\
+_{+} & \omega\left|\left(\sum_{j=1}^{j=m}c_{j}^{\prime}\right)-m\right|\\
++ & \Omega\left|c_{1}^{\prime}-0.5\right|\\
+ & \vdots\\
++ & \Omega\left|c_{n}^{\prime}-0.5\right|
+\end{array}=\left|k\right|+\omega\left|\left(\sum_{j=1}^{j=m}c_{j}^{\prime}\right)-m\right|+0.5m\Omega
+\]
+
+
+
+As $c^{\prime}$was selected over $c^{\ast}$ then
+
+
+by our
+
+
+recalling:
+
+
+\[
+d_{s}(\tilde{s},\,\tilde{t}^{\ast})=\omega\left|\left(\sum_{j=1}^{j=m}c_{j}^{\ast}\right)-m\right|+0.5m\Omega
+\]
+
+
+
+as $\tilde{t}^{\prime}$ is the sum of vectors giving min value for
+the distance to the target point $\tilde{s_{s}}$ thus 
+\[
+d_{s}(\tilde{s_{s}},\,\tilde{t}^{\prime})\le d_{s}(\tilde{s_{s}},\,\tilde{t}^{\ast})
+\]
+
+
+
+i.e.
+
+
+\[
+\left|k\right|+\omega\left|\left(\sum_{j=1}^{j=m}c_{j}^{\prime}\right)-m\right|+0.5m\Omega\le\omega\left|\left(\sum_{j=1}^{j=m}c_{j}^{\ast}\right)-m\right|+0.5m\Omega
+\]
+
+
+
+let $C^{\prime}=\left(\sum_{j=1}^{j=m}c_{j}^{\prime}\right)$ and
+$C^{\ast}=\left(\sum_{j=1}^{j=m}c_{j}^{\ast}\right)$
+
+
+as $0\le C^{\prime}\le m$ and $0\le C^{\ast}\le m$ as both are sums
+of indicator variables (0,1)
+
+
+$\left|\left(\sum_{j=1}^{j=m}c_{j}^{\ast}\right)-m\right|=\left|C^{\ast}-m\right|=m-C^{*}$
+and similarly for $C^{\prime}$
+
+
+substituting in:
+
+
+$\left|k\right|+\omega\left(m-C^{\prime}\right)+0.5m\Omega\le\omega\left(m-C^{\ast}\right)+0.5m\Omega$
+
+
+ie $\left|k\right|+\omega C^{\prime}\le\omega C^{\ast}$
+
+
+ie $\left|k\right|\le\omega\left(C^{\ast}-C^{\prime}\right)$
+
+
+thus $\left(C^{\ast}>C^{\prime}\right)$ it can not be equal as otherwise
+$k=0$ which would be a contradiction.
+
+
+let $\left(C^{\ast}-C^{\prime}\right)=C_{d}$, $C_{d}\in\mathbb{N}$
+
+
+$0<C_{d}$ as otherwise $\left|k\right|=0$ (which would be the contradiction)
+
+
+$C_{d}\le m$ as the largest case is $C^{*}=m$ and $C^{\prime}=0$
+
+
+Substitute
+
+
+\[
+\left|k\right|\le\omega C_{d}
+\]
+
+
+
+substitute from the definition of $\omega=\frac{1}{2m}$
+
+
+\[
+\left|k\right|\le\frac{1}{2m}C_{d}
+\]
+
+
+
+consider the largest value $C_{d}$ can take: $C_{d}=m$
+
+
+\[
+\left|k\right|\le\frac{m}{2m}
+\]
+
+
+
+\[
+|k|\le\frac{1}{2}
+\]
+
+
+
+As $k$ is an integer this would mean $k=0$
+
+
+But this is a contradiction as $|k|>0$.
+
+
+Therefore it is not possible for the Problem 1 based method to say
+there is no solution if there is a solution.
+
+
+i.e. if a solution exists, the Problem 1 based method will find it.
+
+\end{casenv}
+\item Case: Subset sum does not exists, but Problem 1 based method says
+it does
+
+
+Then:
+
+
+\[
+\sum_{j=1}^{j=m}\:\tilde{x}_{j,1}c_{j}^{\prime}=0
+\]
+. 
+
+
+We know that $\tilde{c}^{\prime}\ne\mathbf{0}$ as other wise the
+problem 1 based method would have said no solution exists.
+
+
+Thus $\mathcal{L}^{\prime}\neq\emptyset$
+
+
+further we know by definition of $\tilde{x_{j}}$ that $\tilde{x}_{j,1}=w_{j}$
+for $w_{j}\in\mathcal{S}$
+
+
+thus we have $\sum_{j=1}^{j=m}\:w_{j}c_{j}^{\prime}=0$
+
+
+thus in fact the sum of the elements of $\mathcal{L}^{\prime}$ is
+zero.
+
+
+And so a subset sum does exist.
+
+
+This is a contradiction, thus the Problem 1 based method will never
+say there is a solution unless one exists.
+
+\end{casenv}
+
+Thus the method described in Claim \claimref{method} is a correct
+method to solve subset sum.
+
+\end{proof}
+
+\subsubsection{Subset Sum Reduction Concluding note:}
+
+Thus it has been shown that if a general solution to Problem 1 can
+be found a solution to subset sum could be found which would take
+at most a linear amount of additional time. Thus were a polynomial
+time solution for problem 1 found, it would show that $P=NP$. However,
+the proof above is only for the general case, which is defined over
+$(\mathcal{V},\,\tilde{s},\,d)$ for finite subsets of $\mathbb{R}^{n}$,
+$\mathcal{V}$; and any$\tilde{s}\in\mathbb{R}^{n}$, using any metric
+$d$. Thus the hardness result is only for the general case. Like
+for many problems from the knapsack family, there certainly exists
+special cases for which faster solutions are possible. For example
+$\mathcal{V}\subset\mathbb{R}_{+}^{1}$, $\tilde{s}=\left[0\right]$
+and $d=(x,y)\mapsto\left|x-y\right|$, a linear time solution exists,
+found by finding the index of the smallest member of $\mathcal{V}$.
+The general problem however is not expected to have an exact solution
+in polynomial time.
+
+
+\subsection{A Reduction from from Knapsack to Metric Knapsack}
+
+We can describe a problem very similar to Problem 1, but without the
+inclusion of the metric (which permits ``overshooting''), and with
+the varying profit for knapsack.
+\begin{itemize}
+\item For profits $\{p_{1},p_{2},...,p_{V}\}\subset\mathbb{N}$
+\item For weigh
+\item a target vector $\tilde{s}$, $\tilde{s}\in\mathbb{R}^{m}$
+
+
+by
+\[
+\argmax_{\left\{ \forall\tilde{c}\in\{0,1\}^{V}\right\} }\:d(\tilde{s},\,\sum_{j=1}^{j=V}p_{j}c_{j})
+\]
+
+
+\end{itemize}
+\bibliographystyle{amsplain}
+\bibliography{D:/phd/Resources/master_bibliography/master}
+
+\end{document}
