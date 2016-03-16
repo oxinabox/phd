@@ -96,435 +96,27 @@
 
 \begin_layout Standard
 \begin_inset FormulaMacro
-\newcommand{\s}{\blacktriangleright}
+\newcommand{\s}{w_{\blacktriangleright}}
 \end_inset
 
 
 \begin_inset FormulaMacro
-\newcommand{\ss}{\triangleright}
+\newcommand{\ss}{w_{\triangleright}}
 \end_inset
 
 
 \begin_inset FormulaMacro
-\newcommand{\e}{\triangleleft}
+\newcommand{\e}{w_{\triangleleft}}
 \end_inset
 
 
 \begin_inset FormulaMacro
-\newcommand{\ee}{\blacktriangleleft}
+\newcommand{\ee}{w_{\blacktriangleleft}}
 \end_inset
 
 
 \begin_inset FormulaMacro
 \newcommand{\W}{\mathcal{W}}
-\end_inset
-
-
-\end_layout
-
-\begin_layout Subsection
-Introduction: ordering a bag of words
-\end_layout
-
-\begin_layout Standard
-The problem of solving for the order of an Bag of Word, 
-\end_layout
-
-\begin_layout Standard
-is not intrinsically solvable.
-\end_layout
-
-\begin_layout Standard
-Never the less, some attempts can be made.
-\end_layout
-
-\begin_layout Standard
-In a bag of words all order information is lost.
-\end_layout
-
-\begin_layout Standard
-The same (multi-)set of words can be ordered in different,
-\end_layout
-
-\begin_layout Standard
-gramatically legal ways -- sometimes, but not always resulting in different
- meaning.
-\end_layout
-
-\begin_layout Standard
-With that said, often there are only a few ways, order the words into a
- natural sentence.
-\end_layout
-
-\begin_layout Standard
-Humans are very good at intuiting the correct order for a jumbled sentence
- -- this is a popular execise for people learning english as a second language.
-\end_layout
-
-\begin_layout Standard
-The task of working out a likely order for a bag of words is related to
- the task of working out the correct order during machine translation.
-\end_layout
-
-\begin_layout Standard
-Different languages have different basic orders.
-\end_layout
-
-\begin_layout Standard
-For example English uses Subject Verb Object, where as Japanese uses Subject
- Object Verb.
- The difference between ordering a bag of words and reordering during translatio
-n, is the facility to have a direct map.
- That is, whenever a Subject Verb Object sentence is encountered in the
- English original, it is known that the translated words in the sentence
- must be ordered into Subject Object Verb, in Japanese.
-\end_layout
-
-\begin_layout Standard
-In the Ordering of the Bag of Words, this is not known, as there is no order
- to start with -- that information is already long lost.
-\end_layout
-
-\begin_layout Standard
-This paper tackles the ordering problem using only tri-gram statistics.
- The approach generalises obviously to all n-gram models; but for clarity
- we only reference trigram sentence here.
-\end_layout
-
-\begin_layout Subsection
-Trigram Language Models 
-\end_layout
-
-\begin_layout Standard
-A trigram gives the conditional probability of the next work given the previous
- two:
-\end_layout
-
-\begin_layout Standard
-that is 
-\begin_inset Formula $P(W_{n}|W_{n-2},W_{n-1})$
-\end_inset
-
-.
- The proability of a particular sequence is for example 
-\begin_inset Formula $P(W_{n}="Turkey"|W_{n-2}="Deep",W_{n-1}="Fried")$
-\end_inset
-
-, ie 
-\begin_inset Quotes eld
-\end_inset
-
-What is the probability of the next word being 
-\begin_inset Quotes eld
-\end_inset
-
-Turkey
-\begin_inset Quotes erd
-\end_inset
-
- gien the last two were 
-\begin_inset Quotes eld
-\end_inset
-
-Deep Fried
-\begin_inset Quotes erd
-\end_inset
-
-.
- For consiseness we will use positional semantics writing this as 
-\begin_inset Formula $P("Turkey"|"Deep","Fried")$
-\end_inset
-
-, and more generally will follow the convention of lowercase for an instantated
- variable, eg 
-\begin_inset Formula $P(W_{n}=w_{3}|W{}_{n-2}=w_{1},W_{n-1}=w_{2})=P(w_{3}|w_{1},w_{2})$
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-Following the baysian chain rule, and assuming the Markov property, 
-\end_layout
-
-\begin_layout Standard
-we can use these trigrams to calculate the probaility of any sequence of
- words:
-\end_layout
-
-\begin_layout Standard
-the (unnormalised) probability of a sequence of words: 
-\begin_inset Formula $\W=[w_{1},w_{2},w_{3},w_{4}]$
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-is 
-\begin_inset Formula $P(\W)=P(w_{1},w_{2})P(w_{3}|w_{1},w_{2})P(w_{4}|w_{2},w_{3})$
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-This allows the ordering, but fails to taking advantage of what we could
- know about the likelyhood of words occuring at the start and end of the
- sentence.
-\end_layout
-
-\begin_layout Standard
-We can augment our language model with the addition of pseudowords:
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula $w_{S1}=\mathrm{\s},$
-\end_inset
-
-
-\begin_inset Formula $w_{S2}=\mathrm{“\ss"},$
-\end_inset
-
- and 
-\begin_inset Formula $w_{E1}=\mathrm{“\e”},$
-\end_inset
-
-
-\begin_inset Formula $w_{E2}=\mathrm{\text{“}\ee\text{”}}$
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Which always occur at the start and end of sentences respectively.
-\end_layout
-
-\begin_layout Standard
-Now we know 
-\begin_inset Formula $P(w_{S1},w_{S2})=1$
-\end_inset
-
- and 
-\begin_inset Formula $P(w_{E1},w_{E2})=1$
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-We also know that 
-\begin_inset Formula $w_{E2}$
-\end_inset
-
- only and always occurs after 
-\begin_inset Formula $w_{E1}$
-\end_inset
-
- and so 
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula $\forall w_{i}$
-\end_inset
-
- 
-\begin_inset Formula $P(w_{E2}|w_{i},w_{Ei})=1$
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-And can write 
-\begin_inset Formula $P(\W)=P(w_{S1},w_{S2})P(w_{1}|w_{S1},w_{S2})P(w_{2}|w_{S2},w_{1})P(w_{3}|w_{1},w_{2})P(w_{4}|w_{2},w_{3})P(w_{E1}|w_{3},w_{4})P(w_{E2}|w_{4},w_{E1})$
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Which given the afformantion constant probailities of 1
-\end_layout
-
-\begin_layout Standard
-simplifies to 
-\begin_inset Formula $P(\W)=P(w_{1}|w_{S1},w_{S2})P(w_{2}|w_{S2},w_{1})P(w_{3}|w_{1},w_{2})P(w_{4}|w_{2},w_{3})P(w_{E1}|w_{3},w_{4})$
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-This is the basic tool for estimating the proability of any ordering.
-\end_layout
-
-\begin_layout Standard
-We will assume that our trigram model for purtposes of this discussion is
- complete and can tell an accurate proability for any tripple of words.
- This is not true in general, but with the use of smoothing and back off
- techneques can be treated at true.
-\end_layout
-
-\begin_layout Subsection
-On solving the word order using the language model
-\end_layout
-
-\begin_layout Standard
-The language models give us a tool to describe the probability of any arbiary
- sequence of words.
-\end_layout
-
-\begin_layout Standard
-So this suggests a naive way of finding the most likely ordering for the
- bag:
-\end_layout
-
-\begin_layout Standard
-Enumerate all possible orderings and calculate the probability of each.
- Then choose order with the highest scoring probability.
-\end_layout
-
-\begin_layout Standard
-However this is not compuationally tractable: For a bag containing 
-\begin_inset Formula $N$
-\end_inset
-
- words, there are 
-\begin_inset Formula $N!$
-\end_inset
-
- possible orderings.
-\end_layout
-
-\begin_layout Standard
-Thus fiunding the best ordering naively would take 
-\begin_inset Formula $O(N\cdot N!)$
-\end_inset
-
-time.
-\end_layout
-
-\begin_layout Standard
-Thus the neive method must be ruled out.
- A far less naive method is to consider the problem a a graph search.
-\end_layout
-
-\begin_layout Section
-The World Tour Problem
-\end_layout
-
-\begin_layout Standard
-Consider first the traveling sales man: The Saleman must visit every city
- (say in a country) before returning home, and is looking to find the shortest
- route -- it terms of what order to visit the cities in.
- More general tham this is Travelling Purchaser: the purchaser has a list
- of items to aquire, add there are many shops each of which sell some of
- the items, and there is a distence between the shops, he wants to find
- which shops to visit in which order before returning home.
- This traveling sales man is a specific type of traveling purchaser, where
- there is only one shop that sells each item, and each shop only sells that
- one item -- e.g.
- the town has 1 baker who sells only bread, 1 butcher who sells only meat,
- one green groccer who sells only greens, and no general stores.
-\end_layout
-
-\begin_layout Standard
-A generalisation of this (but still more specific than the Travelling purchaser
- problem) is a town with many bakers (who only sell bread), many butchers
- (who sell only meat) etc, but still no general stores.
- This problem is very simiklar to what we will call the world tour problem
-\end_layout
-
-\begin_layout Standard
-The world tour problem: The travellers goal is to visit every country in
- the world, but only once; he doesn't care which airport in each country
- he visits but he must never return to the same airport again.
- Not all airports have connecting flights to all other airports (though
- we can model those as flights with infinite cost), and the price of travel
- is not always linked to the distance.
- The traveller wants to know which airports to visit minimise his cost on
- this tour.
- This problem (or slight variations) has been called: set TSP, generalized
- TSP, group TSP, One-of-a-Set TSP, Multiple Choice TSP, and Covering Salesman
- Problem.
-\end_layout
-
-\begin_layout Standard
-A slight further generalistation is what we could call the World Touring
- Journey problem: The traveller knows the start and end cities, which are
- not the same, and wishes to visit every country along the way.
- This problem is the same as the word ordering probem.
-\end_layout
-
-\begin_layout Subsection
-The Bag of Words ordering problem as a World Touring Journey problem
-\end_layout
-
-\begin_layout Standard
-Each city is a pair of words -- the current state, the word just added and
- the word before that.
- This is writen as 
-\begin_inset Formula $(w_{n-1},w_{n})$
-\end_inset
-
-, Where 
-\begin_inset Formula $w_{i}$
-\end_inset
-
- are the words to be orderd with arbiratily ascibed subscripts.
-\end_layout
-
-\begin_layout Standard
-The countries are given by the sets of all cities that have a given word
- in the second position.
- So the country for word 
-\begin_inset Formula $w_{j}$
-\end_inset
-
- is given by 
-\begin_inset Formula $S_{i}=\{(w_{i},w_{j})\,\mid\,w_{i}\ne w_{j}\,\wedge w_{i}\in\{START1,\ss,\e\}\cup Bag\,of\,words\}$
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-The Start city is the 
-\begin_inset Formula $(START1,\ss)$
-\end_inset
-
-, the End city is the state 
-\begin_inset Formula $(\e,\ee)$
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-Each city is given by a 
-\begin_inset Formula $(w_{n-2},w_{n-1})$
-\end_inset
-
- and is allowed to transition only to cities 
-\begin_inset Formula $(w_{n-1},w_{n})$
-\end_inset
-
-.
- Such transitions has cost 
-\begin_inset Formula $C((w_{n-2},w_{n-1}),(w_{n-1},w_{n}))=-\log\left(P(w_{n}|w_{n-2},w_{n-1})\right)$
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-The total cost, is given by the sum
-\end_layout
-
-\begin_layout Standard
-\begin_inset Newpage pagebreak
 \end_inset
 
 
@@ -539,8 +131,7 @@ Notation
 \end_layout
 
 \begin_layout Standard
-To model the word ordering problem as a world touring journey, the following
- notation is used.
+The following notion is used
 \end_layout
 
 \begin_layout Itemize
@@ -548,8 +139,23 @@ For
 \begin_inset Formula $\W$
 \end_inset
 
- the bag of words to be ordered, plus the start and end pseudo-words.
- 
+ the bag of words to be ordered, including the start (
+\begin_inset Formula $\s$
+\end_inset
+
+,
+\begin_inset Formula $\ss$
+\end_inset
+
+) and end pseudo-words.(
+\begin_inset Formula $\e$
+\end_inset
+
+, 
+\begin_inset Formula $\ee$
+\end_inset
+
+)
 \end_layout
 
 \begin_layout Itemize
@@ -563,21 +169,21 @@ We will write
 \end_layout
 
 \begin_layout Itemize
-Each city is a sequence of two words -- a Markov state, consisting of a
- word and its predecessor word.
- This is written as 
+Each vertex is a sequence of two words, 
 \begin_inset Formula $\langle w_{i},w_{j}\rangle\in\W^{2}$
 \end_inset
 
-
+.
+ This is a Markov state, consisting of a word and its predecessor word.
+ 
 \end_layout
 
 \begin_layout Itemize
-The Start city is given by the state 
+The Start vertex is given by 
 \begin_inset Formula $\langle\s,\ss\rangle$
 \end_inset
 
-, the End city is the state 
+, the end by
 \begin_inset Formula $\langle\e,\ee\rangle$
 \end_inset
 
@@ -585,17 +191,17 @@ The Start city is given by the state
 \end_layout
 
 \begin_layout Itemize
-The countries are given by the sets of all cities that have a given word
- in the second position.
- So the country 
-\begin_inset Formula $S(w_{j})\subseteq\W^{2}$
-\end_inset
-
-, for word 
+The GA-TSP districts are given by the sets of all states that have a given
+ word in the second position.
+ The district for word 
 \begin_inset Formula $w_{j}$
 \end_inset
 
  is given by 
+\begin_inset Formula $S(w_{j})\subseteq\W^{2}$
+\end_inset
+
+, defined as 
 \begin_inset Formula $S(w_{j})=\{\langle w_{i},w_{j}\rangle\,\mid\,w_{i}\ne w_{j}\,\wedge w_{i}\in\W\}$
 \end_inset
 
@@ -603,8 +209,12 @@ The countries are given by the sets of all cities that have a given word
  
 \end_layout
 
+\begin_layout Itemize
+Each edge represents a transition from one trigram state to another.
+\end_layout
+
 \begin_layout Subsubsection
-Transitions and Cost Model
+Optimization Model
 \end_layout
 
 \begin_layout Standard
@@ -612,20 +222,15 @@ The journey and its costs are modeled by:
 \end_layout
 
 \begin_layout Itemize
-Each city is given by a 
+A transition from 
 \begin_inset Formula $\langle w_{i},w_{j}\rangle$
 \end_inset
 
- and is allowed to transition only to cities 
+ to 
 \begin_inset Formula $\langle w_{j},w_{k}\rangle$
 \end_inset
 
-.
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-Such transitions has cost 
+ transitions has cost 
 \begin_inset Formula $C[\langle w_{i},w_{j}\rangle,\langle w_{j},w_{k}\rangle]=-\log\left(P(w_{k}|w_{i},w_{j}\rangle\right)$
 \end_inset
 
@@ -634,19 +239,14 @@ Such transitions has cost
 \end_layout
 
 \begin_layout Itemize
-The expression in terms of negative log likelihood makes this problem linear,
- rather than having a product of probability, it is just a sum of these
- negative log likelihood.
- 
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-The table of transitions is given by 
-\begin_inset Formula $X$
+The table of transitions to be optimized is given by 
+\begin_inset Formula $\tau$
 \end_inset
 
-, where 
+
+\end_layout
+
+\begin_layout Itemize
 \begin_inset Formula $\tau[\langle w_{a},w_{b}\rangle,\,\langle w_{c},w_{d}\rangle]=\begin{cases}
 1 & \mathrm{if\,transition\,from\,\langle w_{a},w_{b}\rangle,to\,\langle w_{c},w_{d}\rangle\,occurs}\\
 0 & \mathrm{otherwise}
@@ -654,11 +254,6 @@ The table of transitions is given by
 \end_inset
 
 
-\end_layout
-
-\begin_layout Itemize
-This table of transitions is the set binary variables to be optimized --
- making this a mixed integer linear programming problem.
 \end_layout
 
 \begin_layout Itemize
@@ -671,8 +266,8 @@ The total cost to be minimized, is given by
 \end_layout
 
 \begin_layout Itemize
-The probability of a particular journey (ie of a particular ordering) is
- thus given by 
+The probability of a particular path (i.e.
+ of a particular ordering) is thus given by 
 \begin_inset Formula $P(\tau)=e^{-C_{total}(\tau)}$
 \end_inset
 
@@ -680,7 +275,7 @@ The probability of a particular journey (ie of a particular ordering) is
 \end_layout
 
 \begin_layout Itemize
-The word order can be found by following the links, 
+The word order can be found by following the links,
 \end_layout
 
 \begin_deeper
@@ -696,22 +291,31 @@ The word order can be found by following the links,
 \end_layout
 
 \begin_layout Itemize
-(if 
+if 
 \begin_inset Formula $\tau$
 \end_inset
 
- is valid then, the set is a singleton, 
+ follows the constraints that follow then valid then, then each set is a
+ singleton, 
 \begin_inset Formula $\{\}_{1}$
 \end_inset
 
-indicates taking the only element)
+indicates taking the only element.
 \end_layout
 
 \begin_layout Itemize
-\begin_inset Formula $f(\langle w_{i},w_{j}\rangle,\tau)=\{\langle w_{i},w_{j}\rangle,\langle w_{j},w_{k}\rangle=1\}$
+\begin_inset Formula $f(n,\tau)$
 \end_inset
 
+ gives the word that, according to 
+\begin_inset Formula $\tau$
+\end_inset
 
+ occurs in the 
+\begin_inset Formula $n$
+\end_inset
+
+th position.
 \end_layout
 
 \end_deeper
@@ -746,7 +350,7 @@ if
 
 \end_deeper
 \begin_layout Itemize
-Leave every city entered (except those at the beginning and end):
+Leave every vertex entered (except those at the beginning and end):
 \begin_inset Newline linebreak
 \end_inset
 
@@ -856,7 +460,7 @@ The problem as formulated above can be input into the Mixed Integer Linear
 \end_layout
 
 \begin_layout Itemize
-The core tour -- which starts at the beginning 
+The core path -- which starts at the beginning 
 \begin_inset Formula $\langle\s,\ss\rangle$
 \end_inset
 
@@ -897,35 +501,8 @@ the end can be found.
 
 \end_layout
 
-\begin_deeper
 \begin_layout Itemize
-The selected links found: 
-\begin_inset Formula $l(\tau)=\{[\langle w_{i},w_{j}\rangle,\,\langle w_{j},w_{k}\rangle]\in\left(\W^{2}\right)^{2}\;\mid\;\tau[\langle w_{i},w_{j}\rangle,\,\langle w_{j},w_{k}\rangle]\ne0\}$
-\end_inset
-
-
-\end_layout
-
-\begin_layout Itemize
-Or more formally: by taking the transitive closure of 
-\begin_inset Formula $\{[\langle\s,\ss\rangle,\,\langle\ss,w_{i}\rangle]\in l(\tau)\,|\,\forall w_{i}\in\W\}$
-\end_inset
-
- within 
-\begin_inset Formula $\tau_{links}$
-\end_inset
-
-.
- (Not that set is initially a singleton before taking the closure.
-\begin_inset Formula $\rangle$
-\end_inset
-
-
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-From the core tour, the set of words covered is given by 
+From the core path, the set of words covered is given by 
 \begin_inset Formula $\W_{T}=\{w_{i}\,\mid\,\langle w_{i},w_{j}\rangle\in T\,\}\cup\{\ee\}$
 \end_inset
 
@@ -934,25 +511,20 @@ From the core tour, the set of words covered is given by
 \begin_inset Formula $\mathcal{W_{T}}=\W$
 \end_inset
 
- then there are no subtours and the core-tour is the full world touring
- journey (and the most likely ordering of the words in the bag
-\begin_inset Formula $\rangle$
-\end_inset
-
-.
+ then there are no subtours and the core-path is the full.
  Otherwise, there is a subtour to be eliminated.
 \end_layout
 
 \begin_layout Itemize
 If there is a subtour, then to eliminate it, a constraint must be added.
  This constraint is that there must be a connection from at least one of
- the cities in the country covered by the core tour to one of the cities
- in the countries not covered.
+ the nodes in the district covered by the core path to one of the nodes
+ in the districts not covered.
 \end_layout
 
 \begin_deeper
 \begin_layout Itemize
-The countries covered by the tour are given by 
+The districts covered by the tour are given by 
 \begin_inset Formula $S_{T}=\bigcup_{w_{t}\in W_{T}}S(w_{t})$
 \end_inset
 
@@ -965,28 +537,14 @@ The countries covered by the tour are given by
 
 \begin_layout Itemize
 i.e.
- There must be a transition from one of the nodes of the word-classes covered
- by the core-tour, to one of the nodes of a word-class not covered by the
- core tour.
+ There must be a transition from one of the states featuring a word that
+ is in the core path, to one of the states featuring a word not converted
+ by the core path.
 \end_layout
 
 \end_deeper
 \begin_layout Standard
 \begin_inset space ~
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Newpage newpage
-\end_inset
-
-
-\begin_inset CommandInset include
-LatexCommand include
-filename "word_ordinging_case_study.lyx"
-
 \end_inset
 
 
