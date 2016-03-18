@@ -9,7 +9,7 @@
 \usepackage{resizegather}
 
 \begin{document}
-\newcommand{\s}{w_{\blacktriangleright}}
+\renewcommand{\s}{w_{\blacktriangleright}}
 \renewcommand{\ss}{w_{\triangleright}}
 \newcommand{\e}{w_{\triangleleft}}
 \newcommand{\ee}{w_{\blacktriangleleft}}
@@ -18,40 +18,37 @@
 \newcommand{\displayunskip}{\vspace{0pt}} %does nothing, but here to mess with later
 
 \subsubsection{Notation}
-
-The following notion is used:
-
-We will write $w_{i}$ to represent a word from the bag \textbf{$\W$}, with
-arbitrarily assigned subscripts. Where a word occurs with multiplicity
-greater than 1, it is assigned multiple subscripts, and each is treated
-as a distinct word.
+We will write $w_{i}$ to represent a word from the bag \textbf{$\W$} ($w_i\in \W$), with
+arbitrarily assigned unique subscripts. Where a word occurs with multiplicity
+greater than 1, it is assigned multiple subscripts, and is henceforth treated as a distinct word.
 
 Each vertex is a sequence of two words, $\langle w_{i},w_{j}\rangle\in\W^{2}$.
-This is a Markov state, consisting of a word and its predecessor word. \\
-Each edge between two vertices represents a transition from one trigram state to another.
+This is a Markov state, consisting of a word $w_j$ and its predecessor word $w_i$ -- a bigram.
+
+Each edge between two vertices represents a transition from one state to another which forms a trigram.
 The start vertex is given by $\langle\s,\ss\rangle$, and the end by $\langle\e,\ee\rangle$. The pseudowords  $\s,\ss,\e,\ee$ are added during the trigram models training allowing knowledge about the beginning and ending of sentences to be incorporated.
 
 The GA-TSP districts are given by the sets of all states that have
 a given word in the first position. The district for word $w_{i}$
-is given by $S(w_{i})\subseteq\W^{2}$, defined as $S(w_{i})=\{\langle w_{i},w_{j}\rangle\,\mid\,w_{i}\ne w_{j}\,\wedge w_{j}\in\W\}$. It is required to visit every district, thus it is required to use every word.
+is given by $S(w_{i})\subseteq\W^{2}$, defined as $S(w_{i})=\{\langle w_{i},w_{j}\rangle\,\mid \forall w_{j}\in\W\}$. It is required to visit every district, thus it is required to use every word.
 With this description, the problem can be formulated as a MIP optimisation problem.
 
 
 \subsubsection{Optimization Model}
-Every MIP problem has set of variables to optimise, and a cost function that assesses how optimal a given choice of values for that variable is. The cost function for the word ordering problem must represent how unlikely a particular order is. The variables must represent to order taken. This is does by a table indicating whether a particular transition between states is taken.
+Every MIP problem has set of variables to optimise, and a cost function that assesses how optimal a given choice of values for that variable is. The cost function for the word ordering problem must represent how unlikely a particular order is. The variables must represent the order taken. This is does by a table indicating whether a particular transition between states is taken. Note that for any pair of Markov states $\langle w_{a},w_{b}\rangle,\langle w_{c},w_{d}\rangle$ is legal if and only if $b=c$, so we denote legal transitions as $\langle w_{i},w_{j}\rangle \to \langle w_{j},w_{k}\rangle$.
 %
-A transition from $\langle w_{i},w_{j}\rangle$ to $\langle w_{j},w_{k}\rangle$
- has cost \begin{equation*}
+Such a transition has cost:
+\begin{equation*}
 	C[\langle w_{i},w_{j}\rangle,\langle w_{j},w_{k}\rangle]=-\log\left(P(w_{k}|w_{i},w_{j}\rangle\right)
 \end{equation*} 
 %
 The table of transitions to be optimized is 
 \displayunskip
 \begin{multline*}
- \tau[\langle w_{a},w_{b}\rangle,\,\langle w_{c},w_{d}\rangle] = \\
+ \tau[\langle w_{i},w_{j}\rangle,\,\langle w_{j},w_{k}\rangle] = \\
  \begin{cases}
 	 \multirow{2}{*}{1} & \mathrm{if\,transition\,from} \\
-	 	                & \langle w_{a},w_{b}\rangle \to \langle w_{c},w_{d}\rangle
+	 	                & \langle w_{i},w_{j}\rangle \to \langle w_{j},w_{k}\rangle
 	 	                   \;\mathrm{ occurs} \\
                      0  & \mathrm{otherwise}
   \end{cases}
@@ -61,37 +58,29 @@ The total cost to be minimized, is given by
 \displayunskip
 \begin{multline*}
  C_{total}(\tau)= \\
-	 \sum_{\mathrlap{\!\!\!\!\forall\left[\langle w_{a},w_{b}\rangle,\langle w_{c},w_{d}\rangle\right]\in\left(\W^{2}\right)^{2}
+	 \sum_{\mathrlap{\!\!\!\!\forall w_i,w_j,w_k \in \W^{3}
  	}}
- 	\;\tau[\langle w_{a},w_{b}\rangle,\,\langle w_{c},w_{d}\rangle] \cdot C[\langle w_{a},w_{b}\rangle,\,\langle w_{c},w_{d}\rangle]
+ 	\;\tau[\langle w_{i},w_{j}\rangle,\,\langle w_{j},w_{k}\rangle] \cdot C[\langle w_{i},w_{j}\rangle,\,\langle w_{j},w_{k}\rangle]
 \end{multline*}
 
-\begin{comment}
-\begin{multline*}
-C_{total}(\tau)= 
-\sum_{\mathclap{
-		\left[w_{ab},w_{cd}\right]\in\left(\W^{2}\right)^{2}
-	}}
-	\;\tau[w_{ab},w_{cd}] \cdot C[w_{ab},w_{cd}]
-\end{multline*}
-\end{comment}
-%
+
 The probability of a particular path (i.e. of a particular ordering)
 is thus given by $P(\tau)=e^{-C_{total}(\tau)}$
 
 
 The word order can be found by following the links. The function 
-$f(n,\tau)$ gives the word that, according to $\tau$ occurs in the $n$th position.
+$f_\tau(n)$ gives the word that, according to $\tau$ occurs in the $n$th position.
 \displayunskip
-\begin{gather*}%
-f(n,\tau)= %
-\begin{cases}%
-\{w_{a}\mid\tau[\langle\s,\ss\rangle,\langle\ss,w_{a}\rangle]=1\}_{1} & n=1\\%
-\{w_{b}\mid\tau[\langle\ss,f(1,\tau)\rangle,\langle f(1,\tau),w_{b}\rangle]=1\}_{1} & n=2\\%
-\{w_{c}\mid\tau[\langle f(n{-}2,\tau),f(n{-}1,\tau)\rangle,\langle f(n{-}1,\tau),w_{c}\rangle]=1\}_{1} & n\ge3%
-\end{cases}%
-\end{gather*}%
-
+\hspace{-1cm} \mbox{%
+\begin{minipage}{\columnwidth + 0.5cm}
+	\begin{align*}%
+	f_\tau(1)=&\{w_{a}\mid\tau[\langle\s,\ss\rangle,\langle\ss,w_{a}\rangle]=1\}_{1} \\ %
+	f_\tau(2)=&\{w_{b}\mid\tau[\langle\ss,f_\tau(1)\rangle,\langle f_\tau(1),w_{b}\rangle]=1\}_{1} \\%
+	f_\tau(n)=& \\%
+	{}\span\omit $\underset{\:\:\mathrm{when}\;\; n\ge3 \hfill}{\{w_{c}\mid\tau[\langle f_\tau(n{-}2),f_\tau(n{-}1)\rangle,\langle f_\tau(n{-}1),w_{c}\rangle]=1\}_{1}}$ \ \hidewidth%
+	\end{align*}
+	\null{ }
+\end{minipage}}
 %
 The notation $\{\cdot\}_{1}$ indicates taking a singleton set's only element.
 The constraints on $\tau$ ensure that each set is a singleton.
