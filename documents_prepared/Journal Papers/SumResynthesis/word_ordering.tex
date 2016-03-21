@@ -35,33 +35,34 @@ With this description, the problem can be formulated as a MIP optimisation probl
 
 
 \subsubsection{Optimization Model}
-Every MIP problem has set of variables to optimise, and a cost function that assesses how optimal a given choice of values for that variable is. The cost function for the word ordering problem must represent how unlikely a particular order is. The variables must represent the order taken. This is does by a table indicating whether a particular transition between states is taken. Note that for any pair of Markov states $\langle w_{a},w_{b}\rangle,\langle w_{c},w_{d}\rangle$ is legal if and only if $b=c$, so we denote legal transitions as $\langle w_{i},w_{j}\rangle \to \langle w_{j},w_{k}\rangle$.
+Every MIP problem has set of variables to optimise, and a cost function that assesses how optimal a given choice of values for that variable is. The cost function for the word ordering problem must represent how unlikely a particular order is. The variables must represent the order taken. The variable are considered as a table which indicates if a particular transition between states is taken. Note that for any pair of Markov states $\langle w_{a},w_{b}\rangle,\langle w_{c},w_{d}\rangle$ is legal if and only if $b=c$, so we denote legal transitions as $\langle w_{i},w_{j}\rangle \to \langle w_{j},w_{k}\rangle$.
 %
 Such a transition has cost:
-\begin{equation*}
+\begin{gather*}
+%$
 	C[\langle w_{i},w_{j}\rangle,\langle w_{j},w_{k}\rangle]=-\log\left(P(w_{k}|w_{i},w_{j}\rangle\right)
-\end{equation*} 
+%$.
+\end{gather*} 
 %
-The table of transitions to be optimized is 
+The table of transitions to be optimized is:
 \displayunskip
-\begin{multline*}
- \tau[\langle w_{i},w_{j}\rangle,\,\langle w_{j},w_{k}\rangle] = \\
+\begin{gather*}
+ \tau[\langle w_{i},w_{j}\rangle,\,\langle w_{j},w_{k}\rangle] = %\\
  \begin{cases}
 	 \multirow{2}{*}{1} & \mathrm{if\,transition\,from} \\
 	 	                & \langle w_{i},w_{j}\rangle \to \langle w_{j},w_{k}\rangle
 	 	                   \;\mathrm{ occurs} \\
                      0  & \mathrm{otherwise}
   \end{cases}
-\end{multline*}
+\end{gather*}
 %
 The total cost to be minimized, is given by
 \displayunskip
-\begin{multline*}
- C_{total}(\tau)= \\
-	 \sum_{\mathrlap{\!\!\!\!\forall w_i,w_j,w_k \in \W^{3}
+\begin{gather*}
+ C_{total}(\tau)= \sum_{\mathrlap{\!\!\!\!\forall w_i,w_j,w_k \in \W^{3}
  	}}
  	\;\tau[\langle w_{i},w_{j}\rangle,\,\langle w_{j},w_{k}\rangle] \cdot C[\langle w_{i},w_{j}\rangle,\,\langle w_{j},w_{k}\rangle]
-\end{multline*}
+\end{gather*}
 
 
 The probability of a particular path (i.e. of a particular ordering)
@@ -71,7 +72,7 @@ is thus given by $P(\tau)=e^{-C_{total}(\tau)}$
 The word order can be found by following the links. The function 
 $f_\tau(n)$ gives the word that, according to $\tau$ occurs in the $n$th position.
 \displayunskip
-\hspace{-1cm} \mbox{%
+\hspace{-1cm} {\mbox{%
 \begin{minipage}{\columnwidth + 0.5cm}
 	\begin{align*}%
 	f_\tau(1)=&\{w_{a}\mid\tau[\langle\s,\ss\rangle,\langle\ss,w_{a}\rangle]=1\}_{1} \\ %
@@ -80,7 +81,7 @@ $f_\tau(n)$ gives the word that, according to $\tau$ occurs in the $n$th positio
 	{}\span\omit $\underset{\:\:\mathrm{when}\;\; n\ge3 \hfill}{\{w_{c}\mid\tau[\langle f_\tau(n{-}2),f_\tau(n{-}1)\rangle,\langle f_\tau(n{-}1),w_{c}\rangle]=1\}_{1}}$ \ \hidewidth%
 	\end{align*}
 	\null{ }
-\end{minipage}}
+\end{minipage}}}
 %
 The notation $\{\cdot\}_{1}$ indicates taking a singleton set's only element.
 The constraints on $\tau$ ensure that each set is a singleton.
@@ -96,21 +97,19 @@ The Markov state must be maintained: $\forall\langle w_{a},w_{b}\rangle,\langle 
 w_{b}\ne w_{c} \implies \tau[\langle w_{a},w_{b}\rangle,\,\langle w_{c},w_{d}\rangle]=0
 \end{equation*}
 %
-Every node entered must also be exited -- except those at the beginning and end.
-\begin{multline*}
-\forall\langle w_{i},w_{j}\rangle\in\W^{2}\backslash\{\langle\s,\ss\rangle,\langle\e,\ee\rangle\}: \\
+Every node entered must also be exited -- except those at the beginning and end. \\$\forall\langle w_{i},w_{j}\rangle\in\W^{2}\backslash\{\langle\s,\ss\rangle,\langle\e,\ee\rangle\}$: 
+\begin{gather*}%
  \sum_{\mathrlap{\!\!\!\!\forall\langle w_{a},w_{b}\rangle\in\W^{2}}}\tau[\langle w_{a},w_{b}\rangle,\langle w_{i},w_{j}\rangle]
 =\sum_{\mathrlap{\!\!\!\!\forall\langle w_{c},w_{d}\rangle\in\W^{2}}}\tau[\langle w_{i},w_{j}\rangle,\langle w_{c},w_{d}\rangle]
-\end{multline*}
+\end{gather*}
 %
-Visit (enter) every district exactly once. i.e. use every word exactly once.
+Visit (enter) every district exactly once. i.e. use every word exactly once. $\forall w_{i}\in\W\backslash\{\s,\ee\}$:
 \displayunskip
-\begin{multline*}
-\forall w_{i}\in\W\backslash\{\s,\ee\}: \\
+\begin{gather*}
 \sum_{\mathclap{\forall\langle w_{i},w_{j}\rangle\in S(w_{i}\rangle}}
 \sum_{\mathclap{\substack{\; \\ \;\\ \forall\langle w_{a},w_{b}\rangle\in\W^{2}}}}
 \tau[\langle w_{a},w_{b}\rangle,\,\langle w_{i},w_{j}\rangle]=1
-\end{multline*}
+\end{gather*}
 
 To allow the feasibility checker to detect if ordering the words is
 impossible, transitions of zero probability are also forbidden. i.e. if \mbox{$P(w_{n}|w_{n-2},w_{n-1})=0$} then \mbox{$\tau[\langle w_{n-2},w_{n-1}\rangle,\langle w_{n-1},w_{n}\rangle]=0$}.
@@ -120,7 +119,7 @@ an optimal solution in any case, as they have infinitely high cost.
 
 \paragraph{Lazy Subtour Elimination Constraints}
 
-The problem as formulated above can be input into the MIPS solver. However, like similar formulations of the
+The problem as formulated above can be input into a MIPS solver. However, like similar formulations of the
 travelling salesman problem, some solutions will have subtours.
 We take the usual method for handling this; we use callbacks to impose
 lazy constraints to forbid such solutions at run-time.  
@@ -141,21 +140,19 @@ If there is a subtour, then a constraint must be
 added to eliminate it. The constraint we define is that there must be a connection from at least one of the nodes in the district covered by the core path to
 one of the nodes in the districts not covered.
 
-The districts covered by the tour are given by $S_{T}=\bigcup_{w_{t}\in \W_{T}}S(w_{t})$,
-
-The subtour elimination constraint is given by 
+The districts covered by the tour are given by $S_{T}=\bigcup_{w_{t}\in \W_{T}}S(w_{t})$. The subtour elimination constraint is given by 
 \displayunskip
 \begin{equation*}
   \sum_{\mathclap{\forall\langle w_{t1},w_{t2}\rangle\in S_{T}}}
   \sum_{\mathclap{\substack{\; \\ \;\\ \forall\langle w_{a},w_{b}\rangle\in\W^{2}\backslash S_{T}}}}
   \tau[\langle w_{t1},w_{t2}\rangle,\langle w_{a},w_{b}\rangle]\ge1
 \end{equation*}
-i.e. There must be a transition from one of the states featuring a
+i.e. there must be a transition from one of the states featuring a
 word that is in the core path, to one of the states featuring a word
 not covered by the core path.
 
 
-This formulation around the notion of a core-path that differs this from typical subtour elimination in a GA-TSP. GA-TSP problems are not generally guaranteed to have any nodes which must occur. However every word ordering problem is guaranteed to have such a node -- the start and end nodes. Being able to identify the core path allows for reasonably simple subtour elimination constraint definition. Other subtour elimination constraints do exist however.
+This formulation around the notion of a core-path that differs this from typical subtour elimination in a GA-TSP. GA-TSP problems are not generally guaranteed to have any nodes which must occur. However every word ordering problem is guaranteed to have such a node -- the start and end nodes. Being able to identify the core path allows for reasonably simple subtour elimination constraint definition. Other subtour elimination constraints do exist.
 
 
 \end{document}
