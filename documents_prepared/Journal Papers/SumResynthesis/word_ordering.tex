@@ -15,7 +15,7 @@
 \newcommand{\ee}{w_{\blacktriangleleft}}
 \newcommand{\W}{\mathcal{W}}
 
-\newcommand{\displayunskip}{\vspace{0pt}} %does nothing, but here to mess with later
+\newcommand{\displayunskip}{\vspace{0pt}}
 
 \subsubsection{Notation}
 We will write $w_{i}$ to represent a word from the bag \textbf{$\W$} ($w_i\in \W$), with
@@ -26,7 +26,7 @@ Each vertex is a sequence of two words, $\langle w_{i},w_{j}\rangle\in\W^{2}$.
 This is a Markov state, consisting of a word $w_j$ and its predecessor word $w_i$ -- a bigram.
 
 Each edge between two vertices represents a transition from one state to another which forms a trigram.
-The start vertex is given by $\langle\s,\ss\rangle$, and the end by $\langle\e,\ee\rangle$. The pseudowords  $\s,\ss,\e,\ee$ are added during the trigram models training allowing knowledge about the beginning and ending of sentences to be incorporated.
+The start vertex is given by $\langle\s,\ss\rangle$, and the end by $\langle\e,\ee\rangle$. The pseudowords  $\s,\ss,\e,\ee$ are added during the trigram models' training allowing knowledge about the beginning and ending of sentences to be incorporated.
 
 The GA-TSP districts are given by the sets of all states that have
 a given word in the first position. The district for word $w_{i}$
@@ -35,7 +35,7 @@ With this description, the problem can be formulated as a MIP optimisation probl
 
 
 \subsubsection{Optimization Model}
-Every MIP problem has set of variables to optimise, and a cost function that assesses how optimal a given choice of values for that variable is. The cost function for the word ordering problem must represent how unlikely a particular order is. The variables must represent the order taken. The variable are considered as a table which indicates if a particular transition between states is taken. Note that for any pair of Markov states $\langle w_{a},w_{b}\rangle,\langle w_{c},w_{d}\rangle$ is legal if and only if $b=c$, so we denote legal transitions as $\langle w_{i},w_{j}\rangle \to \langle w_{j},w_{k}\rangle$.
+Every MIP problem has a set of variables to optimise, and a cost function that assesses how optimal a given choice of values for that variable is. The cost function for the word ordering problem must represent how unlikely a particular order is. The variables must represent the order taken. The variables are considered as a table ($\tau$) which indicates if a particular transition between states is taken. Note that for any pair of Markov states $\langle w_{a},w_{b}\rangle,\langle w_{c},w_{d}\rangle$ is legal if and only if $b=c$, so we denote legal transitions as $\langle w_{i},w_{j}\rangle \to \langle w_{j},w_{k}\rangle$.
 %
 Such a transition has cost:
 \begin{gather*}
@@ -72,6 +72,7 @@ is thus given by $P(\tau)=e^{-C_{total}(\tau)}$
 The word order can be found by following the links. The function 
 $f_\tau(n)$ gives the word that, according to $\tau$ occurs in the $n$th position.
 \displayunskip
+\begin{comment}
 \hspace{-1cm} {\mbox{%
 \begin{minipage}{\columnwidth + 0.5cm}
 	\begin{align*}%
@@ -82,6 +83,18 @@ $f_\tau(n)$ gives the word that, according to $\tau$ occurs in the $n$th positio
 	\end{align*}
 	\null{ }
 \end{minipage}}}
+\end{comment}
+\begin{gather*}
+	f_\tau(1)=\{w_{a}\mid w_a\in\W \wedge \tau[\langle\s,\ss\rangle,\langle\ss,w_{a}\rangle]=1\}_{1}
+\end{gather*}
+\vspace{-14mm}
+\begin{gather*}
+f_\tau(2)=\{w_{b}\mid  w_b\in\W \wedge  \tau[\langle\ss,f_\tau(1)\rangle,\langle f_\tau(1),w_{b}\rangle]=1\}_{1}
+\end{gather*}
+\vspace{-14mm}
+\begin{gather*}
+f_\tau(n)=\underset{\mathrm{when}\;\; n\ge3 \hfill}{\{w_{c}\mid  w_c\in\W \wedge  \tau[\langle f_\tau(n{-}2),f_\tau(n{-}1)\rangle,\langle f_\tau(n{-}1),w_{c}\rangle]=1\}_{1}}
+\end{gather*}
 %
 The notation $\{\cdot\}_{1}$ indicates taking a singleton set's only element.
 The constraints on $\tau$ ensure that each set is a singleton.
@@ -103,7 +116,7 @@ Every node entered must also be exited -- except those at the beginning and end.
 =\sum_{\mathrlap{\!\!\!\!\forall\langle w_{c},w_{d}\rangle\in\W^{2}}}\tau[\langle w_{i},w_{j}\rangle,\langle w_{c},w_{d}\rangle]
 \end{gather*}
 %
-Visit (enter) every district exactly once. i.e. use every word exactly once. $\forall w_{i}\in\W\backslash\{\s,\ee\}$:
+Every district must be entered exactly once. i.e. every word must be placed in a single position in the sequence. $\forall w_{i}\in\W\backslash\{\s,\ee\}$:
 \displayunskip
 \begin{gather*}
 \sum_{\mathclap{\forall\langle w_{i},w_{j}\rangle\in S(w_{i}\rangle}}
@@ -119,13 +132,11 @@ an optimal solution in any case, as they have infinitely high cost.
 
 \paragraph{Lazy Subtour Elimination Constraints}
 
-The problem as formulated above can be input into a MIPS solver. However, like similar formulations of the
-travelling salesman problem, some solutions will have subtours.
-We take the usual method for handling this; we use callbacks to impose
-lazy constraints to forbid such solutions at run-time.  
+The problem as formulated above can be input into a MIPS solver. However, like similar formulations of the travelling salesman problem, some solutions will have subtours.
+As is usual callback are used to impose lazy constraints to forbid such solutions at run-time.  
 However, the actual formulation of those constraints are different to a typical GA-TSP.
 
-Given a potential solution $\tau$ meeting all other constraints:
+Given a potential solution $\tau$ meeting all other constraints, we proceed as follows.
 
 The core path -- which starts at $\langle\s,\ss\rangle$
 and ends at $\langle\e,\ee\rangle$ can be found. This is done
@@ -152,7 +163,7 @@ word that is in the core path, to one of the states featuring a word
 not covered by the core path.
 
 
-This formulation around the notion of a core-path that differs this from typical subtour elimination in a GA-TSP. GA-TSP problems are not generally guaranteed to have any nodes which must occur. However every word ordering problem is guaranteed to have such a node -- the start and end nodes. Being able to identify the core path allows for reasonably simple subtour elimination constraint definition. Other subtour elimination constraints do exist.
+This formulation around the notion of a core-path that differs this from typical subtour elimination in a GA-TSP. GA-TSP problems are not generally guaranteed to have any nodes which must occur. However, every word ordering problem is guaranteed to have such a node -- the start and end nodes. Being able to identify the core path allows for reasonably simple subtour elimination constraint definition. Other subtour elimination constraints, however, also do exist.
 
 
 \end{document}
