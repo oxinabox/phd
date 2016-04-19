@@ -1,0 +1,128 @@
+\documentclass{article}
+\usepackage[T1]{fontenc}
+\usepackage[default]{raleway}
+\usepackage{microtype}
+%\renewcommand\familydefault{qag}%{lmss}
+%\linespread{1.3}
+\usepackage[top=2cm,bottom=2cm]{geometry}
+
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+
+\edef\restoreparindent{\parindent=\the\parindent\relax}
+\usepackage{parskip}
+\parskip=0.3\parskip
+\restoreparindent
+	
+\usepackage{hyperref}
+
+\title{Proposal for a method for word sense embedding, induction and disambiguation, based on breaking non-elastic objects by applying radial forces}
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+Here, a potentially novel method for creating word embeddings for different word senses, and on determining the word sense of a word, though its context is proposed. It is fully unsupervised, and uses only a corpora -- it is thus a word sense induction method (WSI).
+This idea has been floating around my head since I visited Varun last year. I think I now have it in a concrete form.
+
+Potentially the corpora used (and the general could be POS tagged, in which as substitute in the remainder of the description \emph{``POS tagged word''} for \emph{word}, including \emph{``POS tagged word embedding''} for \emph{``word embedding''}. The remainder of the method performs unchanged. POS tagging is after all a simple kind of word sense disambiguation, since a different POS tag implies a different word sense.
+
+When I say: snapping non-elastic objects by applying radial forces:
+Imagine a \textbf{china plate}, and I had attached 3 strings around the edge at various points. I pull on these strings with various amounts of force. With only a little force applies there is no change in the plate. But if I apply enough force to overcome the tensile strength and it will snap into a number of pieces: whether it is two or three depends on the forces. I now have a number of plates (well shards) -- which by attaching strings to again I may end up snapping again.
+
+Traditionally, word embeddings are one point in vector space per word. Each time a training case is presented, a gradient is calculated and used to create an update delta. In the update step these deltas are applies (normally averaging over a minibatch or similar).
+Rather than this, we consider instead each training case producing a gradient that is a tensile force applies to the vector point. We consider this vector embedding point to be a \textbf{ceramic dot}. If enough combined forces are applied in suitable directions, it will snap (and the piece will pull apart). If not, the whole point will move. 
+
+This method is generally applicable to any embedding method that is based on predicting the context. Without loss of generality we can consider it when applied to skipgrams -- though any language modelling tasked embedding method works.
+
+\section{Detailed Method}
+We are aiming to collect word sense embedding. One word has many word sense embeddings.
+
+\begin{description}
+	\item[1. Initialisation] Begin by training word embeddings in the usual fashion. This provides the starting location for the initial only word sense embedding. Every word now has exactly one word sense embedding -- its word embedding. \emph{This initial training does not actually need to run to convergence -- but it might help (or not)}
+	
+	\item[2. Word Sense Disambiguation], and Forces determination. For each training case, of a word, and its context. Evaluate for each (current) word sense embedding which sense embedding results in the highest accuracy at the context prediction task*. Assign the word instance to this word sense. Calculate gradients for this word sense embedding, and store them as forces on this particular word sense embedding.
+	
+	\emph{*Note: The context prediction task is only to predict the words in the context -- not the word senses, as we haven't determined those yet. And considering each in turn would involve combinatoric numbers of evaluations. Ergo, context is only based on words.}
+	
+	\item[3. Splitting] Evaluate each word sense embedding, with its collection of tensile forces. Determine if it will split, and if so how many pieces, and going where. For example (in the 2D case) if there were 3 forces, one going North, one south west, and one south east, then it may break into two piece, one which would move north, and once which would move south.  \emph{A model for the physics of objects breaking under multiple tensile forces is discussed in the next section.} The forces remain associated with their split pieces  for the next step of moving the pieces.
+	
+	\item[4. Updating] All the word sense embeddings --whether they are new from snaps or old from word sense embeddings that remained whole -- are updated and move according to the forces that remain associated with them.
+	
+	\item[5. Iterate]  Repeat from 2. until convergence.
+\end{description}
+
+\section{Modelling Breaking}
+Truly modelling objects breaking in 300 dimensions seems very complex; thought it may be simplified by the objects being infinitesimally small. My physics are not up to this.
+
+Consider instead simpler methods.
+
+\subsection{Breaking along a plane}
+
+
+Consider we have 3 forces $F_A,F_B, F_C$ acting on our point.
+\newcommand{\diagramsetup}{	\node (core) [draw, circle]  {};
+	\node(A) [brown]  at (-3,1)  {$F_A$};
+	\node(B) [brown]  at (2.5,0.5)  {$F_B$};
+	\node(C) [brown]  at (-2,-2)  {$F_C$};
+	
+	\coordinate (p1) at (1.4,-2);
+	\coordinate (p2) at ($-1*(p1)$);
+}
+
+\begin{figure}[H]
+	\center
+	\begin{tikzpicture}
+	\diagramsetup	
+	%\draw[dashed, thick] (p1) -- (p2) ;
+	\foreach \t  in {A,B,C}{
+		\draw[->, brown, thick] (core) -- (\t); 
+		%\draw[red,->] ($(p1)!(\t)!(p2)$)-- node[xshift=0.35cm,yshift=0.45cm]{$F_{\t,n}$}  (\t); 
+		\draw[->, blue,dashed] (core) ->node[yshift=0.25cm] {$F_{\t,x}$} (\t |- core); 
+		\draw[->, blue,dashed] (\t |- core)  -> node[xshift=0.35cm] {$F_{\t,y}$} (\t); 
+	}
+	\end{tikzpicture}
+	\caption{3 Forces acting on our point}
+\end{figure}
+
+By change of basic, we can consider the portions of the forces which are acting to break it along any given plane.
+
+\begin{figure}[H]
+	\center
+	\begin{tikzpicture}
+	\diagramsetup	
+	\draw[dashed, thick] (p1) -- (p2) ;
+	\foreach \t  in {A,B,C}{
+		\draw[->, brown, thick] (core) -- (\t); 
+		\draw[red,->] ($(p1)!(\t)!(p2)$)-- node[xshift=0.35cm,yshift=0.45cm]{$F_{\t,n}$}  (\t); 
+	}
+	\end{tikzpicture}
+	\caption{Forces normal to the plane shown.}
+\end{figure}
+
+Now, to determine if the point breaks along the plane, we only need to consider weather the sum of opposing forces exceeds some \textbf{tensile strength parameter}.
+
+The portion of the force that is not normal to the plane can be discarded for purposes of determining if there is an a break along the plane being tested.
+
+\subsection{Which planes to break along?}
+The problem is becomes selecting which planes to consider for breaking along.
+
+\begin{itemize}
+	\item An exhaustive search would to consider planes perpendicular to every combination of force vectors. This is $O(n!)$, where $n$ is the number of forces. 
+	\item A single depth search would just consider a plane perpendicular to each force. So $O(n)$
+	\item A greedy solution may be to attempt to find the largest vector sum, by considering first the largest vector, and then shifting it based on its sum with the next largest vector that is inline with it (based on dot products). Then only considering this one plane. Then if a break does occur, consider breaks on the substructures resulting, starting from the next largest vector. This would run in polynomial time.
+	\item A simple method is to only consider the planes in line with the axes. This avoids any need for change of basis. This is $O(n)$. If we consider all of these planes then worse case is the plane we considered is $45^\circ$ off from the true plane that we should have considered.
+\end{itemize}
+
+
+\section{Practical issue: Memory Usage}
+It should be noted that this method does require storing every single update that will happen for a word, before they can be processed, and applies (and then freed). On a large corpus, this may require some tricks to handle. 
+However, the word's embeddings (plural intentional) are not dependent on the other word embeddings at all, so can be processed one at a time. That is: learn from all occurrences of a word in the corpus, then apply the snapping procedure. Then move on to the next word. Words, and sentences could in be partitions to different computers entirely, as they do not interact. Sorting this out 
+is a problem only in indexing. A method like \url{http://stackoverflow.com/questions/25892857/lucene-extracting-sentence-in-which-word-match-occurs} could be used.
+
+
+
+
+\end{document}
