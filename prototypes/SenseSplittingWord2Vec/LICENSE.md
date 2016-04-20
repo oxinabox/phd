@@ -1,7 +1,10 @@
-The Word2Vec.jl package is licensed under the MIT "Expat" License:
+The SenseSplittingWord2Vec.jl package is licensed under the MIT "Expat" License:
 
-> Copyright (c) 2015: Tanmay Mohapatra, Zhixuan Yang
->
+
+> Original work Copyright 2015: Zhixuan Yang
+> Modified work Copyright (c) 2015: Tanmay Mohapatra, 
+> Modified work Copyright (c) 2016: Lyndon White (aka Frames, aka oxinabox) 
+
 > Permission is hereby granted, free of charge, to any person obtaining
 > a copy of this software and associated documentation files (the
 > "Software"), to deal in the Software without restriction, including

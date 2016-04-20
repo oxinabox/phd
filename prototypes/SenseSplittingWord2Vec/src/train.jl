@@ -80,9 +80,9 @@ function _print_codebook(embed::WordEmbedding, N=10)
     nothing
 end
 
-#===============================================================================
-Step 1: Find Word Distribution
-===============================================================================#
+#*===============================================================================
+#*Step 1: Find Word Distribution
+#*===============================================================================#
 
 function merge_distributions(dst_ref::RemoteRef, src_ref::RemoteRef)
     word_count1,distribution1 = fetch(dst_ref)
@@ -162,7 +162,7 @@ function compute_frequency!(distribution::Dict{AbstractString,Float64}, word_cou
     nothing
 end
 
-function word_distribution(source::Union(Block,AbstractString), min_count::Int=5)
+function word_distribution(source::Union{Block,AbstractString}, min_count::Int=5)
     t1 = time()
 
     println("Finding word distribution...")
@@ -180,9 +180,9 @@ function word_distribution(source::Union(Block,AbstractString), min_count::Int=5
 end
 
 
-#===============================================================================
-Step 2: Calculate Word Embedding
-===============================================================================#
+#*===============================================================================
+#*Step 2: Calculate Word Embedding
+#*===============================================================================#
 
 function merge_embeds(ref1::RemoteRef, ref2::RemoteRef)
     e1 = fetch(ref1)
@@ -287,11 +287,11 @@ function work_process(embed::WordEmbedding, words_stream::WordStream, strip::Boo
 end
 
 
-#===============================================================================
-Train a corpus
-Step 1: Find Word Distribution
-Step 2: Calculate Word Embedding
-===============================================================================#
+#*===============================================================================
+#*Train a corpus
+#*Step 1: Find Word Distribution
+#*Step 2: Calculate Word Embedding
+#*===============================================================================#
 
 function initialize_embedding(embed::WordEmbedding, randomly::RandomInited)
     for i in embed.vocabulary

@@ -1,3 +1,5 @@
+using StatsFuns
+
 # linear softmax classifier (with stochastic gradient descent)
 type LinearClassifier
     k::Int64 # number of outputs
@@ -13,8 +15,7 @@ function LinearClassifier(k, n)
 end
 
 function predict(c::LinearClassifier, x::Array{Float64})
-    # the softmax() function from the NumericExtension package is more numeric stable
-    return vec(softmax(x * c.weights))
+    return vec(softmax(x' * c.weights))
 end
 
 function predict!(c::LinearClassifier, x::Array{Float64})

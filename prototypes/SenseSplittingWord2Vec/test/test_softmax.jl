@@ -1,8 +1,10 @@
+push!(LOAD_PATH,"../src/")
 using Word2Vec
 using Base.Test
 using Compat
 
-data_dir = joinpath(Pkg.dir("Word2Vec"), "test", "data")
+#data_dir = joinpath(Pkg.dir("Word2Vec"), "test", "data")
+data_dir = joinpath("data") #For local run from testind directory
 train_file = joinpath(data_dir, "mnist_train.csv")
 test_file = joinpath(data_dir, "mnist_test.csv")
 

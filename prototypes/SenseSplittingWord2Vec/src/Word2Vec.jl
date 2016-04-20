@@ -3,13 +3,9 @@ module Word2Vec
 using Base.Collections      # for priority queue
 using Base.Cartesian        # for @nexprs
 using Distances
-using NumericExtensions
 using Blocks
 using Compat
 
-if isless(Base.VERSION, v"0.4.0-")
-using Iterators
-end
 
 export LinearClassifier, train_one, WordEmbedding, train, accuracy
 export save, restore

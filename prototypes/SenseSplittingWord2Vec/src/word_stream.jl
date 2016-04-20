@@ -1,5 +1,5 @@
 type WordStream
-    fp::Union(IO, AbstractString)
+    fp::Union{IO, AbstractString}
     startpoint::Int64
     endpoint::Int64
     buffer::IOBuffer
@@ -10,7 +10,7 @@ type WordStream
     distr::Dict{AbstractString, Float64}
 end
 
-function words_of(file::Union(IO,AbstractString); subsampling=(0,false,nothing), startpoint=-1, endpoint=-1)
+function words_of(file::Union{IO,AbstractString}; subsampling=(0,false,nothing), startpoint=-1, endpoint=-1)
     rate, filter, distr = subsampling
     WordStream(file, startpoint, endpoint, IOBuffer(), rate, filter, (rate==0 && !filter) ? Dict{AbstractString,Float64}() : distr)
 end

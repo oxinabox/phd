@@ -1,7 +1,8 @@
 using Word2Vec
 using Base.Test
 
-data_dir = joinpath(Pkg.dir("Word2Vec"), "test", "data")
+#data_dir = joinpath(Pkg.dir("Word2Vec"), "test", "data")
+data_dir = joinpath("data") #For local run from testind directory
 test_file = joinpath(data_dir, "text8_tiny")
 
 printover(i) = print("\r$i\e[K")
