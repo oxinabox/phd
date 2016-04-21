@@ -84,35 +84,6 @@ end
 #*Step 1: Find Word Distribution
 #*===============================================================================#
 
-function merge_distributions(dst_ref::RemoteRef, src_ref::RemoteRef)
-    word_count1,distribution1 = fetch(dst_ref)
-    word_count2,distribution2 = fetch(src_ref)
-
-    for (n,v) in distribution2
-        if haskey(distribution1, n)
-            distribution1[n] += v
-        else
-            distribution1[n] = v
-        end
-    end
-
-    ((word_count1 + word_count2), distribution1)
-end
-
-merge_distributions(refs) = merge_distributions(convert(Array{RemoteRef,1}, refs))
-function merge_distributions(refs::Array{RemoteRef,1})
-    result = refs
-    while length(result) > 1
-        iter_result = Array(RemoteRef, 0)
-        while length(result) > 1
-            refpair = splice!(result, 1:2)
-            push!(iter_result, remotecall(refpair[1].where, merge_distributions, refpair[1], refpair[2]))
-        end
-        isempty(result) || push!(iter_result, pop!(result))
-        result = iter_result
-    end
-    fetch(result[1])
-end
 
 function get_distribution(corpus_fileio::IO)
     distribution = Dict{AbstractString,Float64}()
@@ -136,11 +107,6 @@ function get_distribution(corpus_filename::AbstractString)
     end
 end
 
-function get_distribution(b::Block)
-    count_refs = pmap(get_distribution, b; fetch_results=false)
-    merge_distributions(count_refs)
-end
-
 function strip_infrequent(distribution::Dict{AbstractString,Float64}, min_count::Int)
     stripped_distr = Dict{AbstractString,Float64}()
     word_count = 0
@@ -162,7 +128,7 @@ function compute_frequency!(distribution::Dict{AbstractString,Float64}, word_cou
     nothing
 end
 
-function word_distribution(source::Union{Block,AbstractString}, min_count::Int=5)
+function word_distribution(source::AbstractString, min_count::Int=5)
     t1 = time()
 
     println("Finding word distribution...")
@@ -183,44 +149,6 @@ end
 #*===============================================================================
 #*Step 2: Calculate Word Embedding
 #*===============================================================================#
-
-function merge_embeds(ref1::RemoteRef, ref2::RemoteRef)
-    e1 = fetch(ref1)
-    e2 = fetch(ref2)
-    for word in e1.vocabulary
-        e1.embedding[word] .+= e2.embedding[word]
-    end
-    e1.trained_count += e2.trained_count
-    println("merged $ref1 and $ref2")
-    e1
-end
-
-merge_embeds(refs) = merge_embeds(convert(Array{RemoteRef,1}, refs))
-function merge_embeds(refs::Array{RemoteRef,1})
-    n = length(refs)
-    result = refs
-    while length(result) > 1
-        iter_result = Array(RemoteRef, 0)
-        while length(result) > 1
-            refpair = splice!(result, 1:2)
-            push!(iter_result, remotecall(refpair[1].where, merge_embeds, refpair[1], refpair[2]))
-        end
-        isempty(result) || push!(iter_result, pop!(result))
-        result = iter_result
-    end
-
-    emb = fetch(result[1])
-    for word in emb.vocabulary
-        emb.embedding[word] /= n
-    end
-
-    emb
-end
-
-function work_process(ser_embed::AbstractString, words_stream::WordStream, strip::Bool=false)
-    embed = restore(ser_embed)
-    work_process(embed, words_stream, strip)
-end
 
 function work_process(embed::WordEmbedding, words_stream::WordStream, strip::Bool=false)
     t1 = time()
@@ -318,41 +246,6 @@ function initialize_network(embed::WordEmbedding, huffman::HuffmanTree)
     embed
 end
 
-function train(embed::WordEmbedding, corpus::Block, prepared_corpus_location::AbstractString)
-    corpus = corpus |> as_io |> as_wordio
-    embed.distribution = word_distribution(corpus)
-    embed.vocabulary = collect(keys(embed.distribution))
-
-    initialize_embedding(embed, embed.init_type)        # initialize by the specified method
-    initialize_network(embed, embed.network_type)
-
-    # determine the position in the tree for every word
-    for (w, code) in leaves_of(embed.classification_tree)
-        embed.codebook[w] = code
-    end
-
-    # serialize the word distribution for workers to pick up
-    save(embed, prepared_corpus_location)
-
-    t1 = time()
-    println("Starting parallel training...")
-
-    # Note: subsampling is not honored here, probably not required also?
-    corpus = corpus |> words_of
-
-    embs = pmap((x)->work_process(prepared_corpus_location, x, true), corpus; fetch_results=false)
-    t2 = time()
-    println("Partial training done at $(t2-t1) time")
-
-    println("Merging results...")
-    training_result = merge_embeds(embs)
-    embed.embedding = training_result.embedding
-    embed.trained_count = training_result.trained_count
-    t3 = time()
-
-    println("Training complete at $(t3-t1) time")
-    embed
-end
 
 function train(embed::WordEmbedding, corpus_filename::AbstractString)
     embed.distribution = word_distribution(corpus_filename)
