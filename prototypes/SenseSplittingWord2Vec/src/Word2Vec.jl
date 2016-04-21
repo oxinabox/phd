@@ -3,7 +3,6 @@ module Word2Vec
 using Base.Collections      # for priority queue
 using Base.Cartesian        # for @nexprs
 using Distances
-using Blocks
 using Compat
 
 
