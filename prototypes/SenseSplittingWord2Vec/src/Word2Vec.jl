@@ -12,7 +12,6 @@ export find_nearest_words
 
 include("utils.jl")
 include("tree.jl")
-include("word_stream.jl")
 include("softmax_classifier.jl")
 include("train.jl")
 include("query.jl")

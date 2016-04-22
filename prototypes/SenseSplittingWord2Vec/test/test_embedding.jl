@@ -1,8 +1,7 @@
 push!(LOAD_PATH,"../src/")
 using Word2Vec
 using Base.Test
-using Blocks
-using Base.FS
+
 
 #data_dir = joinpath(Pkg.dir("Word2Vec"), "test", "data")
 #model_dir = joinpath(Pkg.dir("Word2Vec"), "test", "models")

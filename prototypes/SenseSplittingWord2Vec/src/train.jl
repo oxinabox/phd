@@ -1,3 +1,6 @@
+push!(LOAD_PATH,".")
+using WordStreams
+
 # The types defined below are used for specifying the options of the word embedding training
 abstract Option
 
