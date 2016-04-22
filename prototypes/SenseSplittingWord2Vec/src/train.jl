@@ -26,7 +26,7 @@ const huffman_tree = HuffmanTree()
 
 type WordEmbedding
     vocabulary::Array{AbstractString}
-    embedding::Dict{AbstractString, Array{Float64}}
+    embedding::Dict{AbstractString, Vector{Float64}}
     classification_tree::TreeNode
     distribution::Dict{AbstractString, Float64}
     codebook::Dict{AbstractString, Vector{Int64}}
@@ -174,8 +174,7 @@ function work_process(embed::WordEmbedding, words_stream::WordStream, strip::Boo
 
             if trained_count % 10000 == 0
                 progress = (current_iter-1 + current_iter_prog)/ embed.iter
-			
-				info("trained on $trained_count words"; progress=progress, α=α)
+		info("trained on $trained_count words"; progress=progress, α=α)
                 α = embed.init_learning_rate * (1 - progress)
                 if α < embed.init_learning_rate * 0.0001
                     α = embed.init_learning_rate * 0.0001
@@ -198,13 +197,12 @@ function work_process(embed::WordEmbedding, words_stream::WordStream, strip::Boo
                 input = embed.embedding[trained_word]
 
                 for code in embed.codebook[target_word]
-                    train_one(node.data, input, code, input_gradient, α)
+                    train_one!(node.data, input, code, input_gradient, α)
                     node = node.children[code]
                 end
-
-                for i in 1:embed.dimension
-                    input[i] -= input_gradient[i]
-                end
+		for ii in 1:embed.dimension
+	                input[ii] -= input_gradient[ii]
+		end
             end
         end
     end
@@ -230,7 +228,7 @@ end
 
 function initialize_embedding(embed::WordEmbedding, randomly::RandomInited)
     for i in embed.vocabulary
-        embed.embedding[i] = rand(1, embed.dimension) * 2 - 1
+        embed.embedding[i] = rand(embed.dimension) * 2 - 1
     end
     embed
 end

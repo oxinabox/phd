@@ -32,7 +32,7 @@ function predict!(c::LinearClassifier, x::Array{Float64})
     softmax!(c.outputs, c.outputs);
 end
 
-function train_one(c::LinearClassifier, x::Array{Float64}, y::Int64, α::Float64=0.025)
+function train_one!(c::LinearClassifier, x::Array{Float64}, y::Int64, α::Float64=0.025)
     # if !in(y, 1 : c.k)
     #     msg = @sprintf "A sample is discarded because the label y = %d is not in range of 1 to %d" y c.k
     #     warn(msg)
@@ -61,7 +61,7 @@ function train_one(c::LinearClassifier, x::Array{Float64}, y::Int64, α::Float64
     end
 end
 
-function train_one(c::LinearClassifier, x::Array{Float64}, y::Int64, input_gradient::Array{Float64}, α::Float64=0.025)
+function train_one!(c::LinearClassifier, x::Array{Float64}, y::Int64, input_gradient::Array{Float64}, α::Float64=0.025)
     predict!(c, x)
     c.outputs[y] -= 1
 
