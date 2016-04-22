@@ -162,16 +162,16 @@ function work_process(embed::WordEmbedding, words_stream::WordStream, strip::Boo
     trained_times = Dict{String, Int64}()
 
     for current_iter in 1:embed.iter
-        for window in sliding_window(words_stream, lsize=embed.lsize, rsize=embed.rsize)
+	println("Iter $current_iter of $(embed.iter)")
+        for (current_iter_prog,window) in enumerate_progress(sliding_window(words_stream, lsize=embed.lsize, rsize=embed.rsize))
             trained_word = window[middle]
             trained_times[trained_word] = get(trained_times, trained_word, 0) + 1
             trained_count += 1
 
             if trained_count % 10000 == 0
-                flen = words_stream.endpoint - words_stream.startpoint
-                iter_progress = (position(words_stream.fp) - words_stream.startpoint) / flen
-                progress = ((current_iter - 1) + iter_progress) / embed.iter
-                println("trained on $trained_count words, progress $progress, α = $α")
+                progress = (current_iter-1 + current_iter_prog)/ embed.iter
+		    
+		println("trained on $trained_count words, progress $progress,  α = $α")
                 α = embed.init_learning_rate * (1 - progress)
                 if α < embed.init_learning_rate * 0.0001
                     α = embed.init_learning_rate * 0.0001
