@@ -1,3 +1,6 @@
+
+using Lumberjack
+
 push!(LOAD_PATH,".")
 using WordStreams
 
@@ -60,7 +63,8 @@ function WordEmbedding(dim::Int64, init_type::InitializatioinMethod, network_typ
 end
 
 function Base.show(io::IO, x::WordEmbedding)
-    println(io, "Word embedding(dimension = $(x.dimension)) of $(length(x.vocabulary)) words, trained on $(x.trained_count) words")
+    println(io, "Word embedding(dimension = $(x.dimension))"*
+			"of $(length(x.vocabulary)) words, trained on $(x.trained_count) words")
     nothing
 end
 
@@ -116,7 +120,7 @@ function strip_infrequent(distribution::Dict{AbstractString,Float64}, min_count:
 
     for (k,v) in distribution
         if v >= min_count
-            word_count += @compat(Int(v))
+            word_count += Int(round(v))
             stripped_distr[k] = v
         end
     end
@@ -154,15 +158,15 @@ end
 #*===============================================================================#
 
 function work_process(embed::WordEmbedding, words_stream::WordStream, strip::Bool=false)
-    t1 = time()
-    middle = embed.lsize + 1
+    tic()
+	middle = embed.lsize + 1
     input_gradient = zeros(Float64, embed.dimension)
     α = embed.init_learning_rate
     trained_count = 0
     trained_times = Dict{String, Int64}()
 
     for current_iter in 1:embed.iter
-	println("Iter $current_iter of $(embed.iter)")
+	debug("Iter $current_iter of $(embed.iter)")
         for (current_iter_prog,window) in enumerate_progress(sliding_window(words_stream, lsize=embed.lsize, rsize=embed.rsize))
             trained_word = window[middle]
             trained_times[trained_word] = get(trained_times, trained_word, 0) + 1
@@ -170,8 +174,8 @@ function work_process(embed::WordEmbedding, words_stream::WordStream, strip::Boo
 
             if trained_count % 10000 == 0
                 progress = (current_iter-1 + current_iter_prog)/ embed.iter
-		    
-		println("trained on $trained_count words, progress $progress,  α = $α")
+			
+				info("trained on $trained_count words"; progress=progress, α=α)
                 α = embed.init_learning_rate * (1 - progress)
                 if α < embed.init_learning_rate * 0.0001
                     α = embed.init_learning_rate * 0.0001
@@ -208,8 +212,8 @@ function work_process(embed::WordEmbedding, words_stream::WordStream, strip::Boo
     embed.trained_count = trained_count
     embed.trained_times = trained_times
 
-    t2 = time()
-    println("Finished training. Trained on $(embed.trained_count) words in $(t2-t1) seconds.")
+    overall_time = toq()
+    debug("Finished training. Trained on $(embed.trained_count) words in $(overall_time) seconds.")
 
     # strip to remove unnecessary members and make serialization faster
     strip && _strip(embed)
