@@ -1,8 +1,10 @@
-function find_nearest_words(embed::WordEmbedding, words::AbstractString; nwords=5)
+function find_nearest_words(embed::WordEmbedding, equation::AbstractString; nwords=5)
+	tokens = replace(replace(equation, "+", " + "), "-", " - ")
     positive_words = AbstractString[]
     negative_words = AbstractString[]
     wordlist = positive_words
-    for tok in split(words,[' ', '+', '-'])
+
+    for tok in split(tokens)
         tok = strip(tok)
         isempty(tok) && continue
         if tok == "+"
@@ -13,7 +15,8 @@ function find_nearest_words(embed::WordEmbedding, words::AbstractString; nwords=
             push!(wordlist, tok)      #It must be a word, put it in currnet list
         end
     end
-    find_nearest_words(embed, positive_words, negative_words; nwords=nwords)
+	
+	find_nearest_words(embed, positive_words, negative_words; nwords=nwords)
 end
 
 function find_nearest_words(embed::WordEmbedding, positive_words::Vector, negative_words::Vector; nwords=5)
