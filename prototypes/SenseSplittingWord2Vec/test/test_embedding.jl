@@ -2,7 +2,7 @@ push!(LOAD_PATH,"../src/")
 using Word2Vec
 using Lumberjack
 using FactCheck
-
+import Lumberjack
 
 #data_dir = joinpath(Pkg.dir("Word2Vec"), "test", "data")
 #model_dir = joinpath(Pkg.dir("Word2Vec"), "test", "models")

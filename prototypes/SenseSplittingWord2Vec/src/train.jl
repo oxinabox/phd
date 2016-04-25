@@ -68,6 +68,7 @@ function Base.show(io::IO, x::WordEmbedding)
     nothing
 end
 
+
 # strip embedding and retain only word vectors
 function _strip(embed::WordEmbedding)
     embed.vocabulary = AbstractString[]
@@ -201,7 +202,7 @@ function work_process(embed::WordEmbedding, words_stream::WordStream, strip::Boo
                     node = node.children[code]
                 end
 		for ii in 1:embed.dimension
-	                input[ii] -= input_gradient[ii]
+			input[ii] -= input_gradient[ii]
 		end
             end
         end

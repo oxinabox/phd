@@ -1,48 +1,34 @@
-function joinvec(embed::WordEmbedding, words::Vector, fn::Function, wv::Array=[])
-    for word in words
-        if !haskey(embed.embedding, word)
-            warn("'$word' not present in the vocabulary")
-            return wv
-        end
-        if isempty(wv)
-            wv = vec(embed.embedding[word])
-        else
-            wv = fn(wv, vec(embed.embedding[word]))
-        end
-    end
-    wv
-end
-
-function find_nearest_words(embed::WordEmbedding, words::AbstractString; k=5)
+function find_nearest_words(embed::WordEmbedding, words::AbstractString; nwords=5)
     positive_words = AbstractString[]
     negative_words = AbstractString[]
     wordlist = positive_words
-    for tok in split(words)
+    for tok in split(words,[' ', '+', '-'])
         tok = strip(tok)
         isempty(tok) && continue
         if tok == "+"
-            wordlist = positive_words
+            wordlist = positive_words #change to putting in the positive list
         elseif tok == "-"
-            wordlist = negative_words
+            wordlist = negative_words #change to putting in the negitive list
         else
-            push!(wordlist, tok)
+            push!(wordlist, tok)      #It must be a word, put it in currnet list
         end
     end
-    find_nearest_words(embed, positive_words, negative_words; k=k)
+    find_nearest_words(embed, positive_words, negative_words; nwords=nwords)
 end
 
-function find_nearest_words(embed::WordEmbedding, positive_words::Vector, negative_words::Vector; k=5)
+function find_nearest_words(embed::WordEmbedding, positive_words::Vector, negative_words::Vector; nwords=5)
     pq = PriorityQueue(Base.Order.Reverse)
+    wv = sum([embed.embedding[w] for w∈positive_words])
+	wv .-= length(negative_words)>0 ? sum([embed.embedding[w] for w∈negative_words]) : 0.0
 
-    wv = joinvec(embed, positive_words, .+, Array[])
-    wv = joinvec(embed, negative_words, .-, wv)
-
-    if !isempty(wv)
-        for (w, embed_w) in embed.embedding
-            ((w in positive_words) || (w in negative_words)) && continue
-            dist = cosine_dist(wv, vec(embed_w))
-            enqueue!(pq, w, dist)
-            (length(pq) > k) && dequeue!(pq)
+    for (w, embed_w) in embed.embedding
+        if (w in positive_words) || (w in negative_words)
+            continue
+        end
+        dist = cosine_dist(wv, embed_w)
+        enqueue!(pq, w, dist)
+        if length(pq) > nwords
+            dequeue!(pq)
         end
     end
     sort(collect(pq), by = t -> t[2])
