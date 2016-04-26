@@ -32,7 +32,7 @@ end
 
 
 function test_word_embedding(inputfile)
-	embed = WordEmbedding(30, Word2Vec.random_inited, Word2Vec.huffman_tree, subsampling = 0)
+	embed = WordEmbedding(30, Word2Vec.random_inited, Word2Vec.huffman_tree, subsampling = 0, iter=2)
 	add_truck(CheckAlphaDecreasingTruck(Inf,"info"), "Testing Truck")
 
 	@time train(embed, inputfile)

@@ -3,6 +3,7 @@ using Lumberjack
 
 push!(LOAD_PATH,".")
 using WordStreams
+using WordDistributions
 
 # The types defined below are used for specifying the options of the word embedding training
 abstract Option
@@ -88,70 +89,6 @@ function _print_codebook(embed::WordEmbedding, N=10)
     nothing
 end
 
-#*===============================================================================
-#*Step 1: Find Word Distribution
-#*===============================================================================#
-
-
-function get_distribution(corpus_fileio::IO)
-    distribution = Dict{AbstractString,Float64}()
-    word_count = 0
-
-    for i in words_of(corpus_fileio)
-        if !haskey(distribution, i)
-            distribution[i] = 1
-        else
-            distribution[i] += 1
-        end
-        word_count += 1
-    end
-
-    (word_count, distribution)
-end
-
-function get_distribution(corpus_filename::AbstractString)
-    open(corpus_filename, "r") do fs
-        return get_distribution(fs)
-    end
-end
-
-function strip_infrequent(distribution::Dict{AbstractString,Float64}, min_count::Int)
-    stripped_distr = Dict{AbstractString,Float64}()
-    word_count = 0
-
-    for (k,v) in distribution
-        if v >= min_count
-            word_count += Int(round(v))
-            stripped_distr[k] = v
-        end
-    end
-
-    (word_count, stripped_distr)
-end
-
-function compute_frequency!(distribution::Dict{AbstractString,Float64}, word_count::Int)
-    for (k, v) in distribution
-        distribution[k] /= word_count
-    end
-    nothing
-end
-
-function word_distribution(source::AbstractString, min_count::Int=5)
-    t1 = time()
-
-    println("Finding word distribution...")
-    word_count, distribution = get_distribution(source)
-    println("Word Count: $word_count, Vocabulary Size: $(length(keys(distribution)))")
-
-    println("Stripping infrequent words...")
-    word_count, distribution = strip_infrequent(distribution, min_count)
-    println("Word Count: $word_count, Vocabulary Size: $(length(keys(distribution)))")
-
-    compute_frequency!(distribution, word_count)
-    println("Compute time: $(time()-t1)")
-
-    distribution
-end
 
 
 #*===============================================================================
@@ -201,9 +138,9 @@ function work_process(embed::WordEmbedding, words_stream::WordStream, strip::Boo
                     train_one!(node.data, input, code, input_gradient, α)
                     node = node.children[code]
                 end
-		for ii in 1:embed.dimension
-			input[ii] -= input_gradient[ii]
-		end
+                for ii in 1:embed.dimension
+                    input[ii] -= input_gradient[ii]
+                end
             end
         end
     end
