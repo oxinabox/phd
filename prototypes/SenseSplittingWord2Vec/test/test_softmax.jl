@@ -7,7 +7,7 @@ data_dir = joinpath("data") #For local run from testind directory
 train_file = joinpath(data_dir, "mnist_train.csv")
 test_file = joinpath(data_dir, "mnist_test.csv")
 
-function test_softmax()
+function test_softmax_training()
     println("Testing the softmax classifier on the MNIST dataset")
 
     println("Loading...")
@@ -35,10 +35,22 @@ function test_softmax()
         acc = accuracy(c, X_test, y_test)
         println("Accuracy on test set $acc")
     end
-    acc
+    c, acc
     
 end
+
+function test_classifier(classifier)
+    #TODO:Write me
+    @pend classifier.predict 
+end
+
 facts() do 
-    final_accurasy=test_softmax()
+    classifier, final_accurasy=test_softmax_training()
     @fact final_accurasy --> greater_than(0.8)
+        
+    test_classifier(classifier)
+    
+end
+    
+    
 end

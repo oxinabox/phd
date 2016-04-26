@@ -1,5 +1,5 @@
 using StatsFuns
-
+using Base.Cartesian        # for @nexprs
 # linear softmax classifier (with stochastic gradient descent)
 type LinearClassifier
     k::Int64 # number of outputs
@@ -15,7 +15,7 @@ function LinearClassifier(k, n)
 end
 
 function predict(c::LinearClassifier, x::Array{Float64})
-    return vec(softmax(x' * c.weights))
+    return softmax(x * c.weights)
 end
 
 function predict!(c::LinearClassifier, x::Array{Float64})

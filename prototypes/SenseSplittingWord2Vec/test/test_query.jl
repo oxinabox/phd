@@ -13,7 +13,7 @@ embed.embedding["e"] = [4., 2.]
 facts() do
 	@fact [w for (w,v) in find_nearest_words(embed,"c", nwords=2)] --> ["e", "d"]
 
-	@fact find_nearest_words(embed, "b-a+c", nwords=1)[1][1] --> "d"
+    @fact find_nearest_words(embed, "b-a+c", nwords=1)[1][1] --> "d" "pattern given in http://www.aclweb.org/anthology/N13-1090"
 
 	@fact_throws find_nearest_words(embed,"z") KeyError
 end
