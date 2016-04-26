@@ -1,9 +1,10 @@
 module WordDistributions
-
 using Lumberjack
 using WordStreams
 
-export get_distribution, strip_infrequent, compute_frequency!, word_distribution
+#TODO Types in this are all screwy. It doesn't really matter, but it would be lcaerer is Floats were not largely being used for Ints
+
+export get_distribution, strip_infrequent, compute_frequency, word_distribution
 
 function get_distribution(corpus_fileio::IO)
     distribution = Dict{AbstractString,Float64}()
@@ -41,14 +42,17 @@ function strip_infrequent(distribution::Dict{AbstractString,Float64}, min_count:
     (word_count, stripped_distr)
 end
 
-function compute_frequency!(distribution::Dict{AbstractString,Float64}, word_count::Int)
-    for (k, v) in distribution
-        distribution[k] /= word_count
+
+function compute_frequency{S<:AbstractString,C<:Number}(distribution_counts::Dict{S,C}, word_count::Int)
+
+	distribution=Dict{S,Float64}()
+	for (k, v) in distribution_counts
+        distribution[k] = v/word_count
     end
-    nothing
+	distribution
 end
 
-function word_distribution(source::AbstractString, min_count::Int=5)
+function word_distribution(source::Union{AbstractString, IO}, min_count::Int=5)
     tic()
 
     info("Finding word distribution...")
@@ -59,7 +63,7 @@ function word_distribution(source::AbstractString, min_count::Int=5)
     word_count, distribution = strip_infrequent(distribution, min_count)
     info("Word Count: $word_count, Vocabulary Size: $(length(keys(distribution)))")
 
-    compute_frequency!(distribution, word_count)
+	distribution = compute_frequency(distribution, word_count)
     info("Compute time: ", toq())
 
     distribution

@@ -2,14 +2,13 @@ push!(LOAD_PATH,"../src/")
 using Word2Vec
 using Lumberjack
 using FactCheck
-import Lumberjack
 
 #data_dir = joinpath(Pkg.dir("Word2Vec"), "test", "data")
 #model_dir = joinpath(Pkg.dir("Word2Vec"), "test", "models")
 data_dir = joinpath("data") #For local run from testing directory
 model_dir = joinpath("models") #For local run from testing directory
 
-test_filename = isempty(ARGS) ? "text8_tiny" : ARGS[1]
+test_filename = "text8_tiny"
 test_file = joinpath(data_dir, test_filename)
 model_file = joinpath(model_dir, test_filename * ".model")
 

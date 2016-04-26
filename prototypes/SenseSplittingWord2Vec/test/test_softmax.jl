@@ -1,7 +1,6 @@
 push!(LOAD_PATH,"../src/")
 using Word2Vec
-using Base.Test
-using Compat
+using FactCheck
 
 #data_dir = joinpath(Pkg.dir("Word2Vec"), "test", "data")
 data_dir = joinpath("data") #For local run from testind directory
@@ -14,11 +13,8 @@ function test_softmax()
     println("Loading...")
     D = readcsv(train_file, header=true)[1]
     X_train = D[:, 2:end] / 255
-    if isless(Base.VERSION, v"0.4.0-")
-        y_train = map(int64, D[:,1] + 1)
-    else
-        y_train = map(Int64, D[:,1] + 1)
-    end
+    y_train = map(Int64, D[:,1] + 1)
+    
 
     D = readcsv(test_file, header=true)[1]
     X_test = D[:, 2:end] / 255
@@ -30,15 +26,19 @@ function test_softmax()
 
     println("Start training...")
     c = LinearClassifier(10, 784)
-    niter = 20
-    for j in 1:niter
-        println("iteration $(j)/$(niter)")
+    acc= NaN
+    for j in 1:5
+        println("iteration $(j)")
         for i in 1:size(X_train,1)
-            Word2Vec.train_one(c, X_train[i,:], y_train[i])
+            Word2Vec.train_one!(c, X_train[i,:], y_train[i])
         end
         acc = accuracy(c, X_test, y_test)
-        println("Accuracy on test set $acc (a value around 0.9 is expected)")
+        println("Accuracy on test set $acc")
     end
+    acc
+    
 end
-
-test_softmax()
+facts() do 
+    final_accurasy=test_softmax()
+    @fact final_accurasy --> greater_than(0.8)
+end

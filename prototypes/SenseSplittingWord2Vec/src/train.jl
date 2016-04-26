@@ -101,7 +101,7 @@ function work_process(embed::WordEmbedding, words_stream::WordStream, strip::Boo
     input_gradient = zeros(Float64, embed.dimension)
     α = embed.init_learning_rate
     trained_count = 0
-    trained_times = Dict{String, Int64}()
+    trained_times = Dict{AbstractString, Int64}()
 
     for current_iter in 1:embed.iter
 	debug("Iter $current_iter of $(embed.iter)")
@@ -112,15 +112,15 @@ function work_process(embed::WordEmbedding, words_stream::WordStream, strip::Boo
 
             if trained_count % 10000 == 0
                 progress = (current_iter-1 + current_iter_prog)/ embed.iter
-		info("trained on $trained_count words"; progress=progress, α=α)
+                info("trained on $trained_count words"; progress=progress, α=α)
                 α = embed.init_learning_rate * (1 - progress)
                 if α < embed.init_learning_rate * 0.0001
                     α = embed.init_learning_rate * 0.0001
                 end
             end
 
-            local_lsize = @compat(Int(rand(Uint64) % embed.lsize))
-            local_rsize = @compat(Int(rand(Uint64) % embed.rsize))
+            local_lsize = rand(0: embed.lsize)
+            local_rsize = rand(0: embed.rsize)
 
             for ind in (middle - local_lsize) : (middle + local_rsize)
                 (ind == middle) && continue
