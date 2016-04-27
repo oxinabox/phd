@@ -2,11 +2,14 @@ push!(LOAD_PATH,"../src/")
 using Word2Vec
 using Base.Test
 using Lumberjack
-
 using PooledElements
 
 model_file = ARGS[1]
 analogy_file = "data/analogy/questions-words.txt";
+
+filename_only(fn) = fn |> basename |> splitext |> first
+
+testname = filename_only(model_file)*"_"*filename_only(analogy_file)
 
 function analogies(path; preprocess::Function=x->x)
     Task() do 
@@ -41,20 +44,22 @@ end
 
 
 function test_analogies()
+    add_truck(LumberjackTruck(testname*".log"), "filelogger")
+
 	ee = restore(model_file)
 	anas = collect( analogies(analogy_file, preprocess=lowercase))
 	
 	res=RetrievalResult[]
 	
 	function print_res()
-		println("Tested $(length(res)) / $(length(anas))")
+		info("Tested $(length(res)) / $(length(anas))")
 		skips = mean(map(r->r==skip, res))*100
 		incorrects = mean(map(r->r==incorrect, res))*100
 		corrects = mean(map(r->r==correct, res))*100
 
-		println("\tskipped  \t$skips \%")
-		println("\tincorrect\t$incorrects \%")
-		println("\tcorrect  \t$corrects \%")
+		info("\tskipped  \t$skips \%")
+		info("\tincorrect\t$incorrects \%")
+		info("\tcorrect  \t$corrects \%")
 	end
 
 	for (ii,ana) in enumerate(anas)
