@@ -1,9 +1,11 @@
+module Trees
+export TreeNode, BranchNode, nullnode, leaves_of, internal_nodes_of, average_height
+
 abstract TreeNode
 
 type BranchNode <: TreeNode
-    children :: Array{BranchNode, 1}
+    children :: Vector{BranchNode}
     data
-    extrainfo
 end
 
 type NullNode <: TreeNode
@@ -26,7 +28,7 @@ function leaves_of(root::TreeNode)
             pop!(code)
         end
     end
-    Task(() -> traverse(root))
+    @task traverse(root)
 end
 
 function internal_nodes_of(root::TreeNode)
@@ -41,7 +43,7 @@ function internal_nodes_of(root::TreeNode)
             traverse(child)
         end
     end
-    Task(() -> traverse(root))
+    @task traverse(root)
 end
 
 function average_height(tree::TreeNode)
@@ -52,3 +54,6 @@ function average_height(tree::TreeNode)
     end
     h / c
 end
+
+
+end #module

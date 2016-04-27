@@ -4,6 +4,7 @@ using Lumberjack
 push!(LOAD_PATH,".")
 using WordStreams
 using WordDistributions
+using Trees
 
 # The types defined below are used for specifying the options of the word embedding training
 abstract Option
@@ -174,7 +175,7 @@ end
 function initialize_network(embed::WordEmbedding, huffman::HuffmanTree)
     heap = PriorityQueue()
     for (word, freq) in embed.distribution
-        node = BranchNode([], word, nothing)    # the data field of leaf node is its corresponding word.
+        node = BranchNode([], word)    # the data field of leaf node is its corresponding word.
         enqueue!(heap, node, freq)
     end
     while length(heap) > 1
@@ -182,7 +183,7 @@ function initialize_network(embed::WordEmbedding, huffman::HuffmanTree)
         dequeue!(heap)
         (node2, freq2) = Base.Collections.peek(heap)
         dequeue!(heap)
-        newnode = BranchNode([node1, node2], LinearClassifier(2, embed.dimension), nothing) # the data field of internal node is the classifier
+        newnode = BranchNode([node1, node2], LinearClassifier(2, embed.dimension)) # the data field of internal node is the classifier
         enqueue!(heap, newnode, freq1 + freq2)
     end
     embed.classification_tree = dequeue!(heap)

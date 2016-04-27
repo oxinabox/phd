@@ -11,7 +11,6 @@ export save, restore
 export find_nearest_words
 
 include("utils.jl")
-include("tree.jl")
 include("softmax_classifier.jl")
 include("train.jl")
 include("query.jl")
