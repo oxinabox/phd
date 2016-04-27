@@ -39,13 +39,16 @@ function test_word_embedding(inputfile)
 	save(embed, model_file)
 	embed = restore(model_file)
 
-	inp = ["king", "queen", "prince"]
-	for w in inp
-		println("nearest words to $w")
-		println(find_nearest_words(embed, w))
-	end
-	println("king + prince - queen ≈?")
-	println(find_nearest_words(embed, ["king", "prince"], ["queen"]))
+    inp = ["king", "queen", "prince", "man"]
+    for w in inp
+        info("nearest words to $w")
+        info(find_nearest_words(embed, w))
+    end
+    for c in inp
+        target =  "queen-king+"*c
+        info(target*" ≈ ")
+        info(find_nearest_words(embed, target))
+    end
 end
 
 facts("Some Facts about Word Embedding Training") do

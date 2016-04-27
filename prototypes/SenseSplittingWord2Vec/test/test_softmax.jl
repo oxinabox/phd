@@ -41,7 +41,7 @@ end
 
 function test_classifier(classifier)
     #TODO:Write me
-    @pend classifier.predict 
+    @pending classifier.predict() --> anyof([0:9]...)
 end
 
 facts() do 
@@ -53,4 +53,3 @@ facts() do
 end
     
     
-end

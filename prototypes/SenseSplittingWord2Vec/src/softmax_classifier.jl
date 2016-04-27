@@ -15,7 +15,7 @@ function LinearClassifier(k, n)
 end
 
 function predict(c::LinearClassifier, x::Array{Float64})
-    return softmax(x * c.weights)
+    return softmax(c.weights'*x)
 end
 
 function predict!(c::LinearClassifier, x::Array{Float64})
