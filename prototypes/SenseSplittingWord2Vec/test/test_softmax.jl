@@ -18,11 +18,7 @@ function test_softmax_training()
 
     D = readcsv(test_file, header=true)[1]
     X_test = D[:, 2:end] / 255
-    if isless(Base.VERSION, v"0.4.0-")
-        y_test = map(int64, D[:, 1] + 1)
-    else
-        y_test = map(Int64, D[:, 1] + 1)
-    end
+    y_test = map(Int64, D[:, 1] + 1)
 
     println("Start training...")
     c = LinearClassifier(10, 784)

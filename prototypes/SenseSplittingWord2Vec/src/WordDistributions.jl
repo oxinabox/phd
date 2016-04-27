@@ -7,7 +7,7 @@ using WordStreams
 export get_distribution, strip_infrequent, compute_frequency, word_distribution
 
 function get_distribution(corpus_fileio::IO)
-    distribution = Dict{AbstractString,Float64}()
+    distribution = Dict{AbstractString,Float32}()
     word_count = 0
 
     for i in words_of(corpus_fileio)
@@ -28,8 +28,8 @@ function get_distribution(corpus_filename::AbstractString)
     end
 end
 
-function strip_infrequent(distribution::Dict{AbstractString,Float64}, min_count::Int)
-    stripped_distr = Dict{AbstractString,Float64}()
+function strip_infrequent(distribution::Dict{AbstractString,Float32}, min_count::Int)
+    stripped_distr = Dict{AbstractString,Float32}()
     word_count = 0
 
     for (k,v) in distribution
@@ -45,7 +45,7 @@ end
 
 function compute_frequency{S<:AbstractString,C<:Number}(distribution_counts::Dict{S,C}, word_count::Int)
 
-	distribution=Dict{S,Float64}()
+	distribution=Dict{S,Float32}()
 	for (k, v) in distribution_counts
         distribution[k] = v/word_count
     end

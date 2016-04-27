@@ -4,21 +4,21 @@ using Base.Cartesian        # for @nexprs
 type LinearClassifier
     k::Int64 # number of outputs
     n::Int64 # number of inputs
-    weights::Array{Float64, 2} # n * k weight matrix
+    weights::Array{Float32, 2} # n * k weight matrix
 
-    outputs :: Vector{Float64}
+    outputs :: Vector{Float32}
 end
 
 function LinearClassifier(k, n)
     weights = rand(n, k) * 2 - 1; # range is [-1, 1]
-    LinearClassifier(k, n, weights, zeros(k))
+    LinearClassifier(k, n, weights, zeros(Float32, k))
 end
 
-function predict(c::LinearClassifier, x::Array{Float64})
+function predict{F<:AbstractFloat}(c::LinearClassifier, x::Array{F})
     return softmax(c.weights'*x)
 end
 
-function predict!(c::LinearClassifier, x::Array{Float64})
+function predict!{F<:AbstractFloat}(c::LinearClassifier, x::Array{F})
     # c.outputs = vec(softmax(x * c.weights))
     s = 0.0
     for i in 1:c.k
@@ -32,7 +32,7 @@ function predict!(c::LinearClassifier, x::Array{Float64})
     softmax!(c.outputs, c.outputs);
 end
 
-function train_one!(c::LinearClassifier, x::Array{Float64}, y::Int64, α::Float64=0.025)
+function train_one!{F<:AbstractFloat}(c::LinearClassifier, x::Array{F}, y::Int64, α::AbstractFloat=0.025f0)
     # if !in(y, 1 : c.k)
     #     msg = @sprintf "A sample is discarded because the label y = %d is not in range of 1 to %d" y c.k
     #     warn(msg)
@@ -61,7 +61,7 @@ function train_one!(c::LinearClassifier, x::Array{Float64}, y::Int64, α::Float6
     end
 end
 
-function train_one!(c::LinearClassifier, x::Array{Float64}, y::Int64, input_gradient::Array{Float64}, α::Float64=0.025)
+function train_one!{F1<:AbstractFloat, F2<:AbstractFloat}(c::LinearClassifier, x::Array{F1}, y::Int64, input_gradient::Array{F2}, α::AbstractFloat=0.025f0)
     predict!(c, x)
     c.outputs[y] -= 1
 
@@ -110,7 +110,7 @@ function log_likelihood(c, X, y)
 end
 
 # calculate the accuracy on the testing dataset
-function accuracy(c::LinearClassifier, X::Array{Float64}, y::Array{Int64})
+function accuracy{F<:AbstractFloat}(c::LinearClassifier, X::Array{F}, y::Array{Int64})
     n = size(X, 1)
     succ = 0
     for i in 1 : n

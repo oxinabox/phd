@@ -15,7 +15,7 @@ model_file = joinpath(model_dir, test_filename * ".model")
 
 
 type CheckAlphaDecreasingTruck <:TimberTruck
-	prev_α::Float64
+	prev_α::Float32
 	_mode
 end
 

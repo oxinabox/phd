@@ -1,6 +1,6 @@
 module WordEmbeddings
 using Trees
-i
+
 export RandomInited, HuffmanTree, NaiveSoftmax, random_inited, naive_softmax, huffman_tree, WordEmbedding, keep_word_vectors_only!
 
 
@@ -26,9 +26,9 @@ const huffman_tree = HuffmanTree()
 
 type WordEmbedding
     vocabulary::Array{AbstractString}
-    embedding::Dict{AbstractString, Vector{Float64}}
+    embedding::Dict{AbstractString, Vector{Float32}}
     classification_tree::TreeNode
-    distribution::Dict{AbstractString, Float64}
+    distribution::Dict{AbstractString, Float32}
     codebook::Dict{AbstractString, Vector{Int64}}
 
     init_type::InitializatioinMethod
@@ -39,8 +39,8 @@ type WordEmbedding
     trained_times::Dict{AbstractString,Int64}
     trained_count::Int64
     corpus_size::Int64
-    subsampling::Float64
-    init_learning_rate::Float64
+    subsampling::Float32
+    init_learning_rate::Float32
     iter::Int64
     min_count::Int64
 end
@@ -50,9 +50,9 @@ function WordEmbedding(dim::Int64, init_type::InitializatioinMethod, network_typ
         throw(ArgumentError("dimension should be a positive integer"))
     end
     WordEmbedding(AbstractString[], 
-                    Dict{AbstractString,Array{Float64}}(),
+                    Dict{AbstractString,Array{Float32}}(),
                     nullnode,
-                    Dict{AbstractString,Array{Float64}}(),
+                    Dict{AbstractString,Array{Float32}}(),
                     Dict{AbstractString,Vector{Int64}}(),
                     init_type, network_type,
                     dim,
@@ -72,7 +72,7 @@ end
 function keep_word_vectors_only!(embed::WordEmbedding)
     embed.vocabulary = AbstractString[]
     embed.classification_tree = nullnode
-    embed.distribution = Dict{AbstractString,Array{Float64}}()
+    embed.distribution = Dict{AbstractString,Array{Float32}}()
     embed.codebook = Dict{AbstractString,Vector{Int64}}()
     embed
 end

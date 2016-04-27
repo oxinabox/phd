@@ -7,14 +7,14 @@ const WHITESPACE = (' ', '\n', '\r')
 type WordStream
     source::Union{IO, AbstractString}
     # filter configuration
-    rate::Float64    #if rate > 0, words will be subsampled according to distr
+    rate::Float32    #if rate > 0, words will be subsampled according to distr
     filter::Bool    # if filter is true, only words present in the keys(distr) will be considered
-    distr::Dict{AbstractString, Float64}
+    distr::Dict{AbstractString, Float32}
 end
 
 function words_of(file::Union{IO,AbstractString}; subsampling=(0,false,nothing))
     rate, filter, subsampling_distr = subsampling
-    distr = (rate==0 && !filter) ? Dict{AbstractString,Float64}() : subsampling_distr
+    distr = (rate==0 && !filter) ? Dict{AbstractString,Float32}() : subsampling_distr
  	WordStream(file, rate, filter, distr)
 end
 
@@ -165,7 +165,7 @@ end
 
 Base.done(prog::ProgressIter, state) = done(prog.source_iter,state[end])
 Base.iteratorsize(::ProgressIter) = Base.SizeUnknown()
-#Base.eltype(::Type{ProgressIter{T}})=Tuple{Float64,eltype(::T)}
+#Base.eltype(::Type{ProgressIter{T}})=Tuple{Float32,eltype(::T)}
 
 function Base.next(prog::ProgressIter, state)
 	complete_at, source_state = state	

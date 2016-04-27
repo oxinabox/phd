@@ -14,7 +14,7 @@ using WordEmbeddings
 function work_process(embed::WordEmbedding, words_stream::WordStream, strip::Bool=false)
     tic()
 	middle = embed.lsize + 1
-    input_gradient = zeros(Float64, embed.dimension)
+    input_gradient = zeros(Float32, embed.dimension)
     α = embed.init_learning_rate
     trained_count = 0
     trained_times = Dict{AbstractString, Int64}()
