@@ -94,6 +94,15 @@ function initialize_embedding(embed::WordEmbedding, randomly::RandomInited)
     embed
 end
 
+function initialize_embedding(embed::WordSenseEmbedding, randomly::RandomInited)
+    for i in embed.vocabulary
+        embed.embedding[i] = rand(embed.dimension,1) * 2 - 1
+    end
+    embed
+end
+
+
+
 function initialize_network(embed::GenWordEmbedding, huffman::HuffmanTree)
     heap = PriorityQueue()
     for (word, freq) in embed.distribution
