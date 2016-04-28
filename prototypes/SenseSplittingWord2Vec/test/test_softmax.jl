@@ -1,24 +1,19 @@
 push!(LOAD_PATH,"../src/")
 using Word2Vec
 using FactCheck
+using JLD
 
 #data_dir = joinpath(Pkg.dir("Word2Vec"), "test", "data")
 data_dir = joinpath("data") #For local run from testind directory
-train_file = joinpath(data_dir, "mnist_train.csv")
-test_file = joinpath(data_dir, "mnist_test.csv")
+train_file = joinpath(data_dir, "mnist_train.jld")
+test_file = joinpath(data_dir, "mnist_test.jld")
 
 function test_softmax_training()
     println("Testing the softmax classifier on the MNIST dataset")
 
-    println("Loading...")
-    D = readcsv(train_file, header=true)[1]
-    X_train = D[:, 2:end] / 255
-    y_train = map(Int64, D[:,1] + 1)
-    
-
-    D = readcsv(test_file, header=true)[1]
-    X_test = D[:, 2:end] / 255
-    y_test = map(Int64, D[:, 1] + 1)
+    println("Loading...")    
+    X_train, y_train = load(train_file,"X_train", "y_train")
+    X_test, y_test = load(test_file,"X_test", "y_test")
 
     println("Start training...")
     c = LinearClassifier(10, 784)
@@ -35,16 +30,11 @@ function test_softmax_training()
     
 end
 
-function test_classifier(classifier)
-    #TODO:Write me
-    @pending classifier.predict() --> anyof([0:9]...)
-end
 
 facts() do 
     classifier, final_accurasy=test_softmax_training()
     @fact final_accurasy --> greater_than(0.8)
         
-    test_classifier(classifier)
     
 end
     
