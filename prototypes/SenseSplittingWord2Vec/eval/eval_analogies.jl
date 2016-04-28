@@ -48,7 +48,8 @@ function test_analogies()
 
 	ee = restore(model_file)
 	anas = collect( analogies(analogy_file, preprocess=lowercase))
-	
+	shuffle!(anas) #Make partway output interesting 
+				   #by not always testing same type of analogy in group
 	res=RetrievalResult[]
 	
 	function print_res()
@@ -64,7 +65,7 @@ function test_analogies()
 
 	for (ii,ana) in enumerate(anas)
 		push!(res, check_analogy(ee, ana...))
-		if ii%500==0
+		if ii%250==0
 			print_res()
 		end
 	end	
