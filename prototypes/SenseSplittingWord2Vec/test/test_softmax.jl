@@ -1,7 +1,7 @@
 push!(LOAD_PATH,"../src/")
 using Word2Vec
 using FactCheck
-using JLD
+import JLD
 
 #data_dir = joinpath(Pkg.dir("Word2Vec"), "test", "data")
 data_dir = joinpath("data") #For local run from testind directory
@@ -12,8 +12,8 @@ function test_softmax_training()
     println("Testing the softmax classifier on the MNIST dataset")
 
     println("Loading...")    
-    X_train, y_train = load(train_file,"X_train", "y_train")
-    X_test, y_test = load(test_file,"X_test", "y_test")
+    X_train, y_train = JLD.load(train_file,"X_train", "y_train")
+    X_test, y_test = JLD.load(test_file,"X_test", "y_test")
 
     println("Start training...")
     c = LinearClassifier(10, 784)

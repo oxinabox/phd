@@ -11,7 +11,38 @@ using WordEmbeddings
 #* Calculate Word Embedding
 #*===============================================================================#
 
-function work_process(embed::WordEmbedding, words_stream::WordStream, strip::Bool=false)
+
+"Given a window, actually does the training on it"
+function train_window!(embed::WordEmbedding, window::Vector{AbstractString},middle::Int64,input_gradient::Array{Float32}, α::AbstractFloat)
+	trained_word=window[middle]
+	local_lsize = rand(0: embed.lsize)
+	local_rsize = rand(0: embed.rsize)
+
+	for ind in (middle - local_lsize) : (middle + local_rsize)
+		(ind == middle) && continue
+
+		target_word = window[ind]
+		# discard words not presenting in the classification tree
+		(haskey(embed.codebook, target_word) && haskey(embed.codebook, trained_word)) || continue
+
+		node = embed.classification_tree::TreeNode
+
+		fill!(input_gradient, 0.0)
+		input = embed.embedding[trained_word] #Inplace changing
+
+		for code in embed.codebook[target_word]
+			train_one!(node.data, input, code, input_gradient, α)
+			node = node.children[code]
+		end
+		for ii in 1:embed.dimension
+			input[ii] -= input_gradient[ii]
+		end
+	end
+	embed
+end
+
+"Runs all the training, handles adjusting learning rate, repeating through loops etc."
+function run_training!(embed::GenWordEmbedding, words_stream::WordStream, strip::Bool=false)
     tic()
 	middle = embed.lsize + 1
     input_gradient = zeros(Float32, embed.dimension)
@@ -34,30 +65,7 @@ function work_process(embed::WordEmbedding, words_stream::WordStream, strip::Boo
                     α = embed.init_learning_rate * 0.0001
                 end
             end
-
-            local_lsize = rand(0: embed.lsize)
-            local_rsize = rand(0: embed.rsize)
-
-            for ind in (middle - local_lsize) : (middle + local_rsize)
-                (ind == middle) && continue
-
-                target_word = window[ind]
-                # discard words not presenting in the classification tree
-                (haskey(embed.codebook, target_word) && haskey(embed.codebook, trained_word)) || continue
-
-                node = embed.classification_tree::TreeNode
-
-                fill!(input_gradient, 0.0)
-                input = embed.embedding[trained_word]
-
-                for code in embed.codebook[target_word]
-                    train_one!(node.data, input, code, input_gradient, α)
-                    node = node.children[code]
-                end
-                for ii in 1:embed.dimension
-                    input[ii] -= input_gradient[ii]
-                end
-            end
+			train_window!(embed,window,middle,input_gradient,α)
         end
     end
 
@@ -69,8 +77,6 @@ function work_process(embed::WordEmbedding, words_stream::WordStream, strip::Boo
 
     # strip to remove unnecessary members and make serialization faster
     strip && keep_word_vectors_only!(embed)
-	
-
     embed
 end
 
@@ -122,7 +128,7 @@ function train(embed::GenWordEmbedding, corpus_filename::AbstractString)
     t1 = time()
     println("Starting sequential training...")
     words_stream = words_of(corpus_filename, subsampling = (embed.subsampling, true, embed.distribution))
-    work_process(embed, words_stream, false)
+    run_training!(embed, words_stream, false)
 
     t2 = time()
     println("Training complete at $(t2-t1) time")
