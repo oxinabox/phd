@@ -6,7 +6,7 @@ using Distances
 using Compat
 
 
-export LinearClassifier, train_one, WordEmbedding, train, accuracy
+export LinearClassifier, train_one, GenWordEmbedding, train, accuracy
 export save, restore
 export find_nearest_words
 

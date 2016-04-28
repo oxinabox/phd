@@ -1,7 +1,7 @@
 push!(LOAD_PATH,"../src/")
 using Word2Vec
 using FactCheck
-
+using WordEmbeddings
 
 embed = WordEmbedding(30, Word2Vec.random_inited, Word2Vec.huffman_tree)
 embed.embedding["a"] = [1., 1.]

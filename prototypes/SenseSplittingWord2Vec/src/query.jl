@@ -1,4 +1,4 @@
-function find_nearest_words(embed::WordEmbedding, equation::AbstractString; nwords=5)
+function find_nearest_words(embed::GenWordEmbedding, equation::AbstractString; nwords=5)
 	tokens = replace(replace(equation, "+", " + "), "-", " - ")
     positive_words = AbstractString[]
     negative_words = AbstractString[]
@@ -19,7 +19,7 @@ function find_nearest_words(embed::WordEmbedding, equation::AbstractString; nwor
 	find_nearest_words(embed, positive_words, negative_words; nwords=nwords)
 end
 
-function find_nearest_words(embed::WordEmbedding, positive_words::Vector, negative_words::Vector; nwords=5)
+function find_nearest_words(embed::GenWordEmbedding, positive_words::Vector, negative_words::Vector; nwords=5)
     pq = PriorityQueue(Base.Order.Reverse)
     wv = sum([embed.embedding[w] for w∈positive_words])
 	wv .-= length(negative_words)>0 ? sum([embed.embedding[w] for w∈negative_words]) : 0.0

@@ -1,7 +1,7 @@
 module WordEmbeddings
 using Trees
 
-export RandomInited, HuffmanTree, NaiveSoftmax, random_inited, naive_softmax, huffman_tree, WordEmbedding, keep_word_vectors_only!
+export RandomInited, HuffmanTree, NaiveSoftmax, random_inited, naive_softmax, huffman_tree, GenWordEmbedding, keep_word_vectors_only!, WordEmbedding
 
 
 # The types defined below are used for specifying the options of the word embedding training
@@ -24,7 +24,11 @@ const naive_softmax = NaiveSoftmax()
 const huffman_tree = HuffmanTree()
 
 
-type WordEmbedding
+abstract GenWordEmbedding
+
+##################### (plain)  Word Embeddings ##################################
+
+type WordEmbedding<:GenWordEmbedding
     vocabulary::Array{AbstractString}
     embedding::Dict{AbstractString, Vector{Float32}}
     classification_tree::TreeNode

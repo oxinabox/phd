@@ -88,7 +88,7 @@ function initialize_embedding(embed::WordEmbedding, randomly::RandomInited)
     embed
 end
 
-function initialize_network(embed::WordEmbedding, huffman::HuffmanTree)
+function initialize_network(embed::GenWordEmbedding, huffman::HuffmanTree)
     heap = PriorityQueue()
     for (word, freq) in embed.distribution
         node = BranchNode([], word)    # the data field of leaf node is its corresponding word.
@@ -107,7 +107,7 @@ function initialize_network(embed::WordEmbedding, huffman::HuffmanTree)
 end
 
 
-function train(embed::WordEmbedding, corpus_filename::AbstractString)
+function train(embed::GenWordEmbedding, corpus_filename::AbstractString)
     embed.distribution = word_distribution(corpus_filename)
     embed.vocabulary = collect(keys(embed.distribution))
 
