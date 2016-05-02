@@ -93,16 +93,21 @@ end
 
 ##################### Word Sense  Embeddings ##################################
 
+
 type WordSenseEmbedding<:GenWordEmbedding
     vocabulary::Array{AbstractString}
-    embedding::Dict{AbstractString, Matrix{Float32}} #Each word sense is a column
+    embedding::Dict{AbstractString, Vector{Vector{Float32}}} #[Word][sense_id]=sense embedding vector
     classification_tree::TreeNode
     distribution::Dict{AbstractString, Float32}
     codebook::Dict{AbstractString, Vector{Int64}}
 
 	strength::Float32
 
-    init_type::InitializatioinMethod
+	
+	pending_forces::Dict{AbstractString, Vector{Vector{Vector{Float32}}}} #[Word][sense_id][force_id]=force vector #TODO move me to run_training!
+    force_minibatch_size::Int64
+
+	init_type::InitializatioinMethod
     network_type::NetworkType
     dimension::Int64
     lsize::Int64    # left window size in training
@@ -118,16 +123,23 @@ end
 
 function WordSenseEmbedding(dim::Int64, init_type::InitializatioinMethod, network_type::NetworkType;
 							lsize=5, rsize=5, subsampling=1e-5, init_learning_rate=0.025, iter=5, min_count=5,
+							force_minibatch_size=10000,
 							strength=0.4	) #this default strength is 1 standard devation of the distribution of word embeddings
     if dim <= 0 || lsize <= 0 || rsize <= 0
         throw(ArgumentError("dimension should be a positive integer"))
     end
+	if force_minibatch_size<min_count
+        throw(ArgumentError("min_count must be at least equal to force_minibatch_size, so that rare words are not resolved less than once per interation"))
+    end
+	
     WordSenseEmbedding(AbstractString[], #voc
-                    Dict{AbstractString,Matrix{Float32}}(), #embedding
+                    Dict{AbstractString,Vector{Vector{Float32}}}(), #embedding
                     nullnode, #classification tree
                     Dict{AbstractString,Array{Float32}}(), #distribution
                     Dict{AbstractString,Vector{Int64}}(), #codebook
 					strength,
+					Dict{AbstractString, Vector{Vector{Vector{Float32}}}}() #pending forces
+					force_minibatch_size,
                     init_type, network_type,
                     dim,
                     lsize, rsize,

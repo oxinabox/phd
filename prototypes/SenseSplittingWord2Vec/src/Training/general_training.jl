@@ -6,11 +6,12 @@
 #*===============================================================================#
 
 
+
+
 "Runs all the training, handles adjusting learning rate, repeating through loops etc."
 function run_training!(embed::GenWordEmbedding, words_stream::WordStream, strip::Bool=false)
     tic()
 	middle = embed.lsize + 1
-    input_gradient = zeros(Float32, embed.dimension)
     α = embed.init_learning_rate
     trained_count = 0
     trained_times = Dict{AbstractString, Int64}()
@@ -30,7 +31,7 @@ function run_training!(embed::GenWordEmbedding, words_stream::WordStream, strip:
                     α = embed.init_learning_rate * 0.0001
                 end
             end
-			train_window!(embed,window,middle,input_gradient,α)
+			train_window!(embed,window,middle,α)
         end
     end
 

@@ -2,7 +2,11 @@ module Query
 using Base.Collections
 using WordEmbeddings
 using Distances
-export find_nearest_words
+
+export find_nearest_words, prob_of_context
+
+
+########### nearest_words, and analogy math
 
 function find_nearest_words(embed::GenWordEmbedding, equation::AbstractString; nwords=5)
 	tokens = replace(replace(equation, "+", " + "), "-", " - ")
@@ -42,5 +46,30 @@ function find_nearest_words(embed::GenWordEmbedding, positive_words::Vector, neg
     end
     sort(collect(pq), by = t -> t[2])
 end
+
+#################### Probability of the context
+    
+function prob_of_context{S<:AbstractString}(embed::WordEmbedding, context::AbstractVector{S}, middle_word::S)
+    input = embed.embedding[middle_word]
+    prob_of_context(embed, context, input)
+end
+
+function prob_of_context{S<:AbstractString}(embed::GenWordEmbedding, context::AbstractVector{S}, input::Vector{Float32})
+    total_logprob=0.0 #Work in logprob to avoid underflow, and get more stability
+    for target_word in context
+        # discard words not presenting in the classification tree
+        (haskey(embed.codebook, target_word) || continue
+        node = embed.classification_tree      
+        
+        word_logprob = 0.0
+        for code in embed.codebook[target_word]  
+            word_logprob+=log(Word2Vec.predict(node.data, input)[code])
+            node = node.children[code]
+        end
+        total_logprob+=word_logprob
+    end
+    exp(total_logprob) #Going back out of the log domain is not required for external logic, but it is nice for clarity
+end
+
 
 end #Module
