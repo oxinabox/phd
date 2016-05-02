@@ -1,3 +1,6 @@
+module Utils
+export save, restore, partition
+
 # serialize to a file
 function save(item, filename::AbstractString)
     open(filename, "w") do fp
@@ -25,3 +28,7 @@ function partition{T}(a::Array{T}, n::Integer)
     end
     b
 end
+
+
+end #module
+

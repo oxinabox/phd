@@ -1,9 +1,9 @@
 push!(LOAD_PATH,"../src/")
-using Word2Vec
+using Query
 using FactCheck
 using WordEmbeddings
 
-embed = WordEmbedding(30, Word2Vec.random_inited, Word2Vec.huffman_tree)
+embed = WordEmbedding(30, random_inited, huffman_tree)
 embed.embedding["a"] = [1., 1.]
 embed.embedding["b"] = [11., 11.]
 embed.embedding["c"] = [5., 2.]

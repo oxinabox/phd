@@ -1,45 +1,10 @@
-using Lumberjack
-
-push!(LOAD_PATH,".")
-using WordStreams
-using WordDistributions
-using Trees
-
-using WordEmbeddings
-
 #*===============================================================================
 #* Calculate Word Embedding
+#*Train a corpus
+#*Step 1: Find Word Distribution
+#*Step 2: Calculate Word Embedding
 #*===============================================================================#
 
-
-"Given a window, actually does the training on it"
-function train_window!(embed::WordEmbedding, window::Vector{AbstractString},middle::Int64,input_gradient::Array{Float32}, α::AbstractFloat)
-	trained_word=window[middle]
-	local_lsize = rand(0: embed.lsize)
-	local_rsize = rand(0: embed.rsize)
-
-	for ind in (middle - local_lsize) : (middle + local_rsize)
-		(ind == middle) && continue
-
-		target_word = window[ind]
-		# discard words not presenting in the classification tree
-		(haskey(embed.codebook, target_word) && haskey(embed.codebook, trained_word)) || continue
-
-		node = embed.classification_tree::TreeNode
-
-		fill!(input_gradient, 0.0)
-		input = embed.embedding[trained_word] #Inplace changing
-
-		for code in embed.codebook[target_word]
-			train_one!(node.data, input, code, input_gradient, α)
-			node = node.children[code]
-		end
-		for ii in 1:embed.dimension
-			input[ii] -= input_gradient[ii]
-		end
-	end
-	embed
-end
 
 "Runs all the training, handles adjusting learning rate, repeating through loops etc."
 function run_training!(embed::GenWordEmbedding, words_stream::WordStream, strip::Bool=false)
@@ -79,28 +44,6 @@ function run_training!(embed::GenWordEmbedding, words_stream::WordStream, strip:
     strip && keep_word_vectors_only!(embed)
     embed
 end
-
-
-#*===============================================================================
-#*Train a corpus
-#*Step 1: Find Word Distribution
-#*Step 2: Calculate Word Embedding
-#*===============================================================================#
-
-function initialize_embedding(embed::WordEmbedding, randomly::RandomInited)
-    for i in embed.vocabulary
-        embed.embedding[i] = rand(embed.dimension) * 2 - 1
-    end
-    embed
-end
-
-function initialize_embedding(embed::WordSenseEmbedding, randomly::RandomInited)
-    for i in embed.vocabulary
-        embed.embedding[i] = rand(embed.dimension,1) * 2 - 1
-    end
-    embed
-end
-
 
 
 function initialize_network(embed::GenWordEmbedding, huffman::HuffmanTree)
@@ -143,3 +86,6 @@ function train(embed::GenWordEmbedding, corpus_filename::AbstractString)
     println("Training complete at $(t2-t1) time")
     embed
 end
+
+
+

@@ -1,7 +1,7 @@
-push!(LOAD_PATH,"../src/")
-using Word2Vec
+using Word2Vec.Training
 using FactCheck
 import JLD
+
 
 #data_dir = joinpath(Pkg.dir("Word2Vec"), "test", "data")
 data_dir = joinpath("data") #For local run from testind directory
@@ -21,7 +21,7 @@ function test_softmax_training()
     for j in 1:5
         println("iteration $(j)")
         for i in 1:size(X_train,1)
-            Word2Vec.train_one!(c, X_train[i,:], y_train[i])
+            train_one!(c, X_train[i,:], y_train[i])
         end
         acc = accuracy(c, X_test, y_test)
         println("Accuracy on test set $acc")

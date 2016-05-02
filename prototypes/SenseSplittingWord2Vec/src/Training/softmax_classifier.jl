@@ -1,5 +1,10 @@
+
 using StatsFuns
 using Base.Cartesian        # for @nexprs
+
+
+export LinearClassifier, predict, predict!, train_one!, accuracy, log_likelihood
+
 # linear softmax classifier (with stochastic gradient descent)
 type LinearClassifier
     k::Int64 # number of outputs

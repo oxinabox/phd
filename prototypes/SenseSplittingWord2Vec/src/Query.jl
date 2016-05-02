@@ -1,3 +1,9 @@
+module Query
+using Base.Collections
+using WordEmbeddings
+using Distances
+export find_nearest_words
+
 function find_nearest_words(embed::GenWordEmbedding, equation::AbstractString; nwords=5)
 	tokens = replace(replace(equation, "+", " + "), "-", " - ")
     positive_words = AbstractString[]
@@ -36,3 +42,5 @@ function find_nearest_words(embed::GenWordEmbedding, positive_words::Vector, neg
     end
     sort(collect(pq), by = t -> t[2])
 end
+
+end #Module

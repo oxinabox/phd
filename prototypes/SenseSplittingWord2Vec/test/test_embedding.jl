@@ -1,8 +1,9 @@
-push!(LOAD_PATH,"../src/")
-using Word2Vec
+using Word2Vec.Training
 using Lumberjack
 using FactCheck
 using WordEmbeddings
+using Query
+using Utils
 
 #data_dir = joinpath(Pkg.dir("Word2Vec"), "test", "data")
 #model_dir = joinpath(Pkg.dir("Word2Vec"), "test", "models")
@@ -32,7 +33,7 @@ end
 
 
 function test_word_embedding(inputfile)
-	embed = WordEmbedding(30, Word2Vec.random_inited, Word2Vec.huffman_tree, subsampling = 0, iter=2)
+	embed = WordEmbedding(30, random_inited, huffman_tree, subsampling = 0, iter=2)
 	add_truck(CheckAlphaDecreasingTruck(Inf,"info"), "Testing Truck")
 
 	@time train(embed, inputfile)
