@@ -55,20 +55,20 @@ function prob_of_context{S<:AbstractString}(embed::WordEmbedding, context::Abstr
 end
 
 function prob_of_context{S<:AbstractString}(embed::GenWordEmbedding, context::AbstractVector{S}, input::Vector{Float32})
-    total_logprob=0.0 #Work in logprob to avoid underflow, and get more stability
+    total_ prob=0.0 #Work in  prob to avoid underflow, and get more stability
     for target_word in context
         # discard words not presenting in the classification tree
         haskey(embed.codebook, target_word) || continue
         node = embed.classification_tree      
         
-        word_logprob = 0.0
+        word_prob = 0.0
         for code in embed.codebook[target_word]  
-            word_logprob+=log(predict(node.data, input)[code])
-            node = node.children[code]
+            word_prob+= predict(node.data, input)[code]
+            @inbounds node = node.children[code]
         end
-        total_logprob+=word_logprob
+        total_prob+=word_prob
     end
-    exp(total_logprob) #Going back out of the log domain is not required for external logic, but it is nice for clarity
+    total_prob #Going back out of the   domain is not required for external  ic, but it is nice for clarity
 end
 
 

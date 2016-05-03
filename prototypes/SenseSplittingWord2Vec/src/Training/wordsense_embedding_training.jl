@@ -4,8 +4,12 @@ Returns integer coresponding to to the Column of the embedding matrix for that w
 """
 function WSD(embed::WordSenseEmbedding, word::AbstractString, context::AbstractVector{AbstractString})
 	sense_embeddings = embed.embedding[word]
-	prob, most_likely_sense_id = findmax([prob_of_context(embed, context, input) for input in sense_embeddings])
-	return most_likely_sense_id
+	if length(sense_embeddings==1)
+		return sense_embeddings[1]
+	else
+		prop, most_likely_sense_id = findmax([prob_of_context(embed, context, input) for input in sense_embeddings])
+		return most_likely_sense_id
+	end
 end
 
 """

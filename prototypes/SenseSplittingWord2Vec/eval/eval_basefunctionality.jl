@@ -2,6 +2,7 @@ using WordEmbeddings
 using Training
 using Query
 using Lumberjack
+using Utils
 
 model_dir = "models"
 data_dir = "./data/corpora/text8/"
