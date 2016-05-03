@@ -1,3 +1,4 @@
+module SoftmaxClassifier
 
 using StatsFuns
 using Base.Cartesian        # for @nexprs
@@ -11,7 +12,7 @@ type LinearClassifier
     n::Int64 # number of inputs
     weights::Array{Float32, 2} # n * k weight matrix
 
-    outputs :: Vector{Float32}
+    outputs :: AbstractVector{Float32}
 end
 
 function LinearClassifier(k, n)
@@ -19,11 +20,11 @@ function LinearClassifier(k, n)
     LinearClassifier(k, n, weights, zeros(Float32, k))
 end
 
-function predict{F<:AbstractFloat}(c::LinearClassifier, x::Array{F})
+function predict{F<:AbstractFloat}(c::LinearClassifier, x::AbstractVector{F})
     return softmax(c.weights'*x)
 end
 
-function predict!{F<:AbstractFloat}(c::LinearClassifier, x::Array{F})
+function predict!{F<:AbstractFloat}(c::LinearClassifier, x::AbstractVector{F})
     # c.outputs = vec(softmax(x * c.weights))
     s = 0.0
     for i in 1:c.k
@@ -37,7 +38,7 @@ function predict!{F<:AbstractFloat}(c::LinearClassifier, x::Array{F})
     softmax!(c.outputs, c.outputs);
 end
 
-function train_one!{F<:AbstractFloat}(c::LinearClassifier, x::Array{F}, y::Int64, α::AbstractFloat=0.025f0)
+function train_one!{F<:AbstractFloat}(c::LinearClassifier, x::AbstractVector{F}, y::Int64, α::AbstractFloat=0.025f0)
     # if !in(y, 1 : c.k)
     #     msg = @sprintf "A sample is discarded because the label y = %d is not in range of 1 to %d" y c.k
     #     warn(msg)
@@ -66,7 +67,7 @@ function train_one!{F<:AbstractFloat}(c::LinearClassifier, x::Array{F}, y::Int64
     end
 end
 
-function train_one!{F1<:AbstractFloat, F2<:AbstractFloat}(c::LinearClassifier, x::Array{F1}, y::Int64, input_gradient::Array{F2}, α::AbstractFloat=0.025f0)
+function train_one!{F1<:AbstractFloat, F2<:AbstractFloat}(c::LinearClassifier, x::AbstractVector{F1}, y::Int64, input_gradient::AbstractVector{F2}, α::AbstractFloat=0.025f0)
     predict!(c, x)
     c.outputs[y] -= 1
 
@@ -115,7 +116,7 @@ function log_likelihood(c, X, y)
 end
 
 # calculate the accuracy on the testing dataset
-function accuracy{F<:AbstractFloat}(c::LinearClassifier, X::Array{F}, y::Array{Int64})
+function accuracy{F<:AbstractFloat}(c::LinearClassifier, X::AbstractVector{F}, y::AbstractVector{Int64})
     n = size(X, 1)
     succ = 0
     for i in 1 : n
@@ -126,3 +127,7 @@ function accuracy{F<:AbstractFloat}(c::LinearClassifier, X::Array{F}, y::Array{I
     end
     return succ / n
 end
+
+
+
+end #module

@@ -2,7 +2,7 @@ module Query
 using Base.Collections
 using WordEmbeddings
 using Distances
-
+using SoftmaxClassifier
 export find_nearest_words, prob_of_context
 
 
@@ -63,7 +63,7 @@ function prob_of_context{S<:AbstractString}(embed::GenWordEmbedding, context::Ab
         
         word_logprob = 0.0
         for code in embed.codebook[target_word]  
-            word_logprob+=log(Word2Vec.predict(node.data, input)[code])
+            word_logprob+=log(predict(node.data, input)[code])
             node = node.children[code]
         end
         total_logprob+=word_logprob

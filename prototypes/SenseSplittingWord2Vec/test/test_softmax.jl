@@ -1,4 +1,4 @@
-using Word2Vec.Training
+using SoftmaxClassifier 
 using FactCheck
 import JLD
 

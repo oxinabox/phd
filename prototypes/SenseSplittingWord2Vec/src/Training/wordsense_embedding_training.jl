@@ -2,18 +2,9 @@
 i.e. use the language modeling task.
 Returns integer coresponding to to the Column of the embedding matrix for that word, for the best word sense embedding.
 """
-function WSD(embed::WordSenseEmbedding, word::AbstractString, context::Vector{AbstractString})
-	embeddings = size(embed.embedding[word])
-	most_likely_sense_id = -1
-	max_prob=-Inf
-	for sense_id in 1:size(embed.embedding[word],2)
-		input = embeddings[sense_id]
-		prob = prob_of_context(embed, context, input)
-		if prob>max_prob
-			max_prob=prob
-			most_likely_sense_id = sense_id
-		end
-	end
+function WSD(embed::WordSenseEmbedding, word::AbstractString, context::AbstractVector{AbstractString})
+	sense_embeddings = embed.embedding[word]
+	prob, most_likely_sense_id = findmax([prob_of_context(embed, context, input) for input in sense_embeddings])
 	return most_likely_sense_id
 end
 
@@ -21,69 +12,79 @@ end
 Returns a Vector of vectors for the movement of every point, given the forces vector of vectors
 If no break occurs then there will be only one motion returned
 """
-function get_motions(forces::Vector{Vector{Float32}}, strength)
+function get_motions{N<:AbstractFloat}(forces::Vector{Vector{N}}, strength)
 
-    ndims = length(forces[1])
+    ndims=length(forces[1] )
     nforces = length(forces)
     motions = map(similar,forces)    
     
     for dim in 1:ndims
         north_force = 0.0
         south_force = 0.0
+		n_north =0
+		n_south =0
         for f_ii in 1:nforces
             force = forces[f_ii][dim]
             if force>0.0
                 north_force+=force
+				n_north+=1
             else
                 south_force+=force
+				n_south+=1
             end
         end
-        tension = 2*min(north_force, south_force) #This is the resisted force. It that can break, rather than move. 
+        tension = 2*min(north_force,-1*south_force) 
+			#This is the resisted force. It that can break, rather than move. 
         if tension>strength
             for f_ii in 1:nforces
-                force = forces[f_ii]
+                force = forces[f_ii][dim]
                 if force>0.0
-                    motion[f_ii][dim] = (north_force-strength) 
+                    motions[f_ii][dim] = north_force/n_north #Don't actually decrease distence moved because of force resisted, that is a metaphore.
                 else
-                    motion[f_ii][dim] = (strength-south_force) 
+                    motions[f_ii][dim] = south_force/n_south 
                 end
             end 
         else
             #does not break, so all forces apply same motion
             for f_ii in 1:nforces
-                motions[f_ii][dim] = (north_force-strength)                 
+                motions[f_ii][dim] = (north_force+south_force)/(n_north+n_south) #Remember one is negative                
             end          
         end
     end
-    #Find unique motion rows.
+
+    #Find unique motion rows, and stack up each occurrence.
     #These corespond to all the new points
-    unique(motions)
+	counts = Dict{Vector{N},Int64}()
+	for motion in motions
+		get!(counts,motion,0)
+		counts[motion]+=1
+	end
+	Vector{N}[motion.*count for (motion, count) in counts]
 end
 
 
 function break_and_move!(embed, word, sense_id, pending_forces)
 	motions = get_motions(pending_forces,embed.strength)
 
-	old_position = embed.embeddings[word][sense_id]
-	embed.embeddings[word] = embed.embeddings[word][0:sense_id-1:sense_id+1:end] #remove old sense vectors
-	for motion in motions
-		push!(embed.embeddings[word], motion+old_position)
-	end
-	return embed.embeddings[word]
+	old_position = embed.embedding[word][sense_id]
+	debug("Break and move: ", size_motions_1 = size(motions[1]), size_old_pos=size(old_position))	
+	new_positions = [motion+old_position for motion in motions]
+	splice!(embed.embedding[word],sense_id,new_positions) #Delete Old, insert new
+	return embed.embedding[word]
 end
 
 "Given a window, actually does the training on it"
 function train_window!(embed::WordSenseEmbedding, window::Vector{AbstractString},middle::Int64, α::AbstractFloat)
-	trained_word=window[middle]
-	if !haskey(embed.codebook, trained_word) #Not a word we are training, move on
+	word=window[middle]
+	if !haskey(embed.codebook, word) #Not a word we are training, move on
 		return embed
 	end
 	
-	local_lsize = rand(0: embed.lsize)
-	local_rsize = rand(0: embed.rsize)
+	local_lsize = rand(0:embed.lsize)
+	local_rsize = rand(0:embed.rsize)
 
-	context = sub(window,1:middle-1:middle+1:length(window)) #IDEA: Should the local_lsize and local_rsize be used to find the context for WSD?
-	sense_id = WSD(embed, trained_word, context)
+	context = sub(window,[1:middle-1; middle+1:length(window)]) #IDEA: Should the local_lsize and local_rsize be used to find the context for WSD?
+	sense_id = WSD(embed, word, context)
 
 
 	#Make space to store the forces
@@ -94,7 +95,7 @@ function train_window!(embed::WordSenseEmbedding, window::Vector{AbstractString}
 	end
 
 	pending_forces = embed.pending_forces[word][sense_id]
-	input = sub(embed.embedding[trained_word],sense_id) 	#Must changing inplace
+	input = embed.embedding[word][sense_id] 
 
 	for ind in (middle - local_lsize) : (middle + local_rsize)
 		(ind == middle) && continue
@@ -114,7 +115,6 @@ function train_window!(embed::WordSenseEmbedding, window::Vector{AbstractString}
 		push!(pending_forces,force)
 		if length(pending_forces)>=embed.force_minibatch_size
 			break_and_move!(embed, word, sense_id, pending_forces)
-
 			blank_forces=[Vector{Float32}()]
 			sizehint!(blank_forces, embed.force_minibatch_size)
 			embed.pending_forces[word][sense_id] = blank_forces 
@@ -126,7 +126,7 @@ function train_window!(embed::WordSenseEmbedding, window::Vector{AbstractString}
 end
 
 
-function initialize_embedding(embed::WordSenseEmbedding, randomly::RandomInited)
+function initialize_embedding(embed::WordSenseEmbedding, ::RandomInited)
     for word in embed.vocabulary
         embed.embedding[word] = [rand(Float32,embed.dimension) * 2 - 1]
 		embed.pending_forces[word] = Vector{Vector{Vector{Float32}}}()

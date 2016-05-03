@@ -1,6 +1,6 @@
-push!(LOAD_PATH,"../src/")
-using Word2Vec
-using Base.Test
+using WordEmbeddings
+using Training
+using Query
 using Lumberjack
 
 model_dir = "models"
@@ -23,7 +23,7 @@ function test_word_embedding()
     
     add_truck(LumberjackTruck(log_file), "filelogger")
     
-    embed = WordEmbedding(ndims, Word2Vec.random_inited, Word2Vec.huffman_tree; subsampling = 0.0)
+    embed = WordEmbedding(ndims, random_inited, huffman_tree; subsampling = 0.0)
     @time train(embed, test_file)
 
     save(embed, model_file)
