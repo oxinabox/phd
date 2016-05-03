@@ -29,7 +29,9 @@ facts() do
 	append!(embed.vocabulary,["a", "b", "c"])
 
 	initialize_embedding(embed, random_inited)
-	@fact embed.embedding["a"] |> size --> (30,1)
+	
+	@fact embed.embedding["a"] |> length --> 1
+	@fact embed.embedding["a"][1] |> size --> (30,)
 	
 
 	@pending test_sense_embedding(test_file)

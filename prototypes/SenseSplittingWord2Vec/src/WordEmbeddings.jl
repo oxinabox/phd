@@ -41,7 +41,6 @@ type WordEmbedding<:GenWordEmbedding
     lsize::Int64    # left window size in training
     rsize::Int64    # right window size
     trained_times::Dict{AbstractString,Int64}
-    trained_count::Int64
     corpus_size::Int64
     subsampling::Float32
     init_learning_rate::Float32
@@ -62,7 +61,7 @@ function WordEmbedding(dim::Int64, init_type::InitializatioinMethod, network_typ
                     dim,
                     lsize, rsize,
                     Dict{AbstractString,Int64}(),
-                    0, 0,
+                    0, #corpus size
                     subsampling, init_learning_rate, iter, min_count)
 end
 
@@ -113,7 +112,6 @@ type WordSenseEmbedding<:GenWordEmbedding
     lsize::Int64    # left window size in training
     rsize::Int64    # right window size
     trained_times::Dict{AbstractString,Int64}
-    trained_count::Int64
     corpus_size::Int64
     subsampling::Float32
     init_learning_rate::Float32
@@ -124,7 +122,7 @@ end
 function WordSenseEmbedding(dim::Int64, init_type::InitializatioinMethod, network_type::NetworkType;
 							lsize=5, rsize=5, subsampling=1e-5, init_learning_rate=0.025, iter=5, min_count=5,
 							force_minibatch_size=10000,
-							strength=0.4	) #this default strength is 1 standard devation of the distribution of word embeddings
+							strength=0.4) #this default strength is 1 standard devation of the distribution of word embeddings
     if dim <= 0 || lsize <= 0 || rsize <= 0
         throw(ArgumentError("dimension should be a positive integer"))
     end
@@ -138,13 +136,13 @@ function WordSenseEmbedding(dim::Int64, init_type::InitializatioinMethod, networ
                     Dict{AbstractString,Array{Float32}}(), #distribution
                     Dict{AbstractString,Vector{Int64}}(), #codebook
 					strength,
-					Dict{AbstractString, Vector{Vector{Vector{Float32}}}}() #pending forces
+					Dict{AbstractString, Vector{Vector{Vector{Float32}}}}(), #pending forces
 					force_minibatch_size,
                     init_type, network_type,
                     dim,
                     lsize, rsize,
                     Dict{AbstractString,Int64}(), #Trained times
-                    0, 0,
+                    0, 
                     subsampling, init_learning_rate, iter, min_count)
 end
 

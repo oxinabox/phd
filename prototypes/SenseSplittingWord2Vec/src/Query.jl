@@ -58,7 +58,7 @@ function prob_of_context{S<:AbstractString}(embed::GenWordEmbedding, context::Ab
     total_logprob=0.0 #Work in logprob to avoid underflow, and get more stability
     for target_word in context
         # discard words not presenting in the classification tree
-        (haskey(embed.codebook, target_word) || continue
+        haskey(embed.codebook, target_word) || continue
         node = embed.classification_tree      
         
         word_logprob = 0.0

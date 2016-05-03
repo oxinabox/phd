@@ -16,7 +16,7 @@ function train_window!(embed::WordEmbedding, window::Vector{AbstractString},midd
 
 		target_word = window[ind]
 		# discard words not presenting in the classification tree
-		(haskey(embed.codebook, target_word) || continue
+		haskey(embed.codebook, target_word) || continue
 
 		node = embed.classification_tree::TreeNode
 

@@ -2,14 +2,14 @@
 i.e. use the language modeling task.
 Returns integer coresponding to to the Column of the embedding matrix for that word, for the best word sense embedding.
 """
-function WSD(embed::WordSenseEmbedding, word::AbstractString, context::Vector{AbstractString}):
+function WSD(embed::WordSenseEmbedding, word::AbstractString, context::Vector{AbstractString})
 	embeddings = size(embed.embedding[word])
 	most_likely_sense_id = -1
 	max_prob=-Inf
 	for sense_id in 1:size(embed.embedding[word],2)
 		input = embeddings[sense_id]
 		prob = prob_of_context(embed, context, input)
-		if prob>max_prob:
+		if prob>max_prob
 			max_prob=prob
 			most_likely_sense_id = sense_id
 		end
@@ -101,7 +101,7 @@ function train_window!(embed::WordSenseEmbedding, window::Vector{AbstractString}
 
 		target_word = window[ind]
 		# discard words not presenting in the classification tree
-		haskey(embed.codebook, target_word || continue
+		haskey(embed.codebook, target_word) || continue
 
 		node = embed.classification_tree::TreeNode
 
@@ -129,10 +129,7 @@ end
 function initialize_embedding(embed::WordSenseEmbedding, randomly::RandomInited)
     for word in embed.vocabulary
         embed.embedding[word] = [rand(Float32,embed.dimension) * 2 - 1]
-		
 		embed.pending_forces[word] = Vector{Vector{Vector{Float32}}}()
-
-		#PREMOPT: sizehint!(embed.pending_forces[word], nWordSenses)
     end
     embed
 end
