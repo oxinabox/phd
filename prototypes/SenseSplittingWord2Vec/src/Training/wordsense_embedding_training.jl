@@ -16,8 +16,9 @@ function get_motions{N<:AbstractFloat}(forces::Vector{Vector{N}}, strength)
 
     ndims=length(forces[1] )
     nforces = length(forces)
-    motions = map(similar,forces)    
-    
+    motions = [Vector{N}(ndims) for _ in 1:nforces]    
+#	[@assert(length(ff)==ndims) for ff in forces]
+
     for dim in 1:ndims
         north_force = 0.0
         south_force = 0.0
@@ -39,7 +40,9 @@ function get_motions{N<:AbstractFloat}(forces::Vector{Vector{N}}, strength)
             for f_ii in 1:nforces
                 force = forces[f_ii][dim]
                 if force>0.0
-                    motions[f_ii][dim] = north_force/n_north #Don't actually decrease distence moved because of force resisted, that is a metaphore.
+                    motions[f_ii][dim] = north_force/n_north 
+					#Don't actually decrease distence moved because of force resisted,
+					#that is a metaphore.
                 else
                     motions[f_ii][dim] = south_force/n_south 
                 end
@@ -47,7 +50,7 @@ function get_motions{N<:AbstractFloat}(forces::Vector{Vector{N}}, strength)
         else
             #does not break, so all forces apply same motion
             for f_ii in 1:nforces
-                motions[f_ii][dim] = (north_force+south_force)/(n_north+n_south) #Remember one is negative                
+                motions[f_ii][dim] = (north_force+south_force)/(n_north+n_south) 
             end          
         end
     end
@@ -56,6 +59,7 @@ function get_motions{N<:AbstractFloat}(forces::Vector{Vector{N}}, strength)
     #These corespond to all the new points
 	counts = Dict{Vector{N},Int64}()
 	for motion in motions
+#		@assert length(motion)==ndims
 		get!(counts,motion,0)
 		counts[motion]+=1
 	end
@@ -67,7 +71,6 @@ function break_and_move!(embed, word, sense_id, pending_forces)
 	motions = get_motions(pending_forces,embed.strength)
 
 	old_position = embed.embedding[word][sense_id]
-	debug("Break and move: ", size_motions_1 = size(motions[1]), size_old_pos=size(old_position))	
 	new_positions = [motion+old_position for motion in motions]
 	splice!(embed.embedding[word],sense_id,new_positions) #Delete Old, insert new
 	return embed.embedding[word]
@@ -89,7 +92,7 @@ function train_window!(embed::WordSenseEmbedding, window::Vector{AbstractString}
 
 	#Make space to store the forces
 	for s_ii in length(embed.pending_forces[word]):sense_id-1
-		blank_forces=[Vector{Float32}()]
+		blank_forces=Vector{Float32}[]
 		sizehint!(blank_forces, embed.force_minibatch_size)
 		push!(embed.pending_forces[word],blank_forces)
 	end
@@ -115,7 +118,7 @@ function train_window!(embed::WordSenseEmbedding, window::Vector{AbstractString}
 		push!(pending_forces,force)
 		if length(pending_forces)>=embed.force_minibatch_size
 			break_and_move!(embed, word, sense_id, pending_forces)
-			blank_forces=[Vector{Float32}()]
+			blank_forces=Vector{Float32}[]
 			sizehint!(blank_forces, embed.force_minibatch_size)
 			embed.pending_forces[word][sense_id] = blank_forces 
 		end	
