@@ -12,22 +12,22 @@ type WordStream{S<:AbstractString, F<:AbstractFloat}
     distr::Dict{S, F}
 end
 
-function words_of(file::Union{IO,AbstractString}; subsampling=(0.0,false,nothing))
+function words_of(source::Union{IO,AbstractString}; subsampling=(0.0,false,nothing))
     rate, filter, subsampling_distr = subsampling
     distr = (rate==0.0 && !filter) ? Dict{AbstractString,Float32}() : subsampling_distr
- 	WordStream(file, rate, filter, distr)
+ 	WordStream(source, rate, filter, distr)
 end
 
 """Filters out all word not in the filter_dist -- only the keys are used, values are ignored"""
-function words_of{S<:AbstractString, F<:AbstractFloat}(file::Union{IO,AbstractString}, filter_distr::Dict{S,F})
+function words_of{S<:AbstractString, F<:AbstractFloat}(source::Union{IO,AbstractString}, filter_distr::Dict{S,F})
 	filter = true
 	rate = -1.0
- 	WordStream(file, rate, filter,filter_distr)
+ 	WordStream(source, rate, filter,filter_distr)
 end
 
 
 
-"Returns the next word without considering rate. Mutated the filepointer state"
+"Returns the next word without considering rate. Mutated the sourcepointer state"
 function unrated_next_word!(ws::WordStream, fp)
     filter_out(word) = (ws.filter && !haskey(ws.distr, word))
     
