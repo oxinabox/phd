@@ -1,60 +1,77 @@
 module SoftmaxClassifier
-
 using StatsFuns
 using Base.Cartesian        # for @nexprs
 
 
-export LinearClassifier, predict, predict!, train_one!, accuracy, log_likelihood
+export LinearClassifier, predict, train_one!, accuracy, log_likelihood
 
-# linear softmax classifier (with stochastic gradient descent)
-type LinearClassifier
-    k::Int64 # number of outputs
+"""
+linear softmax classifier (with stochastic gradient descent)
+K is number of outputs
+"""
+type LinearClassifier{K}
+    #K is number of outputs
     n::Int64 # number of inputs
     weights::Array{Float32, 2} # n * k weight matrix
 
-    outputs :: AbstractVector{Float32}
 end
 
 function LinearClassifier(k, n)
     weights = rand(n, k) * 2 - 1; # range is [-1, 1]
-    LinearClassifier(k, n, weights, zeros(Float32, k))
+    LinearClassifier{k}(n, weights)
 end
 
-function predict{F<:AbstractFloat}(c::LinearClassifier, x::AbstractVector{F})
+
+########Carefully Optimised K=2 Path. (a lot of Profiling went into this)
+
+@fastmath @inline function softmax2{R<:AbstractFloat}(t1::R,t2::R)
+    u = max(t1,t2)
+    t1 = exp(t1 - u)
+    t2 = exp(t2 - u)
+    s = t1+t2
+    t1/=s
+    t2/=s
+    t1,t2
+end
+@fastmath function predict{F<:AbstractFloat}(c::LinearClassifier{2}, x::AbstractVector{F})
+    t1=zero(F)
+    t2=zero(F)
+    @inbounds for ii in 1: size(c.weights,1)
+        @inbounds t1+=c.weights[ii,1]*x[ii]
+        @inbounds t2+=c.weights[ii,2]*x[ii]
+    end
+    return softmax2(t1,t2)
+end
+
+
+##############Normal Path (profiling found that using generated functions did not help)
+
+function predict{F<:AbstractFloat,K}(c::LinearClassifier{K}, x::AbstractVector{F})
     return softmax(c.weights'*x)
 end
 
-function predict!{F<:AbstractFloat}(c::LinearClassifier, x::AbstractVector{F})
-    # c.outputs = vec(softmax(x * c.weights))
-    s = 0.0
-    for i in 1:c.k
-        s = 0.0
-        for j in 1:c.n
-            s += x[j] * c.weights[j, i]
-        end
-        c.outputs[i] = s
-    end
 
-    softmax!(c.outputs, c.outputs);
-end
-
-function train_one!{F<:AbstractFloat}(c::LinearClassifier, x::AbstractVector{F}, y::Int64, α::AbstractFloat=0.025f0)
-    # if !in(y, 1 : c.k)
-    #     msg = @sprintf "A sample is discarded because the label y = %d is not in range of 1 to %d" y c.k
+function train_one!{F<:AbstractFloat,K}(
+					c::LinearClassifier{K},
+					x::AbstractVector{F},
+					y::Int64,
+					α::AbstractFloat=0.025f0)
+    # if !in(y, 1 : K)
+    #     msg = @sprintf "A sample is discarded because the label y = %d is not in range of 1 to %d" y K
     #     warn(msg)
     #     return
     # end
 
-    predict!(c, x)
-    c.outputs[y] -= 1
+	outputs = collect(predict(c, x))
+    outputs[y] -= 1
 
     # c.weights -= α * x' * outputs;
     # BLAS.ger!(-α, vec(x), c.outputs, c.weights)
     m = 0.0
     j = 0
     limit = c.n - 4
-    for i in 1:c.k
-        m = α * c.outputs[i]
+    for i in 1:K
+        m = α * outputs[i]
         j = 1
         while j <= limit
             @nexprs 4 (idx->c.weights[j + idx - 1, i] -= m * x[j + idx - 1])
@@ -67,17 +84,22 @@ function train_one!{F<:AbstractFloat}(c::LinearClassifier, x::AbstractVector{F},
     end
 end
 
-function train_one!{F1<:AbstractFloat, F2<:AbstractFloat}(c::LinearClassifier, x::AbstractVector{F1}, y::Int64, input_gradient::AbstractVector{F2}, α::AbstractFloat=0.025f0)
-    predict!(c, x)
-    c.outputs[y] -= 1
-
-    # input_gradient = ( c.weights * outputs' )'
+function train_one!{F1<:AbstractFloat, F2<:AbstractFloat,K}(
+					c::LinearClassifier{K},
+					x::AbstractVector{F1},
+					y::Int64,
+					input_gradient::AbstractVector{F2},
+					α::AbstractFloat=0.025f0)
+	outputs = collect(predict(c, x))
+    outputs[y] -= 1
+    
+	# input_gradient = ( c.weights * outputs' )'
     # BLAS.gemv!('N', α, c.weights, c.outputs, 1.0, input_gradient)
     m = 0.0
     j = 0
     limit = c.n - 4
-    for i in 1:c.k
-        m = α * c.outputs[i]
+    for i in 1:K
+        m = α * outputs[i]
         j = 1
         while j <= limit
             @nexprs 4 (idx->input_gradient[j+idx-1] += m * c.weights[j+idx-1, i])
@@ -91,8 +113,8 @@ function train_one!{F1<:AbstractFloat, F2<:AbstractFloat}(c::LinearClassifier, x
 
     # c.weights -= α * x' * outputs;
     # BLAS.ger!(-α, vec(x), c.outputs, c.weights)
-    for i in 1:c.k
-        m = α * c.outputs[i]
+    for i in 1:K
+        m = α * outputs[i]
         j = 1
         while j <= limit
             @nexprs 4 (idx->c.weights[j + idx - 1, i] -= m * x[j + idx - 1])
@@ -116,7 +138,7 @@ function log_likelihood(c, X, y)
 end
 
 # calculate the accuracy on the testing dataset
-function accuracy{F<:AbstractFloat}(c::LinearClassifier, X::AbstractVector{F}, y::AbstractVector{Int64})
+function accuracy{F<:AbstractFloat,K}(c::LinearClassifier{K}, X::AbstractMatrix{F}, y::AbstractVector{Int64})
     n = size(X, 1)
     succ = 0
     for i in 1 : n
