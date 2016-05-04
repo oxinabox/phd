@@ -83,9 +83,6 @@ end
 "Given a window, actually does the training on it"
 function train_window!(embed::WordSenseEmbedding, window::Vector{AbstractString},middle::Int64, α::AbstractFloat)
 	word=window[middle]
-	if !haskey(embed.codebook, word) #Not a word we are training, move on
-		return embed
-	end
 	
 	local_lsize = rand(0:embed.lsize)
 	local_rsize = rand(0:embed.rsize)
@@ -108,13 +105,8 @@ function train_window!(embed::WordSenseEmbedding, window::Vector{AbstractString}
 		(ind == middle) && continue
 
 		target_word = window[ind]
-		# discard words not presenting in the classification tree
-		haskey(embed.codebook, target_word) || continue
-
 		node = embed.classification_tree::TreeNode
-
 		force = zeros(Float32, embed.dimension)
-
 		for code in embed.codebook[target_word]
 			train_one!(node.data, input, code, force, α)
 			node = node.children[code]

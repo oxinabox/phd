@@ -9,13 +9,14 @@
 """Reterns the window, and the α, for this round of training.
 Also logs the progress"""
 function training_windows(embed::GenWordEmbedding, words_stream::WordStream)
+	filtered_wordstream = words_of(words_stream.source, embed.distribution) 
 	Task() do
 		tic()
 		α = embed.init_learning_rate
 		trained_count = 0
 		for current_iter in 1:embed.iter
 			debug("Iter $current_iter of $(embed.iter)")
-			windows = sliding_window(words_stream, lsize=embed.lsize, rsize=embed.rsize, embed.distribution)
+			windows = sliding_window(filtered_wordstream, lsize=embed.lsize, rsize=embed.rsize)
 			for (current_iter_prog,window) in enumerate_progress(windows)
 			   trained_count += 1
 
