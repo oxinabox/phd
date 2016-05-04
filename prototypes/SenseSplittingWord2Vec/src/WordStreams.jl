@@ -4,19 +4,27 @@ export words_of, WordStream, SlidingWindow, sliding_window, enumerate_progress
 
 
 const WHITESPACE = (' ', '\n', '\r')
-type WordStream
+type WordStream{S<:AbstractString, F<:AbstractFloat}
     source::Union{IO, AbstractString}
     # filter configuration
-    rate::Float32    #if rate > 0, words will be subsampled according to distr
+    rate::AbstractFloat    #if rate > 0, words will be subsampled according to distr
     filter::Bool    # if filter is true, only words present in the keys(distr) will be considered
-    distr::Dict{AbstractString, Float32}
+    distr::Dict{S, F}
 end
 
-function words_of(file::Union{IO,AbstractString}; subsampling=(0,false,nothing))
+function words_of(file::Union{IO,AbstractString}; subsampling=(0.0,false,nothing))
     rate, filter, subsampling_distr = subsampling
-    distr = (rate==0 && !filter) ? Dict{AbstractString,Float32}() : subsampling_distr
+    distr = (rate==0.0 && !filter) ? Dict{AbstractString,Float32}() : subsampling_distr
  	WordStream(file, rate, filter, distr)
 end
+
+"""Filters out all word not in the filter_dist -- only the keys are used, values are ignored"""
+function words_of{S<:AbstractString, F<:AbstractFloat}(file::Union{IO,AbstractString}, filter_distr::Dict{S,F})
+	filter = true
+	rate = -1.0
+ 	WordStream(file, rate, filter,filter_distr)
+end
+
 
 
 "Returns the next word without considering rate. Mutated the filepointer state"
@@ -66,6 +74,7 @@ function Base.next(ws::WordStream, state)
         if ws.rate > 0
             prob = (sqrt(ws.distr[next_word] / ws.rate) + 1) * ws.rate / ws.distr[next_word]
             if(prob < rand())
+				#Skip this word
                 next_word=unrated_next_word!(ws,fp) #Advance to next word, skipping this one
                 continue
             end

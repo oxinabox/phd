@@ -15,7 +15,7 @@ function training_windows(embed::GenWordEmbedding, words_stream::WordStream)
 		trained_count = 0
 		for current_iter in 1:embed.iter
 			debug("Iter $current_iter of $(embed.iter)")
-			windows = sliding_window(words_stream, lsize=embed.lsize, rsize=embed.rsize)
+			windows = sliding_window(words_stream, lsize=embed.lsize, rsize=embed.rsize, embed.distribution)
 			for (current_iter_prog,window) in enumerate_progress(windows)
 			   trained_count += 1
 

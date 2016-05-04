@@ -16,6 +16,13 @@ facts("Should Read") do
 	@fact collect(words_of(open(filedata_path,"r"))) --> filedata_data "From Open File"
 end
 
+facts("Should Filter") do
+	
+	@fact collect(words_of(data,Dict("the"=>0.01,"men"=>0.01,"sailing"=>0.01, "gold"=>0.01 ) )) --> ["the", "men","sailing","the", "the","gold"] "Filter only, not subsapling"
+end
+
+
+
 
 facts("Should get a sliding window") do 
 	ww=words_of(data)
