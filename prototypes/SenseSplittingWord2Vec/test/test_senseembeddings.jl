@@ -87,7 +87,7 @@ facts("setup correctly") do
 	@fact embed.embedding["a"] |> length --> 1
 	@fact embed.embedding["a"][1] |> size --> (30,)
 	
-	test_sense_embedding(test_file)
+#	test_sense_embedding(test_file)
 end
 
 

@@ -4,11 +4,11 @@ Returns integer coresponding to to the Column of the embedding matrix for that w
 """
 function WSD(embed::WordSenseEmbedding, word::AbstractString, context::AbstractVector{AbstractString})
 	sense_embeddings = embed.embedding[word]
-	if length(sense_embeddings==1)
-		return sense_embeddings[1]
+	if length(sense_embeddings)==1
+		return 1
 	else
-		prop, most_likely_sense_id = findmax([prob_of_context(embed, context, input) for input in sense_embeddings])
-		return most_likely_sense_id
+		prop, sense_id = findmax([prob_of_context(embed, context, input) for input in sense_embeddings])
+		return sense_id
 	end
 end
 
@@ -88,7 +88,7 @@ function train_window!(embed::WordSenseEmbedding, window::Vector{AbstractString}
 	local_rsize = rand(0:embed.rsize)
 
 	context = sub(window,[1:middle-1; middle+1:length(window)]) #IDEA: Should the local_lsize and local_rsize be used to find the context for WSD?
-	sense_id = WSD(embed, word, context)
+	sense_id = WSD(embed, word, context)::Int64
 
 
 	#Make space to store the forces

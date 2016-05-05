@@ -61,12 +61,12 @@ function prob_of_context{S<:AbstractString}(embed::GenWordEmbedding, context::Ab
         
         word_prob = 0.0f0
         for code in embed.codebook[target_word]  
-            word_prob+= predict(node.data, input)[code]
+            word_prob*= predict(node.data, input)[code]
             @inbounds node = node.children[code]
-        end
-        total_prob+=word_prob
+		end
+        total_prob*=word_prob
     end
-    total_prob #Going back out of the   domain is not required for external  ic, but it is nice for clarity
+    total_prob 
 end
 
 end #Module
