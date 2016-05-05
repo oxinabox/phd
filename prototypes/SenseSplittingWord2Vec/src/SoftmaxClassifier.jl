@@ -22,18 +22,18 @@ function LinearClassifier(k, n)
 end
 
 
-########Carefully Optimised K=2 Path. (a lot of Profiling went into this)
+###Carefully Optimised K=2 Path. (a lot of Profiling went into this)
 
 @fastmath @inline function softmax2{R<:AbstractFloat}(t1::R,t2::R)
-    u = max(t1,t2)
-    t1 = exp(t1 - u)
-    t2 = exp(t2 - u)
-    s = t1+t2
-    t1/=s
-    t2/=s
-    t1,t2
+	#This is the softmax function, but particularly optimised.
+    z  = exp(t2-t1)
+    r1 = inv(one(R)+z)
+    r2 = z*r1
+    (r1,r2)
 end
-@fastmath function predict{F<:AbstractFloat}(c::LinearClassifier{2}, x::AbstractVector{F})
+
+@fastmath function predict{F<:AbstractFloat}(c::LinearClassifier{2},
+											 x::AbstractVector{F})
     t1=zero(F)
     t2=zero(F)
     @inbounds for ii in 1: size(c.weights,1)

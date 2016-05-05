@@ -9,7 +9,7 @@ data_dir = "./data/corpora/text8/"
 test_filename = "text8"
 test_file = joinpath(data_dir, test_filename)
 
-const ndims = 150
+const ndims = 300
 
 base_name  ="$(test_filename)_$ndims"
 model_file = joinpath(model_dir, base_name*".model")
