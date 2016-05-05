@@ -63,9 +63,8 @@ function get_motions{N<:AbstractFloat}(forces::Vector{Vector{N}}, strength)
     #These corespond to all the new points
 	counts = Dict{Vector{N},Int64}()
 	for motion in motions
-#		@assert length(motion)==ndims
-		get!(counts,motion,0)
-		counts[motion]+=1
+		counts[motion]=1 + get!(counts,motion,0)
+		#@assert(!(any(isnan(motion))))
 	end
 	Vector{N}[motion.*count for (motion, count) in counts]
 end

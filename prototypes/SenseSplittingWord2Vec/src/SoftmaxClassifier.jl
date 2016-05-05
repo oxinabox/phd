@@ -26,9 +26,20 @@ end
 
 @fastmath @inline function softmax2{R<:AbstractFloat}(t1::R,t2::R)
 	#This is the softmax function, but particularly optimised.
-    z  = exp(t2-t1)
-    r1 = inv(one(R)+z)
-    r2 = z*r1
+    #Note you must in the expondent subtract the larger from the smaller, so you get underfloat (to zero) rather than overflow (to Inf) so that things are all behaved. https://lingpipe-blog.com/2009/03/17/softmax-without-overflow/
+    
+    if t1>t2
+        z=t2-t1
+        m  = exp(z)
+        r1 = inv(one(R)+m)
+        r2 = m*r1
+        (r1,r2)
+    else #t2>t1
+        z=t1-t2
+        m  = exp(z)
+        r2 = inv(one(R)+m)
+        r1 = m*r2
+    end
     (r1,r2)
 end
 
@@ -90,9 +101,12 @@ function train_one!{F1<:AbstractFloat, F2<:AbstractFloat,K}(
 					y::Int64,
 					input_gradient::AbstractVector{F2},
 					α::AbstractFloat=0.025f0)
+	#@assert(!(x |> isnan |> any))
+	#@assert(!(c.weights[:] |> isnan |> any))
 	outputs = collect(predict(c, x))
     outputs[y] -= 1
     
+	#@assert(!(outputs |> isnan |> any))
 	# input_gradient = ( c.weights * outputs' )'
     # BLAS.gemv!('N', α, c.weights, c.outputs, 1.0, input_gradient)
     m = 0.0
@@ -125,6 +139,7 @@ function train_one!{F1<:AbstractFloat, F2<:AbstractFloat,K}(
             j+=1
         end
     end
+	#@assert(!(c.weights[:] |> isnan |> any))
 end
 
 # calculate the overall log likelihood. Mainly used for debugging
