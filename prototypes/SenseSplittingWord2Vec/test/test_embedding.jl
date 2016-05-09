@@ -33,10 +33,17 @@ end
 
 
 function test_word_embedding(inputfile)
+	callback_iters = Int64[]
+	function cb(args)
+		iter, embed = args
+		push!(callback_iters, iter)
+	end
+
+
 	embed = WordEmbedding(30, random_inited, huffman_tree, subsampling = 0, iter=2)
 	add_truck(CheckAlphaDecreasingTruck(Inf,"info"), "Testing Truck")
 
-	@time train(embed, inputfile)
+	@time train(embed, inputfile, end_of_iter_callback = cb)
 
 	save(embed, model_file)
 	embed = restore(model_file)
@@ -51,8 +58,11 @@ function test_word_embedding(inputfile)
         info(target*" ≈ ")
         info(find_nearest_words(embed, target))
     end
+
+	@fact callback_iters --> [0,1,2] "Callback must be triggered before beginning and after each iter"
 end
 
 facts("Some Facts about Word Embedding Training") do
+		
 	test_word_embedding(test_file)
 end

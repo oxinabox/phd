@@ -8,9 +8,10 @@ using Trees
 using WordEmbeddings
 using Lumberjack
 using Query
-
+using Utils
 
 export train, random_init, run_training!, initialize_embedding
+export save_callback
 
 include("Training/general_training.jl")
 include("Training/word_embedding_training.jl")

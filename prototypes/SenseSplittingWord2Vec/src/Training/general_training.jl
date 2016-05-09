@@ -5,15 +5,36 @@
 #*Step 2: Calculate Word Embedding
 #*===============================================================================#
 
+############ Callbacks
+function save_callback(basefilename::String)
+	function scallbck(arg)
+		iter, embed = arg
+		
+		save("$basefilename_i$iter.model",embed)
+	end
+
+end
+
+
+
+
+
+#######################
+
 
 """Reterns the window, and the α, for this round of training.
 Also logs the progress"""
-function training_windows(embed::GenWordEmbedding, words_stream::WordStream)
-	filtered_wordstream = words_of(words_stream.source, embed.distribution) 
+function training_windows(embed::GenWordEmbedding,
+						  words_stream::WordStream, 
+						  end_of_iter_callback::Function=identity)
+	@assert words_stream.filter "Filtered word stream expected"
+	filtered_wordstream = words_stream 
+	
 	Task() do
 		tic()
 		α = embed.init_learning_rate
 		trained_count = 0
+		end_of_iter_callback((0,embed))
 		for current_iter in 1:embed.iter
 			debug("Iter $current_iter of $(embed.iter)")
 			windows = sliding_window(filtered_wordstream, lsize=embed.lsize, rsize=embed.rsize)
@@ -30,6 +51,8 @@ function training_windows(embed::GenWordEmbedding, words_stream::WordStream)
 				end
 				produce(window,α)
 			end
+			debug("Running Callback after $current_iter")
+			end_of_iter_callback((current_iter,embed))
 		end
 		overall_time = toq()
 		debug("Finished training. Trained on $(trained_count) words in $(overall_time) seconds.")
@@ -37,11 +60,14 @@ function training_windows(embed::GenWordEmbedding, words_stream::WordStream)
 end
 
 "Runs all the training, handles adjusting learning rate, repeating through loops etc."
-function run_training!(embed::GenWordEmbedding, words_stream::WordStream, strip::Bool=false)
+function run_training!(embed::GenWordEmbedding, 
+					   words_stream::WordStream;
+					   strip::Bool=false,
+					   end_of_iter_callback::Function=identity)
 	middle = embed.lsize + 1
     trained_times = Dict{AbstractString, Int64}()
 
-	for (window, α) in training_windows(embed,words_stream)
+	for (window, α) in training_windows(embed,words_stream,end_of_iter_callback)
 		trained_word = window[middle]
 		trained_times[trained_word] = get(trained_times, trained_word, 0) + 1
 		train_window!(embed,window,middle,α)
@@ -74,7 +100,9 @@ function initialize_network(embed::GenWordEmbedding, huffman::HuffmanTree)
 end
 
 
-function train(embed::GenWordEmbedding, corpus_filename::AbstractString)
+function train(embed::GenWordEmbedding, corpus_filename::AbstractString;
+			   end_of_iter_callback::Function=identity)
+
     embed.distribution = word_distribution(corpus_filename)
     embed.vocabulary = collect(keys(embed.distribution))
 
@@ -89,7 +117,7 @@ function train(embed::GenWordEmbedding, corpus_filename::AbstractString)
     t1 = time()
     println("Starting sequential training...")
     words_stream = words_of(corpus_filename, subsampling = (embed.subsampling, true, embed.distribution))
-    run_training!(embed, words_stream, false)
+    run_training!(embed, words_stream, end_of_iter_callback=end_of_iter_callback)
 
     t2 = time()
     println("Training complete at $(t2-t1) time")
