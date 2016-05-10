@@ -6,13 +6,9 @@ using Utils
 using Mocking
 
 data_dir = joinpath("data") #For local run from testing directory
-model_dir = joinpath("models") #For local run from testing directory
+test_file = "./data/text8_miniscule"
 
-test_filename = "text8_tiny"
-test_file = joinpath(data_dir, test_filename)
-model_file = joinpath(model_dir, test_filename * ".model")
-
-
+remove_truck("console")
 
 
 
@@ -36,31 +32,26 @@ facts("Motions") do
 end
 
 facts("break and move") do
+	function pend(forces, word="a",sense_id=1)
+		Dict(word=>Dict(sense_id=>forces))
+	end
 
 	embed = WordSenseEmbedding(2, random_inited, huffman_tree, strength=0.0)  
 	embed.embedding["a"]=[[0.0,0]]
-	@fact Training.break_and_move!(embed, "a",1, [[10., 0]]) --> [[10.,0]]
-	@fact Training.break_and_move!(embed, "a",1, [[-10., 0]]) --> [[0.,0]]
-	@fact Training.break_and_move!(embed, "a",1, [[5., 0],[-5,0]]) --> [[5.,0],[-5,0]]
+	@fact Training.break_and_move!(embed, pend([[10., 0]]),"a",1) --> [[10.,0]]
+	@fact Training.break_and_move!(embed, pend([[-10., 0]]),"a",1) --> [[0.,0]]
+	@fact Training.break_and_move!(embed, pend([[5., 0],[-5,0]]),"a",1) --> [[5.,0],[-5,0]]
 
 
 	srand(10) #No actual random chance, in tests
 	forces   = [ 1.+round(10.0*rand(Float32, 2)) for ii in 1:1000]
 	embed.embedding["b"]=[[0.0,0]]
-	@fact Training.break_and_move!(embed, "b",1, forces) |> length  -->  greater_than(0) "should produce some forces after"
+	@fact Training.break_and_move!(embed, pend(forces,"b"),"b",1) |> length  -->  greater_than(0) "should produce some forces after"
 
 
 	embed.embedding["c"]=[[1.,0],[2.,0]]
-	@fact Training.break_and_move!(embed, "c",2,[[50.,-3],[-10,6]]) |> Set --> Set( [[1.,0],[52.,-3],[-8.,6]]) "Don't loose the other word senses"
+	@fact Training.break_and_move!(embed, pend([[50.,-3],[-10,6]],"c",2),"c",2) |> Set --> Set( [[1.,0],[52.,-3],[-8.,6]]) "Don't loose the other word senses"
 
-#Mocks.jl appears to be broken
-#	mend(Training.get_motions, (forces, strength)->forces) do
-#
-#		break_and_move! = @mendable Training.break_and_move!
-#		@fact break_and_move!(embed, "a",1, [[10., 0]]) --> [[10.,0]]
-#		@fact break_and_move!(embed, "a",1, [[-10., 0]]) --> [[0.,0]]
-#		@fact break_and_move!(embed, "a",1, [[5., 0],[-5,0]]) --> [[5.,0],-[5,0]]
-#end
 
 
 end
@@ -71,9 +62,6 @@ function test_sense_embedding(inputfile)
 
 	embed = WordSenseEmbedding(30, random_inited, huffman_tree, subsampling = 0, iter=2, strength=0.4, force_minibatch_size=100)
 	@time train(embed, inputfile)
-
-	save(embed, model_file)
-	embed = restore(model_file)
 	embed
 end
 
@@ -87,7 +75,7 @@ facts("setup correctly") do
 	@fact embed.embedding["a"] |> length --> 1
 	@fact embed.embedding["a"][1] |> size --> (30,)
 	
-#	test_sense_embedding(test_file)
+	test_sense_embedding(test_file)
 end
 
 

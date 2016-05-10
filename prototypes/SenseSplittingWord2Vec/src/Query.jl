@@ -3,7 +3,7 @@ using Base.Collections
 using WordEmbeddings
 using Distances
 using SoftmaxClassifier
-export find_nearest_words, prob_of_context
+export find_nearest_words, logprob_of_context
 
 
 ########### nearest_words, and analogy math

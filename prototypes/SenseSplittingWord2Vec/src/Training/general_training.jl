@@ -17,8 +17,6 @@ end
 
 
 
-
-
 #######################
 
 
@@ -59,26 +57,7 @@ function training_windows(embed::GenWordEmbedding,
 	end
 end
 
-"Runs all the training, handles adjusting learning rate, repeating through loops etc."
-function run_training!(embed::GenWordEmbedding, 
-					   words_stream::WordStream;
-					   strip::Bool=false,
-					   end_of_iter_callback::Function=identity)
-	middle = embed.lsize + 1
-    trained_times = Dict{AbstractString, Int64}()
 
-	for (window, α) in training_windows(embed,words_stream,end_of_iter_callback)
-		trained_word = window[middle]
-		trained_times[trained_word] = get(trained_times, trained_word, 0) + 1
-		train_window!(embed,window,middle,α)
-    end
-
-    embed.trained_times = trained_times
-
-    # strip to remove unnecessary members and make serialization faster
-    strip && keep_word_vectors_only!(embed)
-    embed
-end
 
 
 function initialize_network(embed::GenWordEmbedding, huffman::HuffmanTree)

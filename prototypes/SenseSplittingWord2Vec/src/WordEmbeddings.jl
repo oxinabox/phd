@@ -103,7 +103,7 @@ type WordSenseEmbedding<:GenWordEmbedding
 	strength::Float32
 
 	
-	pending_forces::Dict{AbstractString, Vector{Vector{Vector{Float32}}}} #[Word][sense_id][force_id]=force vector #TODO move me to run_training!
+	
     force_minibatch_size::Int64
 
 	init_type::InitializatioinMethod
@@ -111,7 +111,6 @@ type WordSenseEmbedding<:GenWordEmbedding
     dimension::Int64
     lsize::Int64    # left window size in training
     rsize::Int64    # right window size
-    trained_times::Dict{AbstractString,Int64}
     corpus_size::Int64
     subsampling::Float32
     init_learning_rate::Float32
@@ -120,9 +119,8 @@ type WordSenseEmbedding<:GenWordEmbedding
 end
 
 function WordSenseEmbedding(dim::Int64, init_type::InitializatioinMethod, network_type::NetworkType;
-							lsize=5, rsize=5, subsampling=1e-5, init_learning_rate=0.025, iter=5, min_count=5,
-							force_minibatch_size=1000,
-							strength=0.8) #this default strength is 1 standard devation of the distribution of word embeddings
+							lsize=5, rsize=5, subsampling=1e-5, init_learning_rate=0.025, iter=5,
+							min_count=5, force_minibatch_size=1000,	strength=0.8)
     if dim <= 0 || lsize <= 0 || rsize <= 0
         throw(ArgumentError("dimension should be a positive integer"))
     end
@@ -136,12 +134,10 @@ function WordSenseEmbedding(dim::Int64, init_type::InitializatioinMethod, networ
                     Dict{AbstractString,Array{Float32}}(), #distribution
                     Dict{AbstractString,Vector{Int64}}(), #codebook
 					strength,
-					Dict{AbstractString, Vector{Vector{Vector{Float32}}}}(), #pending forces
 					force_minibatch_size,
                     init_type, network_type,
                     dim,
                     lsize, rsize,
-                    Dict{AbstractString,Int64}(), #Trained times
                     0, 
                     subsampling, init_learning_rate, iter, min_count)
 end

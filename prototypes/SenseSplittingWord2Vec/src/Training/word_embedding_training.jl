@@ -30,6 +30,28 @@ function train_window!(embed::WordEmbedding, window::Vector{AbstractString},midd
 	embed
 end
 
+"Runs all the training, handles adjusting learning rate, repeating through loops etc."
+function run_training!(embed::WordEmbedding, 
+					   words_stream::WordStream;
+					   strip::Bool=false,
+					   end_of_iter_callback::Function=identity)
+	middle = embed.lsize + 1
+    trained_times = Dict{AbstractString, Int64}()
+
+	for (window, α) in training_windows(embed,words_stream,end_of_iter_callback)
+		trained_word = window[middle]
+		trained_times[trained_word] = get(trained_times, trained_word, 0) + 1
+		train_window!(embed,window,middle,α)
+    end
+
+    embed.trained_times = trained_times
+
+    # strip to remove unnecessary members and make serialization faster
+    strip && keep_word_vectors_only!(embed)
+    embed
+end
+
+
 function initialize_embedding(embed::WordEmbedding, randomly::RandomInited)
     for i in embed.vocabulary
         embed.embedding[i] = rand(embed.dimension) * 2 - 1

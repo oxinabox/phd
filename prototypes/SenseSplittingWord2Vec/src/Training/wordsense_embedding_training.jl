@@ -1,3 +1,6 @@
+import DataStructures.DefaultDict
+
+
 """Perform Word Sense Disabmiguation, by chosing the word-sense that says the context words are most likely.
 i.e. use the language modeling task.
 Returns integer coresponding to to the Column of the embedding matrix for that word, for the best word sense embedding.
@@ -7,7 +10,7 @@ function WSD(embed::WordSenseEmbedding, word::AbstractString, context::AbstractV
 	if length(sense_embeddings)==1
 		return 1
 	else
-		prop, sense_id = findmax([prob_of_context(embed, context, input) for input in sense_embeddings])
+		prop, sense_id = findmax([logprob_of_context(embed, context, input) for input in sense_embeddings])
 		return sense_id
 	end
 end
@@ -70,34 +73,37 @@ function get_motions{N<:AbstractFloat}(forces::Vector{Vector{N}}, strength)
 end
 
 
-function break_and_move!(embed, word, sense_id, pending_forces)
-	motions = get_motions(pending_forces,embed.strength)
+function break_and_move!(embed::WordSenseEmbedding,pending_forces, word::AbstractString, sense_id::Int64)
+	forces = pending_forces[word][sense_id]
+	if length(forces)>0
+		motions = get_motions(forces, embed.strength)
 
-	old_position = embed.embedding[word][sense_id]
-	new_positions = [motion+old_position for motion in motions]
-	splice!(embed.embedding[word],sense_id,new_positions) #Delete Old, insert new
+		old_position = embed.embedding[word][sense_id]
+		new_positions = [motion+old_position for motion in motions]
+		splice!(embed.embedding[word],sense_id,new_positions) #Delete Old, insert new
+		pending_forces[word][sense_id] = blank_forces(embed.force_minibatch_size)
+		#Delete processed forces
+	end
 	return embed.embedding[word]
 end
 
+function blank_forces(nforces_hint::Int64)
+    blank_forces=Vector{Float32}[]
+    sizehint!(blank_forces, nforces_hint)
+    blank_forces
+end
+
+
 "Given a window, actually does the training on it"
-function train_window!(embed::WordSenseEmbedding, window::Vector{AbstractString},middle::Int64, α::AbstractFloat)
+function train_window!(embed::WordSenseEmbedding,pending_forces, window::Vector{AbstractString},middle::Int64, α::AbstractFloat)
 	word=window[middle]
-	
 	local_lsize = rand(0:embed.lsize)
 	local_rsize = rand(0:embed.rsize)
 
 	context = sub(window,[1:middle-1; middle+1:length(window)]) #IDEA: Should the local_lsize and local_rsize be used to find the context for WSD?
 	sense_id = WSD(embed, word, context)::Int64
 
-
-	#Make space to store the forces
-	for s_ii in length(embed.pending_forces[word]):sense_id-1
-		blank_forces=Vector{Float32}[]
-		sizehint!(blank_forces, embed.force_minibatch_size)
-		push!(embed.pending_forces[word],blank_forces)
-	end
-
-	pending_forces = embed.pending_forces[word][sense_id]
+    ws_pending_forces = pending_forces[word][sense_id]
 	input = embed.embedding[word][sense_id] 
 
 	for ind in (middle - local_lsize) : (middle + local_rsize)
@@ -110,24 +116,46 @@ function train_window!(embed::WordSenseEmbedding, window::Vector{AbstractString}
 			train_one!(node.data, input, code, force, α)
 			node = node.children[code]
 		end
-		push!(pending_forces,force)
-		if length(pending_forces)>=embed.force_minibatch_size
-			break_and_move!(embed, word, sense_id, pending_forces)
-			blank_forces=Vector{Float32}[]
-			sizehint!(blank_forces, embed.force_minibatch_size)
-			embed.pending_forces[word][sense_id] = blank_forces 
+		push!(ws_pending_forces,force)
+		if length(ws_pending_forces)>=embed.force_minibatch_size
+			break_and_move!(embed, pending_forces, word, sense_id)
 		end	
-		
 	end
 	#TODO: Force all things to break_break_and_move! at end of run_training!
 	embed
+end
+
+"Runs all the training, handles adjusting learning rate, repeating through loops etc."
+function run_training!(embed::WordSenseEmbedding, 
+					   words_stream::WordStream;
+					   strip::Bool=false,
+					   end_of_iter_callback::Function=identity)
+	middle = embed.lsize + 1
+    forces_for_sense = Vector{Vector{Float32}}
+    sense_forces = ()->DefaultDict(Int64, forces_for_sense,
+                                   ()->blank_forces(embed.force_minibatch_size))
+    pending_forces = DefaultDict(AbstractString,typeof(sense_forces()), sense_forces)
+
+    
+	for (window, α) in training_windows(embed,words_stream,end_of_iter_callback)
+		train_window!(embed, pending_forces, window,middle,α)
+    end
+
+	for word in keys(pending_forces)
+		for sense_id in keys(pending_forces[word])
+			break_and_move!(embed, pending_forces, word, sense_id)
+		end
+	end
+
+    # strip to remove unnecessary members and make serialization faster
+    strip && keep_word_vectors_only!(embed)
+    embed
 end
 
 
 function initialize_embedding(embed::WordSenseEmbedding, ::RandomInited)
     for word in embed.vocabulary
         embed.embedding[word] = [rand(Float32,embed.dimension) * 2 - 1]
-		embed.pending_forces[word] = Vector{Vector{Vector{Float32}}}()
     end
     embed
 end
