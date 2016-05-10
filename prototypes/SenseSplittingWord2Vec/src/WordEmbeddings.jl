@@ -121,8 +121,8 @@ end
 
 function WordSenseEmbedding(dim::Int64, init_type::InitializatioinMethod, network_type::NetworkType;
 							lsize=5, rsize=5, subsampling=1e-5, init_learning_rate=0.025, iter=5, min_count=5,
-							force_minibatch_size=10000,
-							strength=0.4) #this default strength is 1 standard devation of the distribution of word embeddings
+							force_minibatch_size=1000,
+							strength=0.8) #this default strength is 1 standard devation of the distribution of word embeddings
     if dim <= 0 || lsize <= 0 || rsize <= 0
         throw(ArgumentError("dimension should be a positive integer"))
     end

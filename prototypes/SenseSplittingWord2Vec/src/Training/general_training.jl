@@ -10,7 +10,7 @@ function save_callback(basefilename::String)
 	function scallbck(arg)
 		iter, embed = arg
 		
-		save("$basefilename_i$iter.model",embed)
+		save(embed, "$(basefilename)_i$(iter).model")
 	end
 
 end

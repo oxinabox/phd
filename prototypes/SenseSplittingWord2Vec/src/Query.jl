@@ -49,24 +49,28 @@ end
 
 #################### Probability of the context
     
-function prob_of_context{S<:AbstractString}(embed::WordEmbedding, context::AbstractVector{S}, middle_word::S)
+function logprob_of_context{S<:AbstractString}(embed::WordEmbedding, context::AbstractVector{S}, middle_word::S)
     input = embed.embedding[middle_word]
-    prob_of_context(embed, context, input)
+    logprob_of_context(embed, context, input)
 end
 
-function prob_of_context{S<:AbstractString}(embed::GenWordEmbedding, context::AbstractVector{S}, input::Vector{Float32})
+function logprob_of_context{S<:AbstractString}(embed::GenWordEmbedding, context::AbstractVector{S}, input::Vector{Float32})
     total_prob=0.0f0
     for target_word in context
         node = embed.classification_tree      
         
         word_prob = 0.0f0
         for code in embed.codebook[target_word]  
-            word_prob*= predict(node.data, input)[code]
+            word_prob+= log(predict(node.data, input)[code])
             @inbounds node = node.children[code]
 		end
-        total_prob*=word_prob
+        total_prob+=word_prob
     end
-    total_prob 
+    total_prob
 end
+
+
+
+
 
 end #Module
