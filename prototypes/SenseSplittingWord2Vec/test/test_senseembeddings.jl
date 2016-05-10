@@ -52,8 +52,6 @@ facts("break and move") do
 	embed.embedding["c"]=[[1.,0],[2.,0]]
 	@fact Training.break_and_move!(embed, pend([[50.,-3],[-10,6]],"c",2),"c",2) |> Set --> Set( [[1.,0],[52.,-3],[-8.,6]]) "Don't loose the other word senses"
 
-
-
 end
 
 
