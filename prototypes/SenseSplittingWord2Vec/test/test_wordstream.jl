@@ -34,34 +34,6 @@ facts("Should get a sliding window") do
 	@fact bigger_windows[end] --> AbstractString["find","the","land","of","gold"]
 end
 
-facts("Should report progress") do
-	function check_progress_facts(ww)		
-		oldprog=0.0
-		for (prog,word) in collect(enumerate_progress(ww))
-			@fact prog --> greater_than_or_equal(oldprog) "progress must monotonically increase"
-			oldprog=prog
-		end
-		
-		@fact collect(enumerate_progress(ww))[end][1] --> 1.0 "Must end at 1.0"
-
-		for ((prog,p_word),s_word) in zip(enumerate_progress(ww), ww)
-			@fact p_word --> s_word
-		end
-	end
-
-	context("On words") do
-		ww=words_of(data)
-		check_progress_facts(ww)
-	end
-
-	context("On Window") do
-		ww=words_of(data)
-		check_progress_facts(sliding_window(ww))
-	end
-
-end
-
-
 
 
 

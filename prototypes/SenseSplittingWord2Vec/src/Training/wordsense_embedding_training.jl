@@ -1,5 +1,5 @@
 import DataStructures.DefaultDict
-
+using WorkIterator
 
 """Perform Word Sense Disabmiguation, by chosing the word-sense that says the context words are most likely.
 i.e. use the language modeling task.
@@ -14,6 +14,8 @@ function WSD(embed::WordSenseEmbedding, word::AbstractString, context::AbstractV
 		return sense_id
 	end
 end
+
+
 
 """
 Returns a Vector of vectors for the movement of every point, given the forces vector of vectors
@@ -73,6 +75,7 @@ function get_motions{N<:AbstractFloat}(forces::Vector{Vector{N}}, strength)
 end
 
 
+#TODO Add α here.
 function break_and_move!(embed::WordSenseEmbedding,pending_forces, word::AbstractString, sense_id::Int64)
 	forces = pending_forces[word][sense_id]
 	if length(forces)>0
@@ -87,6 +90,16 @@ function break_and_move!(embed::WordSenseEmbedding,pending_forces, word::Abstrac
 	return embed.embedding[word]
 end
 
+"Apply break and move across all forces"
+function break_and_move!(embed::WordSenseEmbedding, pending_forces)
+	for word in keys(pending_forces) |> collect #HACK for some reason you can't directly iterate the keys
+		for sense_id in keys(pending_forces[word])
+			break_and_move!(embed, pending_forces, word, sense_id)
+		end
+	end
+	embed.embedding
+end
+
 function blank_forces(nforces_hint::Int64)
     blank_forces=Vector{Float32}[]
     sizehint!(blank_forces, nforces_hint)
@@ -95,21 +108,11 @@ end
 
 
 "Given a window, actually does the training on it"
-function train_window!(embed::WordSenseEmbedding,pending_forces, window::Vector{AbstractString},middle::Int64, α::AbstractFloat)
-	word=window[middle]
-	local_lsize = rand(0:embed.lsize)
-	local_rsize = rand(0:embed.rsize)
-
-	context = sub(window,[1:middle-1; middle+1:length(window)]) #IDEA: Should the local_lsize and local_rsize be used to find the context for WSD?
-	sense_id = WSD(embed, word, context)::Int64
-
+function train_window!(embed::WordSenseEmbedding,pending_forces, context, word, sense_id , α::AbstractFloat)
     ws_pending_forces = pending_forces[word][sense_id]
 	input = embed.embedding[word][sense_id] 
 
-	for ind in (middle - local_lsize) : (middle + local_rsize)
-		(ind == middle) && continue
-
-		target_word = window[ind]
+	for target_word in context 
 		node = embed.classification_tree::TreeNode
 		force = zeros(Float32, embed.dimension)
 		for code in embed.codebook[target_word]
@@ -117,13 +120,20 @@ function train_window!(embed::WordSenseEmbedding,pending_forces, window::Vector{
 			node = node.children[code]
 		end
 		push!(ws_pending_forces,force)
-		if length(ws_pending_forces)>=embed.force_minibatch_size
-			break_and_move!(embed, pending_forces, word, sense_id)
-		end	
 	end
-	#TODO: Force all things to break_break_and_move! at end of run_training!
 	embed
 end
+
+
+function WsdTrainingCase(embed::WordEmbeddings.WordSenseEmbedding, window)
+    word = window[embed.lsize+1]
+    context = sub(window, [1:embed.lsize; embed.lsize+1:endof(window)])
+    sense_id = Training.WSD(embed, word, context)
+    
+    return (context, word, sense_id)
+end
+
+
 
 "Runs all the training, handles adjusting learning rate, repeating through loops etc."
 function run_training!(embed::WordSenseEmbedding, 
@@ -136,16 +146,26 @@ function run_training!(embed::WordSenseEmbedding,
                                    ()->blank_forces(embed.force_minibatch_size))
     pending_forces = DefaultDict(AbstractString,typeof(sense_forces()), sense_forces)
 
-    
-	for (window, α) in training_windows(embed,words_stream,end_of_iter_callback)
-		train_window!(embed, pending_forces, window,middle,α)
-    end
-
-	for word in keys(pending_forces)
-		for sense_id in keys(pending_forces[word])
-			break_and_move!(embed, pending_forces, word, sense_id)
-		end
+	
+	debug("Running End of Iter callback, before first iter")
+	end_of_iter_callback((0,embed))
+	
+	trained_count=0
+	α=embed.init_learning_rate
+	#PREMOPT: consider initially having just one worker, then adding 2 per iteration, as the  workload increases due to splitting
+    for iter in 1:embed.iter
+		windows = sliding_window(words_stream, lsize=embed.lsize, rsize=embed.rsize)
+		cases = WorkFarmerIterator(WsdTrainingCase, windows, embed, 128)
+		for (context, word, sense_id) in cases
+			trained_count+=1
+			α = get_α_and_log(embed, trained_count, α)
+			train_window!(embed, pending_forces, context,word, sense_id,α)
+			break_and_move!(embed,pending_forces)			
+		end	
+		debug("Running End of Iter callback")
+		end_of_iter_callback((iter,embed))
 	end
+
 
     # strip to remove unnecessary members and make serialization faster
     strip && keep_word_vectors_only!(embed)

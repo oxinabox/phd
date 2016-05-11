@@ -1,3 +1,7 @@
+module WorkIterator
+
+export WorkFarmerIterator
+
 "A kind of async parallel iterator map, that does not quiet  presever order."
 immutable WorkFarmerIterator{T}
     func :: Function #Must take an tuple of const_data, and an element of source_iter and do work on them
@@ -79,4 +83,7 @@ end
 Base.iteratorsize(iter::WorkFarmerIterator) = Base.iteratorsize(iter.source_iter)
 
 Base.length(iter::WorkFarmerIterator) = Base.length(iter.source_iter)
+
+
+end #module
 

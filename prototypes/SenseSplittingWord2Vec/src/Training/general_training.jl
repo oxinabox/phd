@@ -19,7 +19,21 @@ end
 
 #######################
 
+function get_α_and_log(embed::GenWordEmbedding, trained_count, α)
+	if trained_count % 10000 == 0
+		progress = trained_count/ (embed.iter*embed.corpus_size)
+		info("trained on $trained_count words"; progress=progress*100, α=α)
+		α = embed.init_learning_rate * (1 - progress)
+		if α < embed.init_learning_rate * 0.0001
+			α = embed.init_learning_rate * 0.0001
+		end
+	end
+	α
+end
 
+
+
+#Todo move this into the plain word embedding file.
 """Reterns the window, and the α, for this round of training.
 Also logs the progress"""
 function training_windows(embed::GenWordEmbedding,
@@ -34,17 +48,9 @@ function training_windows(embed::GenWordEmbedding,
 		for current_iter in 1:embed.iter
 			debug("Iter $current_iter of $(embed.iter)")
 			windows = sliding_window(stream, lsize=embed.lsize, rsize=embed.rsize)
-			for (current_iter_prog,window) in enumerate_progress(windows)
-			   trained_count += 1
-
-				if trained_count % 10000 == 0
-					progress = (current_iter-1 + current_iter_prog)/ embed.iter
-					info("trained on $trained_count words"; progress=progress, α=α)
-					α = embed.init_learning_rate * (1 - progress)
-					if α < embed.init_learning_rate * 0.0001
-						α = embed.init_learning_rate * 0.0001
-					end
-				end
+			for window in windows
+				trained_count += 1
+				α = get_α_and_log(embed, trained_count, α)
 				produce(window,α)
 			end
 			debug("Running Callback after $current_iter")
@@ -69,7 +75,8 @@ function initialize_network(embed::GenWordEmbedding, huffman::HuffmanTree)
         dequeue!(heap)
         (node2, freq2) = Base.Collections.peek(heap)
         dequeue!(heap)
-        newnode = BranchNode([node1, node2], LinearClassifier(2, embed.dimension)) # the data field of internal node is the classifier
+        newnode = BranchNode([node1, node2], LinearClassifier(2, embed.dimension)) 
+								#the data field of internal node is the classifier
         enqueue!(heap, newnode, freq1 + freq2)
     end
     embed.classification_tree = dequeue!(heap)

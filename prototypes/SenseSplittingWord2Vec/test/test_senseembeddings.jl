@@ -67,8 +67,8 @@ facts("setup correctly") do
 
 	embed = WordSenseEmbedding(30, random_inited, huffman_tree, subsampling = 0, iter=2, strength=0.1)
 	append!(embed.vocabulary,["a", "b", "c"])
-
-	initialize_embedding(embed, random_inited)
+	
+	Training.initialize_embedding(embed, random_inited)
 	
 	@fact embed.embedding["a"] |> length --> 1
 	@fact embed.embedding["a"][1] |> size --> (30,)
