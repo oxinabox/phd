@@ -23,10 +23,8 @@ end
 """Reterns the window, and the α, for this round of training.
 Also logs the progress"""
 function training_windows(embed::GenWordEmbedding,
-						  words_stream::WordStream, 
+						  stream::WordStream,
 						  end_of_iter_callback::Function=identity)
-	@assert words_stream.filter "Filtered word stream expected"
-	filtered_wordstream = words_stream 
 	
 	Task() do
 		tic()
@@ -35,7 +33,7 @@ function training_windows(embed::GenWordEmbedding,
 		end_of_iter_callback((0,embed))
 		for current_iter in 1:embed.iter
 			debug("Iter $current_iter of $(embed.iter)")
-			windows = sliding_window(filtered_wordstream, lsize=embed.lsize, rsize=embed.rsize)
+			windows = sliding_window(stream, lsize=embed.lsize, rsize=embed.rsize)
 			for (current_iter_prog,window) in enumerate_progress(windows)
 			   trained_count += 1
 
@@ -82,7 +80,7 @@ end
 function train(embed::GenWordEmbedding, corpus_filename::AbstractString;
 			   end_of_iter_callback::Function=identity)
 
-    embed.distribution = word_distribution(corpus_filename)
+    embed.distribution, embed.corpus_size = word_distribution(corpus_filename)
     embed.vocabulary = collect(keys(embed.distribution))
 
     initialize_embedding(embed, embed.init_type)        # initialize by the specified method

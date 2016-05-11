@@ -66,7 +66,7 @@ function word_distribution(source::Union{AbstractString, IO}, min_count::Int=5)
 	distribution = compute_frequency(distribution, word_count)
     info("Compute time: ", toq())
 
-    distribution
+    distribution, word_count
 end
 
 
