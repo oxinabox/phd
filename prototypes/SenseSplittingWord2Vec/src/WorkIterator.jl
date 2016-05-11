@@ -1,4 +1,3 @@
-
 "A kind of async parallel iterator map, that does not quiet  presever order."
 immutable WorkFarmerIterator{T}
     func :: Function #Must take an tuple of const_data, and an element of source_iter and do work on them
@@ -72,6 +71,7 @@ end
 
 function Base.next(iter::WorkFarmerIterator, state::WorkFarmerState)
 	#Read complete -- this is a blocking operation so if nothing is ready we'll sit here til it is.
+	#All of the sending (by job_submitter) basically has to happen here since this is the only garenteed time the local process will yield
 	res = take!(state.complete)
 	(res,state)
 end
