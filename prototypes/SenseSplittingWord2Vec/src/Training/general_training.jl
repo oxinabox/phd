@@ -88,7 +88,6 @@ function train(embed::GenWordEmbedding, corpus_filename::AbstractString;
 			   end_of_iter_callback::Function=identity)
 
     embed.distribution, embed.corpus_size = word_distribution(corpus_filename)
-    embed.vocabulary = collect(keys(embed.distribution))
 
     initialize_embedding(embed, embed.init_type)        # initialize by the specified method
     initialize_network(embed, embed.network_type)

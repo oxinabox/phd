@@ -29,7 +29,6 @@ abstract GenWordEmbedding
 ##################### (plain)  Word Embeddings ##################################
 
 type WordEmbedding<:GenWordEmbedding
-    vocabulary::Array{AbstractString}
     embedding::Dict{AbstractString, Vector{Float32}}
     classification_tree::TreeNode
     distribution::Dict{AbstractString, Float32}
@@ -52,7 +51,7 @@ function WordEmbedding(dim::Int64, init_type::InitializatioinMethod, network_typ
     if dim <= 0 || lsize <= 0 || rsize <= 0
         throw(ArgumentError("dimension should be a positive integer"))
     end
-    WordEmbedding(AbstractString[], 
+    WordEmbedding(
                     Dict{AbstractString,Array{Float32}}(),
                     nullnode,
                     Dict{AbstractString,Array{Float32}}(),
@@ -67,13 +66,13 @@ end
 
 function Base.show(io::IO, x::WordEmbedding)
     println(io, "Word embedding(dimension = $(x.dimension))"*
-			"of $(length(x.vocabulary)) words, trained on $(x.trained_count) words")
+			"of $(length(x.distribution)) words, trained on $(x.trained_count) words")
     nothing
 end
 
 # strip embedding and retain only word vectors
 function keep_word_vectors_only!(embed::WordEmbedding)
-    embed.vocabulary = AbstractString[]
+    embed.distribution = AbstractString[]
     embed.classification_tree = nullnode
     embed.distribution = Dict{AbstractString,Array{Float32}}()
     embed.codebook = Dict{AbstractString,Vector{Int64}}()
@@ -94,15 +93,12 @@ end
 
 
 type WordSenseEmbedding<:GenWordEmbedding
-    vocabulary::Array{AbstractString}
     embedding::Dict{AbstractString, Vector{Vector{Float32}}} #[Word][sense_id]=sense embedding vector
     classification_tree::TreeNode
     distribution::Dict{AbstractString, Float32}
     codebook::Dict{AbstractString, Vector{Int64}}
 
 	strength::Float32
-
-	
 	
     force_minibatch_size::Int64
 
@@ -120,7 +116,7 @@ end
 
 function WordSenseEmbedding(dim::Int64, init_type::InitializatioinMethod, network_type::NetworkType;
 							lsize=5, rsize=5, subsampling=1e-5, init_learning_rate=0.025, iter=5,
-							min_count=5, force_minibatch_size=1000,	strength=0.8)
+							min_count=5, force_minibatch_size=50_000, strength=0.8)
     if dim <= 0 || lsize <= 0 || rsize <= 0
         throw(ArgumentError("dimension should be a positive integer"))
     end
@@ -128,7 +124,7 @@ function WordSenseEmbedding(dim::Int64, init_type::InitializatioinMethod, networ
         throw(ArgumentError("min_count must be at least equal to force_minibatch_size, so that rare words are not resolved less than once per interation"))
     end
 	
-    WordSenseEmbedding(AbstractString[], #voc
+    WordSenseEmbedding(
                     Dict{AbstractString,Vector{Vector{Float32}}}(), #embedding
                     nullnode, #classification tree
                     Dict{AbstractString,Array{Float32}}(), #distribution

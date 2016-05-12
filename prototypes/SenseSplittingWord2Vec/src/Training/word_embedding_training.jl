@@ -53,7 +53,7 @@ end
 
 
 function initialize_embedding(embed::WordEmbedding, randomly::RandomInited)
-    for i in embed.vocabulary
+    for i in embed.distribution |> keys
         embed.embedding[i] = rand(embed.dimension) * 2 - 1
     end
     embed

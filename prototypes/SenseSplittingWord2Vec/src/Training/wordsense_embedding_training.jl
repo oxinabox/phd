@@ -186,7 +186,7 @@ end
 
 
 function initialize_embedding(embed::WordSenseEmbedding, ::RandomInited)
-    for word in embed.vocabulary
+    for word in embed.distribution |> keys
         embed.embedding[word] = [rand(Float32,embed.dimension) * 2 - 1]
     end
     embed

@@ -66,7 +66,7 @@ end
 facts("setup correctly") do
 
 	embed = WordSenseEmbedding(30, random_inited, huffman_tree, subsampling = 0, iter=2, strength=0.1)
-	append!(embed.vocabulary,["a", "b", "c"])
+	embed.distribution = Dict("a"=>100, "b"=>100, "c"=>100)
 	
 	Training.initialize_embedding(embed, random_inited)
 	
