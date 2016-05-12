@@ -143,7 +143,7 @@ function run_training!(embed::WordSenseEmbedding,
 	middle = embed.lsize + 1
     forces_for_sense = Vector{Vector{Float32}}
     sense_forces = ()->DefaultDict(Int64, forces_for_sense,
-                                   ()->blank_forces(embed.force_minibatch_size))
+                                   ()->blank_forces(1024)) #TODO: Put a number here based on Word Distribution?
     pending_forces = DefaultDict(AbstractString,typeof(sense_forces()), sense_forces)
 
 	
@@ -155,13 +155,16 @@ function run_training!(embed::WordSenseEmbedding,
 	#PREMOPT: consider initially having just one worker, then adding 2 per iteration, as the  workload increases due to splitting
     for iter in 1:embed.iter
 		windows = sliding_window(words_stream, lsize=embed.lsize, rsize=embed.rsize)
-		cases = WorkFarmerIterator(WsdTrainingCase, windows, embed, 128)
-		for (context, word, sense_id) in cases
-			trained_count+=1
-			α = get_α_and_log(embed, trained_count, α)
-			train_window!(embed, pending_forces, context,word, sense_id,α)
+		
+		for minibatch in Base.partition(windows, embed.force_minibatch_size)
+			cases = Base.pgenerate(default_worker_pool(), win->WsdTrainingCase(embed,win), minibatch)
+			for (context, word, sense_id) in cases
+				trained_count+=1
+				α = get_α_and_log(embed, trained_count, α)
+				train_window!(embed, pending_forces, context,word, sense_id,α)
+			end
 			break_and_move!(embed,pending_forces)			
-		end	
+		end
 		debug("Running End of Iter callback")
 		end_of_iter_callback((iter,embed))
 	end

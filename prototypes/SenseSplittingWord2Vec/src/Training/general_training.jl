@@ -22,7 +22,7 @@ end
 function get_α_and_log(embed::GenWordEmbedding, trained_count, α)
 	if trained_count % 10000 == 0
 		progress = trained_count/ (embed.iter*embed.corpus_size)
-		info("trained on $trained_count words"; progress=progress*100, α=α)
+		info(string(round(progress*100,2))*"% - trained on $trained_count words", progress=progress, α=α)
 		α = embed.init_learning_rate * (1 - progress)
 		if α < embed.init_learning_rate * 0.0001
 			α = embed.init_learning_rate * 0.0001

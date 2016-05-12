@@ -24,7 +24,7 @@ function test_word_embedding()
     
     add_truck(LumberjackTruck(log_file), "filelogger")
     
-    embed = WordSenseEmbedding(ndims, random_inited, huffman_tree, subsampling = 0.0)
+    embed = WordSenseEmbedding(ndims, random_inited, huffman_tree, subsampling = 0.0, force_minibatch_size=50_000)
     @time train(embed, test_file, end_of_iter_callback=save_callback(base_name))
 
 end
