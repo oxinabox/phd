@@ -5,7 +5,7 @@ using WorkIterator
 i.e. use the language modeling task.
 Returns integer coresponding to to the Column of the embedding matrix for that word, for the best word sense embedding.
 """
-function WSD(embed::WordSenseEmbedding, word::AbstractString, context::AbstractVector{AbstractString})
+@inline function WSD(embed::WordSenseEmbedding, word::AbstractString, context::AbstractVector{AbstractString})
 	sense_embeddings = embed.embedding[word]
 	if length(sense_embeddings)==1
 		return 1
@@ -93,7 +93,7 @@ end
 "Apply break and move across all forces"
 function break_and_move!(embed::WordSenseEmbedding, pending_forces)
 	for word in keys(pending_forces) |> collect #HACK for some reason you can't directly iterate the keys
-		for sense_id in keys(pending_forces[word])
+		for sense_id in keys(pending_forces[word]) |> collect
 			break_and_move!(embed, pending_forces, word, sense_id)
 		end
 	end
@@ -125,19 +125,28 @@ function train_window!(embed::WordSenseEmbedding,pending_forces, context, word, 
 end
 
 
-function WsdTrainingCase(embed::WordEmbeddings.WordSenseEmbedding, window)
+@inline function WsdTrainingCase(embed::WordEmbeddings.WordSenseEmbedding, window)
     word = window[embed.lsize+1]
-    context = sub(window, [1:embed.lsize; embed.lsize+1:endof(window)])
+	context = window[[1:embed.lsize; embed.lsize+1:end]]
     sense_id = Training.WSD(embed, word, context)
     
     return (context, word, sense_id)
 end
 
 
+#HACK: lets debug what is being serialised by overloading the calls
+function Base.serialize(s::Base.SerializationState, x::WordSenseEmbedding)
+	open("selog.txt","w+") do fp
+		println(fp, time())
+	end
+	Base.Serializer.serialize_any(s,x)		
+end
+
+
 
 "Runs all the training, handles adjusting learning rate, repeating through loops etc."
 function run_training!(embed::WordSenseEmbedding, 
-					   words_stream::WordStream;
+					   words_stream;
 					   strip::Bool=false,
 					   end_of_iter_callback::Function=identity)
 	middle = embed.lsize + 1

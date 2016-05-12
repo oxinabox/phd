@@ -1,5 +1,5 @@
 module WordStreams
-using PooledElements
+#using PooledElements
 export words_of, WordStream, SlidingWindow, sliding_window, enumerate_progress
 
 
@@ -85,7 +85,7 @@ function Base.next(ws::WordStream, state)
     #Hit EOF
     #This is the last word we are getting, do not skip it.
     #This will throw off subsampling some tiny factor. Negligible
-    return (pstring(next_word),("",fp))
+    return ((next_word),("",fp))
 end
 ######################################################
 
