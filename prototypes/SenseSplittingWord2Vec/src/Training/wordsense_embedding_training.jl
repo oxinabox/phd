@@ -75,35 +75,28 @@ function get_motions{N<:AbstractFloat}(forces::Vector{Vector{N}}, strength)
 end
 
 
-#TODO Add α here.
-function break_and_move!(embed::WordSenseEmbedding,pending_forces, word::AbstractString, sense_id::Int64)
-	forces = pending_forces[word][sense_id]
-	if length(forces)>0
-		motions = get_motions(forces, embed.strength)
-
-		old_position = embed.embedding[word][sense_id]
-		new_positions = [motion+old_position for motion in motions]
-		splice!(embed.embedding[word],sense_id,new_positions) #Delete Old, insert new
-		pending_forces[word][sense_id] = blank_forces(embed.force_minibatch_size)
-		#Delete processed forces
+function break_and_move!(word_sense_embeddings::Vector{Vector{Float32}},pending_forces_word, strength)
+	for sense_id in keys(pending_forces_word) |> collect
+		forces = pending_forces_word[sense_id]
+		if length(forces)>0
+			motions = get_motions(forces, strength)
+			old_position = word_sense_embeddings[sense_id]
+			new_positions = [motion+old_position for motion in motions]
+			splice!(word_sense_embeddings, sense_id, new_positions) #Delete Old, insert new
+		end
 	end
-	return embed.embedding[word]
+	word_sense_embeddings
 end
+
 
 "Apply break and move across all forces"
 function break_and_move!(embed::WordSenseEmbedding, pending_forces)
-	for word in keys(pending_forces) |> collect #HACK for some reason you can't directly iterate the keys
-		for sense_id in keys(pending_forces[word]) |> collect
-			break_and_move!(embed, pending_forces, word, sense_id)
-		end
+	@sync for word in keys(pending_forces) |> collect #HACK for some reason you can't directly iterate the keys
+		@async embed.embedding[word] = remote(break_and_move!)(embed.embedding[word],
+																pending_forces[word],
+																embed.strength)
 	end
 	embed.embedding
-end
-
-function blank_forces(nforces_hint::Int64)
-    blank_forces=Vector{Float32}[]
-    sizehint!(blank_forces, nforces_hint)
-    blank_forces
 end
 
 
@@ -133,17 +126,14 @@ end
     return (context, word, sense_id)
 end
 
-
-#HACK: lets debug what is being serialised by overloading the calls
-function Base.serialize(s::Base.SerializationState, x::WordSenseEmbedding)
-	tic()
-	Base.Serializer.serialize_any(s,x)
-	tt=toq()
-	open("selog.txt","a") do fp
-		println(fp, tt)
-	end
+function blank_pending_forces()
+	forces_for_sense = Vector{Vector{Float32}}
+    sense_forces = ()->DefaultDict(Int64, forces_for_sense,
+                                   ()->sizehint!(Vector{Float32}[], 1024)
+								   #TODO: Put a size hint number here based on Word Distribution?
+								   )
+    pending_forces = DefaultDict(AbstractString,typeof(sense_forces()), sense_forces)
 end
-
 
 
 "Runs all the training, handles adjusting learning rate, repeating through loops etc."
@@ -151,23 +141,17 @@ function run_training!(embed::WordSenseEmbedding,
 					   words_stream;
 					   strip::Bool=false,
 					   end_of_iter_callback::Function=identity)
-	middle = embed.lsize + 1
-    forces_for_sense = Vector{Vector{Float32}}
-    sense_forces = ()->DefaultDict(Int64, forces_for_sense,
-                                   ()->blank_forces(1024)) #TODO: Put a number here based on Word Distribution?
-    pending_forces = DefaultDict(AbstractString,typeof(sense_forces()), sense_forces)
-
-	
+    	
 	debug("Running End of Iter callback, before first iter")
 	end_of_iter_callback((0,embed))
 	
 	trained_count=0
 	α=embed.init_learning_rate
-	#PREMOPT: consider initially having just one worker, then adding 2 per iteration, as the  workload increases due to splitting
     for iter in 1:embed.iter
 		windows = sliding_window(words_stream, lsize=embed.lsize, rsize=embed.rsize)
 		
 		for minibatch in Base.partition(windows, embed.force_minibatch_size)
+			pending_forces = blank_pending_forces()
 			#cases = Base.pgenerate(default_worker_pool(), win->WsdTrainingCase(embed,win), minibatch)
 			cases = _pgenerate_gh(win->WsdTrainingCase(embed,win), minibatch, :ss_wsdtrainingcase)
 			for (context, word, sense_id) in cases
