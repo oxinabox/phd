@@ -1,5 +1,5 @@
 module Utils
-export save, restore, partition
+export save, restore, _pgenerate_gh
 
 # serialize to a file
 function save(item, filename::AbstractString)
@@ -17,18 +17,24 @@ function restore(filename::AbstractString)
 end
 restore(fp::IO) = deserialize(fp)
 
-# partition an array to n parts
-function partition{T}(a::Array{T}, n::Integer)
-    b = Array{T}[]
-    t = floor(Int, length(a) / n)
-    cursor = 1
-    for i in 1:n
-        push!(b, a[cursor : (i == n ? length(a) : cursor + t - 1)])
-        cursor += t
-    end
-    b
-end
 
+
+
+"https://github.com/JuliaLang/julia/issues/16345"
+function _pgenerate_gh(f,c, mname=Symbol("_func_genmagic_hack"*string(rand(1:1024)))::Symbol)
+    #Reusing the `mname` in subsequent called can A.) Reclaim memory, B.) Violate certain concurrency expectations
+    worker_ids = workers()
+    for id in worker_ids
+        remotecall_wait(id, mname,f) do mname_i, f_i
+            eval(Expr(:global, Expr(Symbol("="), mname_i, f_i)))
+        end
+    end
+        
+    worker_pool = WorkerPool(worker_ids)
+    
+    #Give send a function telling them to look up the function locally
+    Base.pgenerate(worker_pool, x->eval(mname)(x), c)  
+end
 
 end #module
 

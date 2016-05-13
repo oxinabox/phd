@@ -136,10 +136,12 @@ end
 
 #HACK: lets debug what is being serialised by overloading the calls
 function Base.serialize(s::Base.SerializationState, x::WordSenseEmbedding)
-	open("selog.txt","w+") do fp
-		println(fp, time())
+	tic()
+	Base.Serializer.serialize_any(s,x)
+	tt=toq()
+	open("selog.txt","a") do fp
+		println(fp, tt)
 	end
-	Base.Serializer.serialize_any(s,x)		
 end
 
 
@@ -166,7 +168,8 @@ function run_training!(embed::WordSenseEmbedding,
 		windows = sliding_window(words_stream, lsize=embed.lsize, rsize=embed.rsize)
 		
 		for minibatch in Base.partition(windows, embed.force_minibatch_size)
-			cases = Base.pgenerate(default_worker_pool(), win->WsdTrainingCase(embed,win), minibatch)
+			#cases = Base.pgenerate(default_worker_pool(), win->WsdTrainingCase(embed,win), minibatch)
+			cases = _pgenerate_gh(win->WsdTrainingCase(embed,win), minibatch, :ss_wsdtrainingcase)
 			for (context, word, sense_id) in cases
 				trained_count+=1
 				α = get_α_and_log(embed, trained_count, α)
