@@ -75,7 +75,7 @@ function get_motions{N<:AbstractFloat}(forces::Vector{Vector{N}}, strength)
 end
 
 
-function break_and_move!(word_sense_embeddings::Vector{Vector{Float32}},pending_forces_word, strength)
+function break_and_move!(word_sense_embeddings,pending_forces_word, strength::Number)
 	for sense_id in keys(pending_forces_word) |> collect
 		forces = pending_forces_word[sense_id]
 		if length(forces)>0
@@ -91,10 +91,25 @@ end
 
 "Apply break and move across all forces"
 function break_and_move!(embed::WordSenseEmbedding, pending_forces)
-	@sync for word in keys(pending_forces) |> collect #HACK for some reason you can't directly iterate the keys
-		@async embed.embedding[word] = remote(break_and_move!)(embed.embedding[word],
-																pending_forces[word],
-																embed.strength)
+	#What this actually Does, if not for need to marshal interprocess communication
+	#@sync for word in keys(pending_forces) |> collect
+	#	@async embed.embedding[word] = remote(break_and_move!)(embed.embedding[word],
+	#															pending_forces[word],
+	#															embed.strength)
+	#end
+
+	word_args = Task() do
+		for (word,pending_forces_word) in pending_forces
+			produce(word, embed.embedding[word], pending_forces_word, embed.strength)
+		end
+	end
+
+	returned_embeddings = _pgenerate_gh(word_args, :break_and_move) do args
+		(args[1], break_and_move!(args[2:end]...))
+	end
+
+	for (word,word_embeddings) in returned_embeddings
+		embed.embedding[word] = word_embeddings
 	end
 	embed.embedding
 end
