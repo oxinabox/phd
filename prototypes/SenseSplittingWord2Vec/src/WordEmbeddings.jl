@@ -72,7 +72,6 @@ end
 
 # strip embedding and retain only word vectors
 function keep_word_vectors_only!(embed::WordEmbedding)
-    embed.distribution = AbstractString[]
     embed.classification_tree = nullnode
     embed.distribution = Dict{AbstractString,Array{Float32}}()
     embed.codebook = Dict{AbstractString,Vector{Int64}}()

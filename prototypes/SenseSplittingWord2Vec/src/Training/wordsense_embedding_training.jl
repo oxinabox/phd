@@ -1,5 +1,6 @@
 import DataStructures.DefaultDict
-using WorkIterator
+
+
 
 """Perform Word Sense Disabmiguation, by chosing the word-sense that says the context words are most likely.
 i.e. use the language modeling task.
@@ -45,7 +46,7 @@ function get_motions{N<:AbstractFloat}(forces::Vector{Vector{N}}, strength)
         end
         tension = 2*min(north_force,-1*south_force) 
 			#This is the resisted force. It that can break, rather than move. 
-        if tension>strength
+        if tension>strength*nforces
             for f_ii in 1:nforces
                 force = forces[f_ii][dim]
                 if force>0.0
@@ -76,10 +77,11 @@ end
 
 
 function break_and_move!(word_sense_embeddings,pending_forces_word, strength::Number)
+	scaled_strength = length(word_sense_embeddings)*strength #More embeddings it has, the harder is it to create more.
 	for sense_id in keys(pending_forces_word) |> collect
 		forces = pending_forces_word[sense_id]
-		if length(forces)>0
-			motions = get_motions(forces, strength)
+		if length(forces)>0			
+			motions = get_motions(forces, scaled_strength)
 			old_position = word_sense_embeddings[sense_id]
 			new_positions = [motion+old_position for motion in motions]
 			splice!(word_sense_embeddings, sense_id, new_positions) #Delete Old, insert new
@@ -154,8 +156,9 @@ end
 "Runs all the training, handles adjusting learning rate, repeating through loops etc."
 function run_training!(embed::WordSenseEmbedding, 
 					   words_stream;
-					   strip::Bool=false,
-					   end_of_iter_callback::Function=identity)
+					   end_of_iter_callback::Function=identity,
+					   end_of_minibatch_callback::Function=identity,
+					   )
     	
 	debug("Running End of Iter callback, before first iter")
 	end_of_iter_callback((0,embed))
@@ -174,15 +177,12 @@ function run_training!(embed::WordSenseEmbedding,
 				α = get_α_and_log(embed, trained_count, α)
 				train_window!(embed, pending_forces, context,word, sense_id,α)
 			end
-			break_and_move!(embed,pending_forces)			
+			break_and_move!(embed,pending_forces)
+			end_of_minibatch_callback((trained_count,embed))
 		end
 		debug("Running End of Iter callback")
 		end_of_iter_callback((iter,embed))
 	end
-
-
-    # strip to remove unnecessary members and make serialization faster
-    strip && keep_word_vectors_only!(embed)
     embed
 end
 
