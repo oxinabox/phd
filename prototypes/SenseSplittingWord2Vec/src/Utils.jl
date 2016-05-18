@@ -1,5 +1,5 @@
 module Utils
-export save, restore, _pgenerate_gh
+export save, restore, _pgenerate_gh, orderless_equivalent, ≅
 
 # serialize to a file
 function save(item, filename::AbstractString)
@@ -35,6 +35,48 @@ function _pgenerate_gh(f,c, mname=Symbol("_func_genmagic_hack"*string(rand(1:102
     #Give send a function telling them to look up the function locally
     Base.pgenerate(worker_pool, x->eval(mname)(x), c)  
 end
+
+
+"""Performs unordered nested equivelences check, using provided equivelence operator.
+"""
+function orderless_equivalent(equiv_op, lhs,rhs)
+    if equiv_op(lhs,rhs)
+        return true
+    else
+        if !applicable(length, lhs) || !applicable(length, rhs)
+            return false
+        end
+        if length(lhs)!=length(rhs)
+            return false
+        end
+        if length(lhs)==1
+            return equiv_op(first(lhs),first(rhs)) 
+        end
+            
+        matched = BitVector(length(rhs))
+        
+        for ll in lhs            
+            success=false
+            @inbounds for (ii,rr) in enumerate(rhs)
+                if !matched[ii] && orderless_equivalent(equiv_op,ll,rr)
+                    matched[ii]=true
+                    success=true
+                    break
+                end
+            end
+            if !success
+                return false
+            end
+        end
+        return all(matched)
+    end
+end
+
+"""
+Performed unordered equivalence check using default eqality (==)
+Eg ([[2,1],3,3]≅[3,3,[1,2]])"""
+≅(lhs,rhs) = orderless_equivalent(==, lhs,rhs)
+
 
 end #module
 

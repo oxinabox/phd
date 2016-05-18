@@ -1,5 +1,5 @@
 import DataStructures.DefaultDict
-
+using  MultivariateStats
 
 
 """Perform Word Sense Disabmiguation, by chosing the word-sense that says the context words are most likely.
@@ -17,71 +17,80 @@ Returns integer coresponding to to the Column of the embedding matrix for that w
 end
 
 
-
-"""
-Returns a Vector of vectors for the movement of every point, given the forces vector of vectors
-If no break occurs then there will be only one motion returned
-"""
-function get_motions{N<:AbstractFloat}(forces::Vector{Vector{N}}, strength)
-
-    ndims=length(forces[1] )
-    nforces = length(forces)
-    motions = [Vector{N}(ndims) for _ in 1:nforces]    
-#	[@assert(length(ff)==ndims) for ff in forces]
-
-    for dim in 1:ndims
+"Returns a vector of BitVector, each bitvector corresponds to a unique splitting direction"
+@inline function get_directions(forces::Matrix, strength::Number)
+    ndims, nforces=size(forces)
+    directions = [BitVector(ndims) for _ in 1:nforces]
+    #False is North split, or nosplit
+    
+    @inbounds for dim in 1:ndims
         north_force = 0.0
         south_force = 0.0
-		n_north =0
-		n_south =0
-        for f_ii in 1:nforces
-            force = forces[f_ii][dim]
+        @inbounds for f_ii in 1:nforces
+            force = forces[dim,f_ii]
             if force>0.0
                 north_force+=force
-				n_north+=1
             else
                 south_force+=force
-				n_south+=1
             end
         end
         tension = 2*min(north_force,-1*south_force) 
 			#This is the resisted force. It that can break, rather than move. 
         if tension>strength*nforces
-            for f_ii in 1:nforces
-                force = forces[f_ii][dim]
-                if force>0.0
-                    motions[f_ii][dim] = north_force/n_north 
-					#Don't actually decrease distence moved because of force resisted,
-					#that is a metaphore.
-                else
-                    motions[f_ii][dim] = south_force/n_south 
-                end
+            @inbounds for f_ii in 1:nforces
+                force = forces[dim,f_ii]
+                directions[f_ii][dim]=force<0.0
             end 
-        else
-            #does not break, so all forces apply same motion
-            for f_ii in 1:nforces
-                motions[f_ii][dim] = (north_force+south_force)/(n_north+n_south) 
-            end          
         end
     end
+    directions
+end
 
+"""
+Returns a Vector of vectors for the movement of every point, given the forces vector of vectors
+If no break occurs then there will be only one motion returned
+"""
+@fastmath function get_motions{N<:AbstractFloat}(forces::Vector{Vector{N}}, strength::Number; pca_kwargs...)
+    nforces = length(forces)
+    forces_mat = hcat(forces...)
+    dim_reducer=fit(PCA, forces_mat; pca_kwargs...) 
+    #Setting the mean as zero, indicating it is already centered, 
+    #so PCA will not recenter it, which could change directions
+    #if the forces are of very different magnitude eg [1,0f0],[4,0f0], with strength 0.5 results on two forces.
+    #TODO: Consider if this is not infact a good thing
+    red_forces = transform(dim_reducer, forces_mat)
+        
+    directions = get_directions(red_forces, strength)
     #Find unique motion rows, and stack up each occurrence.
     #These corespond to all the new points
-	counts = Dict{Vector{N},Int64}()
-	for motion in motions
-		counts[motion]=1 + get!(counts,motion,0)
-		#@assert(!(any(isnan(motion))))
-	end
-	Vector{N}[motion.*count for (motion, count) in counts]
+    motions = Dict{BitVector,Vector{N}}()
+    @inbounds for f_ii in 1:nforces
+        direction = directions[f_ii]
+        force = forces[f_ii]
+        
+        if haskey(motions, direction)
+            motions[direction]+=force
+        else
+            motions[direction]=force
+        end
+    end
+    #println(map(bits, keys(motions)))
+    collect(values(motions))
 end
 
 
+
+"Break and move, defaulting to splitting on all axes"
 function break_and_move!(word_sense_embeddings,pending_forces_word, strength::Number)
+	break_and_move!(word_sense_embeddings,pending_forces_word,strength, length(first(word_sense_embeddings)))
+end
+
+function break_and_move!(word_sense_embeddings,pending_forces_word, strength::Number, nsplitaxes::Integer)
 	scaled_strength = length(word_sense_embeddings)*strength #More embeddings it has, the harder is it to create more.
 	for sense_id in keys(pending_forces_word) |> collect
 		forces = pending_forces_word[sense_id]
 		if length(forces)>0			
-			motions = get_motions(forces, scaled_strength)
+            motions = get_motions(forces, scaled_strength; maxoutdim=nsplitaxes)
 			old_position = word_sense_embeddings[sense_id]
 			new_positions = [motion+old_position for motion in motions]
 			splice!(word_sense_embeddings, sense_id, new_positions) #Delete Old, insert new
@@ -102,7 +111,7 @@ function break_and_move!(embed::WordSenseEmbedding, pending_forces)
 
 	word_args = Task() do
 		for (word,pending_forces_word) in pending_forces
-			produce(word, embed.embedding[word], pending_forces_word, embed.strength)
+            produce(word, embed.embedding[word], pending_forces_word, embed.strength, 3)#Set nsplitaxes using embed param
 		end
 	end
 
