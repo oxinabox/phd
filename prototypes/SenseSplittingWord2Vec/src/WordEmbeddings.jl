@@ -98,7 +98,7 @@ type WordSenseEmbedding<:GenWordEmbedding
     codebook::Dict{AbstractString, Vector{Int64}}
 
 	strength::Float32
-	
+	nsplitaxes::Int64	
     force_minibatch_size::Int64
 
 	init_type::InitializatioinMethod
@@ -115,13 +115,16 @@ end
 
 function WordSenseEmbedding(dim::Int64, init_type::InitializatioinMethod, network_type::NetworkType;
 							lsize=5, rsize=5, subsampling=1e-5, init_learning_rate=0.025, iter=5,
-							min_count=5, force_minibatch_size=50_000, strength=0.8)
+							min_count=5, force_minibatch_size=50_000, strength=0.8, nsplitaxes=-1)
     if dim <= 0 || lsize <= 0 || rsize <= 0
         throw(ArgumentError("dimension should be a positive integer"))
     end
 	if force_minibatch_size<min_count
         throw(ArgumentError("min_count must be at least equal to force_minibatch_size, so that rare words are not resolved less than once per interation"))
     end
+	if nsplitaxes<0 #Not set
+		nsplitaxes = dim #Default to split everywhere
+	end
 	
     WordSenseEmbedding(
                     Dict{AbstractString,Vector{Vector{Float32}}}(), #embedding
@@ -129,6 +132,7 @@ function WordSenseEmbedding(dim::Int64, init_type::InitializatioinMethod, networ
                     Dict{AbstractString,Array{Float32}}(), #distribution
                     Dict{AbstractString,Vector{Int64}}(), #codebook
 					strength,
+					nsplitaxes,
 					force_minibatch_size,
                     init_type, network_type,
                     dim,

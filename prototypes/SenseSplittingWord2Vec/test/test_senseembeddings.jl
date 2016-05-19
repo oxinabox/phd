@@ -23,9 +23,13 @@ remove_truck("console")
 	forces = shuffle!([up_forces; down_forces])
 
 	@test Training.get_motions(forces,0.0) ≅ [sum(up_forces), sum(down_forces)]
+	
+	forces_2  = [round(10.0*rand(Float32,30)) for ii in 1:30]
+	@test Training.get_motions(forces_2, Inf) ==[sum(forces_2)] #Infinite strength means only one result
 
 
 end
+
 
 @testset "break and move" begin
 	function sdict(forces, sense_id=1)

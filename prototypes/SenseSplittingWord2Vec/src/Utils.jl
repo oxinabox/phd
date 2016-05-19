@@ -21,21 +21,33 @@ restore(fp::IO) = deserialize(fp)
 
 
 "https://github.com/JuliaLang/julia/issues/16345"
-function _pgenerate_gh(f,c, mname=Symbol("_func_genmagic_hack"*string(rand(1:1024)))::Symbol)
+function _pgenerate_gh(f,c, mname=Symbol("_func_genmagic_hack"*string(rand(UInt64)))::Symbol)
     #Reusing the `mname` in subsequent called can A.) Reclaim memory, B.) Violate certain concurrency expectations
     worker_ids = workers()
-    for id in worker_ids
-        remotecall_wait(id, mname,f) do mname_i, f_i
-            eval(Expr(:global, Expr(Symbol("="), mname_i, f_i)))
-        end
+
+	s_f_buff = IOBuffer()
+	serialize(s_f_buff, f)
+	s_f = s_f_buff.data
+
+    function make_global(mname_i, s_f_i)
+        eval(Expr(:global, 
+					Expr(Symbol("="), mname_i, 
+						Expr(:call,:deserialize,
+							Expr(:call, :IOBuffer, s_f_i)
+							)
+						)
+				 )
+			)
     end
-        
+   
+    @sync for id in worker_ids
+        @async remotecall_wait(make_global, id, mname, s_f)
+    end
     worker_pool = WorkerPool(worker_ids)
-    
+
     #Give send a function telling them to look up the function locally
     Base.pgenerate(worker_pool, x->eval(mname)(x), c)  
 end
-
 
 """Performs unordered nested equivelences check, using provided equivelence operator.
 """

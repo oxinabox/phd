@@ -2,6 +2,23 @@ import DataStructures.DefaultDict
 using  MultivariateStats
 
 
+################ Callbacks
+export sense_counts_callback
+import JSON
+function sense_counts_callback(savename)
+	function callback(arg)
+		meta = arg[1]
+		embed::WordSenseEmbedding=arg[2]
+		open(savename*"_counts.json","a") do fp
+			JSON.print(fp, (meta,Dict([word=>length(sense_embeds) for (word, sense_embeds) in embed.embedding])))
+			println(fp)       
+		end
+	end
+end
+
+#################
+
+
 """Perform Word Sense Disabmiguation, by chosing the word-sense that says the context words are most likely.
 i.e. use the language modeling task.
 Returns integer coresponding to to the Column of the embedding matrix for that word, for the best word sense embedding.
@@ -86,7 +103,7 @@ function break_and_move!(word_sense_embeddings,pending_forces_word, strength::Nu
 end
 
 function break_and_move!(word_sense_embeddings,pending_forces_word, strength::Number, nsplitaxes::Integer)
-	scaled_strength = length(word_sense_embeddings)*strength #More embeddings it has, the harder is it to create more.
+	scaled_strength = strength * 2^(length(word_sense_embeddings)-1)  #More embeddings it has, the harder is it to create more.
 	for sense_id in keys(pending_forces_word) |> collect
 		forces = pending_forces_word[sense_id]
 		if length(forces)>0			
@@ -111,7 +128,7 @@ function break_and_move!(embed::WordSenseEmbedding, pending_forces)
 
 	word_args = Task() do
 		for (word,pending_forces_word) in pending_forces
-            produce(word, embed.embedding[word], pending_forces_word, embed.strength, 3)#Set nsplitaxes using embed param
+            produce(word, embed.embedding[word], pending_forces_word, embed.strength, embed.nsplitaxes)
 		end
 	end
 
