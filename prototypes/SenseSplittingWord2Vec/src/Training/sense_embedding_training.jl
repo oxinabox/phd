@@ -70,29 +70,37 @@ If no break occurs then there will be only one motion returned
 @fastmath function get_motions{N<:AbstractFloat}(forces::Vector{Vector{N}}, strength::Number; pca_kwargs...)
     nforces = length(forces)
     forces_mat = hcat(forces...)
-    dim_reducer=fit(PCA, forces_mat; pca_kwargs...) 
-    #Setting the mean as zero, indicating it is already centered, 
-    #so PCA will not recenter it, which could change directions
-    #if the forces are of very different magnitude eg [1,0f0],[4,0f0], with strength 0.5 results on two forces.
-    #TODO: Consider if this is not infact a good thing
-    red_forces = transform(dim_reducer, forces_mat)
-        
-    directions = get_directions(red_forces, strength)
-    #Find unique motion rows, and stack up each occurrence.
-    #These corespond to all the new points
-    motions = Dict{BitVector,Vector{N}}()
-    @inbounds for f_ii in 1:nforces
-        direction = directions[f_ii]
-        force = forces[f_ii]
-        
-        if haskey(motions, direction)
-            motions[direction]+=force
-        else
-            motions[direction]=force
-        end
-    end
-    #println(map(bits, keys(motions)))
-    collect(values(motions))
+	try	
+		@assert(all(isfinite(forces_mat)), "Nonfinite Forces Matrix with elements: $(forces_mat[!isfinite(forces_mat)])")
+		dim_reducer=fit(PCA, forces_mat; pca_kwargs...) 
+		#Setting the mean as zero, indicating it is already centered, 
+		#so PCA will not recenter it, which could change directions
+		#if the forces are of very different magnitude eg [1,0f0],[4,0f0], with strength 0.5 results on two forces.
+		#TODO: Consider if this is not infact a good thing
+		red_forces = transform(dim_reducer, forces_mat)
+			
+		directions = get_directions(red_forces, strength)
+		#Find unique motion rows, and stack up each occurrence.
+		#These corespond to all the new points
+		motions = Dict{BitVector,Vector{N}}()
+		@inbounds for f_ii in 1:nforces
+			direction = directions[f_ii]
+			force = forces[f_ii]
+			
+			if haskey(motions, direction)
+				motions[direction]+=force
+			else
+				motions[direction]=force
+			end
+		end
+		#println(map(bits, keys(motions)))
+		collect(values(motions))
+	catch
+		open("ErrorMat_time"*string(time())*".jsz","w") do fp
+			serialize(fp,forces_mat)
+		end
+		rethrow()
+	end
 end
 
 
