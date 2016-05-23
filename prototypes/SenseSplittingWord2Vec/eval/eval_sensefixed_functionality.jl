@@ -24,8 +24,8 @@ function test_word_embedding()
     
     add_truck(LumberjackTruck(log_file), "filelogger")
     
-    embed = SplittingWordSenseEmbedding(ndims, random_inited, huffman_tree, subsampling = 0.0,
-							  force_minibatch_size=100, strength=Inf, nsplitaxes=3)
+    embed = FixedWordSenseEmbedding(ndims, random_inited, huffman_tree, subsampling = 0.0,
+							  force_minibatch_size=50_000)
     @time train(embed, test_file, 
 				end_of_iter_callback=save_callback(model_file),
 				end_of_minibatch_callback=sense_counts_callback(model_file)

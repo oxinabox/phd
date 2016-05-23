@@ -104,12 +104,6 @@ If no break occurs then there will be only one motion returned
 end
 
 
-
-"Break and move, defaulting to splitting on all axes"
-function break_and_move!(word_sense_embeddings,pending_forces_word, strength::Number)
-	break_and_move!(word_sense_embeddings,pending_forces_word,strength, length(first(word_sense_embeddings)))
-end
-
 function break_and_move!(word_sense_embeddings,pending_forces_word, strength::Number, nsplitaxes::Integer)
 	scaled_strength = strength * 2^(length(word_sense_embeddings)-1)  #More embeddings it has, the harder is it to create more.
 	for sense_id in keys(pending_forces_word) |> collect
@@ -152,20 +146,35 @@ end
 
 
 "Given a window, actually does the training on it"
-function train_window!(embed::WordSenseEmbedding,pending_forces, context, word, sense_id , α::AbstractFloat)
-    ws_pending_forces = pending_forces[word][sense_id]
+function train_window!{S<:AbstractString}(embed::WordSenseEmbedding, pending_forces, context::AbstractVector{S}, word::S, sense_id::Integer, α::AbstractFloat)
 	input = embed.embedding[word][sense_id] 
-
-	for target_word in context 
-		node = embed.classification_tree::TreeNode
-		force = zeros(Float32, embed.dimension)
-		for code in embed.codebook[target_word]
-			train_one!(node.data, input, code, force, α)
-			node = node.children[code]
+	@assert(all(abs(input).<10.0^10.0))
+	
+	total_grad = zeros(Float32, embed.dimension)
+	try
+		for target_word in context 
+			node = embed.classification_tree::TreeNode
+			for code in embed.codebook[target_word]
+				train_one!(node.data, input, code, total_grad, α)
+				node = node.children[code]
+			end
 		end
-		push!(ws_pending_forces,force)
-	end
-	embed
+		total_force = -total_grad #Force is in opposite direction to gradient
+		all(isfinite(total_force)) || throw(InvalidStateException("Nonfinite force Produced: $(total_force[!isfinite(total_force)])", :NonFiniteForce))
+		push!(pending_forces[word][sense_id], total_force)
+		embed
+	catch
+		open("err_train_window$(time()).jsz", "w") do fp
+			serialize(fp, Dict(
+				:embed=>embed,
+				:pending_forces=>pending_forces,
+				:context=>context,
+				:word=> word,
+				:sense_id=>sense_id,
+			))
+		end	
+		rethrow()
+	end	
 end
 
 

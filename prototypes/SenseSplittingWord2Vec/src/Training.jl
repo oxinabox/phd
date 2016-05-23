@@ -16,5 +16,6 @@ export save_callback
 include("Training/general_training.jl")
 include("Training/word_embedding_training.jl")
 include("Training/sense_embedding_training.jl")
+include("Training/fixed_sense_embedding_training.jl")
 
-end
+end #module

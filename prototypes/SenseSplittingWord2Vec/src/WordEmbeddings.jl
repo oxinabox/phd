@@ -1,7 +1,7 @@
 module WordEmbeddings
 using Trees
 
-export RandomInited, HuffmanTree, NaiveSoftmax, random_inited, naive_softmax, huffman_tree, GenWordEmbedding, keep_word_vectors_only!, WordEmbedding, WordSenseEmbedding
+export RandomInited, HuffmanTree, NaiveSoftmax, random_inited, naive_softmax, huffman_tree, GenWordEmbedding, keep_word_vectors_only!, WordEmbedding, WordSenseEmbedding, FixedWordSenseEmbedding, SplittingWordSenseEmbedding
 
 
 # The types defined below are used for specifying the options of the word embedding training
@@ -89,9 +89,9 @@ function _print_codebook(embed::WordEmbedding, N=10)
 end
 
 ##################### Word Sense  Embeddings ##################################
+abstract WordSenseEmbedding<:GenWordEmbedding
 
-
-type WordSenseEmbedding<:GenWordEmbedding
+type SplittingWordSenseEmbedding<:WordSenseEmbedding
     embedding::Dict{AbstractString, Vector{Vector{Float32}}} #[Word][sense_id]=sense embedding vector
     classification_tree::TreeNode
     distribution::Dict{AbstractString, Float32}
@@ -113,7 +113,7 @@ type WordSenseEmbedding<:GenWordEmbedding
     min_count::Int64
 end
 
-function WordSenseEmbedding(dim::Int64, init_type::InitializatioinMethod, network_type::NetworkType;
+function SplittingWordSenseEmbedding(dim::Int64, init_type::InitializatioinMethod, network_type::NetworkType;
 							lsize=5, rsize=5, subsampling=1e-5, init_learning_rate=0.025, iter=5,
 							min_count=5, force_minibatch_size=50_000, strength=0.8, nsplitaxes=-1)
     if dim <= 0 || lsize <= 0 || rsize <= 0
@@ -126,7 +126,7 @@ function WordSenseEmbedding(dim::Int64, init_type::InitializatioinMethod, networ
 		nsplitaxes = dim #Default to split everywhere
 	end
 	
-    WordSenseEmbedding(
+    FixedWordSenseEmbedding(
                     Dict{AbstractString,Vector{Vector{Float32}}}(), #embedding
                     nullnode, #classification tree
                     Dict{AbstractString,Array{Float32}}(), #distribution
@@ -141,5 +141,50 @@ function WordSenseEmbedding(dim::Int64, init_type::InitializatioinMethod, networ
                     subsampling, init_learning_rate, iter, min_count)
 end
 
+
+
+
+type FixedWordSenseEmbedding<:WordSenseEmbedding
+    embedding::Dict{AbstractString, Vector{Vector{Float32}}} #[Word][sense_id]=sense embedding vector
+    classification_tree::TreeNode
+    distribution::Dict{AbstractString, Float32}
+    codebook::Dict{AbstractString, Vector{Int64}}
+
+    force_minibatch_size::Int64
+
+	init_type::InitializatioinMethod
+    network_type::NetworkType
+    dimension::Int64
+    lsize::Int64    # left window size in training
+    rsize::Int64    # right window size
+    corpus_size::Int64
+    subsampling::Float32
+    init_learning_rate::Float32
+    iter::Int64
+    min_count::Int64
+end
+
+function FixedWordSenseEmbedding(dim::Int64, init_type::InitializatioinMethod, network_type::NetworkType;
+							lsize=5, rsize=5, subsampling=1e-5, init_learning_rate=0.025, iter=5,
+							min_count=5, force_minibatch_size=50_000)
+    if dim <= 0 || lsize <= 0 || rsize <= 0
+        throw(ArgumentError("dimension should be a positive integer"))
+    end
+	if force_minibatch_size<min_count
+        throw(ArgumentError("min_count must be at least equal to force_minibatch_size, so that rare words are not resolved less than once per interation"))
+    end
+	
+    FixedWordSenseEmbedding(
+                    Dict{AbstractString,Vector{Vector{Float32}}}(), #embedding
+                    nullnode, #classification tree
+                    Dict{AbstractString,Array{Float32}}(), #distribution
+                    Dict{AbstractString,Vector{Int64}}(), #codebook
+					force_minibatch_size,
+                    init_type, network_type,
+                    dim,
+                    lsize, rsize,
+                    0, 
+                    subsampling, init_learning_rate, iter, min_count)
+end
 
 end #module

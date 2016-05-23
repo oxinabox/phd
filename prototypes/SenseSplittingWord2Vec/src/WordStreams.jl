@@ -1,6 +1,6 @@
 module WordStreams
 #using PooledElements
-export words_of, WordStream, SlidingWindow, sliding_window, enumerate_progress
+export words_of, WordStream, SlidingWindow, sliding_window 
 
 
 const WHITESPACE = (' ', '\n', '\r')

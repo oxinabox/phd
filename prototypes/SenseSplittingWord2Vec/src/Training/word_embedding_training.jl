@@ -12,13 +12,8 @@ function train_window!(embed::WordEmbedding, window::Vector{AbstractString},midd
 		(ind == middle) && continue
 
 		target_word = window[ind]
-		# discard words not presenting in the classification tree
-
-
 		node = embed.classification_tree::TreeNode
-
 		fill!(input_gradient, 0.0)
-
 		for code in embed.codebook[target_word]
 			train_one!(node.data, input, code, input_gradient, α)
 			node = node.children[code]
@@ -54,7 +49,7 @@ end
 
 function initialize_embedding(embed::WordEmbedding, randomly::RandomInited)
     for i in embed.distribution |> keys
-        embed.embedding[i] = rand(embed.dimension) * 2 - 1
+        embed.embedding[i] = 0.1*rand(embed.dimension) * 2 - 1
     end
     embed
 end
