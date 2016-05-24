@@ -120,7 +120,7 @@ end
 
 
 "Apply break and move across all forces"
-function break_and_move!(embed::WordSenseEmbedding, pending_forces)
+function break_and_move!(embed::SplittingWordSenseEmbedding, pending_forces)
 	#What this actually Does, if not for need to marshal interprocess communication
 	#@sync for word in keys(pending_forces) |> collect
 	#	@async embed.embedding[word] = remote(break_and_move!)(embed.embedding[word],
@@ -146,7 +146,7 @@ end
 
 
 "Given a window, actually does the training on it"
-function train_window!{S<:AbstractString}(embed::WordSenseEmbedding, pending_forces, context::AbstractVector{S}, word::S, sense_id::Integer, α::AbstractFloat)
+function train_window!{S<:AbstractString}(embed::SplittingWordSenseEmbedding, pending_forces, context::AbstractVector{S}, word::S, sense_id::Integer, α::AbstractFloat)
 	input = embed.embedding[word][sense_id] 
 	@assert(all(abs(input).<10.0^10.0))
 	
@@ -197,7 +197,7 @@ end
 
 
 "Runs all the training, handles adjusting learning rate, repeating through loops etc."
-function run_training!(embed::WordSenseEmbedding, 
+function run_training!(embed::SplittingWordSenseEmbedding, 
 					   words_stream;
 					   end_of_iter_callback::Function=identity,
 					   end_of_minibatch_callback::Function=identity,
@@ -215,7 +215,7 @@ function run_training!(embed::WordSenseEmbedding,
 			pending_forces = blank_pending_forces()
 			#cases = Base.pgenerate(default_worker_pool(), win->WsdTrainingCase(embed,win), minibatch)
 			cases = _pgenerate_gh(win->WsdTrainingCase(embed,win), minibatch, :ss_wsdtrainingcase)
-			for (context, word, sense_id) in cases
+            for (context, word, sense_id) in ReservoirShuffler(case,1024)
 				trained_count+=1
 				α = get_α_and_log(embed, trained_count, α)
 				train_window!(embed, pending_forces, context,word, sense_id,α)

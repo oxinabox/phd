@@ -33,35 +33,6 @@ end
 
 
 
-#Todo move this into the plain word embedding file.
-"""Reterns the window, and the α, for this round of training.
-Also logs the progress"""
-function training_windows(embed::GenWordEmbedding,
-						  stream::WordStream,
-						  end_of_iter_callback::Function=identity)
-	
-	Task() do
-		tic()
-		α = embed.init_learning_rate
-		trained_count = 0
-		end_of_iter_callback((0,embed))
-		for current_iter in 1:embed.iter
-			debug("Iter $current_iter of $(embed.iter)")
-			windows = sliding_window(stream, lsize=embed.lsize, rsize=embed.rsize)
-			for window in windows
-				trained_count += 1
-				α = get_α_and_log(embed, trained_count, α)
-				produce(window,α)
-			end
-			debug("Running Callback after $current_iter")
-			end_of_iter_callback((current_iter,embed))
-		end
-		overall_time = toq()
-		debug("Finished training. Trained on $(trained_count) words in $(overall_time) seconds.")
-	end
-end
-
-
 
 
 function initialize_network(embed::GenWordEmbedding, huffman::HuffmanTree)

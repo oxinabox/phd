@@ -9,6 +9,7 @@ using WordEmbeddings
 using Lumberjack
 using Query
 using Utils
+using ReservoirShuffle
 
 export train, random_init, run_training!, initialize_embedding
 export save_callback
