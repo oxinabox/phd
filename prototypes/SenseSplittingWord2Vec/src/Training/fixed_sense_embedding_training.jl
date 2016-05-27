@@ -65,7 +65,7 @@ end
 
 function initialize_embedding(embed::FixedWordSenseEmbedding, ::RandomInited)
     for word in embed.distribution |> keys
-        embed.embedding[word] = [rand(Float32,embed.dimension) * 2 - 1 for __ in 1:5]
+        embed.embedding[word] = [rand(Float32,embed.dimension) * 2 - 1 for _ in 1:5]
     end
     embed
 end

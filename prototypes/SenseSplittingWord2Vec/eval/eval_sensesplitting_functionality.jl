@@ -4,7 +4,10 @@ using Query
 using Lumberjack
 using Utils
 
-model_dir = "models/ss"
+model_dit Base.iteratorsize(chain(1:2:5, cycle(4))) == Base.IsInfinite()
+ 72 @test Base.iteratorsize(chain(1:2:5, 0.2:0.1:1.6)) == Base.HasLength()
+  73 @test Base.iteratorsize(chain(1:2:5, distinct([1,1,10]))) == Base.SizeUnknown()
+   = "models/ss"
 data_dir = "./data/corpora/text8/"
 test_filename = "text8"
 test_file = joinpath(data_dir, test_filename)
