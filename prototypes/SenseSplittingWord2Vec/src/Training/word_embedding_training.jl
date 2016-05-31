@@ -40,7 +40,7 @@ function training_windows(embed::WordEmbedding,
 		end_of_iter_callback((0,embed))
 		for current_iter in 1:embed.iter
 			debug("Iter $current_iter of $(embed.iter)")
-            windows = RandomShuffler(sliding_window(stream, lsize=embed.lsize, rsize=embed.rsize), 1024)
+            windows = ReservoirShuffler(sliding_window(stream, lsize=embed.lsize, rsize=embed.rsize), 1024)
 			for window in windows
 				trained_count += 1
 				α = get_α_and_log(embed, trained_count, α)

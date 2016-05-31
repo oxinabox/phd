@@ -70,7 +70,7 @@ function train(embed::GenWordEmbedding, corpus_filename::AbstractString; kwargs.
     t1 = time()
     println("Starting sequential training...")
     words_stream = words_of(corpus_filename, subsampling = (embed.subsampling, true, embed.distribution))
-run_training!(embed, words_stream; kwargs...)
+	run_training!(embed, words_stream; kwargs...)
 
     t2 = time()
     println("Training complete at $(t2-t1) time")

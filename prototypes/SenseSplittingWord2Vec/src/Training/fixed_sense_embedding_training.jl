@@ -48,7 +48,7 @@ function run_training!(embed::FixedWordSenseEmbedding,
 		
 		for minibatch in Base.partition(windows, embed.force_minibatch_size)
 			cases = _pgenerate_gh(win->WsdTrainingCase(embed,win), minibatch, :ss_wsdtrainingcase)
-			for (context, word, sense_id) in ReservoirShuffler(case,1024)
+			for (context, word, sense_id) in ReservoirShuffler(cases,1024)
 				trained_count+=1
 				α = get_α_and_log(embed, trained_count, α)
 				train_window!(embed, context,word, sense_id,α)

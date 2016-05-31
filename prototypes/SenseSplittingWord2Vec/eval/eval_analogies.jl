@@ -2,7 +2,6 @@ push!(LOAD_PATH,"../src/")
 using Word2Vec
 using Base.Test
 using Lumberjack
-using PooledElements
 
 model_file = ARGS[1]
 analogy_file = "data/analogy/questions-words.txt";
@@ -17,7 +16,7 @@ function analogies(path; preprocess::Function=x->x)
             if line[1]==':'
                 continue
             end
-            a,b,c,d = [word|>preprocess|>pstring for word in split(line)]
+            a,b,c,d = [word|>preprocess for word in split(line)]
             produce(a,b,c,d)
         end
     end

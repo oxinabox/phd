@@ -28,7 +28,7 @@ Returns integer coresponding to to the Column of the embedding matrix for that w
 	if length(sense_embeddings)==1
 		return 1
 	else
-		prop, sense_id = findmax([logprob_of_context(embed, context, input) for input in sense_embeddings])
+		prob, sense_id = findmax([logprob_of_context(embed, context, input) for input in sense_embeddings])
 		return sense_id
 	end
 end
@@ -179,8 +179,12 @@ end
 
 
 @inline function WsdTrainingCase(embed::WordEmbeddings.WordSenseEmbedding, window)
-    word = window[embed.lsize+1]
-	context = window[[1:embed.lsize; embed.lsize+1:end]]
+    word = window[embed.lsize+1
+	#Dynamic Window
+	pre_words = embed.lsize - rand(1:embed.lsize-1)
+	post_words = embed.lsize+1 + rand(1:embed.rsize)
+
+	context = window[[pre_words:embed.lsize; embed.lsize+1:post_words]]
     sense_id = Training.WSD(embed, word, context)
     
     return (context, word, sense_id)
