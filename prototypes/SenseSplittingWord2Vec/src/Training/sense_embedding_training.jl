@@ -179,12 +179,13 @@ end
 
 
 @inline function WsdTrainingCase(embed::WordEmbeddings.WordSenseEmbedding, window)
-    word = window[embed.lsize+1
-	#Dynamic Window
-	pre_words = embed.lsize - rand(1:embed.lsize-1)
-	post_words = embed.lsize+1 + rand(1:embed.rsize)
+	w_ind = embed.lsize+1
+    word = window[w_ind]
+	#Dynamic Window #NOTE: Does it matter that this is not symetric? I think not
+	pre_words =  rand(1:embed.lsize-1)
+	post_words = w_ind+1 + rand(1:embed.rsize-1)
 
-	context = window[[pre_words:embed.lsize; embed.lsize+1:post_words]]
+	context = window[[pre_words:w_ind-1; w_ind+1:post_words]]
     sense_id = Training.WSD(embed, word, context)
     
     return (context, word, sense_id)
@@ -219,7 +220,7 @@ function run_training!(embed::SplittingWordSenseEmbedding,
 			pending_forces = blank_pending_forces()
 			#cases = Base.pgenerate(default_worker_pool(), win->WsdTrainingCase(embed,win), minibatch)
 			cases = _pgenerate_gh(win->WsdTrainingCase(embed,win), minibatch, :ss_wsdtrainingcase)
-            for (context, word, sense_id) in ReservoirShuffler(case,1024)
+            for (context, word, sense_id) in ReservoirShuffler(cases,1024)
 				trained_count+=1
 				α = get_α_and_log(embed, trained_count, α)
 				train_window!(embed, pending_forces, context,word, sense_id,α)

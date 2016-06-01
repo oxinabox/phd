@@ -37,33 +37,32 @@ end
 	end
 
 	zero_start = [[0.0f0,0.0]]	
-	@test Training.break_and_move!(zero_start,  sdict([[10f0, 0]]), 0.) ==	[[10f0,0]]
-	@test Training.break_and_move!(zero_start,  sdict([[-10f0, 0]]), 0.) == [[0f0,0]]
-	@test Training.break_and_move!(zero_start,  sdict([[5f0, 0],[-5,0]]), 0.) == [[5f0,0],[-5f0,0]]
+	#@test Training.break_and_move!(zero_start,  sdict([[10f0, 0]]), 0.) ==	[[10f0,0]]
+	#@test Training.break_and_move!(zero_start,  sdict([[-10f0, 0]]), 0.) == [[0f0,0]]
+	#@test Training.break_and_move!(zero_start,  sdict([[5f0, 0],[-5,0]]), 0.) == [[5f0,0],[-5f0,0]]
 
 
-	srand(10) #No actual random chance, in tests
-	forces   = [ 1.+round(10.0*rand(Float32, 2)) for ii in 1:1000]
-	@test Training.break_and_move!(zero_start, sdict(forces),0.0) |> length  > 0   #should produce some forces after
+	#srand(10) #No actual random chance, in tests
+	#forces   = [ 1.+round(10.0*rand(Float32, 2)) for ii in 1:1000]
+	#@test Training.break_and_move!(zero_start, sdict(forces),0.0) |> length  > 0   #should produce some forces after
 
 
-	@test Training.break_and_move!([[1f0,0],[2f0,0]],
-								sdict([[50f0,-3],[-10f0,6]],2), 0.0)  ≅ [[1f0,0],[52f0,-3],[-8f0,6]] # "Don't loose the other word senses"
+	#@test Training.break_and_move!([[1f0,0],[2f0,0]],
+#								sdict([[50f0,-3],[-10f0,6]],2), 0.0)  ≅ [[1f0,0],[52f0,-3],[-8f0,6]] # "Don't loose the other word senses"
 
 end
 
 
-
 function test_sense_embedding(inputfile)
 
-	embed = WordSenseEmbedding(30, random_inited, huffman_tree, subsampling = 0, iter=2, strength=0.4, force_minibatch_size=100)
+	embed = SplittingWordSenseEmbedding(30, random_inited, huffman_tree, subsampling = 0, iter=2, strength=0.4, force_minibatch_size=100)
 	@time train(embed, inputfile)
 	embed
 end
 
 @testset "setup correctly" begin
 
-	embed = WordSenseEmbedding(30, random_inited, huffman_tree, subsampling = 0, iter=2, strength=0.1)
+	embed = SplittingWordSenseEmbedding(30, random_inited, huffman_tree, subsampling = 0, iter=2, strength=0.1)
 	embed.distribution = Dict("a"=>100, "b"=>100, "c"=>100)
 	
 	Training.initialize_embedding(embed, random_inited)

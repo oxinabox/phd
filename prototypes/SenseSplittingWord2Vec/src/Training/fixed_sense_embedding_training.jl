@@ -45,10 +45,10 @@ function run_training!(embed::FixedWordSenseEmbedding,
 	α=embed.init_learning_rate
     for iter in 1:embed.iter
 		windows = sliding_window(words_stream, lsize=embed.lsize, rsize=embed.rsize)
-		
+		info("Begin Iter $iter")	
 		for minibatch in Base.partition(windows, embed.force_minibatch_size)
 			cases = _pgenerate_gh(win->WsdTrainingCase(embed,win), minibatch, :ss_wsdtrainingcase)
-			for (context, word, sense_id) in ReservoirShuffler(cases,1024)
+			for (context, word, sense_id) in ReservoirShuffler(cases,64)
 				trained_count+=1
 				α = get_α_and_log(embed, trained_count, α)
 				train_window!(embed, context,word, sense_id,α)
@@ -64,8 +64,9 @@ end
 
 
 function initialize_embedding(embed::FixedWordSenseEmbedding, ::RandomInited)
-    for word in embed.distribution |> keys
-        embed.embedding[word] = [rand(Float32,embed.dimension) * 2 - 1 for _ in 1:5]
+    for (word,freq) in embed.distribution
+		nsenses = freq*embed.corpus_size >= 3000 ? 5 : 1
+        embed.embedding[word] = [rand(Float32,embed.dimension) * 2 - 1 for _ in 1:nsenses]
     end
     embed
 end

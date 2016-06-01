@@ -126,7 +126,7 @@ function SplittingWordSenseEmbedding(dim::Int64, init_type::InitializatioinMetho
 		nsplitaxes = dim #Default to split everywhere
 	end
 	
-    FixedWordSenseEmbedding(
+    SplittingWordSenseEmbedding(
                     Dict{AbstractString,Vector{Vector{Float32}}}(), #embedding
                     nullnode, #classification tree
                     Dict{AbstractString,Array{Float32}}(), #distribution
