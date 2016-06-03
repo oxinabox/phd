@@ -65,7 +65,7 @@ end
 
 function initialize_embedding(embed::FixedWordSenseEmbedding, ::RandomInited)
     for (word,freq) in embed.distribution
-		nsenses = freq*embed.corpus_size >= 3000 ? 5 : 1
+		nsenses = freq*embed.corpus_size >= embed.min_count_for_multiple_senses ? embed.initial_nsenses : 1
         embed.embedding[word] = [rand(Float32,embed.dimension) * 2 - 1 for _ in 1:nsenses]
     end
     embed

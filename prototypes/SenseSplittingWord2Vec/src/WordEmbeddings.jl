@@ -7,8 +7,8 @@ export RandomInited, HuffmanTree, NaiveSoftmax, random_inited, naive_softmax, hu
 # The types defined below are used for specifying the options of the word embedding training
 abstract Option
 
-abstract InitializatioinMethod <: Option
-type RandomInited <: InitializatioinMethod 
+abstract InitializationMethod <: Option
+type RandomInited <: InitializationMethod 
     # Initialize the embedding randomly
 end
 const random_inited = RandomInited()
@@ -34,7 +34,7 @@ type WordEmbedding<:GenWordEmbedding
     distribution::Dict{AbstractString, Float32}
     codebook::Dict{AbstractString, Vector{Int64}}
 
-    init_type::InitializatioinMethod
+    init_type::InitializationMethod
     network_type::NetworkType
     dimension::Int64
     lsize::Int64    # left window size in training
@@ -47,7 +47,7 @@ type WordEmbedding<:GenWordEmbedding
     min_count::Int64
 end
 
-function WordEmbedding(dim::Int64, init_type::InitializatioinMethod, network_type::NetworkType; lsize=5, rsize=5, subsampling=1e-5, init_learning_rate=0.025, iter=5, min_count=5)
+function WordEmbedding(dim::Int64, init_type::InitializationMethod, network_type::NetworkType; lsize=5, rsize=5, subsampling=1e-5, init_learning_rate=0.025, iter=5, min_count=5)
     if dim <= 0 || lsize <= 0 || rsize <= 0
         throw(ArgumentError("dimension should be a positive integer"))
     end
@@ -101,7 +101,7 @@ type SplittingWordSenseEmbedding<:WordSenseEmbedding
 	nsplitaxes::Int64	
     force_minibatch_size::Int64
 
-	init_type::InitializatioinMethod
+	init_type::InitializationMethod
     network_type::NetworkType
     dimension::Int64
     lsize::Int64    # left window size in training
@@ -113,7 +113,7 @@ type SplittingWordSenseEmbedding<:WordSenseEmbedding
     min_count::Int64
 end
 
-function SplittingWordSenseEmbedding(dim::Int64, init_type::InitializatioinMethod, network_type::NetworkType;
+function SplittingWordSenseEmbedding(dim::Int64, init_type::InitializationMethod, network_type::NetworkType;
 							lsize=5, rsize=5, subsampling=1e-5, init_learning_rate=0.025, iter=5,
 							min_count=5, force_minibatch_size=50_000, strength=0.8, nsplitaxes=-1)
     if dim <= 0 || lsize <= 0 || rsize <= 0
@@ -152,7 +152,7 @@ type FixedWordSenseEmbedding<:WordSenseEmbedding
 
     force_minibatch_size::Int64
 
-	init_type::InitializatioinMethod
+	init_type::InitializationMethod
     network_type::NetworkType
     dimension::Int64
     lsize::Int64    # left window size in training
@@ -162,16 +162,15 @@ type FixedWordSenseEmbedding<:WordSenseEmbedding
     init_learning_rate::Float32
     iter::Int64
     min_count::Int64
+	min_count_for_multiple_senses::Int64
+	initial_nsenses::Int64
 end
 
-function FixedWordSenseEmbedding(dim::Int64, init_type::InitializatioinMethod, network_type::NetworkType;
+function FixedWordSenseEmbedding(dim::Int64, init_type::InitializationMethod, network_type::NetworkType;
 							lsize=5, rsize=5, subsampling=1e-5, init_learning_rate=0.025, iter=5,
-							min_count=5, force_minibatch_size=50_000)
+							min_count=5, min_count_for_multiple_senses=100, initial_nsense=20)
     if dim <= 0 || lsize <= 0 || rsize <= 0
         throw(ArgumentError("dimension should be a positive integer"))
-    end
-	if force_minibatch_size<min_count
-        throw(ArgumentError("min_count must be at least equal to force_minibatch_size, so that rare words are not resolved less than once per interation"))
     end
 	
     FixedWordSenseEmbedding(
@@ -184,7 +183,9 @@ function FixedWordSenseEmbedding(dim::Int64, init_type::InitializatioinMethod, n
                     dim,
                     lsize, rsize,
                     0, 
-                    subsampling, init_learning_rate, iter, min_count)
+                    subsampling, init_learning_rate, iter, min_count,
+					min_count_for_multiple_senses, initial_nsenses
+					)
 end
 
 export flatten_embeddings

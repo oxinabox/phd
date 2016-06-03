@@ -68,12 +68,14 @@ function logprob_of_context{S<:AbstractString}(embed::WordEmbedding, context::Ab
 end
 
 
-function logprob_of_context{S<:AbstractString}(embed::GenWordEmbedding, context::AbstractVector{S}, input::Vector{Float32}; skip_oov=false)
+function logprob_of_context{S<:AbstractString}(embed::GenWordEmbedding, context::AbstractVector{S}, input::Vector{Float32}; skip_oov=false, normalise_over_length=false)
     total_prob=0.0f0
+	context_length = 0
     for target_word in context
 		skip_oov && !haskey(embed.codebook, target_word) && continue
-        node = embed.classification_tree      
-        
+        context_length+=1
+
+		node = embed.classification_tree      
         word_prob = 0.0f0
         for code in embed.codebook[target_word]  
             word_prob+= log(predict(node.data, input)[code])
@@ -81,7 +83,11 @@ function logprob_of_context{S<:AbstractString}(embed::GenWordEmbedding, context:
 		end
         total_prob+=word_prob
     end
-    total_prob
+    if normalise_over_length
+		total_prob/=context_length #This is equivlent to taking the context_length-th root in nonlog domain. Which makes sense.
+	end
+	total_prob
+
 end
 
 
