@@ -168,7 +168,9 @@ end
 
 function FixedWordSenseEmbedding(dim::Int64, init_type::InitializationMethod, network_type::NetworkType;
 							lsize=5, rsize=5, subsampling=1e-5, init_learning_rate=0.025, iter=5,
-							min_count=5, min_count_for_multiple_senses=100, initial_nsense=20)
+							force_minibatch_size=50_000,
+							min_count=5, min_count_for_multiple_senses=100, initial_nsenses=20
+							)
     if dim <= 0 || lsize <= 0 || rsize <= 0
         throw(ArgumentError("dimension should be a positive integer"))
     end
