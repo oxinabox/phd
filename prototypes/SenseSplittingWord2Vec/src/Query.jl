@@ -3,11 +3,57 @@ using Base.Collections
 using WordEmbeddings
 using Distances
 using SoftmaxClassifier
-export find_nearest_words, logprob_of_context
+using NearestNeighbors
+import NearestNeighbors.NNTree
+export find_nearest_words, logprob_of_context, flatten_embeddings
 
 
 ########### nearest_words, and analogy math
+"The metric equivelent of Cosine Distence"
+immutable AngularDist<:Metric
+end
+function Distances.evaluate(::AngularDist, a::AbstractArray, b::AbstractArray)
+    cdist = cosine_dist(a,b)
+    cos_val = 1-cdist
+    acos(cos_val)/π
+end
+angular_dist(a::AbstractArray, b::AbstractArray) = evaluate(AngularDist(), a, b)
 
+
+
+function nearest_neighbours_tree(embed::WordSenseEmbedding, metric::Metric=AngularDist())
+    num_embeddings = sum(map(length,values(embed.embedding)))
+	labels = Vector{Tuple{typeof(first(embed.embedding)[1]),Int64}}(num_embeddings)
+	points = Matrix{eltype(first(embed.embedding)[2][1])}((embed.dimension, num_embeddings))
+	ii = 0
+	for (word,sense_embeddings) in embed.embedding
+		for (sense_id, sense_embedding) in enumerate(sense_embeddings)
+			ii+=1
+			@inbounds labels[ii]=(word,sense_id)
+			@inbounds points[:,ii]=sense_embedding
+		end
+	end
+    dtree = BallTree(points, metric)
+    (dtree,labels)
+end
+
+function nearest_neighbours_tree(embed::WordEmbedding, metric::Metric=AngularDist())
+    num_embeddings = length(embed.embedding)
+	labels = Vector{typeof(first(embed.embedding)[1])}(num_embeddings)
+	points = Matrix{eltype(first(embed.embedding)[2])}((embed.dimension, num_embeddings))
+	
+	ii = 0
+	for (word,embedding) in embed.embedding
+		ii+=1
+		@inbounds labels[ii]=word
+		@inbounds points[:,ii]=embedding
+	end
+    dtree = BallTree(points, metric)
+    (dtree,labels)
+end
+        
+
+        
 function find_nearest_words(embed::WordEmbedding, equation::AbstractString; nwords=5)
 	tokens = replace(replace(equation, "+", " + "), "-", " - ")
     positive_words = AbstractString[]
@@ -33,31 +79,58 @@ function find_nearest_words(embed::WordEmbedding, positive_words::Vector, negati
     wv = sum([embed.embedding[w] for w in positive_words])
 	wv .-= length(negative_words)>0 ? sum([embed.embedding[w] for w in negative_words]) : 0.0
 
-	find_nearest_embedding(embed.embedding, wv; nwords=nwords, banned=[positive_words;negative_words]) 
+	dtree, labels = nearest_neighbours_tree(embed)
+	find_nearest_embedding(dtree,labels, wv; nwords=nwords, banned=[positive_words;negative_words]) 
 end
 
 
 function find_nearest_words(embed::WordSenseEmbedding, word, sense_id; nwords=5)
 	wv = embed.embedding[word][sense_id]
-	flat_embeddings = flatten_embeddings(embed) 
-	find_nearest_embedding(flat_embeddings, wv; nwords=nwords, banned=[(word,sense_id)]) 
+	dtree, labels = nearest_neighbours_tree(embed)
+	find_nearest_embedding(dtree, labels, wv; nwords=nwords, banned=[(word,sense_id)]) 
+end
+
+function find_nearest_words(embed::WordSenseEmbedding, word; nwords=5)
+	wvs = hcat(embed.embedding[word]...)
+	dtree, labels = nearest_neighbours_tree(embed)
+	find_nearest_embedding(dtree, labels, wvs; nwords=nwords,
+							banneds=[(word,si) for si in 1:length]) 
 end
 
 
-function find_nearest_embedding(candidate_embeddings, target_embedding; nwords=5, banned=[])
-    pq = PriorityQueue(Base.Order.Reverse)
-    for (w, embed_w) in candidate_embeddings
-		if w in banned
-			continue
-		end
-        dist = cosine_dist(target_embedding, embed_w)
-        enqueue!(pq, w, dist)
-        if length(pq) > nwords
-            dequeue!(pq)
-        end
-    end
-    sort(collect(pq), by = t -> t[2])
+
+function _gather_nearests(nwords, idxs, dists, labels, banned)
+	ret = Vector{Tuple{eltype(labels),eltype(dists)}}(nwords)
+	ii=0
+	for (id, dist) in zip(idxs,dists)
+		labels[id] ∈ banned && continue
+		ii+=1
+		ii>nwords && break
+		ret[ii]=(labels[id],dist)
+	end
+	ret	
 end
+
+function find_nearest_embedding(embeddings_dtree::NNTree, labels, target_embedding::Vector; nwords=5, banned=[])
+	max_words = nwords+length(banned)
+	max_words = min(max_words,length(labels))
+	nwords = min(nwords,max_words)
+	idxs, dists = knn(embeddings_dtree,target_embedding, max_words,true)
+	_gather_nearests(nwords, idxs, dists, labels, banned)
+end
+
+function find_nearest_embedding(embeddings_dtree::NNTree, labels, target_embeddings::Matrix; nwords=5, banneds=[[]])
+	max_words = nwords+maximum(map(length,banneds))
+	max_words = min(max_words,length(labels))
+	nwords = min(nwords,max_words)
+	if length(banneds)==1
+		banneds = repeated(banneds)
+	end
+
+	idxss, distss = knn(embeddings_dtree,target_embeddings, max_words,true)
+	[_gather_nearests(nwords, idxs, dists, labels, banned) for (idxs, dists, banned) in zip(idxss,distss, banneds)]
+end
+
 
 
 #################### Probability of the context

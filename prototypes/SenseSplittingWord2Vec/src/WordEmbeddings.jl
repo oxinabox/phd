@@ -190,9 +190,6 @@ function FixedWordSenseEmbedding(dim::Int64, init_type::InitializationMethod, ne
 					)
 end
 
-export flatten_embeddings
-function flatten_embeddings(embed::WordSenseEmbedding)
-	collect(Base.flatten(( ((w,si),we) for (si,we) in enumerate(wse)) for (w,wse) in embed.embedding  ))	
-end
+
 
 end #Module
