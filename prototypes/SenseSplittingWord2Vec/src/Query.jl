@@ -5,7 +5,7 @@ using Distances
 using SoftmaxClassifier
 using NearestNeighbors
 import NearestNeighbors.NNTree
-export find_nearest_words, logprob_of_context, flatten_embeddings
+export find_nearest_words, logprob_of_context, nn_tree
 
 
 ########### nearest_words, and analogy math
@@ -19,9 +19,7 @@ function Distances.evaluate(::AngularDist, a::AbstractArray, b::AbstractArray)
 end
 angular_dist(a::AbstractArray, b::AbstractArray) = evaluate(AngularDist(), a, b)
 
-
-
-function nearest_neighbours_tree(embed::WordSenseEmbedding, metric::Metric=AngularDist())
+function nn_tree(embed::WordSenseEmbedding, metric::Metric=AngularDist())
     num_embeddings = sum(map(length,values(embed.embedding)))
 	labels = Vector{Tuple{typeof(first(embed.embedding)[1]),Int64}}(num_embeddings)
 	points = Matrix{eltype(first(embed.embedding)[2][1])}((embed.dimension, num_embeddings))
@@ -37,7 +35,7 @@ function nearest_neighbours_tree(embed::WordSenseEmbedding, metric::Metric=Angul
     (dtree,labels)
 end
 
-function nearest_neighbours_tree(embed::WordEmbedding, metric::Metric=AngularDist())
+function nn_tree(embed::WordEmbedding, metric::Metric=AngularDist())
     num_embeddings = length(embed.embedding)
 	labels = Vector{typeof(first(embed.embedding)[1])}(num_embeddings)
 	points = Matrix{eltype(first(embed.embedding)[2])}((embed.dimension, num_embeddings))
@@ -53,8 +51,12 @@ function nearest_neighbours_tree(embed::WordEmbedding, metric::Metric=AngularDis
 end
         
 
-        
 function find_nearest_words(embed::WordEmbedding, equation::AbstractString; nwords=5)
+	dtree,labels= nn_tree(embed)
+	find_nearest_words(embed, equation, dtree,labels, nwords=nwords)
+end
+
+function find_nearest_words(embed::WordEmbedding, equation::AbstractString, dtree,labels; nwords=5)
 	tokens = replace(replace(equation, "+", " + "), "-", " - ")
     positive_words = AbstractString[]
     negative_words = AbstractString[]
@@ -72,29 +74,30 @@ function find_nearest_words(embed::WordEmbedding, equation::AbstractString; nwor
         end
     end
 	
-	find_nearest_words(embed, positive_words, negative_words; nwords=nwords)
+	find_nearest_words(embed, positive_words, negative_words,dtree,labels; nwords=nwords)
 end
 
-function find_nearest_words(embed::WordEmbedding, positive_words::Vector, negative_words::Vector; nwords=5)
+find_nearest_words(embed::WordEmbedding, positive_words::Vector, negative_words::Vector; nwords=5) = find_nearest_words(embed, positive_words, negative_words,nn_tree(embed); nwords=nwords)
+function find_nearest_words(embed::WordEmbedding, positive_words::Vector, negative_words::Vector, dtree,labels; nwords=5)
     wv = sum([embed.embedding[w] for w in positive_words])
 	wv .-= length(negative_words)>0 ? sum([embed.embedding[w] for w in negative_words]) : 0.0
 
-	dtree, labels = nearest_neighbours_tree(embed)
 	find_nearest_embedding(dtree,labels, wv; nwords=nwords, banned=[positive_words;negative_words]) 
 end
 
 
-function find_nearest_words(embed::WordSenseEmbedding, word, sense_id; nwords=5)
+find_nearest_words(embed::WordSenseEmbedding, word, sense_id; nwords=5) = find_nearest_words(embed, word, sense_id, nn_tree(embed)...; nwords=nwords)
+function find_nearest_words(embed::WordSenseEmbedding, word, sense_id, dtree,labels; nwords=5)
 	wv = embed.embedding[word][sense_id]
-	dtree, labels = nearest_neighbours_tree(embed)
 	find_nearest_embedding(dtree, labels, wv; nwords=nwords, banned=[(word,sense_id)]) 
 end
 
-function find_nearest_words(embed::WordSenseEmbedding, word; nwords=5)
+
+find_nearest_words(embed::WordSenseEmbedding, word; nwords=5) = find_nearest_words(embed, word,nn_tree(embed)...; nwords=nwords)
+function find_nearest_words(embed::WordSenseEmbedding, word, dtree,labels; nwords=5)
 	wvs = hcat(embed.embedding[word]...)
-	dtree, labels = nearest_neighbours_tree(embed)
 	find_nearest_embedding(dtree, labels, wvs; nwords=nwords,
-							banneds=[(word,si) for si in 1:length]) 
+							banneds=[(word,si) for si in 1:length(embed.embedding[word])]) 
 end
 
 
