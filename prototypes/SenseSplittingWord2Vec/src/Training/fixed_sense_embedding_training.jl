@@ -4,7 +4,7 @@
 function train_window!{S<:AbstractString}(embed::FixedWordSenseEmbedding, context::AbstractVector{S}, word::S, sense_id::Integer, α::AbstractFloat)
 	input = embed.embedding[word][sense_id] 
 	@assert(all(abs(input).<10.0^10.0))
-	
+	embed.trained_times[word][sense_id]+=1	
 	try
 		for target_word in context
 			input_grad = zeros(Float32, embed.dimension)

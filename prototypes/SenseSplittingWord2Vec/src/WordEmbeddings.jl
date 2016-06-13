@@ -1,5 +1,6 @@
 module WordEmbeddings
 using Trees
+using DataStructures
 
 export RandomInited, HuffmanTree, NaiveSoftmax, random_inited, naive_softmax, huffman_tree, GenWordEmbedding, keep_word_vectors_only!, WordEmbedding, WordSenseEmbedding, FixedWordSenseEmbedding, SplittingWordSenseEmbedding
 
@@ -97,6 +98,7 @@ type SplittingWordSenseEmbedding<:WordSenseEmbedding
     distribution::Dict{AbstractString, Float32}
     codebook::Dict{AbstractString, Vector{Int64}}
 
+
 	strength::Float32
 	nsplitaxes::Int64	
     force_minibatch_size::Int64
@@ -149,7 +151,7 @@ type FixedWordSenseEmbedding<:WordSenseEmbedding
     classification_tree::TreeNode
     distribution::Dict{AbstractString, Float32}
     codebook::Dict{AbstractString, Vector{Int64}}
-
+	trained_times::Associative #TODO: give this is a clear type
     force_minibatch_size::Int64
 
 	init_type::InitializationMethod
@@ -180,6 +182,7 @@ function FixedWordSenseEmbedding(dim::Int64, init_type::InitializationMethod, ne
                     nullnode, #classification tree
                     Dict{AbstractString,Array{Float32}}(), #distribution
                     Dict{AbstractString,Vector{Int64}}(), #codebook
+					DefaultDict(AbstractString,DefaultDict{Int64,Int64},()->DefaultDict(Int64,Int64,()->0)), #Trained times
 					force_minibatch_size,
                     init_type, network_type,
                     dim,
