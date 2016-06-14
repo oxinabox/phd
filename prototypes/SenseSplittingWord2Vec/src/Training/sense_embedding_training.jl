@@ -23,12 +23,12 @@ end
 i.e. use the language modeling task.
 Returns integer coresponding to to the Column of the embedding matrix for that word, for the best word sense embedding.
 """
-@inline function WSD(embed::WordSenseEmbedding, word::AbstractString, context::AbstractVector{AbstractString})
+@inline function WSD(embed::WordSenseEmbedding, word::AbstractString, context::AbstractVector{AbstractString}; skip_oov=false)
 	sense_embeddings = embed.embedding[word]
 	if length(sense_embeddings)==1
 		return 1
 	else
-		prob, sense_id = findmax([logprob_of_context(embed, context, input) for input in sense_embeddings])
+		prob, sense_id = findmax([logprob_of_context(embed, context, input; skip_oov=skip_oov) for input in sense_embeddings])
 		return sense_id
 	end
 end
