@@ -11,7 +11,7 @@ using Query
 using Utils
 using ReservoirShuffle
 
-export train, random_init, run_training!, initialize_embedding
+export train, random_init, run_training!,resume_training!, initialize_embedding
 export save_callback
 
 include("Training/general_training.jl")
