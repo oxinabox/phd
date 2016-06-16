@@ -54,7 +54,7 @@
 \DeclareMathOperator*{\argmin}{argmin}
 
 %%%%%
-\usepackage[backend=bibtex,style=ieee,url=false]{biblatex}
+\usepackage[backend=bibtex,style=ieee,url=false, doi=false]{biblatex}
 \bibliography{master}
 
 %Plain Bibtex way, with the BST
@@ -71,16 +71,16 @@
 \renewcommand{\bottomfraction}{.7}
 \renewcommand{\textfraction}{.15}
 \renewcommand{\floatpagefraction}{.8}
-\renewcommand{\dbltopfraction}{.66}
+\renewcommand{\dbltopfraction}{.9}
 \renewcommand{\dblfloatpagefraction}{.8}
 \setcounter{topnumber}{9}
 \setcounter{bottomnumber}{9}
 \setcounter{totalnumber}{20}
 \setcounter{dbltopnumber}{9}
 
-\setlength{\floatsep}{8pt plus 4pt minus 4pt}
-\setlength{\textfloatsep}{8pt plus 4pt minus 4pt}
-\setlength{\intextsep}{8pt plus 4pt minus 4pt}
+%\setlength{\floatsep}{8pt plus 4pt minus 4pt}
+%\setlength{\textfloatsep}{8pt plus 4pt minus 4pt}
+%\setlength{\intextsep}{8pt plus 4pt minus 4pt}
 
 %%%%%%%%%%%%%%%%%
 
@@ -260,7 +260,7 @@ GloVe representations of words are used in our evaluations \parencite{pennington
 \subsection{Corpus and Language Modelling}
 \begin{figure}
 	\begin{tikzpicture}
-	\begin{axis}[resplot,height=0.6\columnwidth,
+	\begin{axis}[resplot,height=0.55\columnwidth,
 	ybar, ymin=0, ytick={0,1000,2000, 3000,4000,5000},
 	bar width=1,
 	ylabel=Number of Sentences,
@@ -347,14 +347,16 @@ Implementation was in the Julia programming language \parencite{Julia}. The impl
 
 \input{example_sents.tex}
 
-The overall results for the two step method (\twosteptitle{}) sentence generation are shown in \Cref{table:overall}. Also shown are the results for just the ordering step, when the reference bag of words in provided as the input (\oracletitle{}). Several metrics are shown for the performance. The Portion Perfect, is the accuracy, counting only exact reproductions of the input. The BLEU score is a more forgiving measure commonly used in machine translation to measure how close a translation is -- in this case how close the generated sentence is to the original \cite{Papineni2002}. Also shown is the Portion Feasible -- as the Word Ordering Step can fail if, according the the language model, there is no possible order that has nonzero probability, this means there is no solution to the GA-TSP meeting all constraints so the ordering is termed infeasible. In these cases for purposes of evaluation the sentence is presented in arbitrary order of the selected or reference BOW is used.
-\Cref{table:wordselection} shows the results reported by \cite{White2015BOWgen} for the Word Selection step only (\selectiontitle{}). Here again a Portion Perfect is shown, but this time without bearing on order. As well the average precision, across all cases, with being the number of correct words generated, out of the total number of words generated. Similarly, the average Jaccard index is shown, this is a measure of the similarities of the BOWs, being the size of the intersection of the generated BOW with the reference BOW, divided by the size of their union. We present these results to show how each steps performance impacts the overall system.
+The overall results for the two step method (\twosteptitle{}) sentence generation are shown in \Cref{table:overall}. Also shown are the results for just the ordering step, when the reference bag of words in provided as the input (\oracletitle{}). Several metrics are shown for the performance. The Portion Perfect is the proportion of the the out sentences which were exact reproductions of the input. The BLEU score is a more forgiving measure commonly used in machine translation to measure how close a translation is -- in this case how close the generated sentence is to the original \cite{Papineni2002}. Finally, Portion Feasible this is the portion for which there does exist a solution within the constraints of the MIP ordering problem. In cases where there are no solution the sentence used for other metrics is is presented in arbitrary order of the prior step.
+
+\Cref{table:wordselection} shows the results reported by \cite{White2015BOWgen} for the Word Selection step only (\selectiontitle{}). Again a Portion Perfect is shown, but this time without bearing on order. As well the average precision, across all cases, with being the number of correct words generated, out of the total number of words generated. Similarly, the average Jaccard index is shown, this is a measure of the similarities of the BOWs, being the size of the intersection of the generated BOW with the reference BOW, divided by the size of their union. We present these results to show how each steps performance impacts the overall system.
+
 
 Both the \oracletitle{} and \selectiontitle{} results place an upper bound on the performance of the overall approach (\twosteptitle{}). The ordering only results (\oracletitle{}) show the best performance that can be obtained in ordering with this language model, when no mistakes are made in selection. Similarly, the selection only results (\selectiontitle{}) are bounding as no matter how good the word ordering method is, it cannot recreate perfectly accurate sentences using incorrect words.
 
-
+\begin{comment}
 It can be noted that \oracletitle{} and \twosteptitle{} were significantly more accurate than the best results reported by \textcite{Horvat2014}. We attribute this to Horvat and Byrne preprocessing the evaluation corpora to remove the easier sentences with 4 or less words. We did not remove short sentences from the corpus. The performance on these sentences was particularly high, thus improving the overall results on ordering.
-
+\end{comment}
 
 
 The resynthesis of the two step process (\twosteptitle{}) degrades as the sentence length increases as shown in \Cref{figure:exactlenscore}. It can be seen from the figure that sentence length is a critical factor of the performance of our two step method. The performance drop is largely from the complexity in the ordering step when faced with long sentences. This is evident in \Cref{figure:exactlenscore}, as performance degrades at almost the same rate even when using the perfect BOW (compare \oracletitle{} vs \twosteptitle{}); rather than being degraded by the failures in the word selection step (\selectiontitle{}). We can conclude that sentences with word selection failures (\selectiontitle{}) are also generally sentences which would have word ordering failures even with perfect BOW (\oracletitle{}). Thus improving word selection, without also improving order, would not have improved the overall results significantly.
@@ -376,14 +378,14 @@ The two step method considers the word selection and word ordering as separate s
 
 
 \section{Conclusion} \label{conclusion}
-A method was presented for regenerating sentences, from the sum of a sentence's word embeddings. It uses sums of existing word embeddings, which are machine learnt to represent the sentences, and then generates natural language output, using only the embeddings and a simple trigram language model. Unlike existing methods, the generation method itself is deterministic rather than being based on machine learn encoder/decoder models. The method involved two steps, word selection and word ordering.
+A method was presented for regenerating sentences, from the sum of a sentence's word embeddings. It uses sums of existing word embeddings, which are machine learnt to represent the sentences, and then generates natural language output, using only the embeddings and a simple trigram language model. Unlike existing methods, the generation method itself is deterministic rather than being based on machine-learnt encoder/decoder models. The method involved two steps, word selection and word ordering.
 
-The first part of the two step method is  the word selection problem, of going from the sum of embeddings to a bag of words. To solve this we utilised the method presented in \textcite{White2015BOWgen}. Their greedy algorithm was found to perform well at regenerating a BOW. The second part was word ordering is carried out by defining a task of finding the most likely sequence of trigrams. This method is an extension to the graph-based work of \textcite{Horvat2014}, through reformulating it as a MIP task. It was demonstrated that a probabilistic language model can be used to order the bag of words output to regenerate the original sentences. While it is certainly impossible to do this perfectly in every case, for many sentences the most likely ordering is correct.
+The first part of the two step method is  the word selection problem, of going from the sum of embeddings to a bag of words. To solve this we utilised the method presented in \textcite{White2015BOWgen}. Their greedy algorithm was found to perform well at regenerating a BOW. The second part was word ordering. This was done through a MIP bases reformulation of the work of the graph-based work of \textcite{Horvat2014}. It was demonstrated that a probabilistic language model can be used to order the bag of words output to regenerate the original sentences. While it is certainly impossible to do this perfectly in every case, for many sentences the most likely ordering is correct.
 
 From a theoretical basis the resolvability of the selection problem, presented by \textcite{White2015BOWgen}, shows that adding up the word embeddings does preserve the information on which words were used; particularly for higher dimensional embeddings. This shows clearly that collisions do not occur (at least with frequency) such that two unrelated sentences do not end up with the same SOWE representation. 
 This work extends that by considering if the order can be recovered based on simple corpus statistics. Its recoverability is dependent, in part, on how frequent sentences with the same words in different order are in the corpus language -- if they were very frequent then non-order preserving, non-compositional representations like SOWE would be poor at capturing meaning, and the ordering task would generally fail. As the method we presented generally does succeed, we can conclude that word order ambiguity is not a dominating problem. This supports the use of simple approaches like SOWE as a meaning representation for sentences -- at least for sufficiently short sentences.
 
-The technique was only evaluated on sentences with up to 18 words (inclusive), due to computational time limitations. On these it performed quite well achieving perfect recreation in 62.2\% of cases. To the authors' knowledge our proposed method is the first to report results for the attempted regeneration of a substantive corpus from a embedding vector representation. Both accuracy and running time worsens exponentially as sentence length increases. With that said, short sentences are sufficient for many practical uses. For longer sentences, it is questionable as to the extent the information used is preserved by the SOWE representation -- given they tend to have large substructures (like this one) compositional models are expected to be more useful. In evaluating such future representations, the two step method we present here is a useful baseline.
+The technique was only evaluated on sentences with up to 18 words (inclusive), due to computational time limitations. Both accuracy and running time worsens exponentially as sentence length increases. With that said, short sentences are sufficient for many practical uses. For longer sentences, it is questionable as to the extent the information used is preserved by the SOWE representation -- given they tend to have large substructures (like this one) compositional models are expected to be more useful. In evaluating such future representations, the two step method we present here is a useful baseline.
 
 %\bibliography{master}
 \printbibliography
