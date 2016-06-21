@@ -55,7 +55,7 @@ function initialize_network(embed::GenWordEmbedding, huffman::HuffmanTree)
 end
 
 
-function resume_training!(embed::GenWordEmbedding, corpus_filename::AbstractString; kwargs...)
+function resume_training!(embed::GenWordEmbedding, corpus_filename::String; kwargs...)
     t1 = time()
     println("Starting sequential training...")
     words_stream = words_of(corpus_filename, subsampling = (embed.subsampling, true, embed.distribution))
@@ -67,7 +67,7 @@ function resume_training!(embed::GenWordEmbedding, corpus_filename::AbstractStri
 end
 
 
-function train(embed::GenWordEmbedding, corpus_filename::AbstractString; kwargs...)
+function train(embed::GenWordEmbedding, corpus_filename::String; kwargs...)
 
     embed.distribution, embed.corpus_size = word_distribution(corpus_filename)
 

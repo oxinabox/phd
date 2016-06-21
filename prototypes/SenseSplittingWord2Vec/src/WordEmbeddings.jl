@@ -30,17 +30,17 @@ abstract GenWordEmbedding
 ##################### (plain)  Word Embeddings ##################################
 
 type WordEmbedding<:GenWordEmbedding
-    embedding::Dict{AbstractString, Vector{Float32}}
+    embedding::Dict{String, Vector{Float32}}
     classification_tree::TreeNode
-    distribution::Dict{AbstractString, Float32}
-    codebook::Dict{AbstractString, Vector{Int64}}
+    distribution::Dict{String, Float32}
+    codebook::Dict{String, Vector{Int64}}
 
     init_type::InitializationMethod
     network_type::NetworkType
     dimension::Int64
     lsize::Int64    # left window size in training
     rsize::Int64    # right window size
-    trained_times::Dict{AbstractString,Int64}
+    trained_times::Dict{String,Int64}
     corpus_size::Int64
     subsampling::Float32
     init_learning_rate::Float32
@@ -53,14 +53,14 @@ function WordEmbedding(dim::Int64, init_type::InitializationMethod, network_type
         throw(ArgumentError("dimension should be a positive integer"))
     end
     WordEmbedding(
-                    Dict{AbstractString,Array{Float32}}(),
+                    Dict{String,Array{Float32}}(),
                     nullnode,
-                    Dict{AbstractString,Array{Float32}}(),
-                    Dict{AbstractString,Vector{Int64}}(),
+                    Dict{String,Array{Float32}}(),
+                    Dict{String,Vector{Int64}}(),
                     init_type, network_type,
                     dim,
                     lsize, rsize,
-                    Dict{AbstractString,Int64}(),
+                    Dict{String,Int64}(),
                     0, #corpus size
                     subsampling, init_learning_rate, iter, min_count)
 end
@@ -74,8 +74,8 @@ end
 # strip embedding and retain only word vectors
 function keep_word_vectors_only!(embed::WordEmbedding)
     embed.classification_tree = nullnode
-    embed.distribution = Dict{AbstractString,Array{Float32}}()
-    embed.codebook = Dict{AbstractString,Vector{Int64}}()
+    embed.distribution = Dict{String,Array{Float32}}()
+    embed.codebook = Dict{String,Vector{Int64}}()
     embed
 end
 
@@ -93,10 +93,10 @@ end
 abstract WordSenseEmbedding<:GenWordEmbedding
 
 type SplittingWordSenseEmbedding<:WordSenseEmbedding
-    embedding::Dict{AbstractString, Vector{Vector{Float32}}} #[Word][sense_id]=sense embedding vector
+    embedding::Dict{String, Vector{Vector{Float32}}} #[Word][sense_id]=sense embedding vector
     classification_tree::TreeNode
-    distribution::Dict{AbstractString, Float32}
-    codebook::Dict{AbstractString, Vector{Int64}}
+    distribution::Dict{String, Float32}
+    codebook::Dict{String, Vector{Int64}}
 
 
 	strength::Float32
@@ -129,10 +129,10 @@ function SplittingWordSenseEmbedding(dim::Int64, init_type::InitializationMethod
 	end
 	
     SplittingWordSenseEmbedding(
-                    Dict{AbstractString,Vector{Vector{Float32}}}(), #embedding
+                    Dict{String,Vector{Vector{Float32}}}(), #embedding
                     nullnode, #classification tree
-                    Dict{AbstractString,Array{Float32}}(), #distribution
-                    Dict{AbstractString,Vector{Int64}}(), #codebook
+                    Dict{String,Array{Float32}}(), #distribution
+                    Dict{String,Vector{Int64}}(), #codebook
 					strength,
 					nsplitaxes,
 					force_minibatch_size,
@@ -147,10 +147,10 @@ end
 
 
 type FixedWordSenseEmbedding<:WordSenseEmbedding
-    embedding::Dict{AbstractString, Vector{Vector{Float32}}} #[Word][sense_id]=sense embedding vector
+    embedding::Dict{String, Vector{Vector{Float32}}} #[Word][sense_id]=sense embedding vector
     classification_tree::TreeNode
-    distribution::Dict{AbstractString, Float32}
-    codebook::Dict{AbstractString, Vector{Int64}}
+    distribution::Dict{String, Float32}
+    codebook::Dict{String, Vector{Int64}}
 	trained_times::Associative #TODO: give this is a clear type
     force_minibatch_size::Int64
 
@@ -178,11 +178,11 @@ function FixedWordSenseEmbedding(dim::Int64, init_type::InitializationMethod, ne
     end
 	
     FixedWordSenseEmbedding(
-                    Dict{AbstractString,Vector{Vector{Float32}}}(), #embedding
+                    Dict{String,Vector{Vector{Float32}}}(), #embedding
                     nullnode, #classification tree
-                    Dict{AbstractString,Array{Float32}}(), #distribution
-                    Dict{AbstractString,Vector{Int64}}(), #codebook
-					DefaultDict(AbstractString,DefaultDict{Int64,Int64},()->DefaultDict(Int64,Int64,()->0)), #Trained times
+                    Dict{String,Array{Float32}}(), #distribution
+                    Dict{String,Vector{Int64}}(), #codebook
+					DefaultDict(String,DefaultDict{Int64,Int64},()->DefaultDict(Int64,Int64,()->0)), #Trained times
 					force_minibatch_size,
                     init_type, network_type,
                     dim,

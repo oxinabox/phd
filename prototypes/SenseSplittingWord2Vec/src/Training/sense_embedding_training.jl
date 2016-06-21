@@ -23,7 +23,7 @@ end
 i.e. use the language modeling task.
 Returns integer coresponding to to the Column of the embedding matrix for that word, for the best word sense embedding.
 """
-@inline function WSD{S<:AbstractString}(embed::WordSenseEmbedding, word::AbstractString, context::AbstractVector{S}; skip_oov=false)
+@inline function WSD{S<:String}(embed::WordSenseEmbedding, word::String, context::AbstractVector{S}; skip_oov=false)
 	sense_embeddings = embed.embedding[word]
 	if length(sense_embeddings)==1
 		return 1
@@ -152,7 +152,7 @@ end
 
 
 "Given a window, actually does the training on it"
-function train_window!{S<:AbstractString}(embed::SplittingWordSenseEmbedding, pending_forces, context::AbstractVector{S}, word::S, sense_id::Integer, α::AbstractFloat)
+function train_window!{S<:String}(embed::SplittingWordSenseEmbedding, pending_forces, context::AbstractVector{S}, word::S, sense_id::Integer, α::AbstractFloat)
 	input = embed.embedding[word][sense_id] 
 	@assert(all(abs(input).<10.0^10.0))
 	
@@ -203,7 +203,7 @@ function blank_pending_forces()
                                    ()->sizehint!(Vector{Float32}[], 1024)
 								   #TODO: Put a size hint number here based on Word Distribution?
 								   )
-    pending_forces = DefaultDict(AbstractString,typeof(sense_forces()), sense_forces)
+    pending_forces = DefaultDict(String,typeof(sense_forces()), sense_forces)
 end
 
 

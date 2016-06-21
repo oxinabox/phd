@@ -7,7 +7,7 @@ using WordStreams
 export get_distribution, strip_infrequent, compute_frequency, word_distribution
 
 function get_distribution(corpus_fileio::IO)
-    distribution = Dict{AbstractString,Float32}()
+    distribution = Dict{String,Float32}()
     word_count = 0
 
     for i in words_of(corpus_fileio)
@@ -22,14 +22,14 @@ function get_distribution(corpus_fileio::IO)
     (word_count, distribution)
 end
 
-function get_distribution(corpus_filename::AbstractString)
+function get_distribution(corpus_filename::String)
     open(corpus_filename, "r") do fs
         return get_distribution(fs)
     end
 end
 
-function strip_infrequent(distribution::Dict{AbstractString,Float32}, min_count::Int)
-    stripped_distr = Dict{AbstractString,Float32}()
+function strip_infrequent(distribution::Dict{String,Float32}, min_count::Int)
+    stripped_distr = Dict{String,Float32}()
     word_count = 0
 
     for (k,v) in distribution
@@ -43,7 +43,7 @@ function strip_infrequent(distribution::Dict{AbstractString,Float32}, min_count:
 end
 
 
-function compute_frequency{S<:AbstractString,C<:Number}(distribution_counts::Dict{S,C}, word_count::Int)
+function compute_frequency{S<:String,C<:Number}(distribution_counts::Dict{S,C}, word_count::Int)
 
 	distribution=Dict{S,Float32}()
 	for (k, v) in distribution_counts
@@ -52,7 +52,7 @@ function compute_frequency{S<:AbstractString,C<:Number}(distribution_counts::Dic
 	distribution
 end
 
-function word_distribution(source::Union{AbstractString, IO}, min_count::Int=5)
+function word_distribution(source::Union{String, IO}, min_count::Int=5)
     tic()
 
     info("Finding word distribution...")
