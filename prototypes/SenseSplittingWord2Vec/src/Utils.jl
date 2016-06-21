@@ -22,6 +22,10 @@ restore(fp::IO) = deserialize(fp)
 
 "https://github.com/JuliaLang/julia/issues/16345"
 function _pgenerate_gh(f,c, mname=Symbol("_func_genmagic_hack"*string(rand(UInt64)))::Symbol)
+	if nprocs()==1
+		return Base.AsyncGenerator(f,c)
+	end
+	#warn("_pgenerate_gh is deprecated now that it is theoreticall fixed in master")
     #Reusing the `mname` in subsequent called can A.) Reclaim memory, B.) Violate certain concurrency expectations
     worker_ids = workers()
 

@@ -9,7 +9,7 @@ test_filename = "WestburyLab.wikicorp.201004"
 test_file = "data/corpora/WikiCorp/tokenised_WestburyLab.wikicorp.201004.txt"
 
 
-const ndims = 300
+const ndims = 50 
 const vname =""
 iter_name = "_i0"
 base_name  ="$(test_filename)_$(ndims)_$(vname)"

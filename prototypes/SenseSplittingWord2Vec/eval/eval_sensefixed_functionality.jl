@@ -9,8 +9,8 @@ test_filename = "WestburyLab.wikicorp.201004"
 test_file = "data/corpora/WikiCorp/tokenised_WestburyLab.wikicorp.201004.txt"
 
 
-const ndims = 300
-const vname ="v2"
+const ndims = 50 
+const vname =""
 base_name  ="$(test_filename)_$(ndims)_$(vname)"
 model_file = joinpath(model_dir, base_name)
 log_file = joinpath(model_dir, base_name*".log")
