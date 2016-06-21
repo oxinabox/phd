@@ -28,8 +28,14 @@ Returns integer coresponding to to the Column of the embedding matrix for that w
 	if length(sense_embeddings)==1
 		return 1
 	else
-		prob, sense_id = findmax([logprob_of_context(embed, context, input; skip_oov=skip_oov) for input in sense_embeddings])
-		return sense_id
+		#NOTE: Using  Experimental Threading
+		lps = Vector{Float32}(length(sense_embeddings))
+        Threads.@threads for ii in 1:length(sense_embeddings)
+            input = sense_embeddings[ii]
+            lps[ii] = logprob_of_context(embed, context, input; skip_oov=skip_oov)
+        end
+        prob, sense_id = findmax(lps)
+        return sense_id
 	end
 end
 
