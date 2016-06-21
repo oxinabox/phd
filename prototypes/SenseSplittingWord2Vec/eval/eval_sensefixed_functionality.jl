@@ -5,12 +5,14 @@ using Lumberjack
 using Utils
 
 model_dir = "models/ss"
-test_filename = "WestburyLab.wikicorp.201004"
-test_file = "data/corpora/WikiCorp/tokenised_WestburyLab.wikicorp.201004.txt"
+#test_filename = "WestburyLab.wikicorp.201004"
+
+test_filename = "text8"
+test_file = "./data/corpora/text8/text8"
 
 
-const ndims = 300
-const vname ="v2"
+const ndims = 50
+const vname =""
 base_name  ="$(test_filename)_$(ndims)_$(vname)"
 model_file = joinpath(model_dir, base_name)
 log_file = joinpath(model_dir, base_name*".log")

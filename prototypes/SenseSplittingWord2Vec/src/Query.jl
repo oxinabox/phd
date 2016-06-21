@@ -51,15 +51,15 @@ function nn_tree(embed::WordEmbedding, metric::Metric=AngularDist())
 end
         
 
-function find_nearest_words(embed::WordEmbedding, equation::AbstractString; nwords=5)
+function find_nearest_words(embed::WordEmbedding, equation::String; nwords=5)
 	dtree,labels= nn_tree(embed)
 	find_nearest_words(embed, equation, dtree,labels, nwords=nwords)
 end
 
-function find_nearest_words(embed::WordEmbedding, equation::AbstractString, dtree,labels; nwords=5)
+function find_nearest_words(embed::WordEmbedding, equation::String, dtree,labels; nwords=5)
 	tokens = replace(replace(equation, "+", " + "), "-", " - ")
-    positive_words = AbstractString[]
-    negative_words = AbstractString[]
+    positive_words = String[]
+    negative_words = String[]
     wordlist = positive_words
 
     for tok in split(tokens)
@@ -138,13 +138,13 @@ end
 
 #################### Probability of the context
     
-function logprob_of_context{S<:AbstractString}(embed::WordEmbedding, context::AbstractVector{S}, middle_word::S; kwargs...)
+function logprob_of_context{S<:String}(embed::WordEmbedding, context::AbstractVector{S}, middle_word::S; kwargs...)
     input = embed.embedding[middle_word]
     logprob_of_context(embed, context, input; kwargs...)
 end
 
 
-function logprob_of_context{S<:AbstractString}(embed::GenWordEmbedding, context::AbstractVector{S}, input::Vector{Float32}; skip_oov=false, normalise_over_length=false)
+function logprob_of_context{S<:String}(embed::GenWordEmbedding, context::AbstractVector{S}, input::Vector{Float32}; skip_oov=false, normalise_over_length=false)
     total_prob=0.0f0
 	context_length = 0
     for target_word in context

@@ -2,7 +2,7 @@ module Utils
 export save, restore, _pgenerate_gh, orderless_equivalent, ≅
 
 # serialize to a file
-function save(item, filename::AbstractString)
+function save(item, filename::String)
     open(filename, "w") do fp
         save(item, fp)
     end
@@ -10,7 +10,7 @@ end
 save(item, fp::IO) = serialize(fp, item)
 
 # restore from a file
-function restore(filename::AbstractString)
+function restore(filename::String)
     open(filename, "r") do fp
         restore(fp)
     end

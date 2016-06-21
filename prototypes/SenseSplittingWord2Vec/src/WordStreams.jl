@@ -4,22 +4,22 @@ export words_of, WordStream, SlidingWindow, sliding_window
 
 
 const WHITESPACE = (' ', '\n', '\r')
-type WordStream{S<:AbstractString, F<:AbstractFloat}
-    source::Union{IO, AbstractString}
+type WordStream{S<:String, F<:AbstractFloat}
+    source::Union{IO, String}
     # filter configuration
     rate::AbstractFloat    #if rate > 0, words will be subsampled according to distr
     filter::Bool    # if filter is true, only words present in the keys(distr) will be considered
     distr::Dict{S, F}
 end
 
-function words_of(source::Union{IO,AbstractString}; subsampling=(0.0,false,nothing))
+function words_of(source::Union{IO,String}; subsampling=(0.0,false,nothing))
     rate, filter, subsampling_distr = subsampling
-    distr = (rate==0.0 && !filter) ? Dict{AbstractString,Float32}() : subsampling_distr
+    distr = (rate==0.0 && !filter) ? Dict{String,Float32}() : subsampling_distr
  	WordStream(source, rate, filter, distr)
 end
 
 """Filters out all word not in the filter_dist -- only the keys are used, values are ignored"""
-function words_of{S<:AbstractString, F<:AbstractFloat}(source::Union{IO,AbstractString}, filter_distr::Dict{S,F})
+function words_of{S<:String, F<:AbstractFloat}(source::Union{IO,String}, filter_distr::Dict{S,F})
 	filter = true
 	rate = -1.0
  	WordStream(source, rate, filter,filter_distr)
@@ -52,7 +52,7 @@ end
 
 
 function Base.start(ws::WordStream)
-    if isa(ws.source, AbstractString)
+    if isa(ws.source, String)
         fp=open(ws.source)
     else
         @assert(typeof(ws.source)<:IO)
@@ -67,7 +67,7 @@ function Base.done(ws::WordStream, state)
 end
 
 Base.iteratorsize(::WordStream) = Base.SizeUnknown()
-Base.eltype(::Type{WordStream})=AbstractString
+Base.eltype(::Type{WordStream})=String
 function Base.next(ws::WordStream, state)
     (next_word, fp) = state
     while(!eof(fp))
@@ -101,7 +101,7 @@ window_length(window) = window.lsize + 1 + window.rsize
 
 function Base.start(window::SlidingWindow)
     ws_state = start(window.ws)
-    words = AbstractString["" for ii in 1:window_length(window)]
+    words = String["" for ii in 1:window_length(window)]
     
     for ii in 0:window_length(window)-2
 	    _,(words,ws_state) = next(window, (words, ws_state))

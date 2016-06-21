@@ -27,11 +27,11 @@ end
 facts("Should get a sliding window") do 
 	ww=words_of(data)
 	windows = collect(sliding_window(ww,lsize=1,rsize=1))
-	@fact windows[1] --> AbstractString["the","king","and"]
-	@fact windows[2] --> AbstractString["king","and", "his"]
+	@fact windows[1] --> String["the","king","and"]
+	@fact windows[2] --> String["king","and", "his"]
 
 	bigger_windows = collect(sliding_window(ww,lsize=2,rsize=2))
-	@fact bigger_windows[end] --> AbstractString["find","the","land","of","gold"]
+	@fact bigger_windows[end] --> String["find","the","land","of","gold"]
 end
 
 

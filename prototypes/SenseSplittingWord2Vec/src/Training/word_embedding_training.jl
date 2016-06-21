@@ -1,6 +1,6 @@
 
 "Given a window, actually does the training on it"
-function train_window!(embed::WordEmbedding, window::Vector{AbstractString},middle::Int64, α::AbstractFloat)
+function train_window!(embed::WordEmbedding, window::Vector{String},middle::Int64, α::AbstractFloat)
 	trained_word=window[middle]
 	
 	local_lsize = rand(0: embed.lsize)
@@ -61,7 +61,7 @@ function run_training!(embed::WordEmbedding,
 					   strip::Bool=false,
 					   end_of_iter_callback::Function=identity)
 	middle = embed.lsize + 1
-    trained_times = Dict{AbstractString, Int64}()
+    trained_times = Dict{String, Int64}()
 
 	for (window, α) in training_windows(embed,words_stream,end_of_iter_callback)
 		trained_word = window[middle]
