@@ -47,11 +47,11 @@ function run_training!(embed::FixedWordSenseEmbedding,
 		windows = sliding_window(words_stream, lsize=embed.lsize, rsize=embed.rsize)
 		info("Begin Iter $iter")	
 		for minibatch in Base.partition(windows, embed.force_minibatch_size)
-			cases = _pgenerate_gh(win->WsdTrainingCase(embed,win), minibatch, :ss_wsdtrainingcase)
-			for (context, word, sense_id) in ReservoirShuffler(cases,64)
+			for win in ReservoirShuffler(minibatch,2048)
+				(context, word, sense_id) = WsdTrainingCase(embed,win)
 				trained_count+=1
 				α = get_α_and_log(embed, trained_count, α)
-				train_window!(embed, context,word, sense_id,α)
+				
 			end
 			debug("Running End of Minibatch callback")
 			end_of_minibatch_callback((trained_count,embed))
