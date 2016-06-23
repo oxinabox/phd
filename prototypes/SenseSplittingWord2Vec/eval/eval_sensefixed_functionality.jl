@@ -38,8 +38,9 @@ function test_word_embedding()
 		 #				     1600            ->  mc  30_000 words, 
 		 #					  250            ->  mc 100_000 words
 		 #						5			 ->  mc 1.5×10⁶ words
-	@time train(embed, test_file, 
-				end_of_minibatch_callback=save_callback(model_file),
+	@time train(embed, test_file,
+                end_of_iter_callback=save_callback(model_file),
+				end_of_minibatch_callback=save_callback("m_"*model_file),
 	)
 
 end
