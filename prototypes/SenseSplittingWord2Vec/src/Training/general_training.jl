@@ -6,11 +6,11 @@
 #*===============================================================================#
 
 ############ Callbacks
-function save_callback(basefilename::String)
+function save_callback(basefilename::String, prefix="i")
 	function scallbck(arg)
 		iter, embed = arg
 		
-		save(embed, "$(basefilename)_i$(iter).model")
+		save(embed, "$(basefilename)_$(prefix)$(iter).model")
 	end
 
 end

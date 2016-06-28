@@ -9,12 +9,12 @@ test_filename = "WestburyLab.wikicorp.201004"
 test_file = "data/corpora/WikiCorp/tokenised_WestburyLab.wikicorp.201004.txt"
 
 
-const ndims = 50 
+const ndims = 100 
 const vname =""
 iter_name = "_i0"
 base_name  ="$(test_filename)_$(ndims)_$(vname)"
 model_file = joinpath(model_dir, base_name)
-load_model_file = model_file*iter_name*".model"
+load_model_file = "models/ss/WestburyLab.wikicorp.201004_100__i0.model"
 log_file = joinpath(model_dir, base_name*".log")
 vname*="r"
 
@@ -29,7 +29,8 @@ function test_word_embedding()
 	embed = restore(load_model_file) 
 	info("resuming training")
     @time resume_training!(embed, test_file, 
-				end_of_iter_callback=save_callback(model_file)
+        end_of_iter_callback=save_callback(model_file, "i"),
+        end_of_minibatch_callback=save_callback(model_file,"m"),
 	)
 
 end
