@@ -5,11 +5,10 @@ using Lumberjack
 using Utils
 
 model_dir = "models/ss"
-test_filename = "WestburyLab.wikicorp.201004"
+test_filename = "tokenised_lowercase_WestburyLab.wikicorp.201004"
 #test_filename = "text8"
 #test_file = "./data/corpora/text8/text8"
-test_file = "./data/corpora/WikiCorp/tokenised_WestburyLab.wikicorp.201004.txt"
-
+test_file = "./data/corpora/WikiCorp/"*test_filename
 const ndims = 100
 const vname =""
 base_name  ="$(test_filename)_$(ndims)_$(vname)"
@@ -30,7 +29,7 @@ function test_word_embedding()
 							  min_count_for_multiple_senses=20_000, 
 							  initial_nsenses=20,
 							  force_minibatch_size=10_000_000,
-							  min_count=1000, iter=1)
+							  min_count=250, iter=1)
 		 #wikicorp counts: 
 		 #				   20_000 means most common 5000 words, 
 		 #				     8000            ->  mc  10_000 words,
