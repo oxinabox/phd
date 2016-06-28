@@ -5,9 +5,10 @@ function train_window!{S<:String}(embed::FixedWordSenseEmbedding, context::Abstr
 	input = embed.embedding[word][sense_id] 
 	@assert(all(abs(input).<10.0^10.0))
 	embed.trained_times[word][sense_id]+=1	
+	input_grad=Vector{Float32}(embed.dimension)
 	try
 		for target_word in context
-			input_grad = zeros(Float32, embed.dimension)
+			fill!(input_grad, 0.0f0)
 			node = embed.classification_tree::TreeNode
 			for code in embed.codebook[target_word]
 				train_one!(node.data, input, code, input_grad, α)
