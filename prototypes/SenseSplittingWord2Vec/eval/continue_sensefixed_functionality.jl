@@ -4,24 +4,15 @@ using Query
 using Lumberjack
 using Utils
 
-model_dir = "models/ss"
-test_filename = "WestburyLab.wikicorp.201004"
-test_file = "data/corpora/WikiCorp/tokenised_WestburyLab.wikicorp.201004.txt"
-
-
-const ndims = 100 
-const vname =""
-iter_name = "_i0"
-base_name  ="$(test_filename)_$(ndims)_$(vname)"
-model_file = joinpath(model_dir, base_name)
-load_model_file = "models/ss/WestburyLab.wikicorp.201004_100__i0.model"
-log_file = joinpath(model_dir, base_name*".log")
-vname*="r"
+test_file = "data/corpora/WikiCorp/tokenised_lowercase_WestburyLab.wikicorp.201004.txt"
+load_model_file = "models/ss/tokenised_lowercase_WestburyLab.wikicorp.201004_100__m0.model"
+model_file = "models/ss/tokenised_lowercase_WestburyLab.wikicorp.201004_100"
+log_file = model_file*".log"
 
 
 function test_word_embedding()
     println("=======================================")
-    println("Resuming sense splitting word embedding with $(base_name)")
+    println("Resuming sense splitting word embedding")
     println("=======================================")
     
     add_truck(LumberjackTruck(log_file, "filelogger"))
