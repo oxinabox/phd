@@ -66,8 +66,7 @@ function resume_training!(embed::GenWordEmbedding, corpus_filename::String; kwar
     embed
 end
 
-
-function train(embed::GenWordEmbedding, corpus_filename::String; kwargs...)
+function setup!(embed::GenWordEmbedding, corpus_filename::String)
 
     embed.distribution, embed.corpus_size = word_distribution(corpus_filename)
 
@@ -78,6 +77,11 @@ function train(embed::GenWordEmbedding, corpus_filename::String; kwargs...)
     for (w, code) in leaves_of(embed.classification_tree)
         embed.codebook[w] = code
     end
+	embed
+end
+
+function train(embed::GenWordEmbedding, corpus_filename::String; kwargs...)
+	setup!(embed, corpus_filename)
 	resume_training!(embed, corpus_filename; kwargs...)
 end
 

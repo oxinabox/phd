@@ -13,6 +13,7 @@ function train_window!{S<:String}(embed::FixedWordSenseEmbedding, context::Abstr
 				train_one!(node.data, input, code, input_grad, α)
 				node = node.children[code]
 			end
+			#@assert(any(input_grad .!=0.0))
 			input[:] -= input_grad[:]	
 		end
 		embed
@@ -51,7 +52,7 @@ function run_training!(embed::FixedWordSenseEmbedding,
 				(context, word, sense_id) = WsdTrainingCase(embed,win)
 				trained_count+=1
 				α = get_α_and_log(embed, trained_count, α)
-				
+				train_window!(embed, context, word, sense_id, α)		
 			end
 			debug("Running End of Minibatch callback")
 			end_of_minibatch_callback((trained_count,embed))
