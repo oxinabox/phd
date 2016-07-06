@@ -35,7 +35,7 @@ end
 
 
 "Runs all the training, handles adjusting learning rate, repeating through loops etc."
-function run_training!(embed::FixedWordSenseEmbedding, 
+@polly function run_training!(embed::FixedWordSenseEmbedding, 
 					   words_stream;
 					   end_of_iter_callback::Function=identity,
 					   end_of_minibatch_callback::Function=identity,
