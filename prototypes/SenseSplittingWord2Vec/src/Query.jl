@@ -162,8 +162,7 @@ function logprob_of_context{S<:String}(embed::GenWordEmbedding, context::Abstrac
     if normalise_over_length
 		total_prob/=context_length #This is equivlent to taking the context_length-th root in nonlog domain. Which makes sense.
 	end
-	total_prob
-
+	total_prob::Float32
 end
 
 
