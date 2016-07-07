@@ -6,9 +6,11 @@ using Utils
 
 model_dir = "models/plain"
 test_filename = "tokenised_lowercase_WestburyLab.wikicorp.201004"
+test_file = "./data/corpora/WikiCorp/"*test_filename*".txt"
+
 #test_filename = "text8"
 #test_file = "./data/corpora/text8/text8"
-test_file = "./data/corpora/WikiCorp/"*test_filename*".txt"
+
 const ndims = 50
 const vname =""
 base_name  ="$(test_filename)_$(ndims)_$(vname)"
@@ -35,8 +37,7 @@ function test_word_embedding()
 		 #					  250            ->  mc 100_000 words
 		 #						5			 ->  mc 1.5×10⁶ words
 	@time train(embed, test_file,
-                end_of_iter_callback=save_callback(model_file,"m"),
-				end_of_minibatch_callback=save_callback(model_file,"m"),
+                end_of_iter_callback=save_callback(model_file,"i")
 	)
 
 end

@@ -1,5 +1,5 @@
 module WordStreams
-#using PooledElements
+using PooledElements
 export words_of, WordStream, SlidingWindow, sliding_window 
 
 
@@ -39,7 +39,7 @@ function unrated_next_word!(ws::WordStream, fp)
             if s == "" || filter_out(s)
                 continue
            else
-                return s
+                return pstring(s)#
            end
         else #Non Whitespace character
             write(next_word,c)
@@ -47,7 +47,7 @@ function unrated_next_word!(ws::WordStream, fp)
     end
     #Hit EOF
     s = takebuf_string(next_word)
-    filter_out(s) ? "" : s
+    filter_out(s) ? pstring("") : pstring(s)
 end
 
 
