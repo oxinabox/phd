@@ -144,7 +144,7 @@ function logprob_of_context{S<:String}(embed::WordEmbedding, context::AbstractVe
 end
 
 
-function logprob_of_context{S<:String}(embed::GenWordEmbedding, context::AbstractVector{S}, input::Vector{Float32}; skip_oov=false, normalise_over_length=false)
+function logprob_of_context(embed::GenWordEmbedding, context, input::Vector{Float32}; skip_oov=false, normalise_over_length=false)
     total_prob=0.0f0
 	context_length = 0
     for target_word in context
