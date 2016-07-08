@@ -69,5 +69,10 @@ function word_distribution(source::Union{String, IO}, min_count::Int=5)
     distribution, word_count
 end
 
+function subsampled_wordcount(subsampling_rate, distribution, word_count)
+	total_distribution = sum(word_distr-> subsampling_prob(subsampling_rate, word_distr), values(distribution)) #TODO Use me in code and Write tests for me
+	return word_count.*total_distribution
+end
+
 
 end #end Module

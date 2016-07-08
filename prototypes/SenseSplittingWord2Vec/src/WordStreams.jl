@@ -1,7 +1,10 @@
 module WordStreams
 using PooledElements
-export words_of, WordStream, SlidingWindow, sliding_window 
+export words_of, WordStream, SlidingWindow, sliding_window, subsampling_prob
 
+function subsampling_prob(subsampling_rate, word_distr)
+	prob = 1.0 - (sqrt(subsampling_rate/word_distr)) 
+end
 
 const WHITESPACE = (' ', '\n', '\r')
 type WordStream{S<:String, F<:AbstractFloat}
@@ -72,8 +75,8 @@ function Base.next(ws::WordStream, state)
     (next_word, fp) = state
     while(!eof(fp))
         if ws.rate > 0
-            prob = 1.0 - (sqrt(ws.rate/ws.distr[next_word])) 
-            if(rand()<prob)
+            prob = subsampling_prob(ws.rate, ws.distr[next_word])
+			if(rand()<prob)
 				#Skip this word
                 next_word=unrated_next_word!(ws,fp) #Advance to next word, skipping this one
                 continue
