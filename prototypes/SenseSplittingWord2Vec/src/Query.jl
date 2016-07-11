@@ -173,6 +173,10 @@ ng.
 """
 @inline function WSD{S<:AbstractString}(embed::WordSenseEmbedding, word::String, context::AbstractVector{S}; skip_oov=false)
     sense_embeddings = embed.embedding[word]
+	WSD(embed, sense_embeddings, context; skip_oov=skip_oov)
+end
+
+@inline function WSD{S<:AbstractString}(embed::WordSenseEmbedding, sense_embeddings, context::AbstractVector{S}; skip_oov=false)
     if length(sense_embeddings)==1
         return 1
     else
