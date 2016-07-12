@@ -4,7 +4,7 @@ using WordStreams
 
 #TODO Types in this are all screwy. It doesn't really matter, but it would be lcaerer is Floats were not largely being used for Ints
 
-export get_distribution, strip_infrequent, compute_frequency, word_distribution
+export get_distribution, strip_infrequent, compute_frequency, word_distribution, subsampled_wordcount
 
 function get_distribution(corpus_fileio::IO)
     distribution = Dict{String,Float32}()
@@ -70,7 +70,7 @@ function word_distribution(source::Union{String, IO}, min_count::Int=5)
 end
 
 function subsampled_wordcount(subsampling_rate, distribution, word_count)
-	total_distribution = sum(word_distr-> subsampling_prob(subsampling_rate, word_distr), values(distribution)) #TODO Use me in code and Write tests for me
+	total_distribution = sum(word_distr -> word_distr - subsampling_prob(subsampling_rate, word_distr), values(distribution)) #TODO Use me in code and Write tests for me
 	return word_count.*total_distribution
 end
 

@@ -2,6 +2,7 @@ module WordStreams
 using PooledElements
 export words_of, WordStream, SlidingWindow, sliding_window, subsampling_prob
 
+"Probability of removing an word that has `word_distr` distribution"
 function subsampling_prob(subsampling_rate, word_distr)
 	prob = 1.0 - (sqrt(subsampling_rate/word_distr)) 
 end

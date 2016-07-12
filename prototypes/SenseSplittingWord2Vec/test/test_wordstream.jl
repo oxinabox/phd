@@ -17,8 +17,11 @@ facts("Should Read") do
 end
 
 facts("Should Filter") do
+	eg_distr = 	Dict("the"=>0.01,"men"=>0.01,"sailing"=>0.01, "gold"=>0.01 ) 
+	@fact collect(words_of(data,eg_distr)) --> ["the", "men","sailing","the", "the","gold"] "Filter only, not subsapling"
 	
-	@fact collect(words_of(data,Dict("the"=>0.01,"men"=>0.01,"sailing"=>0.01, "gold"=>0.01 ) )) --> ["the", "men","sailing","the", "the","gold"] "Filter only, not subsapling"
+	@fact subsampling_prob(0.00001, 0.5) --> greater_than(subsampling_prob(0.00001, 0.1)) "More common wors should be more likely to be sampled out"
+
 end
 
 
