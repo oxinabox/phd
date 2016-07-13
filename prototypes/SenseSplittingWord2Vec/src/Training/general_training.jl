@@ -68,7 +68,9 @@ end
 
 function setup!(embed::GenWordEmbedding, corpus_filename::String)
 
-    embed.distribution, embed.corpus_size = word_distribution(corpus_filename, embed.min_count)
+    embed.distribution, full_corpus_size = word_distribution(corpus_filename, embed.min_count)
+	
+	embed.corpus_size = subsampled_wordcount(embed.subsampling, embed.distribution, full_corpus_size)
 
     initialize_embedding(embed, embed.init_type)        # initialize by the specified method
     initialize_network(embed, embed.network_type)

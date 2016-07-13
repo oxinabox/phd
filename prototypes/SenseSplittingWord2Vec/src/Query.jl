@@ -5,7 +5,7 @@ using Distances
 using SoftmaxClassifier
 using NearestNeighbors
 import NearestNeighbors.NNTree
-export find_nearest_words, logprob_of_context, nn_tree
+export find_nearest_words, logprob_of_context, nn_tree, WSD
 
 
 ########### nearest_words, and analogy math
@@ -144,7 +144,7 @@ function logprob_of_context{S<:String}(embed::WordEmbedding, context::AbstractVe
 end
 
 
-function logprob_of_context{S<:String}(embed::GenWordEmbedding, context::AbstractVector{S}, input::Vector{Float32}; skip_oov=false, normalise_over_length=false)
+function logprob_of_context(embed::GenWordEmbedding, context, input::Vector{Float32}; skip_oov=false, normalise_over_length=false)
     total_prob=0.0f0
 	context_length = 0
     for target_word in context
@@ -162,9 +162,35 @@ function logprob_of_context{S<:String}(embed::GenWordEmbedding, context::Abstrac
     if normalise_over_length
 		total_prob/=context_length #This is equivlent to taking the context_length-th root in nonlog domain. Which makes sense.
 	end
-	total_prob
-
+	total_prob::Float32
 end
+
+
+"""Perform Word Sense Disabmiguation, by chosing the word-sense that says the context words are most likely.
+i.e. use the language modeling task.
+Returns integer coresponding to to the Column of the embedding matrix for that word, for the best word sense embeddi
+ng.
+"""
+@inline function WSD{S<:AbstractString}(embed::WordSenseEmbedding, word::String, context::AbstractVector{S}; skip_oov=false)
+    sense_embeddings = embed.embedding[word]
+	WSD(embed, sense_embeddings, context; skip_oov=skip_oov)
+end
+
+@inline function WSD{S<:AbstractString}(embed::WordSenseEmbedding, sense_embeddings, context::AbstractVector{S}; skip_oov=false)
+    if length(sense_embeddings)==1
+        return 1
+    else
+        #NOTE: Using  Experimental Threading
+        lps = Vector{Float32}(length(sense_embeddings))
+        Threads.@threads for ii in 1:length(sense_embeddings)
+            input = sense_embeddings[ii]
+            lps[ii] = logprob_of_context(embed, context, input; skip_oov=skip_oov)
+        end
+        prob, sense_id = findmax(lps)
+        return sense_id
+    end
+end
+
 
 
 end #Module
