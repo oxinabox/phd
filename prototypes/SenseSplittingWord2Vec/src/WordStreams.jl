@@ -4,7 +4,7 @@ export words_of, WordStream, SlidingWindow, sliding_window, subsampling_prob
 
 "Probability of removing an word that has `word_distr` distribution"
 function subsampling_prob(subsampling_rate, word_distr)
-	prob = 1.0 - (sqrt(subsampling_rate/word_distr)) 
+	prob = clamp(1.0 - sqrt(subsampling_rate/word_distr), 0.0,1.0)
 end
 
 const WHITESPACE = (' ', '\n', '\r')
@@ -71,7 +71,7 @@ function Base.done(ws::WordStream, state)
 end
 
 Base.iteratorsize(::WordStream) = Base.SizeUnknown()
-Base.eltype(::Type{WordStream})=String
+Base.eltype{S,F}(::Type{WordStream{S,F}})=S
 function Base.next(ws::WordStream, state)
     (next_word, fp) = state
     while(!eof(fp))
