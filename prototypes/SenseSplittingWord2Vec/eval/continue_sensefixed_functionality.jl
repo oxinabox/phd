@@ -5,8 +5,8 @@ using Lumberjack
 using Utils
 
 test_file = "data/corpora/WikiCorp/tokenised_lowercase_WestburyLab.wikicorp.201004.txt"
-load_model_file = "models/ss/tokenised_lowercase_WestburyLab.wikicorp.201004_100__m0.model"
-model_file = "models/ss/tokenised_lowercase_WestburyLab.wikicorp.201004_100"
+load_model_file = "models/ss/tokenised_lowercase_WestburyLab.wikicorp.201004_300__m0.model"
+model_file = "models/ss/tokenised_lowercase_WestburyLab.wikicorp.201004_300"
 log_file = model_file*".log"
 
 
