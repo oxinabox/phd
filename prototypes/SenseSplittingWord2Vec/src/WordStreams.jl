@@ -102,7 +102,7 @@ end
 ######################################################
 
 type SlidingWindow
-    ws::WordStream
+    ws::Any #Normally a word stream
     lsize::Int64
     rsize::Int64
 end

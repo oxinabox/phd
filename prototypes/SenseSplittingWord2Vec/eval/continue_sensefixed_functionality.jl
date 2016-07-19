@@ -5,8 +5,9 @@ using Lumberjack
 using Utils
 
 test_file = "data/corpora/WikiCorp/tokenised_lowercase_WestburyLab.wikicorp.201004.txt"
-load_model_file = "models/ss/tokenised_lowercase_WestburyLab.wikicorp.201004_300__m0.model"
-model_file = "models/ss/tokenised_lowercase_WestburyLab.wikicorp.201004_300"
+load_model_file = "models/ss/keep/tokenised_lowercase_WestburyLab.wikicorp.201004_50__m170000000.model"
+progress_count = 170000000
+model_file = "models/ss/tokenised_lowercase_WestburyLab.wikicorp.201004_50"
 log_file = model_file*".log"
 
 
@@ -20,7 +21,8 @@ function test_word_embedding()
 	embed = restore(load_model_file) 
 	info("resuming training")
     @time resume_training!(embed, test_file, 
-        end_of_iter_callback=save_callback(model_file, "i"),
+		progress_count,
+		end_of_iter_callback=save_callback(model_file, "i"),
         end_of_minibatch_callback=save_callback(model_file,"m"),
 	)
 

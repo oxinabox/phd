@@ -39,11 +39,12 @@ end
 					   words_stream;
 					   end_of_iter_callback::Function=identity,
 					   end_of_minibatch_callback::Function=identity,
+					   initial_trained_count = 0
 					   )
     	
 	debug("Running End of Iter callback, before first iter")
 	end_of_iter_callback((0,embed))
-	trained_count=0
+	trained_count=initial_trained_count
 	α=embed.init_learning_rate
     for iter in 1:embed.iter
 		windows = sliding_window(words_stream, lsize=embed.lsize, rsize=embed.rsize)
