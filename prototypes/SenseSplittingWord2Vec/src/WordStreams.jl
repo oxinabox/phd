@@ -78,7 +78,7 @@ function Base.done(ws::WordStream, state)
     next_word=="" #Done when there is no next word.
 end
 
-Base.iteratorsize(::WordStream) = Base.SizeUnknown()
+Base.iteratorsize(::Type{WordStream}) = Base.SizeUnknown()
 Base.eltype{S,F}(::Type{WordStream{S,F}})=S
 function Base.next(ws::WordStream, state)
     (next_word, fp) = state
@@ -102,7 +102,7 @@ end
 ######################################################
 
 type SlidingWindow
-    ws::WordStream
+    ws::Any #Normally a word stream
     lsize::Int64
     rsize::Int64
 end
