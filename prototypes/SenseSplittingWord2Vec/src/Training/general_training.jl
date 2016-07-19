@@ -59,6 +59,9 @@ function resume_training!(embed::GenWordEmbedding, corpus_filename::String, init
     t1 = time()
     println("Starting sequential training...")
     words_stream = words_of(corpus_filename, subsampling = (embed.subsampling, true, embed.distribution))
+	
+
+
 	run_training!(embed, words_stream; initial_trained_count=initial_trained_count, kwargs...)
 
     t2 = time()
