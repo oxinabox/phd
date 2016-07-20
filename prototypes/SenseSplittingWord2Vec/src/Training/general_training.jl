@@ -35,6 +35,7 @@ end
 
 
 
+initialize_network(embed::GenWordEmbedding, network_type=embed.network_type)
 function initialize_network(embed::GenWordEmbedding, huffman::HuffmanTree)
     heap = PriorityQueue()
     for (word, freq) in embed.distribution
@@ -78,7 +79,7 @@ function setup!(embed::GenWordEmbedding, corpus_filename::String)
 	@assert(embed.corpus_size<=full_corpus_size)
 
     initialize_embedding(embed, embed.init_type)        # initialize by the specified method
-    initialize_network(embed, embed.network_type)
+    initialize_network(embed)
 
     # determine the position in the tree for every word
     for (w, code) in leaves_of(embed.classification_tree)
