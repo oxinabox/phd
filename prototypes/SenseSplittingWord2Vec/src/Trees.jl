@@ -1,6 +1,5 @@
 module Trees
-export TreeNode, BranchNode, nullnode, leaves_of, internal_nodes_of, average_height
-
+export TreeNode, BranchNode, nullnode, leaves_of, internal_nodes_of, average_height, leaves_at_depth
 abstract TreeNode
 
 type BranchNode <: TreeNode
@@ -13,13 +12,22 @@ end
 
 const nullnode = NullNode()
 
+
+function Base.show(io::IO, node :: BranchNode)
+	println(typeof(node)," with ",length(node.children), " children. ", "data = ")
+	show(io, node.data)
+	nothing
+end
+
+isleaf(node::TreeNode) = length(node.children)==0
+
 function leaves_of(root::TreeNode)
     code = Int64[]
     function traverse(node::TreeNode)
         if node == nullnode
             return
         end
-        if length(node.children) == 0
+        if isleaf(node)
             produce((node.data, copy(code)))    # notice that we should copy the current state of code
         end
         for (index, child) in enumerate(node.children)
@@ -36,7 +44,7 @@ function internal_nodes_of(root::TreeNode)
         if node == nullnode
             return
         end
-        if length(node.children) != 0
+        if !isleaf(node.children)
             produce(node)
         end
         for child in node.children
@@ -53,6 +61,26 @@ function average_height(tree::TreeNode)
         c += 1
     end
     h / c
+end
+
+
+
+function leaves_at_depth(root::TreeNode, depth)
+    function traverse(node::TreeNode, cur_depth::Int)
+        @assert(cur_depth<=depth)
+        if cur_depth==depth
+            if isleaf(node)
+                produce(node.data)
+            end
+            #Else it is a nonleaf and it has some leaf children that we don't care about
+        else
+            for child in node.children
+                traverse(child,cur_depth+1) #Will make produce calls
+            end
+        end
+        
+    end 
+    @task traverse(root,0)
 end
 
 
