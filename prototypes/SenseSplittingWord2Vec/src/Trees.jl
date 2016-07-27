@@ -14,12 +14,21 @@ const nullnode = NullNode()
 
 
 function Base.show(io::IO, node :: BranchNode)
-	println(typeof(node)," with ",length(node.children), " children. ", "data = ")
+	print(io, typeof(node)," with ",length(node.children), " children. ", "data = ")
 	show(io, node.data)
 	nothing
 end
 
+
+Base.getindex(node::BranchNode, idx) = Base.getindex(node.children, idx)
+Base.start(node::BranchNode) = Base.start(node.children)
+Base.next(node::BranchNode, state) = Base.next(node.children,state)
+Base.done(node::BranchNode, state) = Base.done(node.children,state)
+
+
 isleaf(node::TreeNode) = length(node.children)==0
+
+
 
 function leaves_of(root::TreeNode)
     code = Int64[]
