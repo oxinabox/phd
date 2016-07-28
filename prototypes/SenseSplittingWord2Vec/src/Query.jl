@@ -5,7 +5,7 @@ using Distances
 using SoftmaxClassifier
 using NearestNeighbors
 import NearestNeighbors.NNTree
-export find_nearest_words, logprob_of_context, nn_tree, WSD
+export find_nearest_words, logprob_of_context, nn_tree, WSD, angular_dist, AngularDist
 
 
 ########### nearest_words, and analogy math

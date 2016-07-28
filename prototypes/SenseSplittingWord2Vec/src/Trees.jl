@@ -1,5 +1,8 @@
+"""
+Compatible with AbstractTrees.jl
+"""
 module Trees
-export TreeNode, BranchNode, nullnode, leaves_of, internal_nodes_of, average_height, leaves_at_depth
+export TreeNode, BranchNode, nullnode, leaves_of, internal_nodes_of, average_height, leaves_at_depth, levels
 abstract TreeNode
 
 type BranchNode <: TreeNode
@@ -87,10 +90,45 @@ function leaves_at_depth(root::TreeNode, depth)
                 traverse(child,cur_depth+1) #Will make produce calls
             end
         end
-        
-    end 
+    end
     @task traverse(root,0)
 end
 
+
+"Returns a 2, vector of vectors. the first is the nodes on each level of the tree, and the second is their codes"
+function levels(tree)
+    nodes_at_depth = Vector{Vector{BranchNode}}()
+    codes_at_depth = Vector{Vector{Vector{Int64}}}()
+    
+	push!(nodes_at_depth, tree.children) #TODO: fix so works for partiailly empty root node
+    push!(codes_at_depth, [[ii] for ii in 1:length(tree.children)])
+    
+    
+    parent_depth = 1
+    while true
+        #@show parent_depth
+        level_nodes = BranchNode[]
+        level_codes = Vector{Int64}[]
+        
+        for (parent_code, parent_node) in zip(codes_at_depth[parent_depth], nodes_at_depth[parent_depth])
+            for (ii, child_node) in enumerate(parent_node.children)
+                child_code = [parent_code; ii] #Copy and append
+                push!(level_nodes, child_node)
+                push!(level_codes, child_code)
+            end
+        end
+        
+        if length(level_nodes) == 0
+            #Done if no nodes on this level, don't need to save empties
+            break
+        else
+            push!(nodes_at_depth, level_nodes)
+            push!(codes_at_depth, level_codes)
+            parent_depth += 1
+        end
+    end
+    
+    nodes_at_depth, codes_at_depth
+end
 
 end #module
