@@ -7,7 +7,8 @@
 \begin{document}
 
 \begin{tikzpicture}[
-	every node/.style={ text width=9em,
+ 	->/.style={lightgray, arrows=->},
+	every node/.style={ black,text width=15em,
     					align=center,
                         font=\scriptsize\sffamily,
                         inner sep=1pt
@@ -17,13 +18,15 @@
                   inner sep = 2pt
     }
 ]
-	\node (input) [inner sep=-4pt] {Target SOWE Sentence Vector \\ ($\s$)};
-    \node (selection) [proc, right = 4.5em of input,text width=6em]{Vector\\ Selection};
-	\node (vocab) [above = 1.5em of selection]{Vocabulary of Word Vectors \\($\V$)};
-    \node (output) [inner sep=-4pt, right=4.5em of selection] {Bag of Words \\ ($\c$)};
-    \draw[->] (input) -- (selection);
-    \draw[->] (vocab) -- (selection);
-    \draw[->] (selection) -- (output);
+	\hyphenpenalty=10000
+	\node (window) [proc] {Window from corpus (possibily subsampled etc)};
+	\node (lookup) [proc, below right= 2 of window] {Lookup table of all sense embeddings for word};
+	\node (WSD) [proc, above right= 2 of window] {Select sense embedding that gives highest probability of context. Using softmax language model.};
+	\node (train) [proc, below right= 2 of WSD] {Update word sense embedding, and softmax language model, via backpropergation};
+    \draw[->] (window) -- node {context words} (WSD) -- node{word sense embedding \\ (the single most likely)} (train);
+    \draw[->] (window) -- node{middle word} (lookup)  -- node {sense embeddings \\ (Multiple candidates)} (WSD);
+    \draw[->, thick] (train) to [out=270,in=-90]  node{repeat for each window in training corpus}  (window);
+
 \end{tikzpicture}
 
 \end{document}
