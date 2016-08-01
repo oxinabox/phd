@@ -36,9 +36,15 @@ end
 
 
 initialize_network(embed::GenWordEmbedding) = initialize_network(embed, embed.network_type)
+
 function initialize_network(embed::GenWordEmbedding, huffman::HuffmanTree)
+	embed.classification_tree, embed.codebook = initialize_network(embed.distribution, embed.dimension, huffman)
+    embed
+end
+
+function initialize_network{S<:String, N<:Number}(distribution::Associative{S,N}, embedding_dim::Number, ::HuffmanTree)
     heap = PriorityQueue()
-    for (word, freq) in embed.distribution
+    for (word, freq) in distribution
         node = BranchNode([], word)    # the data field of leaf node is its corresponding word.
         enqueue!(heap, node, freq)
     end
@@ -47,12 +53,14 @@ function initialize_network(embed::GenWordEmbedding, huffman::HuffmanTree)
         dequeue!(heap)
         (node2, freq2) = Base.Collections.peek(heap)
         dequeue!(heap)
-        newnode = BranchNode([node1, node2], LinearClassifier(2, embed.dimension)) 
+        newnode = BranchNode([node1, node2], LinearClassifier(2, embedding_dim))
 								#the data field of internal node is the classifier
         enqueue!(heap, newnode, freq1 + freq2)
     end
-    embed.classification_tree = dequeue!(heap)
-    embed
+    classification_tree = dequeue!(heap)
+
+	codebook = Dict(leaves_of(classification_tree))
+	classification_tree, codebook
 end
 
 initialize_embedding(embed::GenWordEmbedding) = initialize_embedding(embed, embed.init_type)
@@ -79,11 +87,6 @@ function setup!(embed::GenWordEmbedding, corpus_filename::String)
 
     initialize_embedding(embed)        # initialize by the specified method
     initialize_network(embed)
-
-    # determine the position in the tree for every word
-    for (w, code) in leaves_of(embed.classification_tree)
-        embed.codebook[w] = code
-    end
 	embed
 end
 

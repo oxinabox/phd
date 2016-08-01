@@ -35,13 +35,19 @@ function nn_tree(embed::WordSenseEmbedding, metric::Metric=AngularDist())
     (dtree,labels)
 end
 
+
 function nn_tree(embed::WordEmbedding, metric::Metric=AngularDist())
-    num_embeddings = length(embed.embedding)
-	labels = Vector{typeof(first(embed.embedding)[1])}(num_embeddings)
-	points = Matrix{eltype(first(embed.embedding)[2])}((embed.dimension, num_embeddings))
+	nn_tree(embed.embedding, metric)
+end
+
+function nn_tree{K,V}(embeddings::Associative{K,V}, metric::Metric=AngularDist())
+    num_embeddings = length(embeddings)
+	dim_embeddings = length(first(embeddings)[1])
+	labels = Vector{K}(num_embeddings)
+	points = Matrix{eltype(V)}((dim_embeddings, num_embeddings))
 	
 	ii = 0
-	for (word,embedding) in embed.embedding
+	for (word,embedding) in embeddings
 		ii+=1
 		@inbounds labels[ii]=word
 		@inbounds points[:,ii]=embedding
@@ -49,7 +55,6 @@ function nn_tree(embed::WordEmbedding, metric::Metric=AngularDist())
     dtree = BallTree(points, metric)
     (dtree,labels)
 end
-        
 
 function find_nearest_words(embed::WordEmbedding, equation::String; nwords=5)
 	dtree,labels= nn_tree(embed)
@@ -121,6 +126,7 @@ function find_nearest_embedding(embeddings_dtree::NNTree, labels, target_embeddi
 	idxs, dists = knn(embeddings_dtree,target_embedding, max_words,true)
 	_gather_nearests(nwords, idxs, dists, labels, banned)
 end
+
 
 function find_nearest_embedding(embeddings_dtree::NNTree, labels, target_embeddings::Matrix; nwords=5, banneds=[[]])
 	max_words = nwords+maximum(map(length,banneds))

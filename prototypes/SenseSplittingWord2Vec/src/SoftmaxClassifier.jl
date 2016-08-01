@@ -1,6 +1,5 @@
 module SoftmaxClassifier
 using StatsFuns
-using Base.Cartesian        # for @nexprs
 
 
 export LinearClassifier, predict, train_one!, accuracy, log_likelihood
@@ -24,7 +23,7 @@ end
 
 ###Carefully Optimised K=2 Path. (a lot of Profiling went into this)
 
-@fastmath @inline function softmax2{R<:AbstractFloat}(t1::R,t2::R)
+@fastmath @inline function softmax2{R<:Number}(t1::R,t2::R)
 	#This is the softmax function, but particularly optimised.
     #Note you must in the expondent subtract the larger from the smaller, so you get underfloat (to zero) rather than overflow (to Inf) so that things are all behaved. https://lingpipe-blog.com/2009/03/17/softmax-without-overflow/
     
@@ -32,21 +31,22 @@ end
         z=t2-t1
         m  = exp(z)
         r1 = inv(one(R)+m)
-        r2 = m*r1
+        r2 = one(R) - r1
         (r1,r2)
     else #t2>t1
         z=t1-t2
         m  = exp(z)
         r2 = inv(one(R)+m)
-        r1 = m*r2
+        r1 = one(R) - r2
     end
     (r1,r2)
 end
 
-@fastmath function predict{F<:AbstractFloat}(c::LinearClassifier{2},
+@fastmath function predict{F<:Number}(c::LinearClassifier{2},
 											 x::AbstractVector{F})
     t1=zero(F)
     t2=zero(F)
+	# i.e. (t1,t2) = (c.weights'*x)...
     @inbounds for ii in 1: size(c.weights,1)
         @inbounds t1+=c.weights[ii,1]*x[ii]
         @inbounds t2+=c.weights[ii,2]*x[ii]
@@ -57,16 +57,16 @@ end
 
 ##############Normal Path (profiling found that using generated functions did not help)
 
-function predict{F<:AbstractFloat,K}(c::LinearClassifier{K}, x::AbstractVector{F})
+function predict{F<:Number,K}(c::LinearClassifier{K}, x::AbstractVector{F})
     return softmax(c.weights'*x)
 end
 
 
-function train_one!{F<:AbstractFloat,K}(
+function train_one!{F<:Number,K}(
 					c::LinearClassifier{K},
 					x::AbstractVector{F},
 					y::Int64,
-					α::AbstractFloat=0.025f0)
+					α::Number=0.025f0)
     # if !in(y, 1 : K)
     #     msg = @sprintf "A sample is discarded because the label y = %d is not in range of 1 to %d" y K
     #     warn(msg)
@@ -78,29 +78,24 @@ function train_one!{F<:AbstractFloat,K}(
 
     # c.weights -= α * x' * outputs;
     # BLAS.ger!(-α, vec(x), c.outputs, c.weights)
-    m = 0.0
-    j = 0
-    limit = c.n - 4
     for i in 1:K
         m = α * outputs[i]
-        j = 1
-        while j <= limit
-            @nexprs 4 (idx->c.weights[j + idx - 1, i] -= m * x[j + idx - 1])
-            j+=4
-        end
-        while j <= c.n
+        for j in 1:c.n
             c.weights[j, i] -= m * x[j]
-            j+=1
         end
     end
 end
 
-function train_one!{F1<:AbstractFloat, F2<:AbstractFloat,K}(
+function train_one!{F1<:Number, F2<:Number,K}(
 					c::LinearClassifier{K},
 					x::AbstractVector{F1},
 					y::Int64,
 					input_gradient::AbstractVector{F2},
-					α::AbstractFloat=0.025f0)
+					α::Number=0.025f0)
+	#Using Cross Entropy Error
+	#result is
+	#input_gradient += -ForwardDiff.gradient(log(collect(predict(c, x))[y]), x)
+	
 	#@assert(!(x |> isnan |> any))
 	#@assert(!(c.weights[:] |> isnan |> any))
 	outputs = collect(predict(c, x))
@@ -109,38 +104,24 @@ function train_one!{F1<:AbstractFloat, F2<:AbstractFloat,K}(
 	#@assert(!(outputs |> isnan |> any))
 	# input_gradient = ( c.weights * outputs' )'
     # BLAS.gemv!('N', α, c.weights, c.outputs, 1.0, input_gradient)
-    m = 0.0
-    j = 0
-    limit = c.n - 4
     for i in 1:K
         m = α * outputs[i]
-        j = 1
-        while j <= limit
-            @nexprs 4 (idx->input_gradient[j+idx-1] += m * c.weights[j+idx-1, i])
-            j+=4
-        end
-        while j <= c.n
+        for j in 1:c.n
             input_gradient[j] += m * c.weights[j, i]
-            j+=1
         end
     end
 
     # c.weights -= α * x' * outputs;
-    # BLAS.ger!(-α, vec(x), c.outputs, c.weights)
+    # BLAS.ger!(-α, vec(x), c.outputs, c.weights
     for i in 1:K
         m = α * outputs[i]
-        j = 1
-        while j <= limit
-            @nexprs 4 (idx->c.weights[j + idx - 1, i] -= m * x[j + idx - 1])
-            j+=4
-        end
-        while j <= c.n
-            c.weights[j, i] -= m * x[j]
-            j+=1
+        for j in 1:c.n
+			c.weights[j, i] -= m * x[j]
         end
     end
 	#@assert(!(c.weights[:] |> isnan |> any))
 end
+
 
 # calculate the overall log likelihood. Mainly used for debugging
 function log_likelihood(c, X, y)
@@ -153,7 +134,7 @@ function log_likelihood(c, X, y)
 end
 
 # calculate the accuracy on the testing dataset
-function accuracy{F<:AbstractFloat,K}(c::LinearClassifier{K}, X::AbstractMatrix{F}, y::AbstractVector{Int64})
+function accuracy{F<:Number,K}(c::LinearClassifier{K}, X::AbstractMatrix{F}, y::AbstractVector{Int64})
     n = size(X, 1)
     succ = 0
     for i in 1 : n

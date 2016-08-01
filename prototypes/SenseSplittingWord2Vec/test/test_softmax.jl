@@ -1,4 +1,4 @@
-using SoftmaxClassifier 
+using SoftmaxClassifier
 using FactCheck
 import JLD
 
@@ -11,7 +11,7 @@ test_file = joinpath(data_dir, "mnist_test.jld")
 function test_softmax_training()
     println("Testing the softmax classifier on the MNIST dataset")
 
-    println("Loading...")    
+    println("Loading...")
     X_train, y_train = JLD.load(train_file,"X_train", "y_train")
     X_test, y_test = JLD.load(test_file,"X_test", "y_test")
 
@@ -27,15 +27,11 @@ function test_softmax_training()
         println("Accuracy on test set $acc")
     end
     c, acc
-    
 end
 
 
-facts() do 
+facts() do
     classifier, final_accurasy=test_softmax_training()
     @fact final_accurasy --> greater_than(0.8)
-        
     
 end
-    
-    
