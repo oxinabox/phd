@@ -31,12 +31,14 @@ end
 Also logs the progress"""
 function training_windows(embed::WordEmbedding,
 						  stream::WordStream,
-						  end_of_iter_callback::Function=identity)
+						  end_of_iter_callback::Function=identity,
+						  initial_trained_count = 0
+						  )
 	
 	Task() do
 		tic()
 		α = embed.init_learning_rate
-		trained_count = 0
+		trained_count = initial_trained_count
 		end_of_iter_callback((0,embed))
 		for current_iter in 1:embed.iter
 			debug("Iter $current_iter of $(embed.iter)")
@@ -59,11 +61,13 @@ end
 function run_training!(embed::WordEmbedding, 
 					   words_stream::WordStream;
 					   strip::Bool=false,
-					   end_of_iter_callback::Function=identity)
+					   end_of_iter_callback::Function=identity,
+					   initial_trained_count = 0
+					   )
 	middle = embed.lsize + 1
     trained_times = Dict{String, Int64}()
 
-	for (window, α) in training_windows(embed,words_stream,end_of_iter_callback)
+	for (window, α) in training_windows(embed,words_stream,end_of_iter_callback, initial_trained_count)
 		trained_word = window[middle]
 		trained_times[trained_word] = get(trained_times, trained_word, 0) + 1
 		train_window!(embed,window,middle,α)

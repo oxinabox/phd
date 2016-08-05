@@ -5,7 +5,7 @@ using Distances
 using SoftmaxClassifier
 using NearestNeighbors
 import NearestNeighbors.NNTree
-export find_nearest_words, logprob_of_context, nn_tree
+export find_nearest_words, logprob_of_context, nn_tree, WSD, angular_dist, AngularDist
 
 
 ########### nearest_words, and analogy math
@@ -35,13 +35,19 @@ function nn_tree(embed::WordSenseEmbedding, metric::Metric=AngularDist())
     (dtree,labels)
 end
 
+
 function nn_tree(embed::WordEmbedding, metric::Metric=AngularDist())
-    num_embeddings = length(embed.embedding)
-	labels = Vector{typeof(first(embed.embedding)[1])}(num_embeddings)
-	points = Matrix{eltype(first(embed.embedding)[2])}((embed.dimension, num_embeddings))
+	nn_tree(embed.embedding, metric)
+end
+
+function nn_tree{K,V}(embeddings::Associative{K,V}, metric::Metric=AngularDist())
+    num_embeddings = length(embeddings)
+	dim_embeddings = length(first(embeddings)[1])
+	labels = Vector{K}(num_embeddings)
+	points = Matrix{eltype(V)}((dim_embeddings, num_embeddings))
 	
 	ii = 0
-	for (word,embedding) in embed.embedding
+	for (word,embedding) in embeddings
 		ii+=1
 		@inbounds labels[ii]=word
 		@inbounds points[:,ii]=embedding
@@ -49,7 +55,6 @@ function nn_tree(embed::WordEmbedding, metric::Metric=AngularDist())
     dtree = BallTree(points, metric)
     (dtree,labels)
 end
-        
 
 function find_nearest_words(embed::WordEmbedding, equation::String; nwords=5)
 	dtree,labels= nn_tree(embed)
@@ -122,6 +127,7 @@ function find_nearest_embedding(embeddings_dtree::NNTree, labels, target_embeddi
 	_gather_nearests(nwords, idxs, dists, labels, banned)
 end
 
+
 function find_nearest_embedding(embeddings_dtree::NNTree, labels, target_embeddings::Matrix; nwords=5, banneds=[[]])
 	max_words = nwords+maximum(map(length,banneds))
 	max_words = min(max_words,length(labels))
@@ -144,8 +150,8 @@ function logprob_of_context{S<:String}(embed::WordEmbedding, context::AbstractVe
 end
 
 
-function logprob_of_context{S<:String}(embed::GenWordEmbedding, context::AbstractVector{S}, input::Vector{Float32}; skip_oov=false, normalise_over_length=false)
-    total_prob=0.0f0
+function logprob_of_context{N<:Number}(embed::GenWordEmbedding, context, input::Vector{N}; skip_oov=false, normalise_over_length=false)
+    total_prob=zero(N)
 	context_length = 0
     for target_word in context
 		skip_oov && !haskey(embed.codebook, target_word) && continue
@@ -162,9 +168,35 @@ function logprob_of_context{S<:String}(embed::GenWordEmbedding, context::Abstrac
     if normalise_over_length
 		total_prob/=context_length #This is equivlent to taking the context_length-th root in nonlog domain. Which makes sense.
 	end
-	total_prob
-
+	total_prob::N
 end
+
+
+"""Perform Word Sense Disabmiguation, by chosing the word-sense that says the context words are most likely.
+i.e. use the language modeling task.
+Returns integer coresponding to to the Column of the embedding matrix for that word, for the best word sense embeddi
+ng.
+"""
+@inline function WSD{S<:AbstractString}(embed::WordSenseEmbedding, word::String, context::AbstractVector{S}; skip_oov=false)
+    sense_embeddings = embed.embedding[word]
+	WSD(embed, sense_embeddings, context; skip_oov=skip_oov)
+end
+
+@inline function WSD{S<:AbstractString}(embed::WordSenseEmbedding, sense_embeddings, context::AbstractVector{S}; skip_oov=false)
+    if length(sense_embeddings)==1
+        return 1
+    else
+        #NOTE: Using  Experimental Threading
+        lps = Vector{Float32}(length(sense_embeddings))
+        Threads.@threads for ii in 1:length(sense_embeddings)
+            input = sense_embeddings[ii]
+            lps[ii] = logprob_of_context(embed, context, input; skip_oov=skip_oov)
+        end
+        prob, sense_id = findmax(lps)
+        return sense_id
+    end
+end
+
 
 
 end #Module

@@ -4,24 +4,16 @@ using Query
 using Lumberjack
 using Utils
 
-model_dir = "models/ss"
-test_filename = "WestburyLab.wikicorp.201004"
-test_file = "data/corpora/WikiCorp/tokenised_WestburyLab.wikicorp.201004.txt"
-
-
-const ndims = 50 
-const vname =""
-iter_name = "_i0"
-base_name  ="$(test_filename)_$(ndims)_$(vname)"
-model_file = joinpath(model_dir, base_name)
-load_model_file = model_file*iter_name*".model"
-log_file = joinpath(model_dir, base_name*".log")
-vname*="r"
+test_file = "data/corpora/WikiCorp/tokenised_lowercase_WestburyLab.wikicorp.201004.txt"
+load_model_file = "models/ss/keep/tokenised_lowercase_WestburyLab.wikicorp.201004_50__m170000000.model"
+progress_count = 170000000
+model_file = "models/ss/tokenised_lowercase_WestburyLab.wikicorp.201004_50"
+log_file = model_file*".log"
 
 
 function test_word_embedding()
     println("=======================================")
-    println("Resuming sense splitting word embedding with $(base_name)")
+    println("Resuming sense splitting word embedding")
     println("=======================================")
     
     add_truck(LumberjackTruck(log_file, "filelogger"))
@@ -29,7 +21,9 @@ function test_word_embedding()
 	embed = restore(load_model_file) 
 	info("resuming training")
     @time resume_training!(embed, test_file, 
-				end_of_iter_callback=save_callback(model_file)
+		progress_count,
+		end_of_iter_callback=save_callback(model_file, "i"),
+        end_of_minibatch_callback=save_callback(model_file,"m"),
 	)
 
 end

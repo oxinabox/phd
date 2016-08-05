@@ -1,7 +1,19 @@
 module WordStreams
-#using PooledElements
-export words_of, WordStream, SlidingWindow, sliding_window 
+using PooledElements
+export words_of, WordStream, SlidingWindow, sliding_window, subsampling_prob
 
+"""
+Probability of removing an word that has `word_distr` distribution.
+If `subsampling_rate` is zero, then this always returns 0.0 (rather than the expected 1.0)
+"""
+function subsampling_prob(subsampling_rate, word_distr)
+	if subsampling_rate>0.0
+		prob = clamp(1.0 - sqrt(subsampling_rate/word_distr), 0.0,1.0)
+	else
+		#Setting Rate to Zero is shorthand for "We are not doing Subsampling"
+		0.0
+	end
+end
 
 const WHITESPACE = (' ', '\n', '\r')
 type WordStream{S<:String, F<:AbstractFloat}
@@ -39,7 +51,7 @@ function unrated_next_word!(ws::WordStream, fp)
             if s == "" || filter_out(s)
                 continue
            else
-                return s
+                return pstring(s)#
            end
         else #Non Whitespace character
             write(next_word,c)
@@ -47,7 +59,7 @@ function unrated_next_word!(ws::WordStream, fp)
     end
     #Hit EOF
     s = takebuf_string(next_word)
-    filter_out(s) ? "" : s
+    filter_out(s) ? pstring("") : pstring(s)
 end
 
 
@@ -66,14 +78,14 @@ function Base.done(ws::WordStream, state)
     next_word=="" #Done when there is no next word.
 end
 
-Base.iteratorsize(::WordStream) = Base.SizeUnknown()
-Base.eltype(::Type{WordStream})=String
+Base.iteratorsize{S,F}(::Type{WordStream{S,F}}) = Base.SizeUnknown()
+Base.eltype{S,F}(::Type{WordStream{S,F}})=S
 function Base.next(ws::WordStream, state)
     (next_word, fp) = state
     while(!eof(fp))
         if ws.rate > 0
-            prob = (sqrt(ws.distr[next_word] / ws.rate) + 1) * ws.rate / ws.distr[next_word]
-            if(prob < rand())
+            prob = subsampling_prob(ws.rate, ws.distr[next_word])
+			if(rand()<prob)
 				#Skip this word
                 next_word=unrated_next_word!(ws,fp) #Advance to next word, skipping this one
                 continue
@@ -90,13 +102,13 @@ end
 ######################################################
 
 type SlidingWindow
-    ws::WordStream
+    ws::Any #Normally a word stream
     lsize::Int64
     rsize::Int64
 end
 
 
-Base.iteratorsize(::SlidingWindow) = Base.SizeUnknown()
+Base.iteratorsize(::Type{SlidingWindow}) = Base.SizeUnknown()
 window_length(window) = window.lsize + 1 + window.rsize
 
 function Base.start(window::SlidingWindow)

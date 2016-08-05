@@ -67,7 +67,7 @@ end
 
 function Base.show(io::IO, x::WordEmbedding)
     println(io, "Word embedding(dimension = $(x.dimension))"*
-			"of $(length(x.distribution)) words, trained on $(x.trained_count) words")
+			"of $(length(x.distribution)) words")
     nothing
 end
 

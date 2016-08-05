@@ -25,7 +25,7 @@ end
 function Lumberjack.log(t::CheckAlphaDecreasingTruck, args::Dict)
 	if haskey(args,:α)
 		α = args[:α]
-		@fact α --> less_than_or_equal(t.prev_α) "Learning Rate (α) must not decrease"
+		@fact α --> less_than_or_equal(t.prev_α) "Learning Rate (α) must decrease"
 		t.prev_α=α
 	end
 end
