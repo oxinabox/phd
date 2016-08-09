@@ -7,20 +7,20 @@ using AdaGram
 	output_fn = "../models/adagram/v1_d100.adagram_model"#"file to save the model (in Julia format)"
 	dict_fn = "../data/corpora/WikiCorp/tokenised_lowercase_WestburyLab.wikicorp.201004.1gram" #"dictionary file with word frequencies"
 
-	window = 4 #"(max) window size"
+	window = 10 #"(max) window size" C in the paper
 	min_freq  = 20 #"min. frequency of the word"
 	remove_top_k = 0 #"remove top K most frequent words"
-	dim  = 100 #"dimensionality of representations"
-	prototypes = 5 #"number of word prototypes"
-	alpha = 0.1 #"prior probability of allocating a new prototype"
-	d  = 0.0 #"parameter of Pitman-Yor process"
+	dim  = 300 #"dimensionality of representations"
+	prototypes = 20 #"number of word prototypes"
+	alpha = 0.15 #"prior probability of allocating a new prototype"
+	d  = 0.0 #"parameter of Pitman-Yor process" D in paper
 	subsample = 1e-5 #"subsampling treshold. useful value is 1e-5"
 	context_cut  = true #"randomly reduce size of the context"
 	epochs = 1 #"number of epochs to train"
 	initcount = 1. #"initial weight (count) on first sense for each word"
 	stopwords =Set{AbstractString}() #"list of stop words"
 	sense_treshold = 1e-10 #"minimal probability of a meaning to contribute into gradients"
-	save_treshold = 1e-3 #"minimal probability of a meaning to save after training"
+	save_treshold = 0.0 #"minimal probability of a meaning to save after training"
 end
 
 regex = r"" #"ignore words not matching provided regex"
