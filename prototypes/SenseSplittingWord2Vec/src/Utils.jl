@@ -1,5 +1,6 @@
 module Utils
-export save, restore, _pgenerate_gh, orderless_equivalent, ≅
+using JLD
+export save, restore, _pgenerate_gh, orderless_equivalent, ≅, @param_save
 
 # serialize to a file
 function save(item, filename::String)
@@ -93,6 +94,36 @@ Performed unordered equivalence check using default eqality (==)
 Eg ([[2,1],3,3]≅[3,3,[1,2]])"""
 ≅(lhs,rhs) = orderless_equivalent(==, lhs,rhs)
 
+
+#################################################
+
+
+function names_candidates(blk::Expr)
+    names_in_block = Vector{Symbol}()
+    for a in blk.args
+        typeof(a) <: Expr || continue
+        if a.head == :(=)
+            push!(names_in_block, a.args[1])
+        else #Recurse, so we captured things in blocks or behind `const`
+            append!(names_in_block, names_candidates(a))
+        end
+    end
+    names_in_block
+end
+
+macro param_save(filename, blk::Expr)
+    names_in_block =  names_candidates(blk)    
+    quote
+        $(esc(blk))
+        names_defined = Set($(names_in_block)) #∩ Set(names(current_module()))
+        names_and_vals =[(string(name), eval(name)) for name in names_defined]
+        JLD.save($filename, Base.flatten(names_and_vals)...)
+        println("Paramaters -- saved to $($filename)")
+        println("----------")
+        println(join(("$n = $v" for (n,v) in names_and_vals),"\n"))
+        println("----------")
+    end
+end
 
 end #module
 
