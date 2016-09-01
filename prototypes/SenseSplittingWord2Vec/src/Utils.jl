@@ -112,17 +112,20 @@ function names_candidates(blk::Expr)
 end
 
 macro param_save(filename, blk::Expr)
-    names_in_block =  names_candidates(blk)    
+    names_in_block =  names_candidates(blk)   
+
     quote
         $(esc(blk))
-        names_defined = Set($(names_in_block)) #∩ Set(names(current_module()))
-        names_and_vals =[(string(name), eval(name)) for name in names_defined]
-        JLD.save($filename, Base.flatten(names_and_vals)...)
-        println("Paramaters -- saved to $($filename)")
+        names_defined = Set($(names_in_block)) ∩ Set(names(current_module()))
+        names_and_vals =[(string(name), current_module().eval(name)) for name in names_defined] 
+										#Got to eval with the eval from current module
+
+        println("Paramaters -- saving to $($(esc(filename)))")
         println("----------")
         println(join(("$n = $v" for (n,v) in names_and_vals),"\n"))
+        JLD.save($(esc(filename)), Base.flatten(names_and_vals)...)
         println("----------")
-    end
+	 end
 end
 
 end #module

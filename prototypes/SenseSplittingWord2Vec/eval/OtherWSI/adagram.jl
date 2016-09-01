@@ -1,24 +1,28 @@
 using Utils
 using AdaGram
 
-@param_save  "../models/adagram/v1_d100.params.jld" begin
+base_name = "more_senses"
+param_save_fn =  "../models/adagram/$(base_name).params.jld"
+output_fn = "../models/adagram/$(base_name).adagram_model"#"file to save the model (in Julia format)"
+@assert !isfile(output_fn)
+@param_save param_save_fn begin
 	nprocessors = nprocs()
 	train_fn  =  "../data/corpora/WikiCorp/tokenised_lowercase_WestburyLab.wikicorp.201004.txt" #"training text data"
-	output_fn = "../models/adagram/v1_d100.adagram_model"#"file to save the model (in Julia format)"
+	output_fn = output_fn #file to save the model (in Julia format)"
 	dict_fn = "../data/corpora/WikiCorp/tokenised_lowercase_WestburyLab.wikicorp.201004.1gram" #"dictionary file with word frequencies"
 
 	window = 10 #"(max) window size" C in the paper
 	min_freq  = 20 #"min. frequency of the word"
 	remove_top_k = 0 #"remove top K most frequent words"
-	dim  = 300 #"dimensionality of representations"
-	prototypes = 20 #"number of word prototypes"
-	alpha = 0.15 #"prior probability of allocating a new prototype"
+	dim  = 100 #"dimensionality of representations"
+	prototypes = 30 #"number of word prototypes" T in the paper
+	alpha = 0.25 #"prior probability of allocating a new prototype"
 	d  = 0.0 #"parameter of Pitman-Yor process" D in paper
 	subsample = 1e-5 #"subsampling treshold. useful value is 1e-5"
 	context_cut  = true #"randomly reduce size of the context"
 	epochs = 1 #"number of epochs to train"
 	initcount = 1. #"initial weight (count) on first sense for each word"
-	stopwords =Set{AbstractString}() #"list of stop words"
+	stopwords = Set{AbstractString}() #"list of stop words"
 	sense_treshold = 1e-10 #"minimal probability of a meaning to contribute into gradients"
 	save_treshold = 0.0 #"minimal probability of a meaning to save after training"
 end
@@ -42,6 +46,9 @@ inplace_train_vectors!(vm, dict, train_fn, window;
 
 
 save_model(output_fn, vm, dict, save_treshold)
+
+
+
 
 #################
 
