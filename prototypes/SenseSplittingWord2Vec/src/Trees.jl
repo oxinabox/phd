@@ -2,7 +2,9 @@
 Compatible with AbstractTrees.jl
 """
 module Trees
-export TreeNode, BranchNode, nullnode, leaves_of, internal_nodes_of, average_height, leaves_at_depth, levels
+export TreeNode, BranchNode, nullnode, leaves_of, internal_nodes_of, 
+	average_height, leaves_at_depth, levels, get_paths, transform_tree
+
 abstract TreeNode
 
 type BranchNode <: TreeNode
@@ -15,6 +17,11 @@ end
 
 const nullnode = NullNode()
 
+
+import Base.==
+function (==)(a::BranchNode, b::BranchNode) 
+    a.data == b.data && a.children==b.children
+end
 
 function Base.show(io::IO, node :: BranchNode)
 	print(io, typeof(node)," with ",length(node.children), " children. ", "data = ")
@@ -56,7 +63,7 @@ function internal_nodes_of(root::TreeNode)
         if node == nullnode
             return
         end
-        if !isleaf(node.children)
+        if !isleaf(node)
             produce(node)
         end
         for child in node.children
@@ -130,5 +137,35 @@ function levels(tree)
     
     nodes_at_depth, codes_at_depth
 end
+
+
+"""
+Assign each node a consecutive ID given by its Depthfirst, Left to right position
+This function returns the 
+
+"""
+function get_paths(root)
+    function inner(node, id::Int32, path::Vector{Int32})
+        if isleaf(node)
+            produce(node, path)
+        else
+            for child in node.children
+                inner(child, id+one(Int32), [path;id]) # This will make a copy of the path
+            end
+        end
+    end
+    @task inner(root, one(Int32), Int32[])
+end
+
+"Returns a new tree, with the same structure but different values for the data"
+function transform_tree(node::BranchNode; leaf_transform=identity, internal_transform=identity)
+    function treemap_inner(node, leaf_transform, internal_transform)
+        data = Trees.isleaf(node) ? leaf_transform(node.data) : internal_transform(node.data)
+        children = BranchNode[treemap_inner(child, leaf_transform, internal_transform)  for child in node.children]
+        new_node = BranchNode(copy(children), data)
+    end
+    treemap_inner(node, leaf_transform, internal_transform)
+end
+
 
 end #module
