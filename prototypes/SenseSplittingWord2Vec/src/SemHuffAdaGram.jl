@@ -1,6 +1,6 @@
-module SemHuffAdagrams
-using Semhuff
-using Adagrams
+module SemHuffAdaGram
+using SemHuff
+using AdaGram
 using Trees
 
 
@@ -19,8 +19,7 @@ function semhuff_initialize_AdaGram(semtree::Trees.BranchNode,
     for word in dict.id2word
         id = dict.word2id[word]
         freqs[id] = word_freqs[word] 
-		#Todo: The math on this is not quiet right, because subsampling could have messed with the Corpus Size
-		if 
+		 
         huffman_outputs[id] = AdaGram.HierarchicalOutput(codes[word], paths[word])
     end;
 
