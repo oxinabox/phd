@@ -8,10 +8,10 @@ using AdaGram
 using AdaGramCompat
 
 base_name = "semhuff_more_senses"
-folder = "../eval/model/adagram"
+folder = "models/adagram"
 param_save_fn =  folder*"/$(base_name).params.jld"
 output_fn = folder*"/$(base_name).adagram_model.jld"
-simsource_fn = "../eval/models/plain/$(base_name).jld"
+simsource_fn = "models/plain/$(base_name).jld"
 log_file = base_name*".log"
 
 @assert !isfile(output_fn)
@@ -49,9 +49,7 @@ function run()
 	ee = WordEmbedding(dim, random_inited, huffman_tree,
 							  subsampling = 0.0, #Do not subsample, as it breaks my lazy way to calculate freqency
 							  min_count=min_freq, iter=1)
-	train(embed, test_file,
-				end_of_iter_callback=save_callback(model_file,"i")
-	)
+	train(ee, train_fn)
 	
 	JLD.save(simsource_fn, "ee", ee)
 
