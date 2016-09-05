@@ -1,4 +1,4 @@
-module Semhuff
+module SemHuff
 
 using BlossomV
 
