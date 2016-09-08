@@ -12,12 +12,16 @@ export find_nearest_words, logprob_of_context, nn_tree, WSD, angular_dist, Angul
 "The metric equivelent of Cosine Distence"
 immutable AngularDist<:Metric
 end
-function Distances.evaluate(::AngularDist, a::AbstractArray, b::AbstractArray)
+
+
+Distances.evaluate(::AngularDist, a::AbstractArray, b::AbstractArray) = angular_dist(a,b)
+function angular_dist(a::AbstractArray, b::AbstractArray)
     cdist = cosine_dist(a,b)
     cos_val = 1-cdist
     acos(cos_val)/π
 end
-angular_dist(a::AbstractArray, b::AbstractArray) = evaluate(AngularDist(), a, b)
+
+
 
 function nn_tree(embed::WordSenseEmbedding, metric::Metric=AngularDist())
     num_embeddings = sum(map(length,values(embed.embedding)))

@@ -1,8 +1,11 @@
 module SemHuff
-
+using Query
+using Trees
 using BlossomV
-
 import BlossomV.dense_num_edges
+
+export semhuff
+
 """
 dist_func must resturn a values between 0.0 and 1.0. 
 result is a matrix where each column is a pairing of items, expressed as there index (1 indexed)
@@ -51,7 +54,7 @@ function semhuff(classification_tree, embeddings, consider_nearest_n)
         info("semantically sorting level: $depth")
         nodes = nodes_at_depth[depth]
         
-        pair_indexes = most_similar_pairings(Query.angular_dist, embeds, consider_nearest_n)
+        pair_indexes = most_similar_pairings(angular_dist, embeds, consider_nearest_n)
         
         #We will now, assign the new nodes to parents in arbitary order
         nodes_above = nodes_at_depth[depth-1]

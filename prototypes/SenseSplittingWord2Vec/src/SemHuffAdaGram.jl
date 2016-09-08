@@ -3,9 +3,10 @@ using SemHuff
 using AdaGram
 using Trees
 
+export semhuff_initialize_AdaGram
 
-function semhuff_initialize_AdaGram(semtree::Trees.BranchNode,
-									 word_freqs,
+function semhuff_initialize_AdaGram{S<:AbstractString, N<:Integer}(semtree::Trees.BranchNode,
+									 word_freqs::Associative{S,N},
 									 dim::Integer,
 									 num_meanings::Integer,
 									 alpha::Float64=0.01,

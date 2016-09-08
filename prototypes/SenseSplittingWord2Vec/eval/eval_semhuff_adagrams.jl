@@ -8,19 +8,21 @@ using AdaGram
 using AdaGramCompat
 
 base_name = "semhuff_more_senses"
+detailed_name = "tokenised_lowercase_WestburyLab.wikicorp.201004_100_nosubsample"
 folder = "models/adagram"
 param_save_fn =  folder*"/$(base_name).params.jld"
 output_fn = folder*"/$(base_name).adagram_model.jld"
-simsource_fn = "models/plain/$(base_name).jld"
+simsource_fn = "models/plain/"*detailed_name*".jld"
 log_file = base_name*".log"
 
 @assert !isfile(output_fn)
-@assert !isfile(simsource_fn)
+#@assert !isfile(simsource_fn)
 @param_save param_save_fn begin
 	nprocessors = nprocs()
 	train_fn  =  "data/corpora/WikiCorp/tokenised_lowercase_WestburyLab.wikicorp.201004.txt" #"training text data"
 	output_fn = output_fn #file to save the model (in Julia format)"
 	semsimsource_fn = simsource_fn
+	semhuff_tree_fn = "models/semhuff_trees/"*detailed_name*".semhuff_tree.jld"
 
 	window = 10 #"(max) window size" C in the paper
 	min_freq  = 20 #"min. frequency of the word"
@@ -46,19 +48,21 @@ function run()
 
 
 	info("################## Training Word Embeddings ###########")
-	ee = WordEmbedding(dim, random_inited, huffman_tree,
-							  subsampling = 0.0, #Do not subsample, as it breaks my lazy way to calculate freqency
-							  min_count=min_freq, iter=1)
-	train(ee, train_fn)
+	#ee = WordEmbedding(dim, random_inited, huffman_tree,
+	#						  subsampling = 0.0, #Do not subsample, as it breaks my lazy way to calculate freqency
+	#						  min_count=min_freq, iter=1)
+	#train(ee, train_fn)
 	
-	JLD.save(simsource_fn, "ee", ee)
+	#JLD.save(simsource_fn, "ee", ee)
 
+	ee = JLD.load(simsource_fn, "ee")
 	
 
 	info("################## Preparing SemHuff ###############")
 
 	
-	semtree = semhuff(ee.classification_tree, ee.embeddings, semhuff_width);
+	semtree = semhuff(ee.classification_tree, ee.embedding, semhuff_width);
+	JLD.save(semhuff_tree_fn, "semtree", semtree)
 
 	assert(ee.subsampling == 0.0)
 	word_freqs =Dict(word=> round(Int64,ee.distribution[word] * ee.corpus_size) 
@@ -67,7 +71,7 @@ function run()
 	ee = nothing #Free the memory
 
 	vm, dict = semhuff_initialize_AdaGram(semtree::Trees.BranchNode,
-                                     word_freqs,
+									 word_freqs,
                                      dim,
                                      prototypes,
                                      alpha,
