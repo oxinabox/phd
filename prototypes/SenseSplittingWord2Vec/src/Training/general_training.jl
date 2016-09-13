@@ -32,7 +32,14 @@ function get_α_and_log(embed::GenWordEmbedding, trained_count, α)
 end
 
 
-
+function initialize_network!(embed::GenWordEmbedding, network_type::SemHuffTree)
+    embed.classification_tree = transform_tree(semtree, 
+                            leaf_transform = word->word,
+						    internal_transform = dummy -> LinearClassifier(2,embed.dim))
+    
+    embed.codebook = Dict(leaves_of(classification_tree))
+    embed
+end
 
 
 initialize_network(embed::GenWordEmbedding) = initialize_network(embed, embed.network_type)
@@ -41,6 +48,7 @@ function initialize_network(embed::GenWordEmbedding, huffman::HuffmanTree)
 	embed.classification_tree, embed.codebook = initialize_network(embed.distribution, embed.dimension, huffman)
     embed
 end
+
 
 function initialize_network{S<:String, N<:Number}(distribution::Associative{S,N}, embedding_dim::Number, ::HuffmanTree)
     heap = PriorityQueue()
