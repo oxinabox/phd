@@ -1,0 +1,179 @@
+%% LyX 2.1.3 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[english]{article}
+\usepackage[T1]{fontenc}
+\usepackage[default]{raleway}
+\usepackage[utf8]{luainputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+
+
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usetikzlibrary{graphs} 
+\usetikzlibrary{graphs,graphdrawing}
+\usegdlibrary{force, layered, trees}
+\usetikzlibrary{decorations.pathmorphing}
+
+
+\makeatletter
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+\usepackage{standalone}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+\makeatother
+
+\usepackage{babel}
+\begin{document}
+%\global\long\def\argmin{\argmin}
+%\global\long\def\argmax{\argmax}
+
+
+Here we look at methods for producing word sense vectors which are
+aligned to a dictionary -- lexical word sense vectors, by using induced
+word sense vectors; which are then used for lexical word sense disambiguation
+(lexical WSD).
+
+\begin{figure}
+\input{../figs/synthising-lexicalwordsenses-blockdiagram.tex}
+
+\protect\caption{The Process for going from induced word senses to lexical labeled
+word sense uses}
+\end{figure}
+
+
+The process broadly has two parts. 
+
+Alignment, followed by lexical WSD.
+
+
+\section{Method}
+
+
+\subsection{General WSD\label{sub:General-WSD}}
+
+We define a general method for disambiguation, suitable for use on
+induced, or lexical word sense vectors.
+
+This method is used both as a step in the alignment, and as a step
+in the final lexical WSD
+
+
+\subsubsection{The method is so:}
+\begin{itemize}
+\item for $\mathbf{c}=(w_{1},...,w_{n})$ a set of words, that is around
+the word to be disambiguate (but does not include it in the central
+position)
+\item for $\mathbf{s}=(s_{1},...,s_{m})$ the set of induced word senses.
+\item The language model provides: $P(w_{i}\mid s_{i})$ (It actually gives
+a log probability, but we will ignore that)
+\item we can calculate $P_{\mathbf{c}}(\mathbf{c}|s_{i})=\prod_{i=1}^{i=n}P(w_{i}|s_{i})$, 
+
+\begin{itemize}
+\item we also find a normalized probability $P_{\mathbf{c}}^{*}(\mathbf{c}|s_{i},k)=\sqrt[{k\cdot n}]{\prod_{i=1}^{i=n}P(w_{i}|s_{i})}$, 
+
+\begin{itemize}
+\item For $k$ a normalizing factor -- normally $k=1$
+\end{itemize}
+\item which is equal to the geometric mean of per context word probability
+\end{itemize}
+\item We the estimate the probability of each sense by: $P_{s}(s_{i}\mid\mathbf{c})=\dfrac{P_{\mathbf{c}}(\mathbf{c}|s_{i})}{\sum_{j=0}^{j=m}P_{\mathbf{c}}(\mathbf{c}|s_{j})}=\dfrac{\prod_{i=1}^{i=n}P(w_{i}|s_{i})}{\sum_{j=0}^{j=m}\left(\prod_{i=1}^{i=n}P(w_{i}|s_{j})\right)}$
+
+\begin{itemize}
+\item We also define a normalized probability: $P_{s}^{\ast}(s_{i}\mid\mathbf{c},\,k)=\dfrac{\sqrt[{k\cdot n}]{P_{\mathbf{c}}(\mathbf{c}|s_{i})}}{\sum_{j=0}^{j=m}\sqrt[{k\cdot n}]{P_{\mathbf{c}}(\mathbf{c}|s_{j})}}=\dfrac{\sqrt[{k\cdot n}]{\prod_{i=1}^{i=n}P(w_{i}|s_{i})}}{\sum_{j=0}^{j=m}\sqrt[{k\cdot n}]{\left(\prod_{i=1}^{i=n}P(w_{i}|s_{j})\right)}}$
+\end{itemize}
+\end{itemize}
+
+\subsection{Alignment}
+
+The alignment process takes in induced and examples of use (Eg Glosses),
+and outputs lexical word sense vectors.
+
+It can be done offline and prior to WSD.
+
+
+\subsubsection{Method}
+
+We use the General WSD defined in \ref{sub:General-WSD} to find the
+probability of each word sense and then sum them.
+\begin{itemize}
+\item Given a example of use of a particular word sense $l$, which we will
+call $\mathbf{c}_{l}$
+
+\begin{itemize}
+\item If given many examples of use we can union them into a single example.
+\end{itemize}
+\item and given a collection $\mathbf{s}=(s_{1},s_{2},...,s_{m})$ of induced
+sense vectors 
+
+\begin{itemize}
+\item For the special case of multi-word tokens, for example \texttt{british\_airways},
+for which we do not have in our vocabulary, we take the sensed for
+each component word (eg \texttt{british }and\texttt{ airways}), and
+union them into a single larger set of sense vectors, which we still
+call $\mathbf{s}$
+\end{itemize}
+\item produce the new sense vector for lexical sense $l$: $s_{l}^{\ast}=\sum_{i=0}^{i=m}P_{s}(s_{i}\mid\mathbf{c})\cdot s_{i}$ 
+\end{itemize}
+
+\subsection{WSD}
+
+WSD takes lexical word sense vectors and sentence (the context to
+be disambiguate), and outputs the correct word senses for each of
+the words.
+\begin{itemize}
+\item Given a sentence containing the word to be which we will call $\mathbf{c}_{t}$
+\item and given a collection $\mathbf{s^{\ast}}=(s_{1}^{\ast},s_{2}^{\ast},...,s_{m}^{\ast})$
+of lexical sense vectors for the particular word we wish to disambiguate.
+\item We again apply the general WSD method, this time in a winner-takes-all
+approach. The output word sense $l^{\star}=\argmax_{i\in[0,m]}P_{s}(s_{i}^{\ast}\mid\mathbf{c})\cdot s_{i}$ 
+\end{itemize}
+
+\subsection{Similarity In Context}
+
+Another task that goes very well with the previous two is to find
+the similarity of two words, when given their contexts.
+\begin{itemize}
+\item Given a sentence containing the word $a$ to be which we will call
+$\mathbf{c}_{a}$, and for word $b$ which we call $\mathbf{c}_{b}$ 
+\item and given a collection $\mathbf{s}_{a}=(s_{a1},s_{a2},...,s_{am_{a}})$
+of induced sense vectors for $a$, and $\mathbf{s}_{b}=(s_{b1},s_{b2},...,s_{bm_{b}})$
+for word $b$
+\item We again apply the general WSD method but this this normalizing, $s_{a}^{\ast}=\sum_{i=0}^{i=m_{a}}P_{s}^{*}(s_{ai}\mid\mathbf{c},1)\cdot s_{ai}$
+, and $s_{b}^{\ast}=\sum_{i=0}^{i=m_{a}}P_{s}^{*}(s_{bi}\mid\mathbf{c},1)\cdot s_{bi}$
+\item We define the similarity of $a$ and $b$ in there respective contexts
+as the cosine similarity of $s_{a}^{\ast}$ and $s_{b}^{\ast}$
+\end{itemize}
+Here we used the normalized general WSD probabilities. The motivation
+of this is empirical. It roughly doubles the performance at the Similarity
+In Context task over the normalized version (making scores comparable
+to state of the art methods using distance to context (instead of
+our probability of context)).
+
+It might be suggested that this is because the length of the context
+sentences might differ ($m_{a}$ and $m_{b}$). However the contexts
+sentence in the evaluation corpus are all 100 words long (mostly with
+the target word right in the center).
+
+Relating to that: windowing the sentences to 5 words either side (like
+was used for training the embeddings), does not change things; though
+does improve overall similarity correctness slightly.
+
+For different models, different values of the normalizing parameter
+($k$ ) produce different results.
+
+See below
+
+\begin{figure}
+\includegraphics[width=0.5\textwidth]{twoplots}
+
+\protect\caption{Performance of similarity task as normalising constant ($k$) is varied.
+Results for two models are shown. The horizontal axis is $k$, and
+the vertical is spearman rank correlation to human similarity rankings.
+Not the vertical axis is very clipped. The peak for the first is at
+$k\approx0.25$ and for the second $k\approx0.75$. And I don't really
+know why they are different.}
+\end{figure}
+
+\end{document}

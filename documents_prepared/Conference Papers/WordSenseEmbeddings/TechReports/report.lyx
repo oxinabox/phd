@@ -1,10 +1,12 @@
-#LyX 2.0 created this file. For more info see http://www.lyx.org/
-\lyxformat 413
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
 \begin_document
 \begin_header
 \textclass article
 \begin_preamble
 \usepackage{standalone}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
 \end_preamble
 \use_default_options true
 \maintain_unincluded_children false
@@ -15,13 +17,13 @@
 \font_roman default
 \font_sans default
 \font_typewriter default
+\font_math auto
 \font_default_family default
 \use_non_tex_fonts false
 \font_sc false
 \font_osf false
 \font_sf_scale 100
 \font_tt_scale 100
-
 \graphics default
 \default_output_format default
 \output_sync 0
@@ -32,15 +34,24 @@
 \use_hyperref false
 \papersize default
 \use_geometry false
-\use_amsmath 1
-\use_esint 1
-\use_mhchem 1
-\use_mathdots 1
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
 \cite_engine basic
+\cite_engine_type default
+\biblio_style plain
 \use_bibtopic false
 \use_indices false
 \paperorientation portrait
 \suppress_date false
+\justification true
 \use_refstyle 1
 \index Index
 \shortcut idx
@@ -64,10 +75,28 @@
 \begin_body
 
 \begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\argmin}{\argmin}
+{\mathrm{argmin\:}}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\argmax}{\argmax}
+{\mathrm{argmax\,}}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 Here we look at methods for producing word sense vectors which are aligned
- to a dictionary (Here after Lexical Word Sense Vectors, or LWSV), by using
- induced word sense vectors (Here after IWSV); which are then used for word
- sense disambiguation (WSD).
+ to a dictionary -- lexical word sense vectors, by using induced word sense
+ vectors; which are then used for lexical word sense disambiguation (lexical
+ WSD).
 \end_layout
 
 \begin_layout Standard
@@ -77,10 +106,9 @@ sideways false
 status open
 
 \begin_layout Plain Layout
-\begin_inset Graphics
-	filename /home/wheel/oxinabox/Documents/PhD/phd/documents_prepared/Conference Papers/WordSenseEmbeddings/figs/synthising_lexical_wordsenses_block_diagram.pdf
-	width 90text%
-	draft
+\begin_inset CommandInset include
+LatexCommand include
+filename "D:/phd/documents_prepared/Conference Papers/WordSenseEmbeddings/figs/synthising_lexical_wordsenses_block_diagram.tex"
 
 \end_inset
 
@@ -88,10 +116,11 @@ status open
 \end_layout
 
 \begin_layout Plain Layout
-\begin_inset Caption
+\begin_inset Caption Standard
 
 \begin_layout Plain Layout
-The Process
+The Process for going from induced word senses to lexical labeled word sense
+ uses
 \end_layout
 
 \end_inset
@@ -110,20 +139,205 @@ The process broadly has two parts.
 \end_layout
 
 \begin_layout Standard
-Alignment, followed by WSD.
+Alignment, followed by lexical WSD.
 \end_layout
 
+\begin_layout Section
+Method
+\end_layout
+
+\begin_layout Subsection
+General WSD
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:General-WSD"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We define a general method for disambiguation, suitable for use on induced,
+ or lexical word sense vectors.
+\end_layout
+
+\begin_layout Standard
+This method is used both as a step in the alignment, and as a step in the
+ final lexical WSD
+\end_layout
+
+\begin_layout Subsubsection
+The method is so:
+\end_layout
+
+\begin_layout Itemize
+for 
+\begin_inset Formula $\mathbf{c}=(w_{1},...,w_{n})$
+\end_inset
+
+ a set of words, that is around the word to be disambiguate (but does not
+ include it in the central position)
+\end_layout
+
+\begin_layout Itemize
+for 
+\begin_inset Formula $\mathbf{s}=(s_{1},...,s_{m})$
+\end_inset
+
+ the set of induced word senses.
+\end_layout
+
+\begin_layout Itemize
+The language model provides: 
+\begin_inset Formula $P(w_{i}\mid s_{i})$
+\end_inset
+
+ (It actually gives a log probability, but we will ignore that)
+\end_layout
+
+\begin_layout Itemize
+we can calculate 
+\begin_inset Formula $P_{\mathbf{c}}(\mathbf{c}|s_{i})=\prod_{i=1}^{i=n}P(w_{i}|s_{i})$
+\end_inset
+
+, 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+we also find a normalized probability 
+\begin_inset Formula $P_{\mathbf{c}}^{*}(\mathbf{c}|s_{i},k)=\sqrt[^{k\cdot n}]{\prod_{i=1}^{i=n}P(w_{i}|s_{i})}$
+\end_inset
+
+, 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+For 
+\begin_inset Formula $k$
+\end_inset
+
+ a normalizing factor -- normally 
+\begin_inset Formula $k=1$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+which is equal to the geometric mean of per context word probability
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+We the estimate the probability of each sense by: 
+\begin_inset Formula $P_{s}(s_{i}\mid\mathbf{c})=\dfrac{P_{\mathbf{c}}(\mathbf{c}|s_{i})}{\sum_{j=0}^{j=m}P_{\mathbf{c}}(\mathbf{c}|s_{j})}=\dfrac{\prod_{i=1}^{i=n}P(w_{i}|s_{i})}{\sum_{j=0}^{j=m}\left(\prod_{i=1}^{i=n}P(w_{i}|s_{j})\right)}$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+We also define a normalized probability: 
+\begin_inset Formula $P_{s}^{\ast}(s_{i}\mid\mathbf{c},\,k)=\dfrac{\sqrt[^{k\cdot n}]{P_{\mathbf{c}}(\mathbf{c}|s_{i})}}{\sum_{j=0}^{j=m}\sqrt[^{k\cdot n}]{P_{\mathbf{c}}(\mathbf{c}|s_{j})}}=\dfrac{\sqrt[^{k\cdot n}]{\prod_{i=1}^{i=n}P(w_{i}|s_{i})}}{\sum_{j=0}^{j=m}\sqrt[^{k\cdot n}]{\left(\prod_{i=1}^{i=n}P(w_{i}|s_{j})\right)}}$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
 \begin_layout Subsection
 Alignment
 \end_layout
 
 \begin_layout Standard
-The alignment process takes in IWSVs and examples of use (Eg Glosses), and
- outputs LWSVs.
+The alignment process takes in induced and examples of use (Eg Glosses),
+ and outputs lexical word sense vectors.
 \end_layout
 
 \begin_layout Standard
-It can be done offline and prior to WSD
+It can be done offline and prior to WSD.
+\end_layout
+
+\begin_layout Subsubsection
+Method
+\end_layout
+
+\begin_layout Standard
+We use the General WSD defined in 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:General-WSD"
+
+\end_inset
+
+ to find the probability of each word sense and then sum them.
+\end_layout
+
+\begin_layout Itemize
+Given a example of use of a particular word sense 
+\begin_inset Formula $l$
+\end_inset
+
+, which we will call 
+\begin_inset Formula $\mathbf{c}_{l}$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+If given many examples of use we can union them into a single example.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+and given a collection 
+\begin_inset Formula $\mathbf{s}=(s_{1},s_{2},...,s_{m})$
+\end_inset
+
+ of induced sense vectors 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+For the special case of multi-word tokens, for example 
+\family typewriter
+british_airways
+\family default
+, for which we do not have in our vocabulary, we take the sensed for each
+ component word (eg 
+\family typewriter
+british 
+\family default
+and
+\family typewriter
+ airways
+\family default
+), and union them into a single larger set of sense vectors, which we still
+ call 
+\begin_inset Formula $\mathbf{s}$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+produce the new sense vector for lexical sense 
+\begin_inset Formula $l$
+\end_inset
+
+: 
+\begin_inset Formula $s_{l}^{\ast}=\sum_{i=0}^{i=m}P_{s}(s_{i}\mid\mathbf{c})\cdot s_{i}$
+\end_inset
+
+ 
 \end_layout
 
 \begin_layout Subsection
@@ -131,7 +345,209 @@ WSD
 \end_layout
 
 \begin_layout Standard
-WSD takes LWSVs and sentence (the context to be disambiguate)
+WSD takes lexical word sense vectors and sentence (the context to be disambiguat
+e), and outputs the correct word senses for each of the words.
+\end_layout
+
+\begin_layout Itemize
+Given a sentence containing the word to be which we will call 
+\begin_inset Formula $\mathbf{c}_{t}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+and given a collection 
+\begin_inset Formula $\mathbf{s^{\ast}}=(s_{1}^{\ast},s_{2}^{\ast},...,s_{m}^{\ast})$
+\end_inset
+
+ of lexical sense vectors for the particular word we wish to disambiguate.
+\end_layout
+
+\begin_layout Itemize
+We again apply the general WSD method, this time in a winner-takes-all approach.
+ The output word sense 
+\begin_inset Formula $l^{\star}=\argmax_{i\in[0,m]}P_{s}(s_{i}^{\ast}\mid\mathbf{c})\cdot s_{i}$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Subsection
+Similarity In Context
+\end_layout
+
+\begin_layout Standard
+Another task that goes very well with the previous two is to find the similarity
+ of two words, when given their contexts.
+\end_layout
+
+\begin_layout Itemize
+Given a sentence containing the word 
+\begin_inset Formula $a$
+\end_inset
+
+ to be which we will call 
+\begin_inset Formula $\mathbf{c}_{a}$
+\end_inset
+
+, and for word 
+\begin_inset Formula $b$
+\end_inset
+
+ which we call 
+\begin_inset Formula $\mathbf{c}_{b}$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Itemize
+and given a collection 
+\begin_inset Formula $\mathbf{s}_{a}=(s_{a1},s_{a2},...,s_{am_{a}})$
+\end_inset
+
+ of induced sense vectors for 
+\begin_inset Formula $a$
+\end_inset
+
+, and 
+\begin_inset Formula $\mathbf{s}_{b}=(s_{b1},s_{b2},...,s_{bm_{b}})$
+\end_inset
+
+ for word 
+\begin_inset Formula $b$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+We again apply the general WSD method but this this normalizing, 
+\begin_inset Formula $s_{a}^{\ast}=\sum_{i=0}^{i=m_{a}}P_{s}^{*}(s_{ai}\mid\mathbf{c},1)\cdot s_{ai}$
+\end_inset
+
+ , and 
+\begin_inset Formula $s_{b}^{\ast}=\sum_{i=0}^{i=m_{a}}P_{s}^{*}(s_{bi}\mid\mathbf{c},1)\cdot s_{bi}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+We define the similarity of 
+\begin_inset Formula $a$
+\end_inset
+
+ and 
+\begin_inset Formula $b$
+\end_inset
+
+ in there respective contexts as the cosine similarity of 
+\begin_inset Formula $s_{a}^{\ast}$
+\end_inset
+
+ and 
+\begin_inset Formula $s_{b}^{\ast}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here we used the normalized general WSD probabilities.
+ The motivation of this is empirical.
+ It roughly doubles the performance at the Similarity In Context task over
+ the normalized version (making scores comparable to state of the art methods
+ using distance to context (instead of our probability of context)).
+\end_layout
+
+\begin_layout Standard
+It might be suggested that this is because the length of the context sentences
+ might differ (
+\begin_inset Formula $m_{a}$
+\end_inset
+
+ and 
+\begin_inset Formula $m_{b}$
+\end_inset
+
+).
+ However the contexts sentence in the evaluation corpus are all 100 words
+ long (mostly with the target word right in the center).
+\end_layout
+
+\begin_layout Standard
+Relating to that: windowing the sentences to 5 words either side (like was
+ used for training the embeddings), does not change things; though does
+ improve overall similarity correctness slightly.
+\end_layout
+
+\begin_layout Standard
+For different models, different values of the normalizing parameter (
+\begin_inset Formula $k$
+\end_inset
+
+ ) produce different results.
+\end_layout
+
+\begin_layout Standard
+See below
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename twoplots.jpg
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Performance of similarity task as normalising constant (
+\begin_inset Formula $k$
+\end_inset
+
+) is varied.
+ Results for two models are shown.
+ The horizontal axis is 
+\begin_inset Formula $k$
+\end_inset
+
+, and the vertical is speerman rank correlation to human similarity rankings.
+ Not the vertical axis is very clipped.
+ The peak for the first is at 
+\begin_inset Formula $k\approx0.25$
+\end_inset
+
+ and for the second 
+\begin_inset Formula $k\approx0.75$
+\end_inset
+
+.
+ And I don't really know why they are different.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \end_body
