@@ -3,7 +3,7 @@ using Query
 using AdaGram
 const AdaGram_lib = joinpath(Pkg.dir("AdaGram"), "lib", "superlib.so")
 
-export word_sense_vectors, word_sense_vector, AdaGramModel
+export word_sense_vectors, word_sense_vector, AdaGramModel, all_word_sense_vectors
 
 
 immutable AdaGramModel
@@ -11,6 +11,16 @@ immutable AdaGramModel
     dict::AdaGram.Dictionary
 end
 AdaGram.disambiguate(am::AdaGramModel, word, context) = disambiguate(am.vm, am.dict, word, context)
+
+
+function all_word_sense_vectors(am::AdaGramCompat.AdaGramModel, word)
+    if haskey(am.dict.word2id, word)
+        wsv_mat = word_sense_vectors(am, word)
+        [view(wsv_mat,:,ii) for ii in 1:size(wsv_mat,2)]
+    else
+        Vector{Float32}[]
+    end
+end
 
 
 function word_sense_vectors(am::AdaGramModel, word)
