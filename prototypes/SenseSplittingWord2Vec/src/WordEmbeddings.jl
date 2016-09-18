@@ -2,7 +2,7 @@ module WordEmbeddings
 using Trees
 using DataStructures
 
-export RandomInited, HuffmanTree, NaiveSoftmax, random_inited, naive_softmax, huffman_tree, GenWordEmbedding, keep_word_vectors_only!, WordEmbedding, WordSenseEmbedding, FixedWordSenseEmbedding, SplittingWordSenseEmbedding, all_word_sense_vectors
+export RandomInited, HuffmanTree, SemHuffTree, NaiveSoftmax, random_inited, naive_softmax, huffman_tree, GenWordEmbedding, keep_word_vectors_only!, WordEmbedding, WordSenseEmbedding, FixedWordSenseEmbedding, SplittingWordSenseEmbedding
 
 
 # The types defined below are used for specifying the options of the word embedding training
@@ -18,9 +18,15 @@ abstract NetworkType <: Option
 type NaiveSoftmax <: NetworkType
     # |V| outputs softmax
 end
+
 type HuffmanTree <: NetworkType
     # Predicate step by step on the huffman tree
 end
+
+type SemHuffTree <: NetworkType
+    semtree::BranchNode
+end
+
 const naive_softmax = NaiveSoftmax()
 const huffman_tree = HuffmanTree()
 
