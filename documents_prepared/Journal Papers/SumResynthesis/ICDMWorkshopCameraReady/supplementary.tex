@@ -1,0 +1,121 @@
+\documentclass[compsoc]{IEEEtran}
+\usepackage[subpreambles=true]{standalone}
+
+\usepackage{latexsym}
+\newcommand{\oracletitle}{Ref.~BOW+Ord.}
+\newcommand{\selectiontitle}{Sel.~BOW~(only)}
+\newcommand{\twosteptitle}{Sel.~BOW+Ord.}
+
+%\usepackage{fontspec}
+%\usepackage{microtype}
+%\usepackage{csquotes}
+%\usepackage{flushend}
+
+
+
+\usepackage{verbatim}
+\usepackage{grffile}
+
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usepackage{xifthen}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.12}
+\usepackage{booktabs, array} % Generates table from .csv
+\usepackage{pgfplotstable}
+
+%%%%%%%%%%MATH
+
+%\usepackage{nccmath}
+\usepackage{amsthm}
+\usepackage[cmex10]{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{multirow}
+\usepackage{resizegather}
+%\usepackage{amsfonts}
+
+\theoremstyle{plain}
+\newtheorem{thm}{\protect\theoremname}
+\theoremstyle{definition}
+\newtheorem{defn}[thm]{\protect\definitionname}
+\usepackage{csquotes}
+\usepackage[english]{babel}
+\providecommand{\definitionname}{Definition}
+\providecommand{\theoremname}{Theorem}
+
+\DeclareMathOperator*{\argmin}{argmin}
+
+%%%%%
+\usepackage[backend=bibtex,style=ieee,url=false, doi=false]{biblatex}
+\bibliography{master}
+
+%Plain Bibtex way, with the BST
+%\bibliographystyle{IEEEtrans}
+%\newcommand{\parencite}{\protect\cite}
+%\newcommand{\textcite}{\protect\cite}
+
+\usepackage{cleveref}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%% Magic Float Layer Fix Settings 
+\renewcommand{\topfraction}{.85}
+\renewcommand{\bottomfraction}{.7}
+\renewcommand{\textfraction}{.15}
+\renewcommand{\floatpagefraction}{.8}
+\renewcommand{\dbltopfraction}{.9}
+\renewcommand{\dblfloatpagefraction}{.8}
+\setcounter{topnumber}{9}
+\setcounter{bottomnumber}{9}
+\setcounter{totalnumber}{20}
+\setcounter{dbltopnumber}{9}
+
+%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%
+%Consistency in naming 
+%%%%%%%%
+
+
+%opening
+\title{Supplementary Materials to Modelling Sentence Generation from Sum of Word Embedding Vectors as a Mixed Integer Programming Problem}
+
+\author{\IEEEauthorblockN{Lyndon White, Roberto Togneri, Wei Liu \and Mohammed Bennamoun}\\
+	\IEEEauthorblockA{The University of Western Australia\\
+		35 Stirling Highway, Crawley, Western Australia\\
+		\texttt{lyndon.white@research.uwa.edu.au}\\
+		\texttt{\{roberto.togneri, wei.liu, mohammed.bennamoun\}@uwa.edu.au}
+	}
+}
+
+
+\graphicspath{{./figs/}}
+
+\begin{document}
+	
+\maketitle
+
+
+These supplementary materials show additional examples of the performance of our method against the works of \textcite{iyyer2014generating, Bowman2015SmoothGeneration}, as of our well as on sentences with ambiguous order. Bare in mind, exact reproduction is not the goal of either prior work; nor truly is it a goal of out work. Our goal being the regeneration of sentences while preserving meaning -- exact reproduction does of course meet that goal. The examples that follow should highlight the differences in the performance of the methods.
+
+
+
+
+
+\Cref{egiyyer,egbowman,egordered} show quantitative examples; including comparison to the existing works. In these tables \xmark{} and \cmark{} are used to show correctness of the output in the selection (Sel.) and in the ordering (Ord.) steps.
+
+The sentences shown in \Cref{egiyyer}, are difficult. The table features long complex sentences containing many proper nouns. These examples are sourced from \textcite{iyyer2014generating}. The output from their DT-RAE method is also shown for contrast. Only 3C is completed perfectly by our method. Of the remainder the MIP word ordering problem has no solutions, except in 3D, where it is wrong, but does produce an ordered sentence. In the others the language model constraints does not return any feasible ($P(\tau)>0$) ordering solutions. This failure may be attributed in a large part to the proper nouns.  Proper nouns are very sparse in any training corpus for language modelling. The Kneser-Ney smoothed trigrams back-off only down to bigrams, so if the words of the bigrams from the training corpus never appear adjacently in the training corpus, ordering fails. This is largely the case for very rare words. The other significant factor is the sentence length.
+
+The sentences in \Cref{egbowman}, are short and use common words -- they are easy to resynthesis. These examples come from \textcite{Bowman2015SmoothGeneration}. The output of their VAE based approach can be compared to that from our approach. Of the three there were two exact match's, and one failure.
+
+Normally mistakes made in the word selection step result in an unorderable sentence. Failures in selection are likely to result in a BOW that cannot be grammatically combined e.g. missing conjunctions. This results in no feasible solutions to the word ordering problem.
+
+The examples shown in \Cref{egordered} highlight sentences where the order is ambiguous -- where there are multiple reasonable solutions to the word ordering problem. In both cases the word selection performs perfectly, but the ordering is varied. In 5A, the \oracletitle{} sentence and the overall \twosteptitle{} sentence  in word order but not in word content. This is because under the trigram language model both sentences have exactly identical probabilities, so it comes to which solution is found first, which varies on the state of the MIP solver. In 5B the word order is switched -- ``from Paris to London'' vs ``to London from Paris'', which has the same meaning. But, it could also have switched the place names. In cases like this where two orderings are reasonable, the ordering method is certain to fail consistently for one of the orderings. Though it is possible to output the second (and third etc.) most probable ordering, which does ameliorate the failure somewhat. This is the key limitation which prevents this method from direct practical applications.
+
+\newpage
+
+\input{example_sents.tex}
+\printbibliography
+
+\end{document}
