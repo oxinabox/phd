@@ -1,6 +1,40 @@
 module Utils
 using JLD
-export save, restore, _pgenerate_gh, orderless_equivalent, ≅, @param_save
+export save, restore, _pgenerate_gh, orderless_equivalent, ≅, @param_save, importfrom
+
+
+function importfrom(moduleinstance::Module, functionname::Symbol, argtypes::Tuple)
+    meths = methods(moduleinstance.(functionname), argtypes)
+    importfrom(moduleinstance, functionname, meths)
+end
+
+"""
+eg `importfrom(CorpusLoaders.Semcor, :sensekey)`
+"""
+function importfrom(moduleinstance::Module, functionname::Symbol)
+    meths = methods(moduleinstance.(functionname))
+    importfrom(moduleinstance, functionname, meths)
+end
+
+"""
+Import a method from a function, into the current module (eg Main).
+Useful if using two modules both exporting (and thus failing to export)
+the same name.
+"""
+function importfrom(moduleinstance::Module, functionname::Symbol, meths::Base.MethodList)
+    for mt in meths
+        paramnames = collect(mt.lambda_template.slotnames[2:end])
+        paramtypes = collect(mt.sig.parameters[2:end])
+        paramsig = ((n,t)->Expr(:(::),n,t)).(paramnames, paramtypes)
+
+        funcdec = Expr(:(=),
+			Expr(:call, functionname, paramsig...),
+			Expr(:call, :($moduleinstance.$functionname), paramnames...)
+        )
+        current_module().eval(funcdec) #Runs at global scope
+    end
+end
+
 
 # serialize to a file
 function save(item, filename::String)

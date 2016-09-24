@@ -44,9 +44,14 @@ function nn_tree(embed::WordEmbedding, metric::Metric=AngularDist())
 	nn_tree(embed.embedding, metric)
 end
 
-function nn_tree{K,V}(embeddings::Associative{K,V}, metric::Metric=AngularDist())
+function nn_tree{K,V}(
+					embeddings::Associative{K,V},
+					dim_embeddings=length(first(embeddings)[1]),
+					metric::Metric=AngularDist(),
+					)
+
     num_embeddings = length(embeddings)
-	dim_embeddings = length(first(embeddings)[1])
+	
 	labels = Vector{K}(num_embeddings)
 	points = Matrix{eltype(V)}((dim_embeddings, num_embeddings))
 	
@@ -102,7 +107,7 @@ function find_nearest_words(embed::WordSenseEmbedding, word, sense_id, dtree,lab
 end
 
 
-find_nearest_words(embed::WordSenseEmbedding, word; nwords=5) = find_nearest_words(embed, word,nn_tree(embed)...; nwords=nwords)
+find_nearest_words(embed::GenWordEmbedding, word; nwords=5) = find_nearest_words(embed, word,nn_tree(embed)...; nwords=nwords)
 function find_nearest_words(embed::WordSenseEmbedding, word, dtree,labels; nwords=5)
 	wvs = hcat(embed.embedding[word]...)
 	find_nearest_embedding(dtree, labels, wvs; nwords=nwords,
