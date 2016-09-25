@@ -19,6 +19,7 @@ function normal_probs!{F<:AbstractFloat}(logprobs::Vector{F})
     map!(exp,ret)
     denom = sum(ret)
     ret./=denom
+	@assert(sum(ret) ≈ one(F))
     ret
 end
 
