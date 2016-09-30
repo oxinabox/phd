@@ -2,9 +2,9 @@ module AdaGramCompat
 using Query
 using AdaGram
 const AdaGram_lib = joinpath(Pkg.dir("AdaGram"), "lib", "superlib.so")
+import WordEmbeddings.all_word_sense_vectors
 
-export word_sense_vectors, word_sense_vector, AdaGramModel, all_word_sense_vectors
-
+export word_sense_vectors, word_sense_vector, AdaGramModel
 
 immutable AdaGramModel
     vm::AdaGram.VectorModel
