@@ -1,6 +1,7 @@
 \documentclass{sig-alternate}
 
 \newcommand{\W}{\mathcal{W}}
+\newcommand{\ci}{\perp\!\!\!\perp} % from Wikipedia
 
 \begin{document}
 \title{Aligning Word Sense Embeddings, Using a Single Example, with Applications in Word Sense Disambiguation}
@@ -20,6 +21,9 @@ The method we propose is applicable for the synthesising of new lexically aligne
 
 We demonstrate this method on AdaGrams\cite{AdaGrams}, and on our own simpler greedy multiple word-sense embeddings. The method is generally applicable to any skip-gram-like language model that can take multiple vectors as input, and can output the probability of a word appearing in their context.
 
+\section{Framework}
+
+
 \subsection{Sense Language Model}
 A traditional language model defined the probability of a word, given its context -- such as the words preceding it.
 With skip-gram style language models, the context is abstracted into the vector input -- representing the information from all contexts of a word. This is generalised to have multiple different senses per word, for a sense language model.
@@ -31,10 +35,16 @@ Taking some collection of word sense representations, we aim to use the context 
 We will call the word we are trying to disambiguate the \emph{target word}.
 Let $\mathbf{s}=(s_{1},...,s_{m})$, be the collection of possible word sense representations for target word, they may be induced senses, or lexical senses.
 Let $\mathbf{c}=(w_{1},...,w_{n})$ be a sequence of word from around the target word -- that is to say it's context.
-For example for the target word \emph{kid}, the context could be $\mathbf{c}=(wow,\; the,\; wool,\; from,\; the,\; is,\; so,\; soft,\; and,\; fluffy)$
+For example for the target word \emph{kid}, the context could be \mbox{$\mathbf{c}=(wow,\; the,\; wool,\; from,\; the,\; is,\; so,\; soft,\; and,\; fluffy)$}, where \emph{kid} is the centeral word taken from between \emph{the} and \emph{fluffy}.
+Ideally our contexts would be symmetric with similar window size to that used for training the language model, though as shall be discussed below this is not always possible.
  
-For any particular sense, $s_i$ we calculate the probability of the con t
+For any particular sense, $s_i$, we calculate the probability of the context with the language model: \[P(\mathbf{c}|s_{i})=\prod_{\forall w_{j}\in\mathbf{c}}P(w_{j}|s_{i})\]
+Here, we make the assumption that given any sense representation $s_j$, the probability of each word in it's context is conditionally independent. Stated formally we assume $\forall a,b \in [1,n],\; a \ne b\; \wedge \forall s_i \in \mathbf{s},\:w_a \perp w_b \mid s_i$.
+The correctness of this assumption depends on the quality of the representation -- the ideal sense representation would fully capture all information about the contexts it can appear in -- that making elements of those contexts not present any additional information, thus making $P(w_a \mid w_b,s_i)=P(w_a \mid s_i)$ i.e. conditionally independent.
 
+From this, by applying Baye's Theorem, we can calculate the likelyhood function, given a prior for $P(s_i)$.
+
+\[P(s_{i}|\mathbf{c}) = \dfrac{P(\mathbf{c}|s_{j})P(s_{j})}{\sum_{s_{j}\in\mathbf{s}}P(s_{j}|\mathbf{c})P(s_{j})}\].
 
 
 
