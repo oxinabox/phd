@@ -1,5 +1,10 @@
 \documentclass{sig-alternate}
 
+
+\usepackage[author={Lyndon White}]{pdfcomment}
+
+
+
 \newcommand{\W}{\mathcal{W}}
 \newcommand{\ci}{\perp\!\!\!\perp} % from Wikipedia
 
@@ -15,7 +20,13 @@ However, without links from the induced senses to lexical sense, many applicatio
 
 We thus propose a method for quickly aligning the indicted senses, to correspond with the sense in a single example, so as to allow the shift from an representation that makes sense only in the context of other representations of that form, to a representation corresponding to some gold standard label.
 
-The method we propose is applicable for the synthesising of new lexically aligned word sense vectors from unsupervised induced word sense vectors, which come from a language model such a skip-gram.
+
+Our method generated new lexically vectors from the standard vectors as a weighted sum of the unsupervised vectors, with the weighting determined by how likely they (the unsupervised) are to be the correct (unsupervised) sense intended in a example sentence containing the gold standard lexical sentence.
+
+Aligning senses this way also side steps two problems of induced word sense representations: Discarding un-useful representations -- that may have never been trained, and merging overly similar representations. Un-useful representations will never having a high probability for any real context where the target word occurs -- otherwise they would be useful, so will not contribute to the aligned vector. Overly similar representations will  predict similar contexts, and will contribute similar vectors shifts -- it will be roughly equivalent to as if a single vectors was twice as likely.
+
+
+The method we propose is applicable for the synthesising of new lexically aligned word sense vectors from unsupervised induced word sense vectors, which come from a skip-gram language model such or similar.
 
 
 
@@ -47,9 +58,26 @@ From this, by applying Baye's Theorem, we can calculate the likelyhood function,
 \[P(s_{i}|\mathbf{c}) = \dfrac{P(\mathbf{c}|s_{j})P(s_{j})}{\sum_{s_{j}\in\mathbf{s}}P(s_{j}|\mathbf{c})P(s_{j})}\].
 
 
+\subsection Synthesising New Embeddings from a Single Example
+
+Given a collection of induced embeddings 
 
 
+\subsubsection Fallback for dictionary phrases (colocations)
+Unless a specialised tokenizing method is used, a word embedding method will not learn embedding for colocations such as ``civil war'' or ``martial arts''. Normal tokenizers will split them at the word level, learning embeddings for ``civil'', and ``war'', and for ``martial'' and ``arts''. This issue is often considered minimal for word embeddings, as a approximate embedding can be constructed by summing embeddings for each word  in the phrase.
 
+It has been constantly noted that for single-sense word embeddings the summing the vectors for each word in the phrase results in reasonable representation for the phrase  \cite{mikolovSkip} \pdfcomment{Doesn't Rui Wang have a paper than goes into some detail on this? I can't find it}. The intuition from this is that for multiple sense-word embeddings, there is a correct selection of senses for each word such that the sum of these senses will be a representation for the phrase.
+
+Simply evaluating the each combination of word-sense sums for multiple word colocations is computationally expensive. For a $m$ length colocation, where each word has $n$ senses, this requires $m^n$ evaluations of probability of the context ($P(\mathbb{c}\mid u_i)$). When inducing unsupervised word embeddings it is not unreasonable to have $n=30$ sense, so for a 2 word phrase (eg ``civil war'') this is 900 evaluations.
+Instead, we we just add the additional sense embeddings for each word to the total pool of sense embeddings to be combined ($\mathbf{u}$ above), requiring instead $m \times n$ evaluations. So for our 2 word example, this is 60 evaluations, instead of the 30 evaluations that is require for a single word entry. This also has other advantages.
+
+
+In the case that the word-sense induced for one word 
+
+For example, ``civil war''. The context that ``war'' in ``civil war'' occurs, is very similar to the context that ``war'' appears in general -- for both ``war'' and ``civil war'' we expect the context to include words like ``casualties'', ``miltia'' etc, thus we would not expect a our word sense induction method to produce a specific sense of ``war'' for this context.
+Compare ``civil'': ``civil'' as in ``civil war'', has very different expected contexts to ``civil'' as in ``civil servant'' or ``civil behaviour''. In this case we would expect 3 different senses of ``civil'' to be induced -- one of which does contain context information for ``civil war'' -- information not captured by the single representation of ``war''.
+
+The extreme version of this is if one or more words in a multiword expression have no embedding defined at all. In this case we fall back to only using senses from words which do have embeddings. An example of this would be ``Fulton County Court'', while ``County'' and ``Court'' are common words, that are certain to occur in any reasonable training corpus; ``Fulton'' is a rare proper noun -- if it occurs at all it likely does not occur enough to train the representation. We use the remaining words: ``County'' and ``Court'' to determine the meaning of the whole. This is not always going to be suitable, but it is the best that can be done.
 
 
 
