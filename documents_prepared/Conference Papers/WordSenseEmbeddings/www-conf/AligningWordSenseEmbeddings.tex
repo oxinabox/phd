@@ -1,27 +1,50 @@
 \documentclass{sig-alternate}
+\usepackage{csquotes}
+\usepackage{amsmath}
 
+
+\usepackage[style=trad-abbrv,url=false, doi=false]{biblatex}
+\bibliography{master}
 
 \usepackage[author={Lyndon White}]{pdfcomment}
-
-
+\usepackage{cleveref}
 
 \newcommand{\W}{\mathcal{W}}
+\renewcommand{\c}{\mathbf{c}}
+\renewcommand{\l}{\mathbf{l}}
+\renewcommand{\u}{\mathbf{u}}
 \newcommand{\ci}{\perp\!\!\!\perp} % from Wikipedia
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
 
 \begin{document}
 \title{Aligning Word Sense Embeddings, Using a Single Example, with Applications in Word Sense Disambiguation}
 \maketitle
 
+%NonAligned: Reisinger2010,Huang2012,AdaGrams
+%Self Aligned: Chen2014
+%Prealigned: iacobacci2015sensembed
 
-There have been many recent works focused on inducing representations for different word senses based on context; particularly using neural network vector embeddings.
-However these induced representations do not normally line up with the standard human created definitions of any given word sense.
+There have been several works focused on inducing representations for different word senses based on context based on various vector-space embeddings \parencite{Reisinger2010,Huang2012,AdaGrams,Chen2014,iacobacci2015sensembed}.
+However, many of these induced representations do not intrinsically line up with the standard human created definitions of any given word sense.
+Reisinger and Mooney, stated in their seminal work on multiple sense word vectors \parencite{Reisinger2010}: \enquote{we  do
+not  assume  that  clusters  correspond  to  traditional
+word senses. Rather, we only rely on clusters to capture meaningful variation in word usage.}, this remains true for many works that came after\parencite{Huang2012,AdaGrams}.
 It can certainly be argued that the induced senses may capture better senses, more comprehensively, or with better granularity than human lexicographers do.
 However, without links from the induced senses to lexical sense, many applications are limited; and such systems which induce word senses can not be integrated with systems that utilize the wealth of existing lexical knowledge.
 
-We thus propose a method for quickly aligning the indicted senses, to correspond with the sense in a single example, so as to allow the shift from an representation that makes sense only in the context of other representations of that form, to a representation corresponding to some gold standard label.
+We thus propose a method for quickly aligning the indicted senses, to correspond with the sense in a single example, so as to allow the shift from an representation that makes sense only in the context of other representations of that form, to a representation corresponding to some gold standard label. This has several applications.
+
+The most obvious is as a tool for word-sense disambiguation. Which has it own applications, allowing a user to look up the dictionary definition of a word. It also has applications in translation, allowing word senses from one language to be matched to the correct word sense from another by making translator dictionaries accessible. 
+Accomplishing these tasks using word-sense embedding approaches makes for easier integration of these machine learnt models with traditional approaches, opening the way for more powerful hybrids.
+
+Beyond aligning to a standard lexical sense, aligning to a user provided example has applications in information retrieval. Consider the natural language query \enquote{Find me all webpages about banks as in \enquote{the river banks were very muddy.}}. Generating a vector for that specific sense of ``banks'' from the example sentence, and generating one from use of the word in each retrieved document, allows for similarity ranking -- discarding irrelevant uses. 
 
 
-Our method generated new lexically vectors from the standard vectors as a weighted sum of the unsupervised vectors, with the weighting determined by how likely they (the unsupervised) are to be the correct (unsupervised) sense intended in a example sentence containing the gold standard lexical sentence.
+
+
+Our method generated new vectors aligned to a particular usage from prior trained unsupervised vectors using a weighted sum. The weighting determined by how likely they (the unsupervised) are to be the correct (unsupervised) sense intended in a example sentence. Where the example sentence is for a particular dictionary sense of a word, the resulting vector is the for the particular lexical sense in question.
 
 Aligning senses this way also side steps two problems of induced word sense representations: Discarding un-useful representations -- that may have never been trained, and merging overly similar representations. Un-useful representations will never having a high probability for any real context where the target word occurs -- otherwise they would be useful, so will not contribute to the aligned vector. Overly similar representations will  predict similar contexts, and will contribute similar vectors shifts -- it will be roughly equivalent to as if a single vectors was twice as likely.
 
@@ -30,7 +53,7 @@ The method we propose is applicable for the synthesising of new lexically aligne
 
 
 
-We demonstrate this method on AdaGrams\cite{AdaGrams}, and on our own simpler greedy multiple word-sense embeddings. The method is generally applicable to any skip-gram-like language model that can take multiple vectors as input, and can output the probability of a word appearing in their context.
+We demonstrate this method on AdaGrams\parencite{AdaGrams}, and on our own simpler greedy multiple word-sense embeddings. The method is generally applicable to any skip-gram-like language model that can take multiple vectors as input, and can output the probability of a word appearing in their context.
 
 \section{Framework}
 
@@ -44,41 +67,94 @@ It takes a representation of a word sense as an in input, and outputs the probab
 Using the language model, we define a general word-sense disambiguation method, that will be used for serval parts of our process.
 Taking some collection of word sense representations, we aim to use the context to determine which is the most suitable for this use.
 We will call the word we are trying to disambiguate the \emph{target word}.
-Let $\mathbf{s}=(s_{1},...,s_{m})$, be the collection of possible word sense representations for target word, they may be induced senses, or lexical senses.
-Let $\mathbf{c}=(w_{1},...,w_{n})$ be a sequence of word from around the target word -- that is to say it's context.
-For example for the target word \emph{kid}, the context could be \mbox{$\mathbf{c}=(wow,\; the,\; wool,\; from,\; the,\; is,\; so,\; soft,\; and,\; fluffy)$}, where \emph{kid} is the centeral word taken from between \emph{the} and \emph{fluffy}.
+Let $\mathbf{s}=(s_{1},...,s_{n})$, be the collection of possible word sense representations for target word, they may be induced senses, or lexical senses.
+Let $\c=(w_{1},...,w_{m})$ be a sequence of word from around the target word -- that is to say it's context.
+For example for the target word \emph{kid}, the context could be \mbox{$\c=(wow,\; the,\; wool,\; from,\; the,\; is,\; so,\; soft,\; and,\; fluffy)$}, where \emph{kid} is the central word taken from between \emph{the} and \emph{fluffy}.
 Ideally our contexts would be symmetric with similar window size to that used for training the language model, though as shall be discussed below this is not always possible.
  
-For any particular sense, $s_i$, we calculate the probability of the context with the language model: \[P(\mathbf{c}|s_{i})=\prod_{\forall w_{j}\in\mathbf{c}}P(w_{j}|s_{i})\]
-Here, we make the assumption that given any sense representation $s_j$, the probability of each word in it's context is conditionally independent. Stated formally we assume $\forall a,b \in [1,n],\; a \ne b\; \wedge \forall s_i \in \mathbf{s},\:w_a \perp w_b \mid s_i$.
+For any particular sense, $s_i$, one can calculate the probability of the context with the language model:
+\begin{equation} \label{eq:contextprobtrue} P(\c|s_{i})=\prod_{\forall w_{j}\in\c}P(w_{j}|s_{i})
+\end{equation}
+
+Here, the assumption is made that given any sense representation $s_j$, the probability of each word in it's context is conditionally independent. Stated formally it is assumed $\forall a,b \in [1,m],\; a \ne b\; \wedge \forall s_i \in \mathbf{s},\:w_a \perp w_b \mid s_i$.
 The correctness of this assumption depends on the quality of the representation -- the ideal sense representation would fully capture all information about the contexts it can appear in -- that making elements of those contexts not present any additional information, thus making $P(w_a \mid w_b,s_i)=P(w_a \mid s_i)$ i.e. conditionally independent.
 
-From this, by applying Baye's Theorem, we can calculate the likelyhood function, given a prior for $P(s_i)$.
+Rather than use \cref{eq:contextprobtrue} directly, we instead use the geometric mean of the individual word likelihoods as a smoother approximation:
 
-\[P(s_{i}|\mathbf{c}) = \dfrac{P(\mathbf{c}|s_{j})P(s_{j})}{\sum_{s_{j}\in\mathbf{s}}P(s_{j}|\mathbf{c})P(s_{j})}\].
+\begin{equation} \label{eq:contrextprobsmooth}
+P_S(\c|s_{i})=\prod_{\forall w_{j}\in\c}\sqrt[m]{P(w_{j}|s_{i})}
+\end{equation}
+
+This has two key effects. Firstly, it gives consistency for computing the relative  probabilities when dealing with contexts of different lengths. Secondly: When using bayes theorem to find $P(s_{i}|\c)$, this decreases the effect of very small $Q(\c|s_{i})$ on the final sense probabilities\footnote{It also decreases the effect of very large (close to 1) $Q(\c|s_{i})$, but due to the nature of the problem -- the huge number of contexts a word-sense can exist in -- high probabilities should not occur; that would indicate a sense that only occurs in a single context}. This de-emphasis which tends to result in more representative results.
+
+We theorise the reason for the improvement from this geometric smoothing, is due issues caused by rare words in the training corpus. If a word only occurs a few times in the corpus, then it will only be considered a reasonable member of the contexts for a few words, and within those only for a few senses -- probably one. This result in extremely small $P(w|s_i)$ which in turn results in very small $P(\c|s_i)$, which in turn when finding $P(s_{i}|\c)$ eliminates all but the word sense which it has occurred with from the running. However, this would generally be a mistake -- it is unlikely that there is a particularly special link between this rare word and one particular word sense to the exclusion of all others. It is simply a re-emergence of the data sparsity problem which plagues ngram language models. In general this sparsity problem is considered largely solved by word embedding methods due to weight sharing; but it reoccurs here for word-sense embeddings due to the much larger size of the vocabulary of senses,vs of words. Thus we apply this smoothing. In general smoothing is desirable, for consider: \enquote{The CEO of the bank, went for a picnic by the river.} While \enquote{CEO} is closely linked to a financial bank, and \enquote{river} is strongly linked to a river bank, we do not wish for the occurrence of either word in the context to hard negate the possibility of either sense.
+
+\pdfcomment{
+	plot  a=x(1-x))/((x*(1-x))+(y*(1-y))) for 0<x<1, 0<y<1,
+	vs
+	plot  a=sqrt(x(1-x))/(sqrt(x*(1-x))+sqrt(y*(1-y))) for 0<x<1, 0<y<1
+	}
+
+From this, by applying Baye's Theorem, we can calculate the likelihood function, given a prior for $P(s_i)$.
+
+\begin{equation} \label{eq:generalwsd}
+P(s_{i}|\c) = \dfrac{P_S(\c|s_{j})P(s_{j})}{\sum_{s_{j}\in\mathbf{s}P_S(s_{j}|\c)P(s_{j})}}
+\end{equation}
+
+Note that in concrete implementation of this process, it is important to work with the logarithm of the probabilities, given that for any sense $P(\c|s_j)$ is extremely small --given huge range of values for each $w$ -- the entire size of the vocabulary.
 
 
-\subsection Synthesising New Embeddings from a Single Example
+\subsection{Synthesising New Embeddings from a Single Example}
 
-Given a collection of induced embeddings 
+Given a collection of induced (unlabelled) embeddings $\u={u_1,...,u_{n_u}}$, and example sentence which we will again call $\c={w_1,...,w_m}$. We find a new sense embedding: $l$, by: 
 
+\begin{equation} \label{eq:synth}
+l=\sum_{\forall u_i \in \u} u_iP(u_i|\c)
+\end{equation}
 
-\subsubsection Fallback for dictionary phrases (colocations)
-Unless a specialised tokenizing method is used, a word embedding method will not learn embedding for colocations such as ``civil war'' or ``martial arts''. Normal tokenizers will split them at the word level, learning embeddings for ``civil'', and ``war'', and for ``martial'' and ``arts''. This issue is often considered minimal for word embeddings, as a approximate embedding can be constructed by summing embeddings for each word  in the phrase.
+Where $P(u_i|\c$ is found using \cref{eq:generalwsd}, and assuming the uniform prior $P(u_i)=\frac{1}{n_u}$.
 
-It has been constantly noted that for single-sense word embeddings the summing the vectors for each word in the phrase results in reasonable representation for the phrase  \cite{mikolovSkip} \pdfcomment{Doesn't Rui Wang have a paper than goes into some detail on this? I can't find it}. The intuition from this is that for multiple sense-word embeddings, there is a correct selection of senses for each word such that the sum of these senses will be a representation for the phrase.
+The uniform prior is assumed the computational cost of calculating the marginal probability of the final trained sense embeddings over a sufficiently large corpus, is comparable to the cost of training them over that corpus in the first place. Furthermore, it assumes that there is a level of similarity between the distribution of the word-senses in the sources being used for aligning, that matches that of the training corpus. Which seems unlikely given that for WSD tasks we will be aligning to WordNet glosses, which have a very specific distribution of senses -- one of each, when it comes to lexical senses, and it is expected this would also bias the distribution of the induced senses.
 
-Simply evaluating the each combination of word-sense sums for multiple word colocations is computationally expensive. For a $m$ length colocation, where each word has $n$ senses, this requires $m^n$ evaluations of probability of the context ($P(\mathbb{c}\mid u_i)$). When inducing unsupervised word embeddings it is not unreasonable to have $n=30$ sense, so for a 2 word phrase (eg ``civil war'') this is 900 evaluations.
-Instead, we we just add the additional sense embeddings for each word to the total pool of sense embeddings to be combined ($\mathbf{u}$ above), requiring instead $m \times n$ evaluations. So for our 2 word example, this is 60 evaluations, instead of the 30 evaluations that is require for a single word entry. This also has other advantages.
+\subsubsection {Fallback for dictionary phrases (collocations)}
+Unless a specialised tokenizing method is used, a word embedding method will not learn embedding for collocations such as ``civil war'' or ``martial arts''. Normal tokenizers will split them at the word level, learning embeddings for ``civil'', and ``war'', and for ``martial'' and ``arts''. This issue is often considered minimal for word embeddings, as a approximate embedding can be constructed by summing embeddings for each word  in the phrase.
+
+It has been constantly noted that for single-sense word embeddings the summing the vectors for each word in the phrase results in reasonable representation for the phrase  \parencite{mikolovSkip} \pdfcomment{Doesn't Rui Wang have a paper than goes into some detail on this? I can't find it}. The intuition from this is that for multiple sense-word embeddings, there is a correct selection of senses for each word such that the sum of these senses will be a representation for the phrase.
+
+Simply evaluating the each combination of word-sense sums for multiple word collocations is computationally expensive. For a $m$ length collocation, where each word has $n$ senses, this requires $m^n$ evaluations of probability of the context ($P(\mathbb{c}\mid u_i)$). When inducing unsupervised word embeddings it is not unreasonable to have $n=30$ sense, so for a 2 word phrase (eg ``civil war'') this is 900 evaluations.
+Instead, we we just add the additional sense embeddings for each word to the total pool of sense embeddings to be combined ($\u$ above), requiring instead $m \times n$ evaluations. So for our 2 word example, this is 60 evaluations, instead of the 30 evaluations that is require for a single word entry. This also has other advantages.
 
 
 In the case that the word-sense induced for one word 
 
-For example, ``civil war''. The context that ``war'' in ``civil war'' occurs, is very similar to the context that ``war'' appears in general -- for both ``war'' and ``civil war'' we expect the context to include words like ``casualties'', ``miltia'' etc, thus we would not expect a our word sense induction method to produce a specific sense of ``war'' for this context.
+For example, ``civil war''. The context that ``war'' in ``civil war'' occurs, is very similar to the context that ``war'' appears in general -- for both ``war'' and ``civil war'' we expect the context to include words like ``casualties'', ``militia'' etc, thus we would not expect a our word sense induction method to produce a specific sense of ``war'' for this context.
 Compare ``civil'': ``civil'' as in ``civil war'', has very different expected contexts to ``civil'' as in ``civil servant'' or ``civil behaviour''. In this case we would expect 3 different senses of ``civil'' to be induced -- one of which does contain context information for ``civil war'' -- information not captured by the single representation of ``war''.
 
 The extreme version of this is if one or more words in a multiword expression have no embedding defined at all. In this case we fall back to only using senses from words which do have embeddings. An example of this would be ``Fulton County Court'', while ``County'' and ``Court'' are common words, that are certain to occur in any reasonable training corpus; ``Fulton'' is a rare proper noun -- if it occurs at all it likely does not occur enough to train the representation. We use the remaining words: ``County'' and ``Court'' to determine the meaning of the whole. This is not always going to be suitable, but it is the best that can be done.
 
 
+\subsection{Word Sense Disambiguation}
+Given a example sentence ($\{\c_1,...,\c_{n_l}\}$) for each lexical word sense we can find aligned word sense vectors for each $\l=\{l_1,..., l_{n_l}\}$ by using the method described in \cref{eq:synth}. 
+
+Then when given target word in a a sentence to be disambiguated $\c_{challange}$, we can apply the method of \cref{eq:generalwsd}, again to find $P(l_i|c_{challange})$ for each lexical word sense using the lexically aligned sense vectors we found earlier.
+
+\begin{equation}\label{eq:lexicalwsd}
+l^\star = \argmax_{\forall l_i \in \l} P(l_i|c_{challange})
+\end{equation}
+or written out:
+\begin{equation}\label{eq:lexicalwsdexpanded}
+l^\star \argmax_{\forall l_i \in \l} \frac{P_s(c_{challange}|l_i)P(l_i)}{\sum_{\forall l_j \in \l} P_s(c_{challange}|l_j)P(l_j)}
+\end{equation}
+
+Note that in this case, we do have a reasonable prior for $P(l_i)$.
+WordNet comes frequency counts for each word sense based on Semcor\cite{tengi1998design}.
+However Semcor is not a immense corpus, being only a subset of the Brown corpus, \pdfcomment{TODO: Insert a word count for semcor here}, though it does remain one of the largest sense tagged corpora, due to the difficulty of the task event for human annotators.
+The comparatively small size of Semcor means that many word senses do not occur at all.
+Combined with this Semcor's underling texts from Brown are now significantly aging being all from 1961 -- it is not unreasonable to suggest that frequency of word-sense use has changed significantly in the last half century.
+We can solve both issues by applying aggressive Laplacian smoothing -- adding 100 to the pseudo-count of each word. This removes the impossiblity issues with senses the never occur; as well as weaking the prior -- bring it closer to 
+Using less aggressive smoothing, results in the prior dominating over the likelihood term from our module -- which has the net result of the over all system being equivalent to the baseline most common word sense method.
+
+
+\printbibliography
 
 \end{document}
