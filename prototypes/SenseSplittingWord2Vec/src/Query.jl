@@ -5,7 +5,7 @@ using Distances
 using SoftmaxClassifier
 using NearestNeighbors
 import NearestNeighbors.NNTree
-export find_nearest_words, logprob_of_context, nn_tree, WSD, angular_dist, AngularDist
+export find_nearest_words, logprob_of_context, nn_tree, WSD, angular_dist, AngularDist, NoContextError
 
 
 ########### nearest_words, and analogy math
@@ -152,7 +152,11 @@ end
 
 
 #################### Probability of the context
-    
+
+immutable NoContextError <: Exception
+	failed_context
+end
+
 function logprob_of_context{S<:String}(embed::WordEmbedding, context::AbstractVector{S}, middle_word::S; kwargs...)
     input = embed.embedding[middle_word]
     logprob_of_context(embed, context, input; kwargs...)
@@ -174,6 +178,9 @@ function logprob_of_context{N<:Number}(embed::GenWordEmbedding, context, input::
 		end
         total_prob+=word_prob
     end
+	if context_length==0
+		throw(NoContextError(context))
+	end
     if normalise_over_length
 		total_prob/=context_length #This is equivlent to taking the context_length-th root in nonlog domain. Which makes sense.
 	end
