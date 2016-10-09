@@ -9,37 +9,62 @@
 \usetikzlibrary{decorations.pathmorphing}
 \begin{document}
 
-\begin{tikzpicture}[align=center, 	decoration={bent,aspect=.9, amplitude=-2},
-	note/.style= {blue, 
-						  font=\tiny\itshape
+\begin{tikzpicture}[align=center, 	decoration={bent,aspect=.4, amplitude=5},
+	note/.style= {blue,
+				  font=\tiny\itshape
 	},
 	notepoint/.style= {->,
-						  blue, 
-						  dashed,
-						  decorate, shorten <= -32pt
+						note,
+						dashed,
+						decorate, shorten <= -32pt
 	},
+	section/.style = {draw,
+						dashed,
+						fill opacity=0.2,
+						font=\itshape,
+						rounded corners,
+						inner sep=3mm}
 ]
 
 %AlignText/"" [draw];
 
-\graph[ layered layout, sibling distance=7mm, layer sep = 5mm]{
+\graph[ layered layout, sibling distance=40mm, layer sep = 5mm]{
  %grow down, branch right sep]{ %
 	
-	Context/"Context \\{\small (sentence to be disambiguated)}";
-
+	Context/"Context \\\small (sentence to be\\ disambiguated)";
+	WordSense/"Word Sense\\\small (The synset with \\the meaning of\\ this word in this context)";
+	UWSE/"Unsupervised \\Word Sense\\ Embeddings";
+	LWSE/"Lexically Aligned\\ Word Sense\\ Embeddings";
 %
-	{Lemma, POS} -> Synsets -> Glosses -> Align[draw];
-	Word -> "Unsupervised \\Word Sense Embeddings" -> Align;
-	Align -> Lexically Aligned Word Sense Embeddings -> WSD[draw];	
-	Context -> WSD -> "Word Sense\\{\small (The synset with the meaning of this word in this context)}";
 
-{ [same layer] Lemma, POS, Word, Context};
+	
+	
+	{ [same layer] Lemma, POS, Word, Context};
+	
+	
+	Align -> LWSE -> WSD[draw];	
+	
+	"Online: Apply WSD"[section, fill=red]//{
+		Context -> WSD -> WordSense
+	};
+	
+	
+	"Offline: Lexical Alignment"[section, fill=blue, sibling distance = 20mm] // {
+		{Lemma, POS} -> Synsets -> Glosses -> Align[draw],
+		Word -> UWSE -> Align
+	};
+	
+	
 };
-\node[note, left = 0.5 of WSD] (WSDText) { Use language model to find \\ the probability of the context \\ given the input of each\\ lexically aligned word sense embedding\\ Return the one that gives highest probability of context};
- \node[note, left = 0.5 of Align] (AlignText) {Use language model to find \\ the probability of each Gloss \\ given each embeddings. \\ Use this to find a new embeddings, \\ as a weighted sum of each unsupervised embedding \\ proportional how likely the gloss was to occur \\ when it is used input to the language model probability};
+
+
+\node[note, left = 1.0 of WordSense] (WSDText) { Use language model to find \\ the probability of the context \\ given the input of each\\ lexically aligned word sense embedding\\ Return the one that gives highest probability of context};
+ \node[note, left = 0.5 of LWSE] (AlignText) {Use language model to find \\ the probability of each Gloss \\ given each embeddings. \\ Use this to find a new embeddings, \\ as a weighted sum of each unsupervised embedding \\ proportional how likely the gloss was to occur \\ when it is used input to the language model probability};
 
 \draw[notepoint] (AlignText) -> (Align);
 \draw[notepoint] (WSDText) -> (WSD);
+
+
 
 \end{tikzpicture}
 
