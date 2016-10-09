@@ -46,6 +46,11 @@ function Query.logprob_of_context(am::AdaGramModel, context, input::AbstractVect
             input, am.vm.Out,  size(am.vm.In, 1), context_word_path, context_word_code, size(am.vm.code, 1))
         total_lprob+=word_lprob
     end
+
+	if context_length==0
+		throw(Query.NoContextError(context))
+	end
+
     if normalise_over_length
         total_lprob/=context_length #This is equivlent to taking the context_length-th root in nonlog domain. Which makes sense.
 	end

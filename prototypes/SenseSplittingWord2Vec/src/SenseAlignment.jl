@@ -8,10 +8,11 @@ using Utils
 using Query
 using Distances
 
+export normal_probs, normal_probs!, general_wsd, synthesize_embedding
 
-export normal_probs, general_wsd, synthesize_embedding
 
-normal_probs(logprobs::Vector) = normal_probs(copy(logprobs))
+
+normal_probs(logprobs::Vector) = normal_probs!(copy(logprobs))
 function normal_probs!{F<:AbstractFloat}(logprobs::Vector{F})
     ret = logprobs
     max_lp = maximum(logprobs)
@@ -19,7 +20,7 @@ function normal_probs!{F<:AbstractFloat}(logprobs::Vector{F})
     map!(exp,ret)
     denom = sum(ret)
     ret./=denom
-	@assert(sum(ret) ≈ one(F))
+	@assert(sum(ret) ≈ one(F), "Probabilities don't sum to 1, instead are requal to $(sum(ret)), from $ret")
     ret
 end
 
@@ -27,7 +28,8 @@ function general_wsd(ee, context, wvs, priors=ones(length(wvs)), normalise_over_
     lps = Vector{Float64}(length(wvs))
     for (ii,(prior, wv)) in enumerate(zip(priors, wvs))
         lps[ii] = Query.logprob_of_context(ee, context, wv; skip_oov=true, normalise_over_length=normalise_over_context_length)
-        lps[ii] += log(prior)
+		@assert(!isnan(lps[ii]))
+		lps[ii] += log(prior)
     end
     normal_probs!(lps)
 end
