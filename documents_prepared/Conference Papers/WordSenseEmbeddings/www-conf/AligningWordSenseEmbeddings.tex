@@ -1,8 +1,12 @@
 \documentclass{sig-alternate}
 %\documentclass{article}
+
+
 \usepackage{csquotes}
 \usepackage{amsmath}
 
+\usepackage{booktabs, array} % Generates table from .csv
+\usepackage{pgfplotstable}
 
 \usepackage[style=trad-abbrv,url=false, doi=false, sorting=none]{biblatex}
 \bibliography{master}
@@ -21,12 +25,39 @@
 
 
 \begin{document}
-\title{A Bayes Theorem Based, One-Shot Learning, Method for Aligning Word Sense Vectors}
+\title{A Bayes Theorem Based, One-Shot Learning, Method for Refitting Word Sense Vectors}
 \maketitle
 
-%NonAligned: Reisinger2010,Huang2012,AdaGrams
-%Self Aligned: Chen2014
-%Prealigned: iacobacci2015sensembed
+\begin{abstract}
+
+Our contributions are 3:
+
+A Bayes theorem method for refitting word sense vectors to using a single example;
+a novel smoothing technique, for use in the afore mentioned refitting;
+and a new similar measure for words in context, using these refitted vectors, of time complexity lower than for the current standard ArvSimC used by competing systems.
+
+The vector refitting technique can be used to label unsupervised word senses with labels from standard lexical resources, such as WordNet: which as applications in word sense induction, which in tern has applications in machine translation.
+The faster similarity measure has applications in information retrieval, where faster methods are required to allow comparisons to webscale 
+
+
+
+We Demonstrate the effectiveness of the aforementioned techniques, using AdaGrams\cite{AdaGrams}, on word similarity in context, and word sense disambiguation tasks. These are tasks on which the AdaGram embeddings have not previously been successfully applied.
+
+This work 
+
+\end{abstract}
+
+
+\pdfcomment
+One can break up word sense induction methods into two category, for how they determine word senses.
+Clustering based methods, which cluster word instances, and contexts: such as the works of \citeauthor{Reisinger2010}
+
+
+
+
+%NonRefitted: Reisinger2010,Huang2012,AdaGrams
+%Self Refitted: Chen2014
+%Prerefitted: iacobacci2015sensembed
 
 There have been several works focused on inducing representations for different word senses based on context based on various vector-space embeddings \parencite{Reisinger2010,Huang2012,AdaGrams,Chen2014,iacobacci2015sensembed}.
 However, many of these induced representations do not intrinsically line up with the standard human created definitions of any given word sense.
@@ -36,22 +67,22 @@ word senses. Rather, we only rely on clusters to capture meaningful variation in
 It can certainly be argued that the induced senses may capture better senses, more comprehensively, or with better granularity than human lexicographers do.
 However, without links from the induced senses to lexical sense, many applications are limited; and such systems which induce word senses can not be integrated with systems that utilize the wealth of existing lexical knowledge.
 
-We thus propose a method for quickly aligning the indicted senses, to correspond with the sense in a single example, so as to allow the shift from an representation that makes sense only in the context of other representations of that form, to a representation corresponding to some gold standard label. This has several applications.
+We thus propose a method for quickly refitting the indicted senses, to correspond with the sense in a single example, so as to allow the shift from an representation that makes sense only in the context of other representations of that form, to a representation corresponding to some gold standard label. This has several applications.
 
 The most obvious is as a tool for word-sense disambiguation. Which has it own applications, allowing a user to look up the dictionary definition of a word. It also has applications in translation, allowing word senses from one language to be matched to the correct word sense from another by making translator dictionaries accessible. 
 Accomplishing these tasks using word-sense embedding approaches makes for easier integration of these machine learnt models with traditional approaches, opening the way for more powerful hybrids.
 
-Beyond aligning to a standard lexical sense, aligning to a user provided example has applications in information retrieval. Consider the natural language query \enquote{Find me all webpages about banks as in \enquote{the river banks were very muddy.}}. Generating a vector for that specific sense of ``banks'' from the example sentence, and generating one from use of the word in each retrieved document, allows for similarity ranking -- discarding irrelevant uses. 
+Beyond refitting to a standard lexical sense, refitting to a user provided example has applications in information retrieval. Consider the natural language query \enquote{Find me all webpages about banks as in \enquote{the river banks were very muddy.}}. Generating a vector for that specific sense of ``banks'' from the example sentence, and generating one from use of the word in each retrieved document, allows for similarity ranking -- discarding irrelevant uses. 
 
 
 
 
-Our method generated new vectors aligned to a particular usage from prior trained unsupervised vectors using a weighted sum. The weighting determined by how likely they (the unsupervised) are to be the correct (unsupervised) sense intended in a example sentence. Where the example sentence is for a particular dictionary sense of a word, the resulting vector is the for the particular lexical sense in question.
+Our method generated new vectors refitted to a particular usage from prior trained unsupervised vectors using a weighted sum. The weighting determined by how likely they (the unsupervised) are to be the correct (unsupervised) sense intended in a example sentence. Where the example sentence is for a particular dictionary sense of a word, the resulting vector is the for the particular lexical sense in question.
 
-Aligning senses this way also side steps two problems of induced word sense representations: Discarding un-useful representations -- that may have never been trained, and merging overly similar representations. Un-useful representations will never having a high probability for any real context where the target word occurs -- otherwise they would be useful, so will not contribute to the aligned vector. Overly similar representations will  predict similar contexts, and will contribute similar vectors shifts -- it will be roughly equivalent to as if a single vectors was twice as likely.
+Refiting senses this way also side steps two problems of induced word sense representations: Discarding un-useful representations -- that may have never been trained, and merging overly similar representations. Un-useful representations will never having a high probability for any real context where the target word occurs -- otherwise they would be useful, so will not contribute to the refitted vector. Overly similar representations will  predict similar contexts, and will contribute similar vectors shifts -- it will be roughly equivalent to as if a single vectors was twice as likely.
 
 
-The method we propose is applicable for the synthesising of new lexically aligned word sense vectors from unsupervised induced word sense vectors, which come from a skip-gram language model such or similar.
+The method we propose is applicable for the synthesising of new lexically refitted word sense vectors from unsupervised induced word sense vectors, which come from a skip-gram language model such or similar.
 
 
 
@@ -73,19 +104,19 @@ For a corpus to be useful for training word sense vectors, or for learning the a
 
 \subsection{Directly learning Lexical Sense Embeddings}
 While many word sense embeddings do not match to dictionary senses, there are exceptions.
-The alignment method proposed in this paper is thus not required for these methods.
+The refitment method proposed in this paper is thus not required for these methods.
 They can be said to directly compete with our method, when it comes to creating dictionary senses. However when it comes refitting them using a new example sentence for our method is suitable. This continues to have applications in information retrieval.
 
 
 Chen et al. \parencite{Chen2014} train word sense vectors for dictionary senses by relabelling a corpus using embeddings they derived from word embeddings and WordNet. First they train single sense word embeddings using skipgrams \parencite{mikolov2013efficient}. They initially find word sense vectors by averaging the word vectors of all the words in the WordNet gloss.
-Then for each sentence in their training corpus, they progressively relabel the words with word senses. This is done by first calculating a context vector that this the average of all word vectors in the sentence. Then selecting a word to label with a word sense by selecting the word sense that is closest to the context vector. They then recalculate the context vector using the word sense vector, and replace the next word. Only words which can meet a threshhold of similarity are relabelled this way.  Finally, using the relabelled corpus, a new skipgrams method is used with the objective of predicting both words and word-senses in the context. This fine-tunes the sense vectors.  Like Chen et al., Iacobacci et al. \parencite{iacobacci2015sensembed} present another relabelling approach, but use 3rd party labels.
+Then for each sentence in their training corpus, they progressively relabel the words with word senses. This is done by first calculating a context vector that this the average of all word vectors in the sentence. Then selecting a word to label with a word sense by selecting the word sense that is closest to the context vector. They then recalculate the context vector using the word sense vector, and replace the next word. Only words which can meet a threshhold of similarity are relabelled this way, otherwise the word remains unlabelled and a general word vector is trained.  Finally, using the relabelled corpus, a new skipgrams method is used with the objective of predicting both words and word-senses in the context. This fine-tunes the sense vectors.  Like Chen et al., Iacobacci et al. \parencite{iacobacci2015sensembed} present another relabelling approach, but use 3rd party labels.
 
 
 Iacobacci et al. \parencite{iacobacci2015sensembed} apply Continuous Bag of Word (CBOW) language model as in Word2Vec , but rather than using words as the labels, they used word senses. To do this they require a large sense labelled corpus -- which does not exists. Iacobacci et al. create one artificially by applying the 3rd party WSD tool BabelFly. This allows the direct application of Word2Vec techniques to the sense embedding problem, but it does bind their performance to that of BabelFly. 
 
 \pdfcomment{Should I say something about how our method is faster than relabelling and then retraining? Or that it would be a interesting extension of our work to use it for relabelling and then fine tune our vectors, as in Chen}
 
-\subsection{Alignment through a mapping corpus}
+\subsection{Refitment through a mapping corpus}
 
 
 Agirre et al gave a general method for converting disambiguation results from induced word senses to standard lexical word sense disambiguation result \parencite{agirre2006}. This method was used for Semeval-2007 Task 02 \parencite{SemEval2007WSIandWSD} to evaluate all entries.
@@ -127,7 +158,7 @@ With skip-gram style language models, the context is abstracted into the vector 
 It takes a representation of a word sense as an in input, and outputs the probability of any word occurring in the context of the that word sense. In the cases we consider that word sense representation is a vector, and the language model such as skip-gram\parencite{mikolov2013efficient} \footnote{Simple modification of our method would work for related language models such as continuous bag of words (CBOW) \parencite{mikolov2013efficient}}. Do note the asymmetry, in the input and output space: while the input is a vector representing a word-sense, the output is the probability of just a word -- no difference is made between different senses occurring in the context. Given a particular word-sense the language model gives us the probability of the word occurring in the context of that word sense. Stated formally, for a word from the space of words $w\in \W$, and for a sense representation $s$, the language model gives $$P(w \mid s)$$. Using this information we may assumed conditional independence of the words, and apply Bayes Theorem to perform word sense disambiguation across the senses provided.
 
 \subsection{A General WSD method}
-Using the language model, and simple application of bayes theorem, we define a general word-sense disambiguation method, that will be used for several parts of our process. This disambiguation method is used on both the unsupervised induced sense vectors, as well as the lexically aligned sense vectors once we have created them.
+Using the language model, and simple application of bayes theorem, we define a general word-sense disambiguation method, that will be used for several parts of our process. This disambiguation method is used on both the unsupervised induced sense vectors, as well as the lexically refitted sense vectors once we have created them.
 
 Taking some collection of word sense representations, we aim to use the context to determine which is the most suitable for this use.
 We will call the word we are trying to disambiguate the \emph{target word}.
@@ -170,7 +201,7 @@ Note that in concrete implementation of this process, it is important to work wi
 
 \subsection{Synthesising New Embeddings from a Single Example}
 
-The key contribution of this work is to suggest a new way to synthesis a word sense embedding given only one example. For lack of a better term we call this *aligning* the word sense vectors, to find a new vector, that lines up with the specific meaning of the word from the example sentence.
+The key contribution of this work is to suggest a new way to synthesis a word sense embedding given only one example. For lack of a better term we call this *refitting* the word sense vectors, to find a new vector, that lines up with the specific meaning of the word from the example sentence.
 
 This can be looked at as a oneshot learning problem, with the training of language model and induced sense embeddings, as a unsupervised pre-training. The new word sense embedding should give a high value for the likelihood of the example sentence, under the language model. Further more though, it should generalise, to also give high likelihood of other contexts that were never seen, but which also occur near the word of this particular meaning.
 
@@ -185,7 +216,7 @@ l=\sum_{\forall u_i \in \u} u_iP(u_i \mid \c)
 
 Where $P(u_i \mid \c$ is found using \cref{eq:generalwsd}, and assuming the uniform prior $P(u_i)=\frac{1}{n_u}$.
 
-The uniform prior is assumed the computational cost of calculating the marginal probability of the final trained sense embeddings over a sufficiently large corpus, is comparable to the cost of training them over that corpus in the first place. Furthermore, it assumes that there is a level of similarity between the distribution of the word-senses in the sources being used for aligning, that matches that of the training corpus. Which seems unlikely given that for WSD tasks we will be aligning to WordNet glosses, which have a very specific distribution of senses -- one of each, when it comes to lexical senses, and it is expected this would also bias the distribution of the induced senses.
+The uniform prior is assumed the computational cost of calculating the marginal probability of the final trained sense embeddings over a sufficiently large corpus, is comparable to the cost of training them over that corpus in the first place. Furthermore, it assumes that there is a level of similarity between the distribution of the word-senses in the sources being used for refitting, that matches that of the training corpus. Which seems unlikely given that for WSD tasks we will be refitting to WordNet glosses, which have a very specific distribution of senses -- one of each, when it comes to lexical senses, and it is expected this would also bias the distribution of the induced senses.
 
 In the very first neural network language model paper, Bengio et al. describe a similar method for finding word embeddings for words not found in their vocabulary \parencite{NPLM}. They suggest that if a word was not in the training data, \enquote{an initial feature vector for such a word, by taking a weighted convex combination of the feature vectors of other words that could have occurred in the same context, with weights proportional to their conditional probability}. The formula they give is as per \Cref{eq:synth}, but summing over the entire vocabulary of words (rather than just $\u$). To the best of our knowledge, this method has not been used for handling out of vocabulary words in any more recent word embedding architectures, nor has it been used with word-sense vectors.
 
@@ -208,9 +239,9 @@ The extreme version of this is if one or more words in a multiword expression ha
 
 
 \subsection{Word Sense Disambiguation}
-Given a example sentence ($\{\c_1,...,\c_{n_l}\}$) for each lexical word sense we can find aligned word sense vectors for each $\l=\{l_1,..., l_{n_l}\}$ by using the method described in \cref{eq:synth}. 
+Given a example sentence ($\{\c_1,...,\c_{n_l}\}$) for each lexical word sense we can find refitted word sense vectors for each $\l=\{l_1,..., l_{n_l}\}$ by using the method described in \cref{eq:synth}. 
 
-Then when given target word in a a sentence to be disambiguated $\c_{challange}$, we can apply the method of \cref{eq:generalwsd}, again to find $P(l_i \mid c_{challange})$ for each lexical word sense using the lexically aligned sense vectors we found earlier.
+Then when given target word in a a sentence to be disambiguated $\c_{challange}$, we can apply the method of \cref{eq:generalwsd}, again to find $P(l_i \mid c_{challange})$ for each lexical word sense using the lexically refitted sense vectors we found earlier.
 
 \begin{equation}\label{eq:lexicalwsd}
 l^\star = \argmax_{\forall l_i \in \l} P(l_i|c_{challenge})
@@ -230,10 +261,10 @@ Using less aggressive smoothing, results in the prior dominating over the likeli
 
 
 
-\subsection{Bayesian Aligned Word Sense Vectors vs AvgSimC}
+\subsection{Refitted Word Sense Vectors vs AvgSimC}\label{RefittedSimVsAvgSimC}
 Reisinger and Mooney \cite{Reisinger2010} propose several methods for finding similarity utilising multiple word sense vectors -- the best performing of which was AvgSimC.
 The key difference between their method and ours is that AvgSimC, is a probability weighted average of of pairwise computed distances for each word senses vector,
-where as with out Aligned Word sense vectors, it is a single distance computed over probability weighed word sense vector.
+where as with out Refitted Word sense vectors, it is a single distance computed over probability weighed word sense vector.
 
 For $\c$ and $\c^\prime$ the contexts of target words $w$ and $w^\prime$ for which we want to measure the similarity of. Where $w$ has senses $\s=\{s_1,...,s_n\}$, and $w^\prime$ has senses $\s=\{s^\prime_1,...,s\prime_{n^\prime}\}$, and for $d$ the distance function -- normally cosine distance it is defined by:
 
@@ -246,10 +277,10 @@ For $\c$ and $\c^\prime$ the contexts of target words $w$ and $w^\prime$ for whi
 	P(s_{i}\mid\c)\,P(s_{j}^{\prime}\mid\c^{\prime})\,d(s_{i},s_{j}^{\prime})
 \end{multline}
 
-Which we contrast with our method, based on using \Cref{eq:synth} to synthesise a new vector that is aligned to give high likelihood of their contexts, under language model:
+Which we contrast with our method, based on using \Cref{eq:synth} to synthesise a new vector that is refitted to give high likelihood of their contexts, under language model:
 
 \begin{multline}
-	\mathrm{AlignedSim}((\s,\c),(s^{\prime},\c^{\prime}))\\
+	\mathrm{RefittedSim}((\s,\c),(s^{\prime},\c^{\prime}))\\
 	\begin{aligned}
 	&= d(l(\s \mid \c), l(\s^\prime \mid \c^\prime)\\
 	&= d
@@ -258,19 +289,46 @@ Which we contrast with our method, based on using \Cref{eq:synth} to synthesise 
 	\end{aligned}
 \end{multline}
 
-Note that several existing works, evaluated using AvgSimC, do not find $P(s_{i}\mid\c)$ and $P(s_{j}^{\prime}\mid\c^\prime)$ using a probability based method, but rather define them using the a distance function \parencite{Reisinger2010, Huang2012}. Context vector cluster based vectors can use distance from their sense cluster centroid, and call that distance, after with normalisation, the probably that context belonging that cluster. There is a clear rational for this interpretation, as we can see it as a soft (fuzzy) membership function. Such a method could be used to allow for lexical alignment, and thus with the AlignedSim similarity function and other techniques discussed in this paper. 
+Note that several existing works, evaluated using AvgSimC, do not find $P(s_{i}\mid\c)$ and $P(s_{j}^{\prime}\mid\c^\prime)$ using a probability based method, but rather define them using the a distance function \parencite{Reisinger2010, Huang2012}. Context vector cluster based vectors can use distance from their sense cluster centroid, and call that distance, after with normalisation, the probably that context belonging that cluster. There is a clear rational for this interpretation, as we can see it as a soft (fuzzy) membership function. Such a method could with \Cref{eq:synth}, and thus with the RefittedSim similarity function and other techniques discussed in this paper. 
  
 
+There is a notable time complexity difference between AvgSimC and ReffittedSim.
 AvgSimC has time complexity $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert +n\times n^{\prime})$
+RefittedSim is $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert)$
+In the information retrieval context, the probabilities of the word sense for the context of the document can be done off-line, during indexing. With this assumption, the query-time time complexity becomes: for AvgSimC becomes $O(n\times n^{\prime})$, and for RefittedSim is now $O(1)$. We do note however that pre-computing the word sense probabilities for each word in the document during indexing remains expensive (though no more so than for AvgSimC) -- it is however trivially parallelisable. We suggest that when this indexing time is considered worthwhile, then RefittedSim is significantly more viable for use in information retrieve tasks, where the user provides a example of the words they query so that a search for \enquote{\enquote{Apple} as in \enquote{the fruit I might like to eat}}, can return different results from \enquote{\enquote{Apple} as in \enquote{the company that makes the iPod, ad the Macbook}}.
+
+\section{Results and Discussion}
 
 
-AlignedSim is $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert)$
+\section{Similarity in context}
+
+We evaluate our refitting method, with and without, the geometric smoothing mentioned in \Cref{eq:contrextprobsmooth}, using the Stanford's Contextual Word Similarities (SCWS) corpus \parencite{Huang2012}.
+
+\begin{table*}
+\pgfplotstabletypeset[col sep=comma, search path={../data,..}, header=has colnames, string type,
+columns/rho/.style={
+	column name={$\rho \times 100$},
+	numeric type,
+	precision=1,
+	preproc/expr={100*##1},
+	column type=l
+}]{swsc.csv}
+
+\caption{Results on SWSC. $\rho$ is Speerman rank correlation between the output similarities from each method and the ground truth of the average rating of from the human annotators. \pdfcomment{TODO: Reformat this table. Remove Smoothing column, call out RefittedSim-Without-Smoothing}} \label{swscres}
+\end{table*}
 
 
-\pdfcomment{shall we treat $\left\Vert \c\right\Vert $ as constants?}
+We suggest that no results have been presented prior to our work for AdaGrams evaluated on SCWS,
+due to the comparative failure of AvgSimC to produce suitable results on that task. As can be seen in \Cref{swscres} AvgSimC preduces a comparatively 
 
-The difference is significant, when it comes to utilising this as a similarity measure for webscale information retrieval.
 
+It can be seen that using the RefittedSim measure, our results perform similarly to those of Huang et al., using AvgSimC; but as discussed in \Cref{RefittedSimVsAvgSimC}, have a lower time-complexity to calculate.
+
+The results of Chen et al using AvgSimC, do significantly out perform both our method and that of Huang et al. This supports their approach of utilising WordNet sense data, to bootstrap their problem into a semi-supervised learning problem. This in and of itself highlights the importance and utility of bridging the gap between structures data such as WordNet, and unstructured data such as induced word sense vectors.
+
+
+
+It can be seen 
 
 
 \printbibliography
