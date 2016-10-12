@@ -182,13 +182,34 @@ For any particular sense, $s_i$, one can calculate the probability of the contex
 Here, the assumption is made that given any sense representation $s_j$, the probability of each word in it's context is conditionally independent. Stated formally it is assumed $\forall a,b \in [1,m],\; a \ne b\; \wedge \forall s_i \in \s,\:w_a \perp w_b \mid s_i$.
 The correctness of this assumption depends on the quality of the representation -- the ideal sense representation would fully capture all information about the contexts it can appear in -- that making elements of those contexts not present any additional information, thus making $P(w_a \mid w_b,s_i)=P(w_a \mid s_i)$ i.e. conditionally independent.
 
-Rather than use \cref{eq:contextprobtrue} directly, we instead use the geometric mean of the individual word likelihoods as a smoother approximation:
+
+From this, by applying Baye's Theorem, we can calculate the likelihood function, given a prior for $P(s_i)$.
+FYI, I have set the project start date to Oct 31 given the busy October month for all of us, and project duration of 7 months (average of 13 hours/week in case not all of you are engaged each and every week, we can always finish sooner or work in bursts). 
+\begin{equation} \label{eq:generalwsd}
+P(s_{i} \mid \c) = \dfrac{P_S(\c \mid s_{j})P(s_{j})}{\sum_{s_{j}\in\s P_S(s_{j} \mid \c)P(s_{j})}}
+\end{equation}
+
+Note that in concrete implementation of this process, it is important to work with the logarithm of the probabilities, given that for any sense $P(\c \mid s_j)$ is extremely small --given huge range of values for each $w$ -- the entire size of the vocabulary.
+
+\subsubsection{Geometric Smoothing}
+As covered above, is a typical application of Bayes' theorem to the problem of finding the posterior distribution, given the likelihood of observations.
+Our contribution beyond this is what we will call, for lack of a better term, geometric smoothing.
+Rather than use \cref{eq:contextprobtrue} directly, we instead use the geometric mean of the individual word likelihoods:
 
 \begin{equation} \label{eq:contrextprobsmooth}
 P_S(\c \mid s_{i})=\prod_{\forall w_{j}\in\c}\sqrt[m]{P(w_{j} \mid s_{i})}
 \end{equation}
 
-This has two key effects. Firstly, it gives consistency for computing the relative  probabilities when dealing with contexts of different lengths. Secondly: When using Bayes' theorem to find $P(s_{i} \mid \c)$, this decreases the effect of very small $Q(\c \mid s_{i})$ on the final sense probabilities\footnote{It also decreases the effect of very large (close to 1) $Q(\c \mid s_{i})$, but due to the nature of the problem -- the huge number of contexts a word-sense can exist in -- high probabilities should not occur; that would indicate a sense that only occurs in a single context}. This de-emphasis which tends to result in more representative results.
+This does not smooth, $P_S(\c \mid s_{i})$
+But when this is used with in \Cref{eq:generalwsd}, it smooths $P(s_{i} \mid )$.
+
+\begin{equation} \label{eq:generalwsdsmoothed}
+P(s_{i} \mid \c) = \dfrac{P_S(\c \mid s_{j})P(s_{j})}{\sum_{s_{j}\in\s P_S(s_{j} \mid \c)P(s_{j})} = }
+\end{equation}
+
+
+
+For lack of a better term we will call this geometric smoothing. Geometric smoothing has two key effects. Firstly, it gives consistency for computing the relative  probabilities when dealing with contexts of different lengths. Secondly: When using Bayes' theorem to find $P(s_{i} \mid \c)$, this decreases the effect of very small $P(\c \mid s_{i})$ on the final sense probabilities\footnote{It also decreases the effect of very large (close to 1) $P(\c \mid s_{i})$, but due to the nature of the problem -- the huge number of contexts a word-sense can exist in -- high probabilities should not occur; that would indicate a sense that only occurs in a single context}. This de-emphasis which tends to result in more representative results.
 
 We theorise the reason for the improvement from this geometric smoothing, is due issues caused by rare words in the training corpus. If a word only occurs a few times in the corpus, then it will only be considered a reasonable member of the contexts for a few words, and within those only for a few senses -- probably one. This result in extremely small $P(w \mid s_i)$ which in turn results in very small $P(\c \mid s_i)$, which in turn when finding $P(s_{i} \mid \c)$ eliminates all but the word sense which it has occurred with from the running. However, this would generally be a mistake -- it is unlikely that there is a particularly special link between this rare word and one particular word sense to the exclusion of all others. It is simply a re-emergence of the data sparsity problem which plagues ngram language models. In general this sparsity problem is considered largely solved by word embedding methods due to weight sharing; but it reoccurs here for word-sense embeddings due to the much larger size of the vocabulary of senses,vs of words. Thus we apply this smoothing. In general smoothing is desirable, for consider: \enquote{The CEO of the bank, went for a picnic by the river.} While \enquote{CEO} is closely linked to a financial bank, and \enquote{river} is strongly linked to a river bank, we do not wish for the occurrence of either word in the context to hard negate the possibility of either sense.
 
@@ -198,13 +219,6 @@ We theorise the reason for the improvement from this geometric smoothing, is due
 	plot  a=sqrt(x(1-x))/(sqrt(x*(1-x))+sqrt(y*(1-y))) for 0<x<1, 0<y<1
 	}
 
-From this, by applying Baye's Theorem, we can calculate the likelihood function, given a prior for $P(s_i)$.
-FYI, I have set the project start date to Oct 31 given the busy October month for all of us, and project duration of 7 months (average of 13 hours/week in case not all of you are engaged each and every week, we can always finish sooner or work in bursts). 
-\begin{equation} \label{eq:generalwsd}
-P(s_{i} \mid \c) = \dfrac{P_S(\c \mid s_{j})P(s_{j})}{\sum_{s_{j}\in\s P_S(s_{j} \mid \c)P(s_{j})}}
-\end{equation}
-
-Note that in concrete implementation of this process, it is important to work with the logarithm of the probabilities, given that for any sense $P(\c \mid s_j)$ is extremely small --given huge range of values for each $w$ -- the entire size of the vocabulary.
 
 
 \subsection{Synthesising New Embeddings from a Single Example}
@@ -323,7 +337,7 @@ To confirm that our refitting method, and associated techniques are not simply a
 This method starts with a fixed number of randomly initialised word-sense embeddings, then greedily aligns each training cases to the sense for which predicts that context with highest probability (using \Cref{eq:generalwsd}), at each training step. The task remains the same: using skipgrams with hierarchical softmax to predict context words for the word sense.
 Our implementation is based on a heavily modified version of the Word2Vec.jl package by Tanmay Mohapatra, and Zhixuan Yang \footnote{\url{https://github.com/tanmaykm/Word2Vec.jl/}} for word embeddings.
 
-Due to the greedy nature of this baseline method, it is a intrinsically worse than Adagrams. A particular embedding may get an initial lead at predicting a context, simply based on predicting high probability for all words. It then gets trained more, resulting in it generally predicting high probability of many words, while other embeddings remain untrained. There is no force in the model to encourage diversification and specialisation of the embeddings. As a greedy method it readily falls into traps where the most used embedding is the most trained embedding, and thus is likely to receive more training. The random initialisation does help with this. Manual inspection reveals that it does capture a variety of senses, though with significant repetition of common senses, and with rare senses being largely missed. It is however a fully independent method from AdaGrams, and so is suitable for use in checking the generalisation of our method.
+Due to the greedy nature of this baseline method, it is a intrinsically worse than AdaGrams. A particular embedding may get an initial lead at predicting a context, simply based on predicting high probability for all words. It then gets trained more, resulting in it generally predicting high probability of many words, while other embeddings remain untrained. There is no force in the model to encourage diversification and specialisation of the embeddings. As a greedy method it readily falls into traps where the most used embedding is the most trained embedding, and thus is likely to receive more training. The random initialisation does help with this. Manual inspection reveals that it does capture a variety of senses, though with significant repetition of common senses, and with rare senses being largely missed. It is however a fully independent method from AdaGrams, and so is suitable for use in checking the generalisation of our method.
 
 
 \subsection{Experimental Setup and Model Parameters}
@@ -331,6 +345,42 @@ Due to the greedy nature of this baseline method, it is a intrinsically worse th
 The results reported in \Cref{results}
 
 
+During training we use the Wikipedia dataset as used by Huang et al. \cite{Huang2012}.
+We did not perform the extensive preprocessing used in that work, 
+We preprocessed the data merely by converting it to lowercase, tokenizing it and removing punctuation tokens.
+For both models, were trained with a single iteration over the whole data set.
+
+
+\subsubsection{AdaGram}
+For the AdaGram model, we configured it to have 30 word senses, each represented by a 100 dimension vector,
+We did not prune rare word senses during the Adagram training, preferring to allow them to be removed in the refitting step.
+Having excess word senses, does not causes out method to have any problem, as excess embeddings will not significantly contribute towards the refitted sum.
+However having too few senses may mean some aspect of meaning may fail to be captured.
+
+
+\pdfcomment{
+	Dict\{String,Any\} with 18 entries:
+	"prototypes" => 30
+	"nprocessors" => 13
+	"output\_fn" => "../models/adagram/more\_senses.adagram\_model"
+	"sense\_treshold" => 1.0e-10
+	"remove\_top\_k" => 0
+	"context\_cut" => true
+	"initcount" => 1.0
+	"train\_fn" => "../data/corpora/WikiCorp/tokenised\_lowercase\_WestburyLab.wikicorp.201004.txt"
+	"d" => 0.0
+	"alpha" => 0.25
+	"subsample" => 1.0e-5
+	"epochs" => 1
+	"window" => 10
+	"min\_freq" => 20
+	"save\_treshold" => 0.0
+	"dim" => 100
+	"stopwords" => Set\{AbstractString\}()
+	"dict\_fn" => "../data/corpora/WikiCorp/tokenised\_lowercase\_WestburyLab.wikicorp.201004.1gram
+	}
+\begin{comment}
+\end{comment}
 
 
 \section{Results and Discussion} \label{results}
