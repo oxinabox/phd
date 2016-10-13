@@ -197,27 +197,24 @@ Our contribution beyond this is what we will call, for lack of a better term, ge
 Rather than use \cref{eq:contextprobtrue} directly, we instead use the geometric mean of the individual word likelihoods:
 
 \begin{equation} \label{eq:contrextprobsmooth}
-P_S(\c \mid s_{i})=\prod_{\forall w_{j}\in\c}\sqrt[m]{P(w_{j} \mid s_{i})}
+P_S(\c \mid s_{i})=\prod_{\forall w_{j}\in\c}\sqrt[|\c|]{P(w_{j} \mid s_{i})}
 \end{equation}
 
 This does not smooth, $P_S(\c \mid s_{i})$
 But when this is used with in \Cref{eq:generalwsd}, it smooths $P(s_{i} \mid )$.
 
 \begin{equation} \label{eq:generalwsdsmoothed}
-P(s_{i} \mid \c) = \dfrac{P_S(\c \mid s_{j})P(s_{j})}{\sum_{s_{j}\in\s P_S(s_{j} \mid \c)P(s_{j})} = }
+P(s_{i} \mid \c) = \dfrac{P_S(\c \mid s_{j})P(s_{i})}{\sum_{s_{i}\in\s P_S(s_{j} \mid \c)P(s_{j})}} = \dfrac{\prod_{\forall w_{j}\in\c}\sqrt[|\c|]{P(w_{j} \mid s_{i})}P(s_{j})}{\sum_{s_{j}\in\s \prod_{\forall w_{k}\in\c}\sqrt[|\c|]{P(w_{k} \mid s_{j})} P(s_{j})}} 
 \end{equation}
 
 
+Whether or not the prior is included in the normalisation has no effect, if the uniform prior is used.
+
+\pdfcomment{I am now thinking I should really bring the Prior, inside the root. and smooth that as well.}
 
 For lack of a better term we will call this geometric smoothing. Geometric smoothing has two key effects. Firstly, it gives consistency for computing the relative  probabilities when dealing with contexts of different lengths. Secondly: When using Bayes' theorem to find $P(s_{i} \mid \c)$, this decreases the effect of very small $P(\c \mid s_{i})$ on the final sense probabilities\footnote{It also decreases the effect of very large (close to 1) $P(\c \mid s_{i})$, but due to the nature of the problem -- the huge number of contexts a word-sense can exist in -- high probabilities should not occur; that would indicate a sense that only occurs in a single context}. This de-emphasis which tends to result in more representative results.
 
 We theorise the reason for the improvement from this geometric smoothing, is due issues caused by rare words in the training corpus. If a word only occurs a few times in the corpus, then it will only be considered a reasonable member of the contexts for a few words, and within those only for a few senses -- probably one. This result in extremely small $P(w \mid s_i)$ which in turn results in very small $P(\c \mid s_i)$, which in turn when finding $P(s_{i} \mid \c)$ eliminates all but the word sense which it has occurred with from the running. However, this would generally be a mistake -- it is unlikely that there is a particularly special link between this rare word and one particular word sense to the exclusion of all others. It is simply a re-emergence of the data sparsity problem which plagues ngram language models. In general this sparsity problem is considered largely solved by word embedding methods due to weight sharing; but it reoccurs here for word-sense embeddings due to the much larger size of the vocabulary of senses,vs of words. Thus we apply this smoothing. In general smoothing is desirable, for consider: \enquote{The CEO of the bank, went for a picnic by the river.} While \enquote{CEO} is closely linked to a financial bank, and \enquote{river} is strongly linked to a river bank, we do not wish for the occurrence of either word in the context to hard negate the possibility of either sense.
-
-\pdfcomment{
-	plot  a=x(1-x))/((x*(1-x))+(y*(1-y))) for 0<x<1, 0<y<1,
-	vs
-	plot  a=sqrt(x(1-x))/(sqrt(x*(1-x))+sqrt(y*(1-y))) for 0<x<1, 0<y<1
-	}
 
 
 
