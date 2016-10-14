@@ -193,7 +193,7 @@ Note that in concrete implementation of this process, it is important to work wi
 \subsubsection{Geometric Smoothing}
 As covered above, is a typical application of Bayes' theorem to the problem of finding the posterior distribution, given the likelihood of observations.
 Our contribution beyond this is what we will call, for lack of a better term, geometric smoothing.
-Rather than use \cref{eq:generalwsd} directly, we consider instead replacing the normalised posterior estimate (i.e. the numerator), with it's $|\c|$-th root.
+Rather than use \Cref{eq:generalwsd} directly, we consider instead replacing the normalised posterior estimate (i.e. the numerator), with it's $|\c|$-th root.
 
 \begin{equation} \label{eq:contrextprobsmooth}
 P_S(\c \mid s_{i})=\prod_{\forall w_{j}\in\c}\sqrt[|\c|]{P(w_{j} \mid s_{i})}
@@ -206,14 +206,33 @@ But when this is used with in \Cref{eq:generalwsd}, it smooths $P(s_{i} \mid )$.
 P(s_{i}\mid\c)=\dfrac{P_{S}(\c\mid s_{j})P(s_{i})}{\sum_{s_{i}\in\s P_{S}(s_{j}\mid\c)P(s_{j})}}=\dfrac{\prod_{\forall w_{j}\in\c}\sqrt[|\c|]{P(w_{j}\mid s_{i})P(s_{j})}}{\sum_{s_{j}\in\s\prod_{\forall w_{k}\in\c}\sqrt[|\c|]{P(w_{k}\mid s_{j})P(s_{j})}}}
 \end{equation}
 
-The motivation for this comes from considering, the case of the uniform prior.
-In this case, it is the same as replacing $P_S(\c \mid s_{i})$ with the geometric mean of the individual word probabilities -- rather than the 
+The motivation for this comes from considering the case of the uniform prior.
+In this case, it is the same as replacing $P_S(\c \mid s_{i})$ with the geometric mean of the individual word probabilities $P_S(w_j \mid s_{i})$. 
+If one has two sentences, $\c=\{w_1,...w_{|\c|}\}$ and $\c^\prime=\{w_1^\prime,...w^\prime_{|\c^\prime|}\}$, such that $|\c|^\prime > |\c|$:
+then using \Cref{eq:contextprobtrue} to calculate $P(\c \mid s_{i})$ and $P(\c^\prime \mid s_{i})$ will generally result in incomparable results as addition probability terms will dominate -- often significantly more than then the probabilities themselves.
+This becomes clear when one considers the expected values. For $V$ the vocabulary size, we have the expected value:
+\begin{equation} \label{eq:expectcontexprob}
+\mathbb{E}_\c(P(\c \mid s_{i}))
+=(\mathbb{E}_w(P(w \mid s_i)))^{|\c|}
+= \frac{1}{V}^{|\c|}
+\end{equation}
+Taking the $|\c|$-th and $|\c^\prime|$-th roots of $P(\c \mid s_{i})$ and $P(\c \mid s_{i})$ normalises these probabilities so that they have the same expected value; thus making a fair comparison possible, where the context length does not dominate.
+When this normalisation is applied to \Cref{eq:generalwsd}, we get a smoothing effect.
 
-If the uniform prior is used, then this is simply the geometric mean of the individual word likelihoods.
 
-Whether or not the prior is included in the normalisation has no effect, if the uniform prior is used.
+Geometric smoothing has, as we suggest with the name, a smoothing effect on the $$P(s_{i}\mid\c)$$. It effectively increases small values, and decrease large values, in monotonically to their distance. The reasoning behind applying smoothing is that very high, and very low probabilities of a context are not expected to truely occur in natural languages. In general one should almost never be completely certain that one sense, or another applies (or does not apply) to a given sentence. The context is not truely so informative as to allow hard decisions.
+However, due to data sparsity, only tiny small fraction of the possible contexts a word sense can appear in, will actually occur, even in a very large training corpus.
 
-\pdfcomment{I am now thinking I should really bring the Prior, inside the root. and smooth that as well.}
+
+
+ 
+
+very few contexts 
+
+\pdfcomment{I think I should show some plots here} 
+
+It is sensible approach to take the geometric mean
+
 
 For lack of a better term we will call this geometric smoothing. Geometric smoothing has two key effects. Firstly, it gives consistency for computing the relative  probabilities when dealing with contexts of different lengths. Secondly: When using Bayes' theorem to find $P(s_{i} \mid \c)$, this decreases the effect of very small $P(\c \mid s_{i})$ on the final sense probabilities\footnote{It also decreases the effect of very large (close to 1) $P(\c \mid s_{i})$, but due to the nature of the problem -- the huge number of contexts a word-sense can exist in -- high probabilities should not occur; that would indicate a sense that only occurs in a single context}. This de-emphasis which tends to result in more representative results.
 
