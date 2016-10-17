@@ -9,7 +9,8 @@
 \usepackage{pgfplotstable}
 
 \usepackage[backend=bibtex,
-style=trad-abbrv,url=false, doi=false, sorting=none]{biblatex}
+style=trad-abbrv,url=false, doi=false,
+sorting=none, sortcites=true]{biblatex}
 \bibliography{master}
 
 \usepackage[author={Lyndon White}]{pdfcomment}
@@ -408,7 +409,7 @@ Only words with at least 20 occurrences were kept, this gave a total vocabulary 
 \subsection{Greedy Baseline Model}
 The greedy word sense embedding model, was configured without significant thought for it's performance -- indeed it was selected to have significantly different parameters to the AdaGram model that we trained. So that impact of using our methods could be checked to see they performed consistently on different word sense embedding models.
 
-The vocabulary was restricted to only words with at least 250 occurrences, which resulted in a total vocabulary of 88,262 words. Words with at least 20,000 occurrences, were giving 20 senses, and the remainder just a single sense. This resulted in the most common 2,796 words having multiple senses. This never the less covers a substantial portion of all the word senses used, due to the most common words having the most word senses \parencite{zipf1945meaning}, and being vastly more common than the less common words \parencite{zipf1949human,gilmour2005understanding}.
+The vocabulary was restricted to only words with at least 250 occurrences, which resulted in a total vocabulary of 88,262 words. Words with at least 20,000 occurrences, were giving 20 senses, and the remainder just a single sense. This resulted in the most common 2,796 words having multiple senses. This is not very high coverage, however it is more substantial than may be expected as the most common words having the most word senses \parencite{zipf1945meaning}, and being vastly more common than the less common words \parencite{zipf1949human,gilmour2005understanding}.
 
 
 \pdfcomment{
@@ -454,11 +455,9 @@ As can be seen, using RefittedSim without using geometric smoothing, does it not
 
 We suggest that RefittedSim with geometric smoothing, is a more appropriate method that AvgSimC when working with probabilities directly taken from a word sense language model such as AdaGram or the Greedy embeddings we defined as a baseline. 
 The methods presented by Reisinger and Mooney, Huang et al. and Iacobacci et al., do not work with sense probabilities taken from a language model; rather their methods use a distance measure to approximate fuzzy membership of cluster or a degree of relatedness to the sense vector \parencite{Reisinger2010,Huang2012,iacobacci2015sensembed}. The distance measure itself imposes a particular curve onto the distribution of distances i.e. onto the assumed probabilities used in AvgSimC; and this particular distribution, solves the data sparsity problem that we solve with geometric smoothing.
-The method presented by Chen et al. is significantly different, in that it has the predicted sense of the context words as an output (rather than an input) of it's model, and so has a different distribution from either of our methods, or from the  distance methods discuessed. Further, it leavages WordNet to realable the training data, which proves very effective.
+The method presented by Chen et al. is significantly different, in that it has the predicted sense of the context words as an output (rather than an input) of it's model, and so has a different distribution from either of our methods, or from the  distance methods discussed. Further, it re-label it's training data and then fine tunes it's sense embeddings.
 
 The results of Chen et al using AvgSimC, do significantly out perform both our method and that of Huang et al. This supports their approach of utilising WordNet sense data, to bootstrap their problem into a semi-supervised learning problem. This in and of itself highlights the importance and utility of bridging the gap between structures data such as WordNet, and unstructured data such as induced word sense vectors.
-
-
 
 
 We do note that our method does have lower training time, as it only requires using the training data once, where as relabelling approaches, as uses by Chen et al, require a second training pass, using the boot-strapped labels. We suggest though that this extra time is well worth it, as the results from using it are notably better. It would be possible to apply a similar relabelling method to AdaGrams, using our approach to solve the WSD problem to bootstrap the training data.
@@ -472,15 +471,12 @@ It seems that AdaGram when using smoothing, there is little performance differen
 As discussed in \Cref{lexicalWSD} the language model, can be applied to a WSD Task by fitting to the glosses. We do not window the glosses as they are already short, and the actual word we are fitting may not occur in the gloss itself, being that it is a definition shared by mean words with the same meaning. We do convert the gloss to lower case, and strip any out of vocabulary words, including punctuation.
 
 \begin{table*}
-	\begin{tabular}{|c|c|c|c|c|}
-		\hline Paper & Method & Attempted & Precison & Recall \\ 
-		\hline Holder &  &  &  &  \\ 
-		\hline Place  &  &  &  &  \\ 
-		\hline Holder &  &  &  &  \\ 
-		\hline Holder &  &  &  &  \\ 
-		\hline Place &  &  &  &  \\ 
-		\hline 
-	\end{tabular} 
+	\pgfplotstabletypeset[col sep=comma, search path={../data,..}, header=has colnames, string type,
+	columns/F1/.style={ numeric type,precision=3, fixed zerofill=true},
+	columns/Precision/.style={ numeric type,precision=3, fixed zerofill=true},
+	columns/Recall/.style={ numeric type,precision=3, fixed zerofill=true}
+	]{semeval2007t7.csv}
+	
 	
 	\caption{Results on SemEval 2007 Task 7 -- course-all-words disambiguation.
 		For comparison we include subset of the results from the other indicated papers.
