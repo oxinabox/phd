@@ -2,7 +2,7 @@ module WordEmbeddings
 using Trees
 using DataStructures
 
-export RandomInited, HuffmanTree, SemHuffTree, NaiveSoftmax, random_inited, naive_softmax, huffman_tree, GenWordEmbedding, keep_word_vectors_only!, WordEmbedding, WordSenseEmbedding, FixedWordSenseEmbedding, SplittingWordSenseEmbedding, all_word_sense_vectors
+export RandomInited, HuffmanTree, SemHuffTree, NaiveSoftmax, random_inited, naive_softmax, huffman_tree, GenWordEmbedding, keep_word_vectors_only!, WordEmbedding, WordSenseEmbedding, FixedWordSenseEmbedding, SplittingWordSenseEmbedding, all_word_sense_vectors, has_word, all_word_sense_priors
 
 
 # The types defined below are used for specifying the options of the word embedding training
@@ -199,9 +199,23 @@ function FixedWordSenseEmbedding(dim::Int64, init_type::InitializationMethod, ne
 					)
 end
 
+
+############################
+
 function all_word_sense_vectors(ee::WordSenseEmbedding, word)
     get(ee.embedding, word, Vector{Float32}[])
 end
 
+
+function all_word_sense_priors(ee::WordSenseEmbedding, word)
+	n_senses= length(all_word_sense_vectors(ee, word))
+	fill(1f0/n_senses, n_senses)
+end
+
+
+
+function has_word(ee::GenWordEmbedding, word)
+	haskey(ee.codebook, word)
+end
 
 end #Module
