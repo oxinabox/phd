@@ -8,7 +8,13 @@
 \usepackage{adjustbox}
 
 \usepackage{booktabs, array} % Generates table from .csv
-\usepackage{pgfplotstable}
+\usepackage{pgfplots, pgfplotstable}
+
+\pgfplotsset{
+%pgfplots/table/
+search path={.,..,../data}
+}
+
 
 \usepackage[backend=bibtex,
 style=trad-abbrv,url=false, doi=false,
@@ -33,24 +39,28 @@ sorting=none, sortcites=true]{biblatex}
 \maketitle
 
 \begin{abstract}
-Word sense embedding induction is notable extension of word embedding methods.
-An issue with this unsupervised method, it can not directly be determined what each induced sense means. Further, as the induced senses do not (normally) match to standard dictionary meanings of the word, this limits ability to integrate sense embeddings with existing knowledge bases. Another issues is how to detect and remove redundant senses.
+Word sense embedding induction is a  notable extension of word embedding methods.
+An issue with this unsupervised method, it cannot directly be determined what each induced sense means.
+Further, as the induced senses do not (normally) match to standard dictionary meanings of the word, this limits ability to integrate sense embeddings with existing knowledge bases. Another issue is the detection and removal of redundant senses.
 We propose a method for handling these issues.
-We use the unsupervised senses and the language model to synthesise new sense embeddings which line up to target word's meaning in a given example sentence.
+A method for finding new word sense vectors from a single example, utilizing the existing word sense embeddings and the language model;
+We term this refitting, as the new embedding is fitted to model the meaning in the example sentence -- where are the unsupervised senses were not.
 
+Our contributions are threefold:
+The refitting method to find new sense vectors,
+a novel smoothing technique, for use with the refitting method;
+and a new similarity measure for words in context, using these refitted vectors,
 
-Our contributions are three:
-A method for refitting word sense vectors to using a single example;
-a novel smoothing technique, for use in the afore mentioned refitting;
-and a new similar measure for words in context, using these refitted vectors, of time complexity lower than for the current standard AvgSimC used by competing systems.
+%of time complexity lower than for the current standard AvgSimC used by competing systems.
 
 The vector refitting technique can be used to label unsupervised word senses with labels from standard lexical resources, such as WordNet: which as applications in word sense induction, which in turn has applications in machine translation.
-The faster similarity measure has applications in information retrieval, where faster methods are required to allow comparisons to web-scale 
+The faster similarity measure has applications in information retrieval, where faster methods are required to allow comparisons to web-scale
 
 
 We demonstrate the effectiveness of the aforementioned techniques, using AdaGram \parencite{AdaGrams}, on word similarity in context, and word sense disambiguation tasks. These are tasks on which the AdaGram embeddings have not previously been successfully applied.
 \end{abstract}
 
+\section{Introduction}
 
 Many word embedding techniques train their word vectors, in a unsupervised fashion, using the task of training a language model \parencite{NPLM, collobert2008unified, mikolov2013efficient}.
 For most applications, this language model is discarded, and only the trained word embeddings are kept and utilised.
@@ -61,7 +71,7 @@ Here, the language models which when given a word sense embedding output the pro
 
 
 While it can be argued that the induced senses may capture better senses, more comprehensively, or with better granularity than human lexicographers do.
-However, without links from the induced senses to lexical sense, many applications are limited; and such systems which induce word senses can not be integrated with systems that utilize the wealth of existing lexical knowledge.
+However, without links from the induced senses to lexical sense, many applications are limited; and such systems which induce word senses cannot be integrated with systems that utilize the wealth of existing lexical knowledge.
 
 We thus propose a method for quickly refitting the indicted senses, to correspond with the sense in a single example. This allows a shift from an representation that can only work within the system, to one that uses a standard sense, or a user defined sense, which can be used as part of a more complex knowledge engineering system. This refitting method  has several applications.
 
@@ -87,7 +97,7 @@ We demonstrate the refitting method on Adaptive Skip-Grams (AdaGram) \parencite{
 A significant issue for WSD, is the lack of annotated corpora suitable for training a machine learning approach.
 There are several reasons for this. One is the difficulty of the task -- it is hard to get high inter-annotator agreement on the correct word sense. Second is the huge size a corpora needs to be to be practically useful.
 
-For a corpus to be useful for training word sense vectors, or for learning the association between context and sense more generally, it would need to show a large number of examples of all the contexts a word could be seen in. Powerful generalising methods for machine learning can decrease the number of examples, but not remove the need for a large corpus. 
+For a corpus to be useful for training word sense vectors, or for learning the association between context and sense more generally, it would need to show a large number of examples of all the contexts a word could be seen in. Powerful generalising methods for machine learning can decrease the number of examples, but not remove the need for a large corpus.
 Zipf's law \parencite{zipf1949human} applies not only to the frequency of words, but to the frequency of word senses with-in words \parencite{Kilgarriff2004}. Thus an extremely large corpus is required to capture useful information. Creating such a annotated corpus manually is a herculean task. This is one of the key attractions of unsupervised word sense induction -- which can make use of immense corpora without requiring them to be annotated.
 
 This lack of labelled training data makes systems that can work with unsupervised data initially, and then use only a very small amount of labelled training data to get labelled output very desirable.
@@ -121,8 +131,8 @@ This mapping is given by for $\l=\{l_1,..., l_{n_l}\}$ the set of lexically defi
 M_{i,j} = P(l_i | u_j) = \frac{count(\mathrm{method\: gives\: u_i \wedge l_i\: is\: annotated})}{count(\mathrm{method\: gives\: u_i})}
 \end{equation}
 
-An issue with estimating $P(l_i \mid u_j)$ this way is that to get a accurate estimate the law of large samples must apply to the mapping corpus, which given the issues discussed in \Cref{corpussize} may not. Given such a mapping corpus with sufficient overlap to the test corpus Agirre's method works well. 
-From this  when presented with a sentence containing the target word to disambiguate ($\c$) the unsupervised sense score ($P(u_j \mid \c)$ are converted to supervised scores ($P(l_j \mid \c)$) by 
+An issue with estimating $P(l_i \mid u_j)$ this way is that to get a accurate estimate the law of large samples must apply to the mapping corpus, which given the issues discussed in \Cref{corpussize} may not. Given such a mapping corpus with sufficient overlap to the test corpus Agirre's method works well.
+From this  when presented with a sentence containing the target word to disambiguate ($\c$) the unsupervised sense score ($P(u_j \mid \c)$ are converted to supervised scores ($P(l_j \mid \c)$) by
 \begin{equation} \label{eq:agireewsd}
 P(l_i \mid \c) = P(l_i | u_j) P(u_j \mid c)
 \end{equation}
@@ -150,7 +160,7 @@ Let $\s=(s_{1},...,s_{n})$, be the collection of possible word sense representat
 Let $\c=(w_{1},...,w_{m})$ be a sequence of word from around the target word -- that is to say it's context window.
 For example for the target word \emph{kid}, the context could be {$\c=(wow,\; the,\; wool,\; from,\; the,\; is,\; so,\; soft,\; and,\; fluffy)$}, where \emph{kid} is the central word taken from between \emph{the} and \emph{fluffy}.
 Ideally our contexts would be symmetric with similar window size to that used for training the language model, though this is not always possible.
- 
+
 For any particular sense, $s_i$, one can calculate the probability of the context with the language model:
 \begin{equation} \label{eq:contextprobtrue}
  P(\c \mid s_{i})=\prod_{\forall w_{j}\in\c}P(w_{j} \mid s_{i})
@@ -186,7 +196,7 @@ P(s_{i}\mid\c)=\dfrac{P_{S}(\c\mid s_{j})P(s_{i})}{\sum_{s_{i}\in\s P_{S}(s_{j}\
 \end{equation}
 
 The motivation for this comes from considering the case of the uniform prior.
-In this case, it is the same as replacing $P_S(\c \mid s_{i})$ with the geometric mean of the individual word probabilities $P_S(w_j \mid s_{i})$. 
+In this case, it is the same as replacing $P_S(\c \mid s_{i})$ with the geometric mean of the individual word probabilities $P_S(w_j \mid s_{i})$.
 If one has two sentences, $\c=\{w_1,...w_{|\c|}\}$ and $\c^\prime=\{w_1^\prime,...w^\prime_{|\c^\prime|}\}$, such that $|\c|^\prime > |\c|$:
 then using \Cref{eq:contextprobtrue} to calculate $P(\c \mid s_{i})$ and $P(\c^\prime \mid s_{i})$ will generally result in incomparable results as addition probability terms will dominate -- often significantly more than then the relative values of the probabilities themselves. This is because for almost any word $w$ and any target word sense $P(w \mid \s_i)$ the number of words that could be in the targets context is a significant portion of the entire vocabulary.
 This becomes clear when one considers the expected values. For $V$ the vocabulary size, we have the expected value:
@@ -216,13 +226,13 @@ This can be looked at as a one-shot learning problem, with the training of langu
 In preliminarily investigation of this, we attempted directly optimising a vector, to maximise the probability of the example when input into the language model. This took significant time per word, and did not produce a generalisable representation. We attribute this to overfitting, which is very easy to do with just the single example. Rather than directly optimising for a new word sense vector, we sought to express them as a combinations of the existing vectors that were already trained. We propose to do this as a weighted sum of the induced word sense sense, where the weighting is determine using  probability of the context under the vectors vectors.
 
 
-Given a collection of induced (unlabelled) embeddings $\u={u_1,...,u_{n_u}}$, and example sentence which we will again call $\c={w_1,...,w_m}$. We define that gives uas a new sense embedding: $l(\u \mid \c )$, by: 
+Given a collection of induced (unlabelled) embeddings $\u={u_1,...,u_{n_u}}$, and example sentence which we will again call $\c={w_1,...,w_m}$. We define that gives uas a new sense embedding: $l(\u \mid \c )$, by:
 
 \begin{equation} \label{eq:synth}
 l(\u \mid \c ) = \sum_{\forall u_i \in \u} u_i P(u_i \mid \c)
 \end{equation}
 
-Where $P(u_i \mid \c$ is found using \Cref{eq:generalwsd} (or the geometric smoothed version \Cref{eq:generalwsdsmoothed}), 
+Where $P(u_i \mid \c$ is found using \Cref{eq:generalwsd} (or the geometric smoothed version \Cref{eq:generalwsdsmoothed}),
 and $P(u_i)$ is the prior over the unsupervised senses. Or the uniform prior if no prior $P(u_i)=\frac{1}{n_u}$ is available .
 
 
@@ -238,7 +248,7 @@ Simply evaluating the each combination of word-sense sums for multiple word coll
 Instead, we we just add the additional sense embeddings for each word to the total pool of sense embeddings to be combined ($\u$ above), requiring instead $m \times n$ evaluations. So for our 2 word example, this is 60 evaluations, instead of the 30 evaluations that is require for a single word entry. This also has other advantages.
 
 
-In the case that no word-sense induced for one word does highlight the specialised collocation information, but the other word does have a particular induced 
+In the case that no word-sense induced for one word does highlight the specialised collocation information, but the other word does have a particular induced
 
 For example, ``civil war''. The context that ``war'' in ``civil war'' occurs, is very similar to the context that ``war'' appears in general. With both ``war'' and ``civil war'' we expect the context to include words like ``casualties'', ``militia'' etc, thus we would not expect a our word sense induction method to produce a specific sense of ``war'' for this context.
 Compare ``civil'': ``civil'' as in ``civil war'', has very different expected contexts to ``civil'' as in ``civil servant'' or ``civil behaviour''. In this case we would expect 3 different senses of ``civil'' to be induced -- one of which does contain context information for ``civil war'' -- information not captured by the single representation of ``war''.
@@ -246,14 +256,14 @@ Compare ``civil'': ``civil'' as in ``civil war'', has very different expected co
 The extreme version of this is if one or more words in a multiword expression have no embedding defined at all. In this case we fall back to only using senses from words which do have embeddings. An example of this would be ``Fulton County Court'', while ``County'' and ``Court'' are common words, that are certain to occur in any reasonable training corpus; ``Fulton'' is a rare proper noun -- if it occurs at all it likely does not occur enough to train the representation. We use the remaining words: ``County'' and ``Court'' to determine the meaning of the whole. This is not always going to be suitable, but often is.
 
 \subsection{Word Sense Disambiguation} \label{lexicalWSD}
-Given a example sentence ($\{\c_1,...,\c_{n_l}\}$), such as a gloss, for each lexical word sense we can refitted word sense vectors for each of $\l=\{l_1,..., l_{n_l}\}$ by using the method described in \cref{eq:synth}. 
+Given a example sentence ($\{\c_1,...,\c_{n_l}\}$), such as a gloss, for each lexical word sense we can refitted word sense vectors for each of $\l=\{l_1,..., l_{n_l}\}$ by using the method described in \cref{eq:synth}.
 
 Then when given target word $w_{target}$ in a a sentence $\c_{challange}$ to be disambiguated, we can apply \Cref{eq:generalwsd} (or the smoothed version \Cref{eq:generalwsdsmoothed}), again to find $P(l_i \mid c_{challange})$ for each lexical word sense of $w$ using the lexically refitted sense vectors we found earlier.
 
-%\begin{aligned}\label{eq:lexicalwsd}
-%l^\star &= \argmax_{\forall l_i \in \l} P(l_i|c_{challenge})
-%&= \argmax_{\forall l_i \in \l} \frac{P_s(c_{challange}|l_i)P(l_i)}{\sum_{\forall l_j \in \l} P_s(c_{challenge}|l_j)P(l_j)}
-%\end{aligned}
+\begin{aligned}\label{eq:lexicalwsd}
+l^\star &= \argmax_{\forall l_i \in \l} P(l_i|c_{challenge})
+&= \argmax_{\forall l_i \in \l} \frac{P_s(c_{challange}|l_i)P(l_i)}{\sum_{\forall l_j \in \l} P_s(c_{challenge}|l_j)P(l_j)}
+\end{aligned}
 
 As each lexical word-sense shares it's gloss with the rest of its set of synonymous senses, this means that the lexically aligned word senses for synonym are all fitted to the same example sentence. However this does not mean they are equal, as they use different word sense vectors to find the weighted sums. Similarly, as the glosses are defined per lemma (base form), the different tenses (and other variants) of a word also share the same example sentence, but once again, the refitted word sense vector will still be different, so we learn different word sense vectors for each form of the word.
 
@@ -263,7 +273,7 @@ Note that in this case, we do have a prior for $P(l_i)$.
 WordNet includes frequency counts for each word sense based on Semcor \textcite{tengi1998design}.
 However Semcor is not a immense corpus, being only a subset of the Brown corpus.
 
-The comparatively small size of Semcor means that many word senses do not occur at all. As counted by WordNet 2.1 (used in the WSD task in \Cref{WSDtask}), there are counts for just  36973 word senses, out of the total 207,016 senses in WordNet; i.e. 82\% of all word senses have no count information. 
+The comparatively small size of Semcor means that many word senses do not occur at all. As counted by WordNet 2.1 (used in the WSD task in \Cref{WSDtask}), there are counts for just  36973 word senses, out of the total 207,016 senses in WordNet; i.e. 82\% of all word senses have no count information.
 
 There is an additional issue that the Semcor's underling texts from Brown are now significantly ageing being all from 1961 \cite{francis1979brown} -- it is not unreasonable to suggest that frequency of word-sense use has changed significantly in the last half century.
 
@@ -286,7 +296,7 @@ It is simply defined by using \Cref{eq:synth} to refit the unsupervised word sen
 \end{aligned}
 \end{multline}
 
-For $\c$ and $\c^\prime$ the contexts of target words $w$ and $w^\prime$ for which we want to measure the similarity of. Where $w$ has senses $\s=\{s_1,...,s_n\}$, and $w^\prime$ has senses $\s=\{s^\prime_1,...,s\prime_{n^\prime}\}$, and for $d$ the distance function -- normally cosine distance. 
+For $\c$ and $\c^\prime$ the contexts of target words $w$ and $w^\prime$ for which we want to measure the similarity of. Where $w$ has senses $\s=\{s_1,...,s_n\}$, and $w^\prime$ has senses $\s=\{s^\prime_1,...,s\prime_{n^\prime}\}$, and for $d$ the distance function -- normally cosine distance.
 
 Reisinger and Mooney \parencite{Reisinger2010} propose several methods for finding similarity utilising multiple word sense vectors -- the best performing of which was AvgSimC.
 The key difference between their method and ours is that AvgSimC, is a probability weighted average of of pairwise computed distances for each word senses vector,
@@ -297,7 +307,7 @@ the formula for RefittedSim \Cref{eq:refittedsim} can be contrasted with that fo
 
 \begin{multline}
 	\mathrm{AvgSimC}((\s,\c),(s^{\prime},\c^{\prime})) \\
-	=  \frac{1}{n \times n^{\prime}} 
+	=  \frac{1}{n \times n^{\prime}}
 	\sum_{s_{i}\in\s}
 	\sum_{s_{j}^{\prime}\in\s^{\prime}}
 	P(s_{i}\mid\c)\,P(s_{j}^{\prime}\mid\c^{\prime})\,d(s_{i},s_{j}^{\prime})
@@ -305,14 +315,14 @@ the formula for RefittedSim \Cref{eq:refittedsim} can be contrasted with that fo
 
 
 Note that several existing works, evaluated using AvgSimC, do not find $P(s_{i}\mid\c)$ and $P(s_{j}^{\prime}\mid\c^\prime)$ using a probability based method, but rather define them using the a distance function \parencite{Reisinger2010, Huang2012}. Context vector cluster based vectors can use distance from their sense cluster centroid, and then interpret that distance after with normalisation, the probably that context belonging that cluster. There is a clear rational for this interpretation, as we can see it as a soft membership function. \pdfcomment{Such a method could with \Cref{eq:synth}, and thus with the RefittedSim similarity function and other techniques discussed in this paper.}
- 
+
 
 There is a notable time complexity difference between AvgSimC and RefittedSim.
 AvgSimC has time complexity $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert +n\times n^{\prime})$
 RefittedSim is $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert)$.
 The product of the number of senses of each word $n \times n^\prime$, may small for dictionary senses, but it is often large for induced senses. Dictionaries tend to define only a few sense per word -- the average\footnote{It should be noted, though, that the number of meanings is not normally distributed \parencite{zipf1945meaning}} number of senses in WordNet is less than three for all parts of speech \parencite{miller1995wordnet}. For induced sense, however, it is often desirable to train many more senses, to get better results using the more fine-grained information. In several evaluations performed by Reisinger and Mooney they found optimal results at near to 50 senses \parencite{Reisinger2010}; this aligned with our own preliminary experiments also.
 
-In the information retrieval context, the probabilities of the word sense for the context of the document can be done off-line, during indexing. With this assumption, the query-time time complexity becomes: for AvgSimC becomes $O(n\times n^{\prime})$, and for RefittedSim is now $O(1)$. 
+In the information retrieval context, the probabilities of the word sense for the context of the document can be done off-line, during indexing. With this assumption, the query-time time complexity becomes: for AvgSimC becomes $O(n\times n^{\prime})$, and for RefittedSim is now $O(1)$.
 We do note however that pre-computing the word sense probabilities for each word in the document during indexing remains expensive (though no more so than for AvgSimC) -- it is however trivially parallelisable. We suggest that when this indexing time is considered worthwhile, then RefittedSim is significantly more viable for use in information retrieve tasks, where the user provides a example of the words they query so that a search for \enquote{\enquote{Apple} as in \enquote{the fruit I might like to eat}}, can return different results from \enquote{\enquote{Apple} as in \enquote{the company that makes the iPod, ad the Macbook}}.
 
 
@@ -330,7 +340,7 @@ Due to the greedy nature of this baseline method, it is a intrinsically worse th
 
 \subsection{Experimental Setup and Model Parameters}
 During training we use the Wikipedia dataset as used by Huang et al. \parencite{Huang2012}.
-We did not perform the extensive preprocessing used in that work, 
+We did not perform the extensive preprocessing used in that work,
 We preprocessed the data merely by converting it to lower case, tokenizing it and removing punctuation tokens.
 For both models, were trained with a single iteration over the whole data set.
 Also in both cases sub-sampling of $10^-5$ was used, and decreasing learning rate starting at 0.25 was used.
@@ -374,9 +384,9 @@ With these greedy embeddings, we always use the uniform prior, as the assignment
 
 \pdfcomment{
 Vocab size: 88,262
-n\_senses = 20 
+n\_senses = 20
 min\_count = 250
-min\_count for multiple senses = 20\_000	
+min\_count for multiple senses = 20\_000
 multisense word count = 2796
 }
 
@@ -388,9 +398,8 @@ multisense word count = 2796
 We evaluate our refitting method, with and without, the geometric smoothing mentioned in \Cref{eq:contrextprobsmooth}, using the Stanford's Contextual Word Similarities (SCWS) corpus \parencite{Huang2012}.
 As per in the training, each challenge context was windowed to 5 word either side of the target word, where possible.
 
-
 \begin{table*}
-\pgfplotstabletypeset[col sep=comma, search path={../data,..}, header=has colnames, string type,
+\pgfplotstabletypeset[col sep=comma, header=has colnames, string type,
 columns/rho/.style={
 	column name={$\rho \times 100$},
 	numeric type,
@@ -408,7 +417,7 @@ In \Cref{swscres}, are shown the results on the SCWS similarity task. Shown are 
 
 It can be seen that using the RefittedSim measure, our results perform similarly to those of Huang et al. and to those of Tian et al, using AvgSimC; but as discussed in \Cref{RefittedSimVsAvgSimC}, have a lower time-complexity to calculate.
 
-We suggest that no results have been presented prior to our work using AdaGram evaluated on SCWS, due to the comparative failure of AvgSimC to produce suitable results when applied to AdaGram that task. As can be seen in \Cref{swscres} Adagram with AvgSimC produces lack-luster results. 
+We suggest that no results have been presented prior to our work using AdaGram evaluated on SCWS, due to the comparative failure of AvgSimC to produce suitable results when applied to AdaGram that task. As can be seen in \Cref{swscres} Adagram with AvgSimC produces lack-luster results.
 
 Using RefittedSim without using geometric smoothing and without the prior from, does it not perform much better than just using AvgSimC. Adding the geometric smoothing to AvgSimC did improve that result. However it much more significantly improved the results with RefittedSim. We see similar pattern with the greedy multiple word sense embeddings -- though unsurprisingly these results are significantly worse. It seems that geometric smoothing also improved the greedy multiple sense embeddings in the same away.
 
@@ -416,7 +425,7 @@ The performance shift from AdaGram RefittedSim with the uniform prior by adding 
 
 
 \begin{comment}
-We suggest that RefittedSim with geometric smoothing, is a more appropriate method that AvgSimC when working with probabilities directly taken from a word sense language model such as AdaGram or the Greedy embeddings we defined as a baseline. 
+We suggest that RefittedSim with geometric smoothing, is a more appropriate method that AvgSimC when working with probabilities directly taken from a word sense language model such as AdaGram or the Greedy embeddings we defined as a baseline.
 The methods presented by Reisinger and Mooney, Huang et al. and Iacobacci et al., do not work with sense probabilities taken from a language model; rather their methods use a distance measure to approximate fuzzy membership of cluster or a degree of relatedness to the sense vector \parencite{Reisinger2010,Huang2012,iacobacci2015sensembed}. The distance measure itself imposes a particular curve onto the distribution of distances i.e. onto the assumed probabilities used in AvgSimC; and this particular distribution, solves the data sparsity problem that we solve with geometric smoothing.
 The method presented by Chen et al. is significantly different, in that it has the predicted sense of the context words as an output (rather than an input) of it's model, and so has a different distribution from either of our methods, or from the  distance methods discussed. Further, it re-label it's training data and then fine tunes it's sense embeddings.
 \end{comment}
@@ -433,22 +442,22 @@ As discussed in \Cref{lexicalWSD} the language model, can be applied to a WSD Ta
 
 \begin{table*}
 	\begin{adjustbox}{max width=\textwidth}
-	\pgfplotstabletypeset[col sep=comma, search path={../data,..}, header=has colnames, string type,
+	\pgfplotstabletypeset[col sep=comma, header=has colnames, string type,
 	columns/F1/.style={ numeric type,precision=3, fixed zerofill=true},
 	columns/Precision/.style={ numeric type,precision=3, fixed zerofill=true},
 	columns/Recall/.style={ numeric type,precision=3, fixed zerofill=true}
 	]{semeval2007t7.csv}
 	\end{adjustbox}
-	
+
 	\caption{Results on SemEval 2007 Task 7 -- course-all-words disambiguation.
 		For comparison we include subset of the results from the other indicated papers.
 	} \label{samevalres}
 \end{table*}
 
 The results of employing our method, are shown in \Cref{samevalres}, with several others for comparison. Our results marginally outperforms the baseline most frequents sense -- as often observed, a surprisingly difficult baseline to beat.
-We note, that it is particularly important to include the prior based on sense counts -- to do otherwise results in incorrect formulation of Bayes theorem in \Cref{eq:lexicalwsd}. In this case, the uniform prior is not a good approximation to the true prior distribution at all -- given the highly unbalanced frequencies of different word senses. \pdfcomment{Should I include some results for what happens if you try and use a uniform prior?}
+We note, that it is particularly important to include the prior based on sense counts -- to do otherwise results in incorrect formulation of Bayes theorem in \Cref{eq:lexicalwsd}. In this case, the uniform prior is snot a good approximation to the true prior distribution at all -- given the highly unbalanced frequencies of different word senses. \pdfcomment{Should I include some results for what happens if you try and use a uniform prior?}
 
-Our method, like that of Chen et al only uses information from WordNet, and a unlabelled corpus \parencite{Chen2014}. It does not use hand-engineered features, or labelled training data -- beyond the glosses from WordNet. 
+Our method, like that of Chen et al only uses information from WordNet, and a unlabelled corpus \parencite{Chen2014}. It does not use hand-engineered features, or labelled training data -- beyond the glosses from WordNet.
 
 Our method is beaten by the S2C method, when used with MFS backoff.
 We do not employ any back-off strategy with AdaGram, as almost all words are found in the trained vocabulary. We suggest that threshold approach used with S2C is particularly effective at determining whether there is enough useful context information to make it clear as to if the word can be disambiguated, using the model.
@@ -472,7 +481,7 @@ The performance of our method is comparable to AvgSimC.
 
 We also demonstrated how similar principles, could be used to create a set of vectors that are aligned to the meanings in a sense inventory, such as WordNet. We showed how this could be used for word sense disambiguation. On this difficult task, it performed marginally better than the MFS baseline, and better than some implementations comparable systems. However, on it's own it we do not believe the method is strong enough for commercial use. Future similar systems, building upon our work would have strong uses in machine translation.
 
-As part of our method for refitting the sense embeddings to there new senses, we presented a novel smoothing algorithm -- geometric smoothing. 
+As part of our method for refitting the sense embeddings to there new senses, we presented a novel smoothing algorithm -- geometric smoothing.
 This smoothing method, is required to compensate for the data sparsity problem that is intrinsic in learning senses from usage data. Even more so than the data sparsity problem for words which is normally solved by word embeddings, due to their being many more meanings for words than there are words, particularly when fine grained senses are employed. We show as part of the discussed methods that our smoothing gives substantial improvement over the results with unsmoothed language model.
 
 \printbibliography
