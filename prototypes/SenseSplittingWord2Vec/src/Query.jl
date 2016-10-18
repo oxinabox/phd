@@ -163,11 +163,11 @@ function logprob_of_context{S<:String}(embed::WordEmbedding, context::AbstractVe
 end
 
 
-function logprob_of_context{N<:Number}(embed::GenWordEmbedding, context, input::Vector{N}; skip_oov=false, normalise_over_length=false)
+function logprob_of_context{N<:Number}(embed::GenWordEmbedding, context, input::Vector{N}; skip_oov=false)
     total_prob=zero(N)
 	context_length = 0
     for target_word in context
-		skip_oov && !haskey(embed.codebook, target_word) && continue
+		skip_oov && !has_word(embed, target_word) && continue
         context_length+=1
 
 		node = embed.classification_tree      
@@ -180,9 +180,6 @@ function logprob_of_context{N<:Number}(embed::GenWordEmbedding, context, input::
     end
 	if context_length==0
 		throw(NoContextError(context))
-	end
-    if normalise_over_length
-		total_prob/=context_length #This is equivlent to taking the context_length-th root in nonlog domain. Which makes sense.
 	end
 	total_prob::N
 end

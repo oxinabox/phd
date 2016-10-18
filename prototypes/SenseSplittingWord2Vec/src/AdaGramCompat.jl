@@ -2,7 +2,7 @@ module AdaGramCompat
 using Query
 using AdaGram
 const AdaGram_lib = joinpath(Pkg.dir("AdaGram"), "lib", "superlib.so")
-import WordEmbeddings.all_word_sense_vectors
+import WordEmbeddings: all_word_sense_vectors, has_word, all_word_sense_priors
 
 export word_sense_vectors, word_sense_vector, AdaGramModel
 
@@ -13,8 +13,23 @@ end
 AdaGram.disambiguate(am::AdaGramModel, word, context) = disambiguate(am.vm, am.dict, word, context)
 
 
+function has_word(am::AdaGramModel, word)
+	haskey(am.dict.word2id, word)
+end
+
+function all_word_sense_priors(am::AdaGramModel, word)
+	if has_word(am, word)
+		word_id = am.dict.word2id[word]
+		expected_pi(am.vm, word_id)
+    else
+        Vector{Float32}[]
+    end
+end
+
+
+
 function all_word_sense_vectors(am::AdaGramCompat.AdaGramModel, word)
-    if haskey(am.dict.word2id, word)
+    if has_word(am, word)
         wsv_mat = word_sense_vectors(am, word)
         [view(wsv_mat,:,ii) for ii in 1:size(wsv_mat,2)]
     else
@@ -23,19 +38,22 @@ function all_word_sense_vectors(am::AdaGramCompat.AdaGramModel, word)
 end
 
 
+
 function word_sense_vectors(am::AdaGramModel, word)
 	view(am.vm.In, :, :, am.dict.word2id[word])
 end
+
+
 
 function word_sense_vector(am::AdaGramModel, word, sense_id::Int)
 	view(word_sense_vectors(am,word), :, sense_id)
 end
 
-function Query.logprob_of_context(am::AdaGramModel, context, input::AbstractVector{Float32}; skip_oov=false, normalise_over_length=false)
+function Query.logprob_of_context(am::AdaGramModel, context, input::AbstractVector{Float32}; skip_oov=false)
     total_lprob=zero(Float32)
 	context_length = 0
     for context_word in context
-        skip_oov && !haskey(am.dict.word2id, context_word) && continue
+		skip_oov && !has_word(am, context_word) && continue
         context_length+=1
         context_word_id = am.dict.word2id[context_word]
         context_word_path = view(am.vm.path, :, context_word_id)
@@ -50,11 +68,8 @@ function Query.logprob_of_context(am::AdaGramModel, context, input::AbstractVect
 	if context_length==0
 		throw(Query.NoContextError(context))
 	end
-
-    if normalise_over_length
-        total_lprob/=context_length #This is equivlent to taking the context_length-th root in nonlog domain. Which makes sense.
-	end
-    total_lprob
+    
+	total_lprob
 end
 
 
