@@ -85,17 +85,6 @@ Rare senses may occur in a system due to embeddings that are never trained, or t
 
 We demonstrate the refitting method on Adaptive Skip-Grams (AdaGram) \parencite{AdaGrams}, and on our own simple greedy multiple word-sense embeddings. The method is generally applicable to any skip-gram-like language model that can take multiple vectors as input, and can output the probability of a word appearing in their context.
 
-\subsection{Issues with Lack of Annotated Corpora} \label{corpussize}
-\pdfcomment{This section needs to move. Where to put it}
-A significant issue for WSD, is the lack of annotated corpora suitable for training a machine learning approach.
-There are several reasons for this. One is the difficulty of the task -- it is hard to get high inter-annotator agreement on the correct word sense. Second is the huge size a corpora needs to be to be practically useful.
-
-For a corpus to be useful for training word sense vectors, or for learning the association between context and sense more generally, it would need to show a large number of examples of all the contexts a word could be seen in. Powerful generalising methods for machine learning can decrease the number of examples, but not remove the need for a large corpus.
-Zipf's law \parencite{zipf1949human} applies not only to the frequency of words, but to the frequency of word senses with-in words \parencite{Kilgarriff2004}. Thus an extremely large corpus is required to capture useful information. Creating such a annotated corpus manually is a herculean task. This is one of the key attractions of unsupervised word sense induction -- which can make use of immense corpora without requiring them to be annotated.
-
-This lack of labelled training data makes systems that can work with unsupervised data initially, and then use only a very small amount of labelled training data to get labelled output very desirable.
-The type of problem, where there is only one labelled example of the class, is some this called a one-shot learning problems
-The refitting method we outline can be seen as a one-shot method for learning word sense representations.
 
 
 The rest of the paper is organised as follows: \Cref{relatedwords} discusses related works on learning standard lexical sense repressions directly, and on associating the induced senses with standard lexical senses. \Cref{Framework} presents our refitting methods, and the derived methods for WSD and word similarity measurement that come from it. \Cref{method} describes our models and the setup used for evaluation. \Cref{results} discusses the results of this evaluation. Finally, the paper presents it's conclusions in \Cref{conclusion}.
@@ -103,15 +92,21 @@ The rest of the paper is organised as follows: \Cref{relatedwords} discusses rel
 \section{Related Works} \label{relatedwords}
 
 \subsection{Directly Learning Lexical Sense Embeddings}
-Some word sense embeddings are trained to match match to dictionary senses. The refitting method proposed in this paper is thus not required for these methods.
-They can be said to directly compete with our method, when it comes to creating dictionary senses. However when it comes to applying them to a new fine grained sense from a single example our refitting method remains suitable. This continues to have applications in information retrieval.
+Our refitting method can be considered as learning lexical sense embeddings, as a one-shot learning problem. The alternative is to transform the problem into a supervised or semi-supervised learning task. The difficulty lies in how to get a sufficient number of labelled senses. One option is to use a seperate WSD method to artificially label an unlabelled corpus.
 
+Iacobacci et al. \parencite{iacobacci2015sensembed} use a Continuous Bag of Word (CBOW) \parencite{mikolov2013efficient} language model, but use wordsenses as the labels rather than words. This is a direct application of word embedding techniques. To overcome the lack of a large sense labelled corpus, Iacobacci et al. use the 3rd party WSD tool BabelFly, to add sense annotations to a previously unlabelled corpus. An alternative approach would be to use a method that disambiguates the senses using a partially trained model.
 
-Chen et al. \parencite{Chen2014} train word sense vectors for dictionary senses by relabelling a corpus using embeddings they derived from word embeddings and WordNet. First they train single sense word embeddings using skip-grams \parencite{mikolov2013efficient}. They initially find word sense vectors by averaging the word vectors of all the words in the WordNet gloss.
-Then for each sentence in their training corpus, they progressively relabel the words with word senses. This is done by first calculating a context vector that this the average of all word vectors in the sentence. Then selecting a word to label with a word sense by selecting the word sense that is closest to the context vector. They then recalculate the context vector using the word sense vector, and replace the next word. Only words which can meet a threshold of similarity are relabelled this way, otherwise the word remains unlabelled and a general word vector is trained.  Finally, using the relabelled corpus, a new skip-grams method is used with the objective of predicting both words and word-senses in the context\footnote{Note, that using the input word to predict the sense of words from the context is the opposite of the approach used by AdaGram, which uses the word-sense to predict the word of the context \parencite{AdaGrams}.}. This fine-tunes the sense vectors.  Like Chen et al., Iacobacci et al. \parencite{iacobacci2015sensembed} present another relabelling approach, but use 3rd party labels.
+Chen et al. use a semi-supervised approach to train word sense vectors \parencite{Chen2014}. They partially disambiguate their training corpus, using initial word sense vectors and WordNet; and use these labels to fine-turn their embeddings. 
+Initial the word sense vectors are set as the average of the single sense word embeddings\parencite{mikolov2013efficient} for the words in the WordNet gloss.
+Similarly, they define a context vector, as the average of all words in a sentence.
+They then progressively label the words with the senses
+that for the sense vector that is closest to the context vector, if it is closer than a fixed threshold.
+The selected sense vector is used to update the context vector and then the next word is relabelled. They give two methods for selecting the order of relabelling.
+They then fine turn the sense embeddings by defining a new skip-gram method with the objective of predicting both the words and word-senses in the context, when given a input word\footnote{Note, that using the input word to predict the sense of words from the context is the opposite of the approach used by AdaGram, which uses the word-sense to predict the word of the context \parencite{AdaGrams}.}. By using the threshold before adding the sense label, their method minimises training word sense vectors on broader-line cases that could be incorrect. The overall approach is the process the data add labels where confidant, based on initial sense vectors estimated from the glosses, and then use these as the training target.
 
+The key practical difference between the one-shot approach used by refitting, compared to the supervised, and semi-supervised approach uses in existing works it the time to retrain to add a new sense. With our refitting fitting approach added a new sense is practically instantiations, and replacing the entire sense inventory only a matter of hours. Where-as for the existing approaches adding senses would require retraining nearly from scratch. This is because refitting is a process done to sense word embeddings, rather a method for finding word-sense embeddings itself. It can be applied to any trained word sense embeddings, so long as it meeting the requirement for a suitable language model.
+\pdfcomment{Should I mention that it could be adapted to apply to both the embeddings above, with some adaption?}
 
-Iacobacci et al. \parencite{iacobacci2015sensembed} apply Continuous Bag of Word (CBOW) \parencite{mikolov2013efficient} language model, but rather than using words as the labels, they used word senses. To do this they require a large sense labelled corpus -- which does not exists. Iacobacci et al. create one artificially by applying the 3rd party WSD tool BabelFly. This overcomes the lack of labelled training data problem and allows the direct application of Word2Vec techniques to finding sense embeddings, but it does bind their performance to that of BabelFly.
 
 
 \subsection{Mapping WSI senses to lexical senses through a mapping corpus}
@@ -481,5 +476,6 @@ We also demonstrated how similar principles, could be used to create a set of ve
 As part of our method for refitting the sense embeddings to there new senses, we presented a novel smoothing algorithm -- geometric smoothing.
 This smoothing method, is required to compensate for the data sparsity problem that is intrinsic in learning senses from usage data. Even more so than the data sparsity problem for words which is normally solved by word embeddings, due to their being many more meanings for words than there are words, particularly when fine grained senses are employed. We show as part of the discussed methods that our smoothing gives substantial improvement over the results with unsmoothed language model.
 
+\newpage
 \printbibliography
 \end{document}
