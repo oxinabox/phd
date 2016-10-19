@@ -66,6 +66,13 @@ Word embeddings represent a word's semantic meaning and syntactic role in a vect
 
 It can be argued that many word sense induction (WSI) systems may capture better senses than a human lexicographers, however this does not mean induce senses can replace standard lexical senses. While the induces senses may cover the space of meanings more comprehensively, or with better granularity than standard senses there is a vast wealth of existing knowledge build around various standard lexical senses. Methods to links induced senses to lexical senses, allow this information to be unlocked.
 
+
+
+We propose a \emph{refitting} method to allow induced word sense vectors to be converted to labelled word sense vectors, allowing them to be used with lexical knowledge bases.
+We show that technique can be used to allow for word sense disambiguation to a lexical sense inventory -- something that can not be done with the original induced sense vectors.
+We further demonstrate the usefulness of refitting, and this correctness of the results, by using it to define a new similarity measure for words with context which we call \emph{RefittedSim}, this similarity measure is significantly faster than the commonly used \emph{AvgSimC}.
+We noted that when refitting, often one induced sense overly dominated in finding the refitted sense. We developed a new smoothing method, \emph{geometric smoothing}, suitable for smoothing these. We demonstrated its effectiveness at improving out earlier results.
+
 We thus propose a method for using a single example of a word in context, to synthesis a new embedding for that particular sense. We term this \emph{refitting} the induced senses, as it combines then to fit to the meaning in the example sentence. Our method allows us to uses a single labelled example to produce a labelled sense embedding. This allows a shift from an representation that can only work within the system, to one that uses a standard sense, or a user defined sense, which can be used as part of a more complex knowledge engineering system. This refitting method  has several applications.
 
 
@@ -131,13 +138,57 @@ Their method applies to all word sense induction systems, not just word embeddin
 
 \section{Framework} \label{Frameword}
 
-\subsection{Sense Language Model} \label{senselanguagemodel}
+\subsection{Refitting} \label{refitting}
+
+The key contribution of this work is to provide a way to synthesis a word sense embedding given only a single example. For lack of a better term we call this \emph{refitting} the word sense vectors. By refitting the unsupervised vectors we define a new vector, that lines up with the specific meaning of the word from the example sentence.
+
+This can be looked at as a one-shot learning problem.
+The training of the induced sense, and of the language model, can be considered the a unsupervised pre-training step. The new word sense embedding should give a high value for the likelihood of the example sentence, under the language model. Further more though, it should generalise to also give high likelihood of other contexts that were never seen, but which also occur near the word of this particular meaning.
+
+We attempted directly optimising the sense vector as to maximise the probability of the example when input into the language model as part of preliminary investigations. This was found to generalise poorly, due to over-fitting. It also took a significant amount of time. Rather than a direct approach, we instead take inspiration from the famous locally linear relationship between meaning and vector position demonstrated with single sense word embeddings \parencite{mikolov2013efficient,mikolovSkip,mikolov2013linguisticsubstructures}.
+
+We express the new word sense vector as a weighted sum of the existing vectors that were already trained. Where the weight is determined by the probability of each induced sense given the context.
+
+
+Given a collection of induced (unlabelled) embeddings $\u={u_1,...,u_{n_u}}$, and example sentence which we will again call $\c={w_1,...,w_{n_c}}$. We define a function $l(\u \mid \c )$ which that determines the refitted sense vector, from the unsupervised vectors and the context.
+
+\begin{equation} \label{eq:synth}
+l(\u \mid \c ) = \sum_{\forall u_i \in \u} u_i P(u_i \mid \c)
+\end{equation}
+
+To do this, we need to estimate the posterior predictive distribution $P(u_i \mid \c)$. 
+This can be done simply by using Baye's Theorem, as shown in \Cref{generalwsd}. Further to that though, we present an alternative, for estimating a smoothed version of the result in \Cref{eq:generalwsdsmoothed}. We find in general that it is beneficial to smooth the distribution, to prevent a single sense dominating the sum.
+
+
+In the very first neural network language model paper, Bengio et al. describe a similar method to \Cref{eq:synth} for finding the word embeddings for words not found in their vocabulary \parencite{NPLM}. They suggest that if a word was not in the training data, \enquote{an initial feature vector for such a word, by taking a weighted convex combination of the feature vectors of other words that could have occurred in the same context, with weights proportional to their conditional probability}. The formula they give is as per \Cref{eq:synth}, but summing over the entire vocabulary of words (rather than just $\u$). To the best of our knowledge, this method has not been used for handling out-of-vocabulary words in any more recent word embedding architectures, nor has it ever been used for word sense vectors.
+
+
+\subsubsection {Fallback for dictionary phrases (collocations)}
+Unless a specialised tokenizing method is used, a word embedding method will not learn embedding for collocations such as ``civil war'' or ``martial arts''. Normal tokenizers will split them at the word level, learning embeddings for ``civil'', and ``war'', and for ``martial'' and ``arts''. This issue is often considered minimal for word embeddings, as a approximate embedding can be constructed by summing embeddings for each word  in the phrase.
+
+It has been constantly noted that for single-sense word embeddings the summing the vectors for each word in the phrase results in reasonable representation \parencite{mikolovSkip, White2015SentVecMeaning} \pdfcomment{Doesn't Rui Wang have a paper than goes into some detail on this? I can't find it. I tried emailing him, but no response}. The intuition from this is that for multiple sense-word embeddings, there is a correct selection of senses for each word such that the sum of these senses will be a representation for the phrase.
+
+Simply evaluating the each combination of word-sense sums for multiple word collocations is computationally expensive. For a $m$ length collocation, where each word has $n$ senses, this requires $O(m^n)$ evaluations of probability of the context ($P(\mathbb{c}\mid u_i)$). When inducing unsupervised word embeddings it is not unreasonable to have say $n=30$ senses (or even $50$), so for a 2 word phrase (eg ``civil war'') this is 900 evaluations.
+Instead, we we just add the additional sense embeddings for each word to the total pool of sense embeddings to be combined ($\u$ above), requiring instead $m \times n$ evaluations. So for our 2 word example, this is 60 evaluations, instead of the 30 evaluations that is require for a single word entry. This also has other advantages.
+
+
+In the case that no word-sense induced for one word does highlight the specialised collocation information, but the other word does have a particular induced
+
+For example, ``civil war''. The context that ``war'' in ``civil war'' occurs, is very similar to the context that ``war'' appears in general. With both ``war'' and ``civil war'' we expect the context to include words like ``casualties'', ``militia'' etc, thus we would not expect a our word sense induction method to produce a specific sense of ``war'' for this context.
+Compare ``civil'': ``civil'' as in ``civil war'', has very different expected contexts to ``civil'' as in ``civil servant'' or ``civil behaviour''. In this case we would expect 3 different senses of ``civil'' to be induced -- one of which does contain context information for ``civil war'' -- information not captured by the single representation of ``war''.
+
+The extreme version of this is if one or more words in a multiword expression have no embedding defined at all. In this case we fall back to only using senses from words which do have embeddings. An example of this would be ``Fulton County Court'', while ``County'' and ``Court'' are common words, that are certain to occur in any reasonable training corpus; ``Fulton'' is a rare proper noun -- if it occurs at all it likely does not occur enough to train the representation. We use the remaining words: ``County'' and ``Court'' to determine the meaning of the whole. This is not always going to be suitable, but often is.
+
+
+
+\subsection{A General WSD method} \label{generalwsd}
+
+\subsubsection{Sense Language Model} \label{senselanguagemodel}
 A traditional language model defined the probability of a word, given its context -- such as the two words preceding it for a trigram language model.
 A skip-gram language model gives the probability of a word appearing in a context window around a input word.
 This input word is associated with a vector called the word embedding. The word embedding which is trained, with the language model, to so that it captures the information about what contexts of a word.  For a word sense language model, this is generalise so that rather than a input word, there is a input word sense.
 In the cases we consider that word sense representation is a vector, and the language model such as skip-gram\parencite{mikolov2013efficient} \footnote{Simple modification of our method would work for related language models such as continuous bag of words (CBOW) \parencite{mikolov2013efficient}}, predicting the words that occur near the word sense. Do note the asymmetry, in the input and output space: while the input is a vector representing a \emph{word sense}, the output is the probability of just a \emph{word}-- no difference is made between different senses occurring in the context. Stated formally, for a word $w$, and for a sense representation $s$ of another word (potentially the same word), the language model gives $$P(w \mid s)$$. Using this information we may apply Bayes Theorem to perform word sense disambiguation across the senses provided.
 
-\subsection{A General WSD method} \label{generalwsd}
 Using the language model, and simple application of Bayes' theorem, we define a general word-sense disambiguation method, that will be used for several parts of our process. This disambiguation method is used on both the unsupervised induced sense vectors, as well as the lexically refitted sense vectors once we have created them.
 The general procedure of how to use Bayes' theorem has appeared may times before -- including in the work of Tian et al. applied to multi-sense language models to determine most-likely sense using multiple word sense vectors \parencite{tian2014probabilistic}. We present it here to give explanation to the new work that proceeds in the following sections.
 
@@ -168,6 +219,8 @@ Note that in concrete implementation of this process, it is important to work wi
 
 
 \subsubsection{Geometric Smoothing} \label{smoothing}
+Geometric smoothing is suitable for smoothing posterior probability estimates of sequences of conditionally independent likelyhoods.
+
 Covered in the previous section was typical application of Bayes' theorem to the problem of finding the posterior distribution, given the likelihood of observations.
 Our contribution beyond this is what we will call, for lack of a better term, geometric smoothing.
 Rather than use \Cref{eq:generalwsd} directly, we consider instead replacing the normalised posterior estimate (i.e. the numerator), with it's $|\c|$-th root.
@@ -204,43 +257,6 @@ In general smoothing is desirable, for consider: \enquote{The CEO of the bank, w
 
 
 
-\subsection{Synthesising New Embeddings from a Single Example} \label{refitting}
-
-The key contribution of this work is to suggest a new way to synthesis a word sense embedding given only one example. For lack of a better term we call this \emph{refitting} the word sense vectors. By refitting the unsupervised vectors we define a new vector, that lines up with the specific meaning of the word from the example sentence.
-
-This can be looked at as a one-shot learning problem, with the training of language model and induced sense embeddings, as a unsupervised pre-training. The new word sense embedding should give a high value for the likelihood of the example sentence, under the language model. Further more though, it should generalise to also give high likelihood of other contexts that were never seen, but which also occur near the word of this particular meaning.
-
-In preliminarily investigation of this, we attempted directly optimising a vector, to maximise the probability of the example when input into the language model. This took significant time per word, and did not produce a generalisable representation. We attribute this to overfitting, which is very easy to do with just the single example. Rather than directly optimising for a new word sense vector, we sought to express them as a combinations of the existing vectors that were already trained. We propose to do this as a weighted sum of the induced word sense sense, where the weighting is determine using  probability of the context under the vectors vectors.
-
-
-Given a collection of induced (unlabelled) embeddings $\u={u_1,...,u_{n_u}}$, and example sentence which we will again call $\c={w_1,...,w_m}$. We define that gives uas a new sense embedding: $l(\u \mid \c )$, by:
-
-\begin{equation} \label{eq:synth}
-l(\u \mid \c ) = \sum_{\forall u_i \in \u} u_i P(u_i \mid \c)
-\end{equation}
-
-Where $P(u_i \mid \c$ is found using \Cref{eq:generalwsd} (or the geometric smoothed version \Cref{eq:generalwsdsmoothed}),
-and $P(u_i)$ is the prior over the unsupervised senses. Or the uniform prior if no prior $P(u_i)=\frac{1}{n_u}$ is available .
-
-
-In the very first neural network language model paper, Bengio et al. describe a similar method for finding word embeddings for words not found in their vocabulary \parencite{NPLM}. They suggest that if a word was not in the training data, \enquote{an initial feature vector for such a word, by taking a weighted convex combination of the feature vectors of other words that could have occurred in the same context, with weights proportional to their conditional probability}. The formula they give is as per \Cref{eq:synth}, but summing over the entire vocabulary of words (rather than just $\u$). To the best of our knowledge, this method has not been used for handling out-of-vocabulary words in any more recent word embedding architectures, nor has it been used ever for word-sense vectors.
-
-
-\subsubsection {Fallback for dictionary phrases (collocations)}
-Unless a specialised tokenizing method is used, a word embedding method will not learn embedding for collocations such as ``civil war'' or ``martial arts''. Normal tokenizers will split them at the word level, learning embeddings for ``civil'', and ``war'', and for ``martial'' and ``arts''. This issue is often considered minimal for word embeddings, as a approximate embedding can be constructed by summing embeddings for each word  in the phrase.
-
-It has been constantly noted that for single-sense word embeddings the summing the vectors for each word in the phrase results in reasonable representation \parencite{mikolovSkip, White2015SentVecMeaning} \pdfcomment{Doesn't Rui Wang have a paper than goes into some detail on this? I can't find it. I tried emailing him, but no response}. The intuition from this is that for multiple sense-word embeddings, there is a correct selection of senses for each word such that the sum of these senses will be a representation for the phrase.
-
-Simply evaluating the each combination of word-sense sums for multiple word collocations is computationally expensive. For a $m$ length collocation, where each word has $n$ senses, this requires $O(m^n)$ evaluations of probability of the context ($P(\mathbb{c}\mid u_i)$). When inducing unsupervised word embeddings it is not unreasonable to have say $n=30$ senses (or even $50$), so for a 2 word phrase (eg ``civil war'') this is 900 evaluations.
-Instead, we we just add the additional sense embeddings for each word to the total pool of sense embeddings to be combined ($\u$ above), requiring instead $m \times n$ evaluations. So for our 2 word example, this is 60 evaluations, instead of the 30 evaluations that is require for a single word entry. This also has other advantages.
-
-
-In the case that no word-sense induced for one word does highlight the specialised collocation information, but the other word does have a particular induced
-
-For example, ``civil war''. The context that ``war'' in ``civil war'' occurs, is very similar to the context that ``war'' appears in general. With both ``war'' and ``civil war'' we expect the context to include words like ``casualties'', ``militia'' etc, thus we would not expect a our word sense induction method to produce a specific sense of ``war'' for this context.
-Compare ``civil'': ``civil'' as in ``civil war'', has very different expected contexts to ``civil'' as in ``civil servant'' or ``civil behaviour''. In this case we would expect 3 different senses of ``civil'' to be induced -- one of which does contain context information for ``civil war'' -- information not captured by the single representation of ``war''.
-
-The extreme version of this is if one or more words in a multiword expression have no embedding defined at all. In this case we fall back to only using senses from words which do have embeddings. An example of this would be ``Fulton County Court'', while ``County'' and ``Court'' are common words, that are certain to occur in any reasonable training corpus; ``Fulton'' is a rare proper noun -- if it occurs at all it likely does not occur enough to train the representation. We use the remaining words: ``County'' and ``Court'' to determine the meaning of the whole. This is not always going to be suitable, but often is.
 
 \subsection{Word Sense Disambiguation} \label{lexicalWSD}
 Given a example sentence ($\{\c_1,...,\c_{n_l}\}$), such as a gloss, for each lexical word sense we can refitted word sense vectors for each of $\l=\{l_1,..., l_{n_l}\}$ by using the method described in \cref{eq:synth}.
@@ -381,11 +397,13 @@ multisense word count = 2796
 dimensions=300
 }
 
-\section{Results and Discussion} \label{results}
+
+\section{Similarity in context}
 
 
-\subsection{Similarity in context}
 
+
+\subsection{Results}
 We evaluate our refitting method, with and without, the geometric smoothing mentioned in \Cref{eq:contrextprobsmooth}, using the Stanford's Contextual Word Similarities (SCWS) corpus \parencite{Huang2012}.
 As per in the training, each challenge context was windowed to 5 word either side of the target word, where possible.
 
@@ -414,12 +432,6 @@ Using RefittedSim without using geometric smoothing and without the prior from, 
 
 The performance shift from AdaGram RefittedSim with the uniform prior by adding geometric smoothing $\rho=24.1$ to $\rho=65.0$ is much larger than for using adding geometric smoothing to AdaGram with the estimated prior, which is only $\rho=47.8$ to  $\rho=64.8$. \pdfcomment{Why?}
 
-
-\begin{comment}
-We suggest that RefittedSim with geometric smoothing, is a more appropriate method that AvgSimC when working with probabilities directly taken from a word sense language model such as AdaGram or the Greedy embeddings we defined as a baseline.
-The methods presented by Reisinger and Mooney, Huang et al. and Iacobacci et al., do not work with sense probabilities taken from a language model; rather their methods use a distance measure to approximate fuzzy membership of cluster or a degree of relatedness to the sense vector \parencite{Reisinger2010,Huang2012,iacobacci2015sensembed}. The distance measure itself imposes a particular curve onto the distribution of distances i.e. onto the assumed probabilities used in AvgSimC; and this particular distribution, solves the data sparsity problem that we solve with geometric smoothing.
-The method presented by Chen et al. is significantly different, in that it has the predicted sense of the context words as an output (rather than an input) of it's model, and so has a different distribution from either of our methods, or from the  distance methods discussed. Further, it re-label it's training data and then fine tunes it's sense embeddings.
-\end{comment}
 
 
 The results of Chen et al using AvgSimC, do significantly out perform both our method and that of Huang et al. This supports their approach of utilising WordNet sense data, to bootstrap their problem into a semi-supervised learning problem. This in and of itself highlights the importance and utility of bridging the gap between structures data such as WordNet, and unstructured data such as induced word sense vectors.
