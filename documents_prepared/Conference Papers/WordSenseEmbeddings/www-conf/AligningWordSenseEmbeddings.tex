@@ -333,11 +333,18 @@ dimensions=300
 }
 
 
-\section{Evaluation: Similarity in context} \label{SimilarityInContext}
-\subsection{RefittedSim}\label{RefittedSimVsAvgSimC}
+\section{Similarity of Word in Context} \label{SimilarityInContext}
+Estimating word similarity with context is the task of determining how similar words are, when presented with the context they occur in. The goal of the task is the match human judgements of word similarity.
 
-Using the refitting process we define a new similarity measure: RefittedSim, for determining the similarity of words with context.
-It is simply defined by using \Cref{eq:synth} to refit the unsupervised word senses to get a new word sense vector for the example context provided, for each word (with context) to be compared, then finding the distance between those vectors.
+For each of the target words and contexts; we can use refitting on the target word to create a word sense embedding specialised for the meaning in the context provided. Then the similarity of the refitted vectors can be measured using cosine distance (or similar).
+By measuring similarity this way, we are defining a new similarity measure take takes advantage of context -- distinct from the commonly used AvgSimC.
+
+
+\subsection{RefittedSim}\label{RefittedSimVsAvgSimC}
+RefittedSim is simply defined by using the refitting to determine a suitable word sense vector for the context of each work to be measured, and then measuring the distance between the refitted sense embeddings.
+This is a direct application of \Cref{eq:synth}. 
+
+For $\c$ and $\c^\prime$ the contexts of target words $w$ and $w^\prime$ for which we want to measure the similarity of. Where $w$ has senses $\s=\{s_1,...,s_n\}$, and $w^\prime$ has senses $\s=\{s^\prime_1,...,s\prime_{n^\prime}\}$, and for $d$ the distance function -- normally cosine distance. We define the RefittedSim as 
 
 \begin{multline} \label{eq:refittedsim}
 \mathrm{RefittedSim}((\s,\c),(s^{\prime},\c^{\prime}))\\
@@ -349,15 +356,8 @@ It is simply defined by using \Cref{eq:synth} to refit the unsupervised word sen
 \end{aligned}
 \end{multline}
 
-For $\c$ and $\c^\prime$ the contexts of target words $w$ and $w^\prime$ for which we want to measure the similarity of. Where $w$ has senses $\s=\{s_1,...,s_n\}$, and $w^\prime$ has senses $\s=\{s^\prime_1,...,s\prime_{n^\prime}\}$, and for $d$ the distance function -- normally cosine distance.
-
-Reisinger and Mooney \parencite{Reisinger2010} propose several methods for finding similarity utilising multiple word sense vectors -- the best performing of which was AvgSimC.
-The key difference between their method and ours is that AvgSimC, is a probability weighted average of of pairwise computed distances for each word senses vector,
-where as with out Refitted Word sense vectors, it is a single distance computed over probability weighed word sense vector.
-
-the formula for RefittedSim \Cref{eq:refittedsim} can be contrasted with that for AvgSimC:
-
-
+\pdfcomment{Should I move this to it's own subsection above?}
+We can contrast this against the commonly used AvgSimC, as proposed by Reisinger and Mooney \parencite{Reisinger2010}.
 \begin{multline}
 \mathrm{AvgSimC}((\s,\c),(s^{\prime},\c^{\prime})) \\
 =  \frac{1}{n \times n^{\prime}}
@@ -366,60 +366,101 @@ the formula for RefittedSim \Cref{eq:refittedsim} can be contrasted with that fo
 P(s_{i}\mid\c)\,P(s_{j}^{\prime}\mid\c^{\prime})\,d(s_{i},s_{j}^{\prime})
 \end{multline}
 
+AvgSimC is a probability weighted average of pairwise computed distances for each word senses vector.
+RefittedSim: it is a single distance measured between the two refitted vectors -- which are the probability weighed averages of the orignal unsupervised word sense vectors.
 
-Note that several existing works, evaluated using AvgSimC, do not find $P(s_{i}\mid\c)$ and $P(s_{j}^{\prime}\mid\c^\prime)$ using a probability based method, but rather define them using the a distance function \parencite{Reisinger2010, Huang2012}. Context vector cluster based vectors can use distance from their sense cluster centroid, and then interpret that distance after with normalisation, the probably that context belonging that cluster. There is a clear rational for this interpretation, as we can see it as a soft membership function. \pdfcomment{Such a method could with \Cref{eq:synth}, and thus with the RefittedSim similarity function and other techniques discussed in this paper.}
+AvgSimC is used in multiple existing works. It should be noted that many of these  $P(s_{i}\mid\c)$ and $P(s_{j}^{\prime}\mid\c^\prime)$ using a probabilistic language model based method, but rather define them using the distance function \parencite{Reisinger2010, Huang2012}. Context vector clustering based sense embeddings interpret the distance from their sense cluster centroid, as a as we can see it as a soft membership function with that sense. We note that this has a different distribution to that of which comes directly out of the skip-gram language model.
+
 
 
 There is a notable time complexity difference between AvgSimC and RefittedSim.
 AvgSimC has time complexity $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert +n\times n^{\prime})$
 RefittedSim is $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert)$.
-The product of the number of senses of each word $n \times n^\prime$, may small for dictionary senses, but it is often large for induced senses. Dictionaries tend to define only a few sense per word -- the average\footnote{It should be noted, though, that the number of meanings is not normally distributed \parencite{zipf1945meaning}} number of senses in WordNet is less than three for all parts of speech \parencite{miller1995wordnet}. For induced sense, however, it is often desirable to train many more senses, to get better results using the more fine-grained information. In several evaluations performed by Reisinger and Mooney they found optimal results at near to 50 senses \parencite{Reisinger2010}; this aligned with our own preliminary experiments also.
+The product of the number of senses of each word $n \times n^\prime$, may small for dictionary senses, but it is often large for induced senses. Dictionaries tend to define only a few sense per word -- the average\footnote{It should be noted, though, that the number of meanings is not normally distributed \parencite{zipf1945meaning}} number of senses per word in WordNet is less than three for all parts of speech \parencite{miller1995wordnet}. For induced sense, however, it is often desirable to train many more senses, to get better results using the more fine-grained information. In several evaluations performed by Reisinger and Mooney they found optimal results at near to 50 senses \parencite{Reisinger2010}; We found similar results with our own preliminary experiments also. In the case of fine grained induced senses, the $O(n \times n^\prime)$ is significant; avoiding it with RefittedSim makes the similarity measure more useful for information retrieval.
 
-In the information retrieval context, the probabilities of the word sense for the context of the document can be done off-line, during indexing. With this assumption, the query-time time complexity becomes: for AvgSimC becomes $O(n\times n^{\prime})$, and for RefittedSim is now $O(1)$.
-We do note however that pre-computing the word sense probabilities for each word in the document during indexing remains expensive (though no more so than for AvgSimC) -- it is however trivially parallelisable. We suggest that when this indexing time is considered worthwhile, then RefittedSim is significantly more viable for use in information retrieve tasks, where the user provides a example of the words they query so that a search for \enquote{\enquote{Apple} as in \enquote{the fruit I might like to eat}}, can return different results from \enquote{\enquote{Apple} as in \enquote{the company that makes the iPod, ad the Macbook}}.
+It may be desired for retrieving relevant search results to allows the user to provide an example of the term being searched for to allow removal of relevant uses of the word in a different sense. consider for example a search for \enquote{\enquote{Apple} as in \enquote{the fruit I like to eat}}, can return different results from \enquote{\enquote{Apple} as in \enquote{the company that makes the iPod, and the Macbook}}. This is the practical usecase for similarity with context.
+In the information retrieval context, the probabilities of the word sense for the context of the document can be done off-line, during indexing. With this assumption, the query-time time complexity becomes: for AvgSimC becomes $O(n\times n^{\prime})$, and for RefittedSim it becomes $O(1)$.
+We do note however that pre-computing the word sense probabilities for each word in the document during indexing remains expensive (though no more so than for AvgSimC). We suggest that when this indexing time is considered worthwhile, then RefittedSim is significantly more viable for use in information retrieve tasks than AvgSimC. For many uses through, ignoring word senses in information retrieval continues to be viable, as documents can be differentiated by adding more query terms -- this limits the practical use of both AvgSimC and RefittedSim. 
 
+\subsection{Experimental Setup}
+We evaluate our refitting method using the Stanford's Contextual Word Similarities (SCWS) corpus \parencite{Huang2012}.
+During evaluation each context was converted to lower case, and limited to 5 words to either side of the target word, as in the training.
+We also evaluated using the whole context, the results were found, in all cases, to be very similar, but the processing time much longer.
+For brevity, we have excluded those results from the tables presented below.
 
 
 \subsection{Results}
-We evaluate our refitting method, with and without, the geometric smoothing mentioned in \Cref{eq:contrextprobsmooth}, using the Stanford's Contextual Word Similarities (SCWS) corpus \parencite{Huang2012}.
-As per in the training, each challenge context was windowed to 5 word either side of the target word, where possible.
 
-\begin{table*}
-\pgfplotstabletypeset[col sep=comma, header=has colnames, string type,
-columns/rho/.style={
-	column name={$\rho \times 100$},
-	numeric type,
-	precision=1,
-	fixed zerofill=true,
-	preproc/expr={100*##1},
-	column type=l
-}]{swsc.csv}
+\begin{table}
+	\begin{adjustbox}{max width=\columnwidth}
+		\pgfplotstabletypeset[col sep=comma, header=has colnames, string type,
+%		columns/Smoothing/.style={column name={\small{Smoothing}}},
+%		columns/Use Prior/.style={column name={\small{Use Prior}}},
+		columns/AvgSimC/.style={
+			%column name={\small{AvgSimC}},
+			numeric type,
+			precision=1,
+			fixed zerofill=true,
+			preproc/expr={100*##1},
+			column type=c
+		},
+		columns/RefittedSim/.style={
+			%column name={\small{RefittedSim}},
+			numeric type,
+			precision=1,
+			fixed zerofill=true,
+			preproc/expr={100*##1},
+			column type=c
+		},
+		every head row/.style={after row = {\toprule}}
+		]{swsc-grid.csv}
+	\end{adjustbox}
+\caption{Spearman rank correlation $\rho \times 100$, for various configurations of AgaGram and greedy Sense embeddings, when evaluated on the SCWS task.} \label{swscres}
+\end{table}
 
-\caption{Results on SCWS. $\rho$ is Spearman rank correlation between the output similarities from each method and the ground truth of the average rating of from the human annotators. For comparison we include subset of the results from the other indicated papers. \pdfcomment{TODO: This table needs trimming down, and relabelling.}} \label{swscres}
-\end{table*}
+\Cref{swscres} shows the results of evaluation on the SCWS similarity task, as different parameters are used or not. The table only shows our results, on multiple sense embeddings using language models. These improvements are not demostrated to apply to clustering based model (these have not been evaluated as part of this study). 
+It can be noted that RefittedSim constantly out performs AvgSimC.
+Geometric Smoothing consistently improves performance, for both AvgSimC and for RefittedSim.
+In general using the unsupervised sense prior estimate from the AdaGram model, improves performance -- particularly for AvgSimC. The exception to this is with RefittedSim with smoothing, where it makes very little difference. \pdfcomment{Should I workout how to explain this?}
+Unsurprisingly, given its low quality, the Greeding embeddings are always outperformed by AdaGrams.
 
-In \Cref{swscres}, are shown the results on the SCWS similarity task. Shown are several variations of our method, as well as several results from other works. We note that it is not entirely reasonable to directly compare the different works, and they are each trained on a different dataset (Interestedly, all various plain text extractions of Wikipedia), with significantly different preprocessing steps, some considerably more complex than our own removal of punctuation and change of case. Never the less, all the results successful methods are fairly similar.
+It is not clear as to if these improvements will transfor to clustering based methods due to the differences in how the sense probability is estimated, compared to the language model based method evaluated on in \Cref{swscres}.
 
+\begin{table}
+	\begin{adjustbox}{max width=\columnwidth}
+		\pgfplotstabletypeset[col sep=comma, header=has colnames, string type,
+		%		columns/Smoothing/.style={column name={\small{Smoothing}}},
+		%		columns/Use Prior/.style={column name={\small{Use Prior}}},
+		columns/rho/.style={
+			column name={$\rho \times 100$},
+			numeric type,
+			precision=1,
+			fixed zerofill=true,
+			preproc/expr={100*##1},
+			column type=c
+		},
+		every head row/.style={after row = {\toprule}}
+		]{swsc.csv}
+	\end{adjustbox}
+	\caption{	\pdfcomment{I need to afix the scale on this}
+		Spearman rank correlation $\rho \times 100$  as reported by several methods\label{swscEvery}}
+\end{table}
 
-It can be seen that using the RefittedSim measure, our results perform similarly to those of Huang et al. and to those of Tian et al, using AvgSimC; but as discussed in \Cref{RefittedSimVsAvgSimC}, have a lower time-complexity to calculate.
+For greater context, \Cref{swscEvery} shows the our results compared to the results reported by other methods in the literature. These results are not directly comparable, as each method uses a different training corpus, with different prepocessing steps;  which can have significant effects on performance \pdfcomment{Cite Rui Here}.
+It can been seen though that by apply our techniques we bring the results of AdaGram (initially using AvgSimC without smoothing) from poor, up to being competitive with other model. The state of the art by Chen et al, is the only method with a significant lead \parencite{Chen2014}. This can be attributed to its very effective semi-supervised fine-tuning method. This suggest interesting future applications in using refitted sense vectors for relabelling a corpus, and then performing fine tuning similar to that done by Chen et al.
 
-We suggest that no results have been presented prior to our work using AdaGram evaluated on SCWS, due to the comparative failure of AvgSimC to produce suitable results when applied to AdaGram that task. As can be seen in \Cref{swscres} Adagram with AvgSimC produces lack-luster results.
-
-Using RefittedSim without using geometric smoothing and without the prior from, does it not perform much better than just using AvgSimC. Adding the geometric smoothing to AvgSimC did improve that result. However it much more significantly improved the results with RefittedSim. We see similar pattern with the greedy multiple word sense embeddings -- though unsurprisingly these results are significantly worse. It seems that geometric smoothing also improved the greedy multiple sense embeddings in the same away.
-
-The performance shift from AdaGram RefittedSim with the uniform prior by adding geometric smoothing $\rho=24.1$ to $\rho=65.0$ is much larger than for using adding geometric smoothing to AdaGram with the estimated prior, which is only $\rho=47.8$ to  $\rho=64.8$. \pdfcomment{Why?}
-
-
-
-The results of Chen et al using AvgSimC, do significantly out perform both our method and that of Huang et al. This supports their approach of utilising WordNet sense data, to bootstrap their problem into a semi-supervised learning problem. This in and of itself highlights the importance and utility of bridging the gap between structures data such as WordNet, and unstructured data such as induced word sense vectors.
-
-
-We do note that our method does have lower training time, as it only requires using the training data once, where as relabelling approaches, as uses by Chen et al, require a second training pass, using the boot-strapped labels. We suggest though that this extra time is well worth it, as the results from using it are notably better. It would be possible to apply a similar relabelling method to AdaGram, using our approach to solve the WSD problem to bootstrap the training data.
 
 
 \section{Word Sense Disambiguation}
 
 \subsection{Refitting for Word Sense Disambiguation} \label{lexicalWSD}
+Once refitting has been used to create word sense vectors that are matched to lexical word senses, we would like to use them to perform word sense disambiguation. This would show that the refitted embeddings are capturing the lexical information. In this section we refer to the standard word sense disambiguation problem -- to take a word and find it's dictionary sense; where-as \Cref{eq:generalwsd} and \Cref{eq:generalwsdsmoothed} consider the more general word sense disambiguation problem, as applicable to disambiguate to lexical word senses, or induces word senses, depending on the inputs. Our overall process must to both: first disambiguating to induces senses as part of refitting, then using the refitted word sense vectors to find the most likely dictionary sense.
+
+First we perform refitting, to transform the induces sense vectors, into lexical word sense vectors. Each sense of the word has a example sentence from the sense inventory -- in the case of WordNet this is the gloss (i.e. the definition). By applying refitting to the unsupervised senses using
+
+
+We initially re
+We use the 
 Given a example sentence ($\{\c_1,...,\c_{n_l}\}$), such as a gloss, for each lexical word sense we can refitted word sense vectors for each of $\l=\{l_1,..., l_{n_l}\}$ by using the method described in \cref{eq:synth}.
 
 Then when given target word $w_{target}$ in a a sentence $\c_{T}$ to be disambiguated, we can apply \Cref{eq:generalwsd} (or the smoothed version \Cref{eq:generalwsdsmoothed}), again to find $P(l_i \mid c_{T})$ for each lexical word sense of $w$ using the lexically refitted sense vectors we found earlier.
@@ -477,7 +518,7 @@ We do not employ any back-off strategy with AdaGram, as almost all words are fou
 
 
 When we compare our method, Refitted AdaGram, to Mapped Adagram which uses the method of Agirre et al \parencite{agirre2006}; which we implemented. Using both the Brown1 and Brown2 subcorpora of SemCor as the mapping corpus.
-It can be seen that the mapping method does not perform well largely due to the number words not found in the mapped vocabulary -- but even when a backoff method is added to handle those cases, we see the results are still worse than MFS alone, and worse than the Refitted AdaGram. This indicates that the lack of data prevented the good estimation of the Mapping probabilities. Refitted AdaGram did not have this problem due to only needed a single example of each lexical wordsense.
+It can be seen that the mapping method does not perform well largely due to the number words not found in the mapped vocabulary -- but even when a backoff method is added to handle those cases, we see the results are still worse than MFS alone, and worse than the Refitted AdaGram. This indicates that the lack of data prevented the good estimation of the Mapping probabilities. Refitted AdaGram did not have this problem due to only needed a single example of each lexical word sense.
 
 
 Even the very best methods for WSD do not perform substantially better than the baseline. It has been suggested that a ensemble method as the way forward to improve WSD beyond this level \cite{saarikoski2006building,saarikoski2006defining}.
