@@ -1,0 +1,86 @@
+\documentclass{standalone}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usetikzlibrary{shapes} 
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{decorations.pathmorphing}
+\renewcommand{\c}{\mathbf{c}}
+\begin{document}
+
+\tikzset{
+	tripleinner/.style args={[#1] in [#2] in [#3]}{
+	    	#1,preaction={preaction={draw,#3},draw,#2}
+	},
+	triple/.style={%
+		tripleinner={[line width=0.5pt,black] in
+			[line width=3pt,white] in
+			[line width=4pt,black]}	 
+	}
+}
+
+\tikzset{
+	input/.style={
+		%circle,
+		%draw,
+		Blue,
+		minimum width = 2
+	},
+	datastore/.style={cylinder,
+		draw,
+		Green,
+		minimum width = 2
+	},
+	proc/.style={rectangle,
+		draw,
+		Red,
+		minimum size = 50
+	},
+	link/.style={->,
+		black},
+	multi/.style={-Implies,
+		triple,
+	},
+	labe/.style={
+		Blue,
+		fill=white,
+		fill opacity=0.6,
+		text opacity=1,
+		font={\footnotesize\itshape}	
+	}
+}
+
+		
+\begin{tikzpicture}[align=center]
+
+\node[input](lemma){Target\\Lemma};
+\node[input, right = 1 of lemma](POS){Target\\POS Tag};
+\node[input, right = 1 of POS](word){Target\\ Word};
+\node[datastore, below=1 of lemma](wordnet){WordNet \\Sense Inventory};
+
+\node[datastore, below=1 of word](embeddings) {Pretrained Unsupervised \\ Sense Embeddings};
+\node[proc, below=4 of POS] (refitting) {Refitting};
+
+\node[proc, below = 2 of refitting] (WSD) {Lexical WSD};
+\node[input, right = 2 of word] (sentence) {Sentence};
+
+\node[input, right = 2 of WSD] (output){Disambiguated\\ Sense\\ $l^\star$};
+
+
+\draw[link] (lemma) edge (wordnet);
+\draw[link] (POS) edge (wordnet);
+\draw[link] (word) edge (embeddings);
+
+\draw[multi] (wordnet) -> (refitting) node[midway, labe]{Synset Glosses \\ $\{\c_1,\c_2,...\}$};
+\draw[multi] (embeddings) -> (refitting) node[midway, labe]{Induced \\ Sense Embeddings \\$\{u_1,u_2,...\}$};;
+
+\draw[link] (refitting) -> (WSD) node[midway, labe]{Lexical\\ Sense Embeddings\\ $\{l_1,l_2,..\}$};
+\draw[link] (sentence) edge[bend left] (WSD);
+\draw[link] (wordnet) edge[bend right] (WSD);
+\node[labe, left = 1 of refitting] {Lexical\\Sense Priors\\$\{P(l_1), P(l_2),...\}$}; %hack cos benlines don't label right
+\node[labe, right = 3.5 of refitting] {$\c_T$}; %hack cos benlines don't label right
+
+\draw[link] (WSD) -> (output);
+
+\end{tikzpicture}
+\end{document}
