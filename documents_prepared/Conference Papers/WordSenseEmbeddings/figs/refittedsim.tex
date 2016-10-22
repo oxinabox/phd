@@ -1,67 +1,96 @@
 \documentclass{standalone}
-
+%\usepackage[dvipsnames]{xcolor}
 \usepackage{tikz}
 \usetikzlibrary{positioning}
-\usetikzlibrary{graphs} 
-%\usegdlibrary{layered}
-\usetikzlibrary{graphs,graphdrawing}
-\usegdlibrary{force, layered, trees}
+\usetikzlibrary{shapes} 
+\usetikzlibrary{arrows.meta}
 \usetikzlibrary{decorations.pathmorphing}
+
+\renewcommand{\c}{\mathbf{c}}
+\renewcommand{\u}{\mathbf{u}}
+
 \begin{document}
 
-\begin{tikzpicture}[align=center, 	decoration={bent,aspect=.4, amplitude=5},
-	note/.style= {blue,
-				  font=\tiny\itshape
+\tikzset{
+	tripleinner/.style args={[#1] in [#2] in [#3]}{
+	    	#1,preaction={preaction={draw,#3},draw,#2}
 	},
-	notepoint/.style= {->,
-						note,
-						dashed,
-						decorate, shorten <= -32pt
+	triple/.style={%
+		tripleinner={[line width=0.5pt,black] in
+			[line width=3pt,white] in
+			[line width=4pt,black]}	 
+	}
+}
+
+\tikzset{
+	input/.style={
+		%circle,
+		%draw,
+		%Blue,
+		minimum width = 2
 	},
-	section/.style = {draw,
-						dashed,
-						fill opacity=0.2,
-						font=\itshape,
-						rounded corners,
-						inner sep=3mm}
-]
+	datastore/.style={cylinder,
+		draw,
+		%Green,
+		minimum width = 2
+	},
+	proc/.style={rectangle,
+		draw,
+		%Red,
+		minimum size = 50
+	},
+	link/.style={->,
+		black},
+	multi/.style={-Implies,
+		triple,
+	},
+	labe/.style={
+		%Blue,
+		fill=white,
+		fill opacity=0.6,
+		text opacity=1,
+		font={\footnotesize\itshape}	
+	}
+}
 
-%AlignText/"" [draw];
-
-\graph[ layered layout, layer sep = 5mm, sibling distance=23mm,
-]{
- %grow down, branch right sep]{ %
-
-	Word1/"Word 1";
-	Word2/"Word 2";
-	Context1/"Context 1 \\\small (context for word 1)";
-	Context2/"Context 2 \\\small (context for word 2)";
-
-
-	US1/"Unsupervised \\Senses\\For Word 1";
-	US2/"Unsupervised \\Senses\\For Word 2";
-
-	Refitting1/Refitting;
-	Refitting2/Refitting;
-
-	
-	Distance Measure <-  {Refitting1, Refitting2};
-
-	Refitting2 <- Context2;
-	Refitting2 <- {US2};
-	Refitting1 <- {US1};
-	Refitting1 <- Context1;
-	US1 <- Word1;
-	US2 <- Word2;
-	
-%	{[same layer] Word1, Word2, Context1, Context2};
+		
+\begin{tikzpicture}[align=center]
+\node[input](context1){Sentence containing\\ Word1};
+\node[input, right = 1 of context1](word1){Word1};
+\node[right= 1 of word1](centermark){};
+\node[input, right = 1 of centermark](word2){Word2};
+\node[input, right = 1 of word2](context2){Sentence containing\\ Word2};
 
 
-};	
+\node[datastore, below=0.5 of centermark](embeddings) {Pretrained Unsupervised \\ Sense Embeddings};
+\node[proc, below left=1.25 of embeddings] (refitting1) {Refitting};
+\node[proc, below right=1.25 of embeddings] (refitting2) {Refitting};
 
-	
-	
+\node[proc, below = 5.25 of centermark](dist) {Distance};
+\node[input, right = 2 of dist](output){RefittedSim};
+
+
+\draw[link] (word1) -> (embeddings);
+\draw[link] (word2) -> (embeddings);
+
+\draw[multi] (embeddings) -> (refitting1) node[labe,midway, xshift=-5]{$\u={\{u_1,...\}}$};
+\draw[multi] (embeddings) -> (refitting2) node[labe, midway, xshift=15]{$\u^\prime={\{u^\prime_1,...\}}$};
+
+\draw[link] (context1) -> (refitting1) node[labe, midway, above]{$\c$};
+\draw[link] (context2) -> (refitting2)node [labe, midway,above]{$\c^\prime$};
+
+\draw[link] (refitting1) -> (dist) node [labe, midway]{$l(\u \mid \c)$};
+\draw[link] (refitting2) -> (dist) node [labe, midway]{$l(\u^\prime \mid \c^\prime)$};
+\draw[link] (dist) -> (output);
+
 \end{tikzpicture}
-
-
+%\[
+%\mathrm{RefittedSim}((\u,\c),(u^{\prime},\c^{\prime}))
+%\begin{aligned}
+%&= d(l(\u \mid \c), l(\u^\prime \mid \c^\prime)\\
+%&= d\left(
+%\sum_{u_{i}\in\u}u_{i}P(u_{i}\mid\c),\:
+%\sum_{u_{j}^{\prime}\in\u^{\prime}}u_{i}P(u_{j}^{\prime}\mid\c^{\prime})\right)
+%\end{aligned}
+%\]
 \end{document}
