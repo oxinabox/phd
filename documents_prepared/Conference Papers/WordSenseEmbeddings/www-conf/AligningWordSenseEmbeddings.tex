@@ -8,7 +8,7 @@
 \usepackage{amsmath}
 
 \usepackage[all=normal,
-paragraphs=tight,
+%paragraphs=tight,
 floats=tight,
 %mathspacing=tight,
 %wordspacing=tight,
@@ -49,7 +49,7 @@ sorting=none, sortcites=true, hyperref=false]{biblatex}
 \DeclareMathOperator*{\argmin}{arg\,min}
 \DeclareMathOperator*{\argmax}{arg\,max}
 
-
+\newcommand{\wordquote}[1]{\enquote{\texttt{#1}}}
 
 
 \begin{document}
@@ -84,6 +84,10 @@ sorting=none, sortcites=true, hyperref=false]{biblatex}
 
 \maketitle
 
+
+
+
+
 \begin{abstract}
 Word sense embeddings are vector representations of polysemous words -- words with multiple meanings. Similar techniques to those used to find word embedding vectors, such as in Word2Vec, are often used to learn multiple sense embeddings for each word.
 These induced sense embeddings, however, do not necessarily correspond to any dictionary senses of the word.
@@ -104,58 +108,69 @@ Further to this, the similarity measure we derive from the refitting has signifi
 \section{Introduction}
 
 
-Word embeddings represent a word's semantic meaning and syntactic role as a point in a vector space \parencite{NPLM, collobert2008unified, mikolov2013efficient}. However, each word is only given one embedding -- which restricts it to representing only one combined sense. Word sense embeddings are the generalisation of this to handle polysemous and homonymous  words. Often these word sense embeddings are learnt through unsupervised word sense induction \parencite{Reisinger2010,Huang2012,tian2014probabilistic, AdaGrams}. In these cases it is not possible to directly determine which meaning belongs to which embedding. Furthermore the induced senses are unlikely to directly match to any one human defined meaning at all; but rather will be more specific, more broad, or include the meanings of jargon not in common use.
+Popular word embedding vectors, such as Word2Vec \parencite{mikolov2013efficient} and GLoVE \parencite{pennington2014glove}, represent a word's semantic meaning and its syntactic role as a point in a vector space. As each word is only given one embedding such method are restricted to only representing a single combined sense, or meaning, of the word. \emph{Word sense embeddings} are the generalisation of word embeddings to handle polysemous and homonymous  words. Often these sense embeddings are learnt through unsupervised word sense induction \parencite{Reisinger2010,Huang2012,tian2014probabilistic, AdaGrams}. The induced sense embeddings are unlikely to directly coincide with any set of human defined meaning at all, i.e. they will not match lexical senses such as those defined in a lexical dictionary, eg WordNet \parencite{miller1995wordnet}. These induced senses can be more specific, more broad, or include the meanings of jargon not in common use.
 
 
-It can be argued that many word sense induction (WSI) systems may capture better word senses than human lexicographers do manually, however this does not mean that induced senses can replace standard lexical senses. While the induced senses may cover the space of meanings more comprehensively, or with better granularity than the standard senses, there is a vast wealth of existing knowledge defined around lexical senses from various sense inventories. Methods to link induced senses to lexical senses allow this information to be unlocked.
+It can be argued that many word sense induction (WSI) systems may capture better word senses than human lexicographers do manually, however this does not mean that induced senses can replace standard lexical senses. While the induced senses may cover the space of meanings more comprehensively, or with better granularity than the lexical senses, it is important to appreciate the vast wealth of existing knowledge defined around lexical senses from various sense inventories. Methods to link induced senses to lexical senses allow us to take advantage of both worlds.
 
 
-We thus propose a method for using a single example of a word in context to synthesise a new embedding for that particular sense. We term this \emph{refitting} the induced senses, as it combines them to fit to the meaning in the example sentence. Our method allows us to use a single labelled example to produce a labelled sense embedding. This allows a shift from a representation that can only work within the system, to one that uses a standard sense, or a user defined sense, which can be used as part of a more complex knowledge engineering system. 
-
-Refitting word sense vectors to match a lexicographical sense inventory, such as WordNet or a translator's dictionary, is possible if the sense inventory features at least one example of the target senses use. The new lexically refitted sense embedding can then be used for Word Sense Disambiguation (WSD). Applying WSD adds useful information to an unstructured document, allowing further processing methods to take advantage of this information. An application of this would be as part of a machine translation system. To properly translate a word, the correct sense should be determined, as different senses in the source language, often translate to entirely different words in the target language. Using WSD to add sense annotation to a document bridges between unstructured raw text data to sense annotated data allowing for further processing with systems that require this structure. The application of our method for WSD is discussed in \Cref{lexicalWSD}.
-
-Beyond refitting to a standard lexical sense, refitting to a user provided example has applications in information retrieval. Consider the natural language query \enquote{Find me web-pages about banks as in \enquote{the river banks were very muddy.}}. By generating an embedding vector for that specific sense of ``banks'' from the example sentence, and generating one from use of the word in each retrieved document, we can approximate measuring distance in a semantic space. This allows for similarity ranking -- discarding irrelevant uses of the word. The method we propose, using our refitted embeddings, has lower time complexity than AvgSimC, the current state of the art alternative for measuring similarity of words in context. This is detailed in \Cref{RefittedSimVsAvgSimC}
-
-Our refitting method synthesises a new sense vector using the existing induced word sense vectors and the language model.
-The new vector is formed as an appropriately weighted sum of the original embeddings. A weighting of the induced sense vectors is determined using the language model and the example sentence.
-The refitted vector approximately corresponds to the meaning given by the example sentence. 
-Our refitting method is detailed in \Cref{refitting}.
-
-We noted during refitting often a single induced sense would dominate the refitted sense representation. It is rare in natural language for the meaning to be so unequivocal. Generally, a significant overlap exists between the meaning of different lexical senses, and there is often a high level of disagreement when humans are asked to annotate a corpus \parencite{veronis1998study}. We thus would expect similar to hold automatically determining the appropriateness of the induced senses, as is done during refitting. Towards this end, we develop a smoothing method, which we call \emph{geometric smoothing} that de-emphasises the sharp decisions made by the (unsmoothed) refitting method. We found that this significantly improves results. This suggests that the sharpness of decisions from the language model is an issue with the language model, which smoothing can correct. The geometric smoothing method is presented in \Cref{smoothing}.
+In this paper, we propose a refitting method to generate a sense embedding vector that matches with a labelled lexical sense.
+Given an example sentence with the labelled lexical sense of a particular word, the refitting method algorithmically combined the induced sense embeddings of the target word in a way such that the likihood of the example sentence, is similar usages, is maximised.
+With the refitting, the induced sense embeddings are not restrict ot be used only in the system they are obtained from, but can also be used in more general situations where standard senses, or user defined senses are desired.
 
 
-We demonstrate the refitting method on Adaptive Skip-Grams (AdaGram) \parencite{AdaGrams}, and on our own simple greedy word sense embeddings. The method is applicable to any skip-gram-like language model that can take a sense vector as its input, and can output the probability of a word appearing in that sense's context.
+Refitting word sense vectors to match a lexicographical sense inventory, such as WordNet or a translator's dictionary, is possible if the sense inventory features at least one example of the target senses use. The new lexically refitted sense embedding can then be used for Word Sense Disambiguation (WSD). 
+Applying WSD is almost indispensable in any unstructured document understanding.
+For example, a machine translation system: to properly translate a word, the correct sense should be determined, as different senses in the source language, often translate to entirely different words in the target language.
+We demonstrate how the refitting method can be successfully applied for WSD in \Cref{lexicalWSD}.
+
+Beyond refitting to a standard lexical sense, refitting to a user provided example has applications in information retrieval. Consider the natural language query \wordquote{Find me web-pages about banks as in \enquote{the river banks were very muddy.}}. By generating an embedding vector for that specific sense of ``banks'' from the example sentence, and by comparing with the generated one from use of the same word in each retrieved document, we can more accurately measure their distance in a semantic space. This allows for similarity ranking -- discarding irrelevant uses of the word. The method we propose, using our refitted embeddings, has lower time complexity than AvgSimC \parencite{Reisinger2010}, the current state of the art alternative for measuring similarity of words in context. This is detailed in \Cref{RefittedSimVsAvgSimC}.
 
 
-The rest of the paper is organised as follows: \Cref{relatedwords} discusses related works on learning standard lexical sense repressions directly, and on associating the induced senses with standard lexical senses. \Cref{Framework} presents our refitting method, as well as the geometric smoothing method used with it. \Cref{lexicalWSD} shows how the refitted sense vectors can be used for lexical word sense disambiguation. \Cref{SimilarityInContext} describes the RefittedSim measure for word similarity in context, and presents its results. Finally, the paper presents its conclusions in \Cref{conclusion}.
+
+We noted during refitting often a single induced sense would dominate the refitted sense representation. It is rare in natural language for the meaning to be so unequivocal. Generally, a significant overlap exists between the meaning of different lexical senses, and there is often a high level of disagreement when humans are asked to annotate a corpus \parencite{veronis1998study}. We thus would expect similar to hold automatically determining the appropriateness of the induced senses, as is done during refitting. Towards this end, we develop a smoothing method, which we call \emph{geometric smoothing} that de-emphasises the sharp decisions made by the (unsmoothed) refitting method. We found that this significantly improves the results. This suggests that the sharpness of decisions from the language model is an issue with the language model, which smoothing can correct. The geometric smoothing method is presented in \Cref{smoothing}.
+
+
+We demonstrate the refitting method on sense embedding vectors induced using Adaptive Skip-Grams (AdaGram) \parencite{AdaGrams}, as well as own simple greedy word sense embeddings. The method is applicable to any skip-gram-like language model that can take a sense vector as its input, and can output the probability of a word appearing in that sense's context.
+
+
+The rest of the paper is organised as follows: \Cref{relatedwords} discusses two camps of related works, one on directly learning standard lexical sense repressions, and the other on on indirectly associating induced senses with standard lexical senses. \Cref{Framework} presents our refitting method, as well as the geometric smoothing method used with it. \Cref{lexicalWSD} shows how the refitted sense vectors can be used for lexical word sense disambiguation. \Cref{SimilarityInContext} describes the RefittedSim measure for word similarity in context, and presents its results. Finally, the paper concludes with outlook to future works in \Cref{conclusion}.
 
 \section{Related Works} \label{relatedwords}
 
 \subsection{Directly Learning Lexical Sense Embeddings}
-Our refitting method can be considered as learning lexical sense embeddings, as a one-shot learning task. A alternative is to transform the problem into a supervised or semi-supervised learning task. The difficulty lies in how to get a sufficient number of labelled senses. One option is to use a separate WSD method to artificially label an unlabelled corpus.
+In this camp of research, the induction of word sense embeddings is treated as a supervised, or semi-supervised task, that requires sense labelled corpora for training.
 
-Iacobacci et al. \parencite{iacobacci2015sensembed} use a Continuous Bag of Word language model\parencite{mikolov2013efficient}, but use word senses as the labels rather than words. This is a direct application of word embedding techniques. To overcome the lack of a large sense labelled corpus, Iacobacci et al. use the 3rd party WSD tool BabelFly, to add sense annotations to a previously unlabelled corpus. An alternative approach would be to use a method that disambiguates the senses using a partially trained model.
+Iacobacci et al. \parencite{iacobacci2015sensembed} use a Continuous Bag of Word language model \parencite{mikolov2013efficient}, using word senses as the labels rather than words. This is a direct application of word embedding techniques. To overcome the lack of a large sense labelled corpus, Iacobacci et al. use a 3rd party WSD tool, BabelFly, to add sense annotations to a previously unlabelled corpus.
 
-Chen et al. use a semi-supervised approach to train sense vectors \parencite{Chen2014}. They partially disambiguate their training corpus, using their initial word sense vectors and WordNet; and use these labels to fine-turn their embeddings.
-Initially the sense vectors are set as the average of the single sense word embeddings\parencite{mikolov2013efficient} for the words in the WordNet gloss.
-Similarly, they define a context vector, as the average of all words in a sentence.
-They then progressively label the words with the sense of the sense vector that is closest to the context vector if it is closer than a fixed threshold.
+Chen et al. \parencite{Chen2014} use a semi-supervised approach to train sense vectors. They partially disambiguate their training corpus, using initial word sense vectors and WordNet; and use these labels to fine-turn their embeddings.
+Initially the sense vectors are set as the average of the single sense word embeddings \parencite{mikolov2013efficient} for the words in the WordNet gloss.
+Similarly, a context vector is defined as the average of all words in a sentence.
+They then progressively label the words with the sense vector that is closest to the context vector if it is closer than a predefined threshold.
 The requirement for meeting a threshold in order to add the sense label  decreases the likelihood of training on an incorrect sense label.
 The selected sense vector is used to update the context vector and then the next word is relabelled. They give two methods for selecting the order of relabelling.
 After the relabelling is complete they fine tune the sense embeddings by defining a new skip-gram method with the objective of predicting both the words and the word senses in the context, when given an input word\footnote{Note that using the input word to predict the which word senses will appear in the context is the opposite of the approach used by AdaGram. AdaGram uses the word sense to predict the word of the context \parencite{AdaGrams}.}. The overall approach is to use the initial sense vectors estimated from the glosses to add sense labels to some of the words, and then use these as the training target.
 
-The key practical difference between the one-shot approach used by refitting, compared to the supervised, and semi-supervised approach uses in existing works is the time taken to  add a new sense. With our refitting fitting approach adding a new sense is practically instantiations, and replacing the entire sense inventory is only a matter of a few hours. Whereas for the existing approaches adding senses would require almost fully repeating the training process, often taking several days. Refitting is a process done to sense word embeddings, rather a method for finding sense embeddings from a large corpus. It can be applied to any pretrained sense embeddings, so long as it meets the requirement for a suitable language model.
+
+Our refitting method learns a new sense embedding as a weighted sum of existing induced sense embeddings of the target word.
+This is analogous to regression learning or one-shot learning using refitting.
+The key practical difference between the one-shot approach used by refitting, compared to the supervised, and semi-supervised approach uses in existing works is the time taken to  add a new sense.
+Adding a new sense using our approach is practically instantiations, and replacing the entire sense inventory, of several hundred thousand senses, is only a matter of a few hours.
+Whereas for the existing approaches adding senses would require almost fully repeating the training process, often taking several days.
+Refitting is a process done to sense word embeddings, rather a method for finding sense embeddings from a large corpus. 
+It can be applied to any pretrained sense embeddings, so long as it uses a language model based approach.
 \pdfcomment{Should I mention that it could be adapted to apply to both the embeddings above, with some adaption?}
 
-One of the key reasons, that it is useful to have senses that align with standard lexical senses, is that it allows word sense embeddings to be used for word sense disambiguation. This is demonstrated by Chen et al.  \parencite{Chen2014}, and we discuss how refitted word sense vectors can be used do the same in \Cref{eq:lexicalwsd}. If the word senses do not correspond to the lexical senses, then one approach is to form a weighted mapping from induced senses, to the lexical senses.
+
 
 \subsection{Mapping induced senses to lexical senses}\label{mapping}
- Agirre et al. give a general method to allow induced word senses to be used for lexical WSD \parencite{agirre2006}.
+Rather than learning lexical senses directly, and alternative camp of thought is to form a weighted mapping from induced senses, to the lexical senses.
+ Agirre et al. \parencite{agirre2006} give a general method to allow induced word senses to be used for lexical WSD.
 Their method applies to all word sense induction systems, not just word embedding systems, so is more general than the refitting approach that we present.
-Their method maps the induced sense disambiguation scores, to scores for disambiguating standard lexical senses. This method was used for the SemEval-2007 Task 02 \parencite{SemEval2007WSIandWSD} to evaluate all entries.
+Their method maps the induced sense disambiguation scores, to scores for disambiguating standard lexical senses. This method was used for SemEval-2007 Task 02 \parencite{SemEval2007WSIandWSD} to evaluate all entries.
 They use an annotated \emph{mapping corpus} to construct a mapping weight between induced senses probabilities and the lexical sense probabilities.
 
-For $\l=\{l_1,...\}$ the set of lexically defined senses, $\u=\{u_1,...\}$ the set of unsupervised induced senses, and a corpus of labelled contexts $\{\c_1, ...\}$ Agirre et al. define the mapping weight by a likelihood.
+For $\l=\{l_1,..., l_m\}$ the set of lexically defined senses, $\u=\{u_1,...,u_n\}$ the set of unsupervised induced senses, and a corpus of labelled contexts $\{\c_1, ...,c_k\}$, Agirre et al. define the mapping weight by a likelihood.
 This likelihood $P(l_i \mid u_j)$ is estimated by counting how often $u_j$ is the most-likely sense as returned by WSD on the induced senses, when $l_i$ is the labelled lexical sense; and applying the definition of conditional probability.
 
 This method requires the mapping corpus to cover every lexical word sense, with enough instances for the frequency count to converge to the actual likelihood.
@@ -166,24 +181,30 @@ P(l_i \mid \c_T) = P(l_i | u_j) P(u_j \mid \c_T)
 \end{equation}
 
 
-Agirre et al. demonstrate this method with the small Senseval 3 English Lexical Sample \parencite{mihalcea2004senseval} -- it is less clear how well it will work on more complete tasks featuring rarer words and senses. We use this method as a baseline in \Cref{lexicalWSD}.
+Agirre et al. demonstrate this method with the small SensEval 3 English Lexical Sample \parencite{mihalcea2004senseval}. However, it is less clear how well it will work on more complete tasks featuring rarer words and senses. 
+This method as a baseline to compare with our work in \Cref{lexicalWSD}.
 
 
 \section{Proposed Refitting Framework} \label{refitting} \label{Framework}
 
-The key contribution of this work is to provide a way to synthesise a word sense embedding given only a single example. This is what we call this \emph{refitting} the sense vectors. By refitting the unsupervised vectors we define a new vector, that lines up with the specific meaning of the word from the example sentence.
+The key contribution of this work is to provide a way to synthesise a word sense embedding given only a single example sentence and a set of pretrained sense embedding vectors. 
+We termed this \emph{refitting} the sense vectors.
+By refitting the unsupervised vectors we define a new vector, that lines up with the specific meaning of the word from the example sentence.
 
-This can be looked at as a one-shot learning problem.
+This can be looked at as a one-shot learning problem, analogous to regression.
 The training of the induced sense, and of the language model, can be considered an unsupervised pre-training step. The new word sense embedding should give a high value for the likelihood of the example sentence, according to the language model. Furthermore, it should generalise to also give a high likelihood of other contexts that were never seen, but which also occur near the word sense of this particular meaning.
 
-As part of our preliminary investigations, we attempted directly optimising the sense vector so as to maximise the probability of the example. This was found to generalise poorly, due to over-fitting. It also took a significant amount of time. Rather than a direct approach, we instead take inspiration from the locally linear relationship between meaning and vector position that has been demonstrated for (single sense) word embeddings \parencite{mikolov2013efficient,mikolovSkip,mikolov2013linguisticsubstructures}.
+As part of our preliminary investigations, we attempted directly optimising the sense vector to predict the example.
+We applied the L-BFGS \parencite{nocedal1980updating} optimisation algorithm with the sense vector being the parameter being optimised over, and the objective being to maximise the probability of the example sentence according the the language model.
+This was found to generalise poorly, due to over-fitting.
+It also took a significant amount of time per word sense to be fitted.
+Rather than a direct approach, we instead take inspiration from the locally linear relationship between meaning and vector position that has been demonstrated for (single sense) word embeddings \parencite{mikolov2013efficient,mikolovSkip,mikolov2013linguisticsubstructures}.
 
 In order to refit the sense embedding to align to the meaning of the word in a particular context, we express it as a combination of the unsupervised sense vectors for that word.
 The new sense vector is a weighted sum of the existing vectors that were already trained, where the weight is determined by the probability of each induced sense given the context.
 
 
-Assume we are given a collection of induced (unlabelled) embeddings $\u={u_1,...,u_{n_u}}$, and an example sentence $\c={w_1,...,w_{n_c}}$. We define a function $l(\u \mid \c )$ which determines the refitted sense vector, from the unsupervised vectors and the context:
-
+Assume we are given a collection of induced (unlabelled) embeddings $\u={u_1,...,u_{n_u}}$, and an example sentence $\c={w_1,...,w_{n_c}}$. We define a function $l(\u \mid \c )$ which determines the refitted sense vector, from the unsupervised vectors and the context as
 \begin{equation} \label{eq:synth}
 l(\u \mid \c ) = \sum_{\forall u_i \in \u} u_i P(u_i \mid \c)
 \end{equation}
@@ -202,16 +223,16 @@ For single-sense word embeddings  summing the word embeddings of the words makin
 As we are already creating a weighted sum, in the refitting step (\Cref{eq:synth}), we can facilitate a similar result by adding the additional sense embeddings for each word to the total pool of sense embeddings to be combined ($\u$ above). This allows for the senses of one word to contribute more than the other.
 
 It is likely that one word in a collocation will contain senses with more specialised use in the collocation than the other.
-For example, \enquote{civil war}: \enquote{war} as in \enquote{civil war} appears in similar contexts to any other senses of \enquote{war}.
-But \enquote{civil} as in \enquote{civil war} appears in rather different contexts to the other uses of \enquote{civil}. Thus we expect there to be a sense embedding for \enquote{civil} that is particularly useful in refitting for \enquote{civil war}.
+For example, \wordquote{civil war}: \wordquote{war} as in \wordquote{civil war} appears in similar contexts to any other senses of \wordquote{war}.
+But \wordquote{civil} as in \wordquote{civil war} appears in rather different contexts to the other uses of \wordquote{civil}. Thus we expect there to be a sense embedding for \wordquote{civil} that is particularly useful in refitting for \enquote{civil war}.
 
 
-The extreme version of this is if one or more words in the collocation have no embedding defined. In this case we fall back to only using the embeddings from the remaining words An example of this would be ``Fulton County Court'', while ``County'' and ``Court'' are common words, ``Fulton'' is a rare proper noun. We use the remaining words: ``County'' and ``Court'' to determine the meaning of the whole.
+The extreme version of this is if one or more words in the collocation have no embedding defined. In this case we fall back to only using the embeddings from the remaining words An example of this would be \wordquote{Fulton County Court}, while \wordquote{County} and \wordquote{Court} are common words, \wordquote{Fulton} is a rare proper noun. We use the remaining words: \wordquote{County} and \wordquote{Court} to determine the meaning of the whole.
 
 
 
 \subsection{A General WSD method} \label{generalwsd}
-Using the language model, and simple application of Bayes' theorem, we define a general word sense disambiguation method that will be used for refitting (\Cref{eq:synth}), it will also be used for lexical word sense disambiguation (see \Cref{lexicalWSD}). This is a standard approach of using Bayes' theorem, \parencite{tian2014probabilistic, AdaGrams}. We present it here by way of background.
+Using the language model, and application of Bayes' theorem, we define a general word sense disambiguation method that can be used for refitting (\Cref{eq:synth}), it is also be used for lexical word sense disambiguation (see \Cref{lexicalWSD}). This is a standard approach of using Bayes' theorem \parencite{tian2014probabilistic, AdaGrams}. We present it here for completeness.
 
 Taking some collection of sense representations, we aim to use the context to determine which sense is the most suitable for this use.
 We will call the word we are trying to disambiguate the \emph{target word}.
@@ -233,7 +254,6 @@ The correctness of the conditional independence assumption depends on the qualit
 
 
 Bayes' Theorem can be applied to this context likelihood function  $P(\c \mid s_{i})$ and a prior for the sense $P(s_i)$ to allow the posterior probability to be found.
-
 \begin{equation} \label{eq:generalwsd}
 P(s_{i} \mid \c) =
 \dfrac{P_S(\c \mid s_{i})P(s_{i})}
@@ -253,7 +273,7 @@ We call this method geometric smoothing.
 Geometric smoothing is suitable for smoothing posterior probability estimates derived from products of conditionally independent likelihoods.
 It smooths the resulting distribution, by shifting all probabilities to be closer to the uniform distribution -- more-so the further they are from being uniform.
 
-It was noted that during refitting, that often one induced sense would be calculated as having much higher probability of occurring than the others (according to \Cref{eq:generalwsd}). This level of certainty is not expected to occur in natural language. Consider sentences such as \enquote{The CEO of the bank, went for a picnic by the river.} While \enquote{CEO} is closely linked to a financial bank, and \enquote{river} is strongly linked to a river bank, we do not wish for the occurrence of either word in the context to completely negate the possibility of either sense -- this use of \enquote{bank} does refer to a financial institution, but there are other sentences with very similar words in the context window that world refer to a river bank.
+It was noted that during refitting, that often one induced sense would be calculated as having much higher probability of occurring than the others (according to \Cref{eq:generalwsd}). This level of certainty is not expected to occur in natural language. Consider sentences such as \wordquote{The CEO of the bank, went for a picnic by the river.} While \wordquote{CEO} is closely linked to a financial bank, and \wordquote{river} is strongly linked to a river bank, we do not wish for the occurrence of either word in the context to completely negate the possibility of either sense -- this use of \wordquote{bank} does refer to a financial institution, but there are other sentences with very similar words in the context window that world refer to a river bank.
 By using a smoothing method we investigate if this sharp focus on a sense was causing issues.
 Our results in \Cref{lexicalWSD} and \Cref{refitting} confirm that smoothing the sense probability estimates does improve performance.
 
@@ -281,8 +301,6 @@ P_S(s_{i})= \sqrt[n_c]{P(w_{j} \mid s_{i})}
 
 
 When this is substituted into \Cref{eq:generalwsd}, it becomes a smoothed version of $P(s_{i} \mid \c)$.
-
-
 \begin{equation} \label{eq:generalwsdsmoothed}
 \begin{aligned}
 P_S(s_{i}\mid\c) %
@@ -385,7 +403,6 @@ In their seminal work on sense vectors representations Reisinger and Mooney defi
 
 
 AvgSimC is defined using distance metric $d$ (normally cosine distance) as: 
-
 \begin{multline} \label{eq:avgsimc}
 \mathrm{AvgSimC}((\u,\c),(u^{\prime},\c^{\prime})) \\
 =  \frac{1}{n \times n^{\prime}}
@@ -432,7 +449,7 @@ AvgSimC has time complexity $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \
 RefittedSim is $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert)$.
 The product of the number of senses of each word $n \times n^\prime$, may be small for dictionary senses, but it is often large for induced senses. Dictionaries tend to define only a few senses per word -- the average\footnote{It should be noted, though, that the number of meanings is not normally distributed \parencite{zipf1945meaning}} number of senses per word in WordNet is less than three for all parts of speech \parencite{miller1995wordnet}. For induced senses, however, it is often desirable to train many more senses, to get better results using the more fine-grained information. In several evaluations performed by Reisinger and Mooney they found optimal results at near to 50 senses \parencite{Reisinger2010}; We found similar results with our own preliminary experiments. In the case of fine grained induced senses, the $O(n \times n^\prime)$ is significant; avoiding it with RefittedSim makes the similarity measure more useful for information retrieval.
 
-It may be desirable for retrieving relevant search results to allow the user to provide an example of the term being searched for. This would allow documents containing only uses of irrelevant meanings of the word can be removed, and documents including effective synonyms included. Consider for example a search for \enquote{Apple} as in \enquote{the fruit I like to eat}, can return different results from \enquote{Apple} as in \enquote{the company that makes the iPod, and the MacBook}. This is the practical use-case for similarity with context.
+It may be desirable for retrieving relevant search results to allow the user to provide an example of the term being searched for. This would allow documents containing only uses of irrelevant meanings of the word can be removed, and documents including effective synonyms included. Consider for example a search for \wordquote{Apple} as in \wordquote{the fruit I like to eat}, can return different results from \wordquote{Apple} as in \wordquote{the company that makes the iPod, and the MacBook}. This is the practical use-case for similarity with context.
 In the information retrieval context, the probabilities of the word sense for the context of the document can be done off-line, during indexing. With this assumption, the query-time time complexity for AvgSimC becomes : $O(n\times n^{\prime})$, and for RefittedSim it becomes: $O(1)$.
 We do note however that pre-computing the word sense probabilities for each word in the document during indexing remains expensive (though no more so than for AvgSimC). If this indexing time is considered worthwhile, then RefittedSim is significantly more viable for use in information retrieval tasks than AvgSimC. For many uses however, ignoring word senses in information retrieval is viable, as documents can be differentiated by adding more query terms -- this limits the practical use of both AvgSimC and RefittedSim.
 
@@ -569,7 +586,7 @@ While evaluating the map, we do clip to a 10 word context window for each word t
 
 The second baseline we use is the Most Frequent Sense (MFS). This method always disambiguates any word as having its  most common meaning. Due to the power law distribution of word senses, this is an effective heuristic \parencite{Kilgarriff2004}.
 
-We also evaluted the performance of the mapping baseline, and the Greedy embedding method with a backoff to the MSF. When a method is unable to determine the word sense, the method can report the MFS instead of returning no result (a non-attempt). For embedding methods, this occurs when a polysemous word has only one (or zero) sense embeddings trained. For the mapping method it occurs when the word does not occur in the mapping corpus. We do not report the results for AdaGram with MSF backoff, as it was trained with a large enough vocabulary, that it has almost complete coverage.
+We also evaluated the performance of the mapping baseline, and the Greedy embedding method with a backoff to the MSF. When a method is unable to determine the word sense, the method can report the MFS instead of returning no result (a non-attempt). For embedding methods, this occurs when a polysemous word has only one (or zero) sense embeddings trained. For the mapping method it occurs when the word does not occur in the mapping corpus. We do not report the results for AdaGram with MSF backoff, as it was trained with a large enough vocabulary, that it has almost complete coverage.
 
 \subsection{Word Sense Disambiguation Results} \label{WSDtask}
 \pgfplotstableset{
