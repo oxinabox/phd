@@ -7,7 +7,13 @@
 \usepackage{csquotes}
 \usepackage{amsmath}
 
-\usepackage[subtle]{savetrees}
+\usepackage[all=normal,
+paragraphs=tight,
+floats=tight,
+%mathspacing=tight,
+%wordspacing=tight,
+tracking=tight,
+bibbreaks=tight]{savetrees}
 \usepackage{microtype}
 \usepackage{adjustbox}
 \usepackage{flushend}
@@ -42,6 +48,8 @@ sorting=none, sortcites=true, hyperref=false]{biblatex}
 \newcommand{\ci}{\perp\!\!\!\perp} % from Wikipedia
 \DeclareMathOperator*{\argmin}{arg\,min}
 \DeclareMathOperator*{\argmax}{arg\,max}
+
+
 
 
 \begin{document}
@@ -113,21 +121,20 @@ The new vector is formed as an appropriately weighted sum of the original embedd
 The refitted vector approximately corresponds to the meaning given by the example sentence. 
 Our refitting method is detailed in \Cref{refitting}.
 
-\pdfcomment{How can I (should I?) rewrite the ``We noted that while our refitted'' sentence to not be in past tense}
-We noted that while our refitted sense vectors did capture the meaning of the example sentence, often a single induced sense would dominate the refitted sense representation. It is rare in natural language for the meaning to be so clearly cut. Generally, a significant overlap exists between the meaning of different lexical senses, and there is often a high level of disagreement when humans are asked to annotate a corpus \parencite{veronis1998study}. We thus would expect this also to be true when automatically determining the appropriateness of the induced senses, as is done during refitting. Towards this end, we develop a smoothing method, which we call \emph{geometric smoothing} that de-emphasises the sharp decisions made by the (unsmoothed) refitting method. We found that this significantly improves results. This suggests that the sharpness of decisions from the language model may be an artefact of the training method and the sparseness of the training data, which smoothing can correct. The geometric smoothing method is presented in \Cref{smoothing}.
+We noted during refitting often a single induced sense would dominate the refitted sense representation. It is rare in natural language for the meaning to be so unequivocal. Generally, a significant overlap exists between the meaning of different lexical senses, and there is often a high level of disagreement when humans are asked to annotate a corpus \parencite{veronis1998study}. We thus would expect similar to hold automatically determining the appropriateness of the induced senses, as is done during refitting. Towards this end, we develop a smoothing method, which we call \emph{geometric smoothing} that de-emphasises the sharp decisions made by the (unsmoothed) refitting method. We found that this significantly improves results. This suggests that the sharpness of decisions from the language model is an issue with the language model, which smoothing can correct. The geometric smoothing method is presented in \Cref{smoothing}.
 
 
 We demonstrate the refitting method on Adaptive Skip-Grams (AdaGram) \parencite{AdaGrams}, and on our own simple greedy word sense embeddings. The method is applicable to any skip-gram-like language model that can take a sense vector as its input, and can output the probability of a word appearing in that sense's context.
 
 
-The rest of the paper is organised as follows: \Cref{relatedwords} discusses related works on learning standard lexical sense repressions directly, and on associating the induced senses with standard lexical senses. \Cref{Framework} presents our refitting method, as well as the geometric smoothing method used with it. \Cref{lexicalWSD} shows how the refitted sense vectors can be used for lexical word sense disambiguation. \Cref{SimilarityInContext} describes the RefittedSim measure for word similarity in context, and presents its results. Finally, the paper presents it's conclusions in \Cref{conclusion}.
+The rest of the paper is organised as follows: \Cref{relatedwords} discusses related works on learning standard lexical sense repressions directly, and on associating the induced senses with standard lexical senses. \Cref{Framework} presents our refitting method, as well as the geometric smoothing method used with it. \Cref{lexicalWSD} shows how the refitted sense vectors can be used for lexical word sense disambiguation. \Cref{SimilarityInContext} describes the RefittedSim measure for word similarity in context, and presents its results. Finally, the paper presents its conclusions in \Cref{conclusion}.
 
 \section{Related Works} \label{relatedwords}
 
 \subsection{Directly Learning Lexical Sense Embeddings}
 Our refitting method can be considered as learning lexical sense embeddings, as a one-shot learning task. A alternative is to transform the problem into a supervised or semi-supervised learning task. The difficulty lies in how to get a sufficient number of labelled senses. One option is to use a separate WSD method to artificially label an unlabelled corpus.
 
-Iacobacci et al. \parencite{iacobacci2015sensembed} use a Continuous Bag of Word (CBOW)  language model\parencite{mikolov2013efficient}, but use word senses as the labels rather than words. This is a direct application of word embedding techniques. To overcome the lack of a large sense labelled corpus, Iacobacci et al. use the 3rd party WSD tool BabelFly, to add sense annotations to a previously unlabelled corpus. An alternative approach would be to use a method that disambiguates the senses using a partially trained model.
+Iacobacci et al. \parencite{iacobacci2015sensembed} use a Continuous Bag of Word language model\parencite{mikolov2013efficient}, but use word senses as the labels rather than words. This is a direct application of word embedding techniques. To overcome the lack of a large sense labelled corpus, Iacobacci et al. use the 3rd party WSD tool BabelFly, to add sense annotations to a previously unlabelled corpus. An alternative approach would be to use a method that disambiguates the senses using a partially trained model.
 
 Chen et al. use a semi-supervised approach to train sense vectors \parencite{Chen2014}. They partially disambiguate their training corpus, using their initial word sense vectors and WordNet; and use these labels to fine-turn their embeddings.
 Initially the sense vectors are set as the average of the single sense word embeddings\parencite{mikolov2013efficient} for the words in the WordNet gloss.
@@ -151,7 +158,7 @@ They use an annotated \emph{mapping corpus} to construct a mapping weight betwee
 For $\l=\{l_1,...\}$ the set of lexically defined senses, $\u=\{u_1,...\}$ the set of unsupervised induced senses, and a corpus of labelled contexts $\{\c_1, ...\}$ Agirre et al. define the mapping weight by a likelihood.
 This likelihood $P(l_i \mid u_j)$ is estimated by counting how often $u_j$ is the most-likely sense as returned by WSD on the induced senses, when $l_i$ is the labelled lexical sense; and applying the definition of conditional probability.
 
-This method requires the mapping corpus to cover every lexical word sense, with enough instances for the frequency count to converge to the actual likelihood by the law of large numbers.
+This method requires the mapping corpus to cover every lexical word sense, with enough instances for the frequency count to converge to the actual likelihood.
 
 This is used to disambiguate a target word within a sentence ($\c_T$)  by converting the the unsupervised sense score $P(u_j \mid \c_T)$ to supervised sense scores $P(l_j \mid \c_T)$ by
 \begin{equation} \label{eq:agireewsd}
@@ -169,10 +176,10 @@ The key contribution of this work is to provide a way to synthesise a word sense
 This can be looked at as a one-shot learning problem.
 The training of the induced sense, and of the language model, can be considered an unsupervised pre-training step. The new word sense embedding should give a high value for the likelihood of the example sentence, according to the language model. Furthermore, it should generalise to also give a high likelihood of other contexts that were never seen, but which also occur near the word sense of this particular meaning.
 
-As part of our preliminary investigations, we attempted directly optimising the sense vector so as to maximise the probability of the example when input into the language model  This was found to generalise poorly, due to over-fitting. It also took a significant amount of time. Rather than a direct approach, we instead take inspiration from the locally linear relationship between meaning and vector position demonstrated with single sense word embeddings \parencite{mikolov2013efficient,mikolovSkip,mikolov2013linguisticsubstructures}.
+As part of our preliminary investigations, we attempted directly optimising the sense vector so as to maximise the probability of the example. This was found to generalise poorly, due to over-fitting. It also took a significant amount of time. Rather than a direct approach, we instead take inspiration from the locally linear relationship between meaning and vector position that has been demonstrated for (single sense) word embeddings \parencite{mikolov2013efficient,mikolovSkip,mikolov2013linguisticsubstructures}.
 
 In order to refit the sense embedding to align to the meaning of the word in a particular context, we express it as a combination of the unsupervised sense vectors for that word.
-The new word sense vector is a weighted sum of the existing vectors that were already trained, where the weight is determined by the probability of each induced sense given the context.
+The new sense vector is a weighted sum of the existing vectors that were already trained, where the weight is determined by the probability of each induced sense given the context.
 
 
 Assume we are given a collection of induced (unlabelled) embeddings $\u={u_1,...,u_{n_u}}$, and an example sentence $\c={w_1,...,w_{n_c}}$. We define a function $l(\u \mid \c )$ which determines the refitted sense vector, from the unsupervised vectors and the context:
@@ -182,10 +189,10 @@ l(\u \mid \c ) = \sum_{\forall u_i \in \u} u_i P(u_i \mid \c)
 \end{equation}
 
 To do this, we need to estimate the posterior predictive distribution $P(u_i \mid \c)$.
-This can be done simply by using Bayes' Theorem, as shown in \Cref{generalwsd}; or with our smoothed variation discussed in \Cref{smoothing}
+This can be done by using Bayes' Theorem, as shown in \Cref{generalwsd}; or with our smoothed variation discussed in \Cref{smoothing}
 
 
-In the very first neural network language model paper, Bengio et al. describe a similar method to \Cref{eq:synth} for finding the word embeddings for words not found in their vocabulary \parencite{NPLM}. They suggest that if a word was not present in the training data, they form \enquote{an initial feature vector for such a word, by taking a weighted convex combination of the feature vectors of other words that could have occurred in the same context, with weights proportional to their conditional probability} \parencite{NPLM}\pdfcomment{Is it Ok to use a direct quote here? RT Response: Unusual but OK}. The formula they give is as per \Cref{eq:synth}, but summing over the entire vocabulary of words (rather than just $\u$). To the best of our knowledge, this method has not been used for handling out-of-vocabulary words in any more recent word embedding architectures, nor has it ever been used for sense vectors.
+In the very first neural network language model paper, Bengio et al. \parencite{NPLM} describe a similar method to \Cref{eq:synth} for finding the word embeddings for words not found in their vocabulary. They suggest that if a word was not present in the training data, they form \enquote{an initial feature vector for such a word, by taking a weighted convex combination of the feature vectors of other words that could have occurred in the same context, with weights proportional to their conditional probability} \parencite{NPLM}. The formula they give is as per \Cref{eq:synth}, but summing over the entire vocabulary of words (rather than just $\u$). To the best of our knowledge, this method has not been used for handling out-of-vocabulary words in any more recent word embedding architectures, nor has it ever been used for sense vectors.
 
 
 \subsection {Fall back for Dictionary Phrases (Collocations)}
@@ -208,7 +215,7 @@ Using the language model, and simple application of Bayes' theorem, we define a 
 
 Taking some collection of sense representations, we aim to use the context to determine which sense is the most suitable for this use.
 We will call the word we are trying to disambiguate the \emph{target word}.
-Let $\s=(s_{1},...,s_{n})$, be the collection of possible senses for the target word\footnote{As this part of our method is used with both the unsupervised senses and the lexical senses, referred to as $\u$ and $\l$ in other parts of the paper, here we use $\s$ to avoid confusion, $\u$ or $\l$ as referred to else where can be substituted here for $\s$.}.
+Let $\s=(s_{1},...,s_{n})$, be the collection of possible senses for the target word\footnote{As this part of our method is used with both the unsupervised senses and the lexical senses, referred to as $\u$ and $\l$ respectively in other parts of the paper, here we use a general sense $\s$ to avoid confusion.}.
 
 Let $\c=(w_{1},...,w_{n_c})$ be a sequence of words from around the target word -- its context window.
 For example for the target word \emph{kid}, the context could be $\c=($ \emph{ wow the wool from the, is, so, soft, and, fluffy}$)$, where \emph{kid} is the central word taken from between \emph{the} and \emph{fluffy}.
@@ -222,7 +229,7 @@ By assuming the conditional independence of each word $w_j$ in the context, give
 P(\c \mid s_{i})=\prod_{\forall w_{j}\in\c}P(w_{j} \mid s_{i})
 \end{equation}
 
-The correctness of the conditional independence assumption depends on the quality of the representation -- the ideal sense representation would fully capture all information about the contexts it can appear in -- thus making the other elements of those contexts not present any additional information, and so  $P(w_a \mid w_b,s_i)=P(w_a \mid s_i)$. Given this, we have a good estimate of $P(\c \mid s_{i})$ which can be used with Bayes' theorem to find $P( s_i \mid \c)$.
+The correctness of the conditional independence assumption depends on the quality of the representation -- the ideal sense representation would fully capture all information about the contexts it can appear in -- thus making the other elements of those contexts not present any additional information, and so  $P(w_a \mid w_b,s_i)=P(w_a \mid s_i)$. Given this, we have a good estimate of $P(\c \mid s_{i})$ which can be used with Bayes' theorem to find $P( s_i \mid \c)$. However, it is known that a false assumption of independence contributes towards overly sharp estimates of the posterior distribution \cite{rosenfeld2000two}, which we seek to address in \Cref{smoothing} with geometric smoothing.
 
 
 Bayes' Theorem can be applied to this context likelihood function  $P(\c \mid s_{i})$ and a prior for the sense $P(s_i)$ to allow the posterior probability to be found.
@@ -237,7 +244,7 @@ This is the probability of the sense, given the context.
 
 Note that in a software implementation of these equations it is important to work with the logarithms of the probabilities to avoid numeric underflow; as is common practice when working with products of probabilities \parencite{press2007numerical}.
 
-Further to \Cref{eq:generalwsd}, we also developed a method, for estimating a smoothed version of posterior predictive distribution.
+Further to \Cref{eq:generalwsd}, we also developed a method, for estimating a smoothed version of the posterior predictive distribution.
 
 
 \subsection{Geometric Smoothing for General WSD} \label{smoothing}
@@ -250,10 +257,18 @@ It was noted that during refitting, that often one induced sense would be calcul
 By using a smoothing method we investigate if this sharp focus on a sense was causing issues.
 Our results in \Cref{lexicalWSD} and \Cref{refitting} confirm that smoothing the sense probability estimates does improve performance.
 
-We posit that the sharpness of probability estimates from \Cref{eq:generalwsd} are the result of a data sparsity problem. While word  embeddings largely overcome the data sparsity problem that plagued n-gram languages models because of weight sharing effects \parencite{NPLM}, we suggest data sparsity continues to cause problems for word sense embeddings. Sense embeddings have a significantly larger set of labels to learn; the same amount of training data must be split amongst all the senses of all the words. Further to this, not only do the words in a corpus occur with frequency according to a power law distribution \parencite{zipf1949human},  but the relative frequency of word senses are also distributed according to a power law \parencite{Kilgarriff2004}. The rare (induced) word senses are thus extremely rare. These rare senses, are liable to over-fit the few contexts they do occur in, and so give disproportionately high likelihoods to contexts that they are similar to. From the other side: as the training examples have to be shared amongst each word sense, rarer words are unlikely to only occur in the context of more than one sense -- thus causing the other senses to predict that it is unlikely to occur in their context. Weight sharing effects do offset this, but we suggest the data sparsity problem can become too great with sense embeddings. Thus requiring the additional smoothing.
+
+We posit that the sharpness of probability estimates from \Cref{eq:generalwsd} are the result of a data sparsity problem, and of a false independence assumption in \Cref{eq:contextprobtrue}. False independence and training data sparsity cause overly sharp posterior distribution estimates, the is particularly a problem for n-gram language models \cite{rosenfeld2000two}.
+Word  embeddings largely overcome the data sparsity problem due to weight sharing effects \parencite{NPLM},  and by being a higher quality language model allow for the approximation of conditional independence of the words in the context.
+We posit that these problems remain for word sense embeddings, where there is a significant larger number of classes.
+Thus the training data must be split further between each sense. 
+Further to this, the frequency of words \parencite{zipf1949human}  and word senses \parencite{Kilgarriff2004} within a corpus both follow a approximate power law distribution (Zipf's Law).
+Thus raw word senses are extremely rare.
+These rare senses, are liable to over-fit to the few contexts they do occur in, and so give disproportionately high likelihoods to contexts that they are similar to.
+We propose to handle these language model issues through additional smoothing.
 
 
-In geometric smoothing we consider instead replacing the, unnormalised posterior  with it's $n_c$-th root, where $n_c$ is the length of the context.
+In geometric smoothing we consider instead replacing the, unnormalised posterior  with its $n_c$-th root, where $n_c$ is the length of the context.
 We replace the likelihood of \Cref{eq:contextprobtrue} with:
 \begin{equation} \label{eq:contrextprobsmooth}
 P_S(\c \mid s_{i})=\prod_{\forall w_{j}\in\c}\sqrt[n_c]{P(w_{j} \mid s_{i})}
@@ -272,32 +287,23 @@ When this is substituted into \Cref{eq:generalwsd}, it becomes a smoothed versio
 \begin{aligned}
 P_S(s_{i}\mid\c) %
 &=\dfrac{P_{S}(\c\mid s_{i})P_S(s_{i})}
-{\sum_{s_{i}\in\s} P_{S}(s_{j}\mid\c) P_S(s_{j})} \\
+{\sum_{s_{j}\in\s} P_{S}(s_{j}\mid\c) P_S(s_{j})} \\
 %
 &=\dfrac{\sqrt[n_c]{P(\c\mid s_{i})P(s_{i})}}
-{\sum_{s_{i}\in\s} \sqrt[n_c]{P(s_{j}\mid\c)P_S(s_{j})}} \\
+{\sum_{s_{j}\in\s} \sqrt[n_c]{P(s_{j}\mid\c)P_S(s_{j})}} \\
 %
 %&=\dfrac{\prod_{\forall w_{j}\in\c} \sqrt[|\c|]{P(w_{j}\mid s_{})P(s_{j})}}%
 %{\sum_{s_{j}\in\s}\prod_{\forall w_{k}\in\c}\sqrt[|\c|]{P(w_{k}\mid s_{j})P(s_{j})}}
 \end{aligned}
 \end{equation}
-
-The motivation for this comes from considering the case of the uniform prior.
-In this case, it is the same as just replacing $P_S(\c \mid s_{i})$ with the geometric mean of the individual word probabilities $P_S(w_j \mid s_{i})$.
-If one has two sentences, $\c=\{w_1,...w_{n_c}\}$ and $\c^\prime=\{w_1^\prime,...w^\prime_{|n_{c^\prime}|}\}$, such that $n_c^\prime > n_c^\prime$ \pdfcomment{(WLOG)}:
-then using \Cref{eq:contextprobtrue} to calculate $P(\c \mid s_{i})$ and $P(\c^\prime \mid s_{i})$ will generally result in incomparable results as addition probability terms will dominate -- often significantly more than then the relative values of the probabilities themselves. This is because for almost any word $w$ and any target sense $P(w \mid \s_i)$ the number of words that could be in the target's context is a significant portion of the entire vocabulary.
-This becomes clear when one considers the expected values. For $V$ the vocabulary size, we have the expected value:
-
-\pdfcomment{LW: 'Is this math right? Can I take an expected value of a probability?' RT response: 'Not really but you can of the random variable c? Maybe your subscript implies this but I am not familiar with it'. LW: 'Should I maybe just delete this section?'}
-
-\begin{equation} \label{eq:expectcontexprob}
-\mathbb{E}_\c(P(\c \mid s_{i}))
-=(\mathbb{E}_w(P(w \mid s_i)))^{n_c}
-= \frac{1}{V^{n_c}}
-\end{equation}
-
-Taking the $|\c|$-th and $|\c^\prime|$-th roots of $P(\c \mid s_{i})$ and $P(\c \mid s_{i})$ normalises these probabilities so that they have the same expected value; thus making a fair comparison possible, where the context length does not control the probability.
-When this normalisation is applied to \Cref{eq:generalwsd}, we get a smoothing effect.
+The motivation for taking the $n_c$-th root comes from considering the case of the uniform prior.
+In this case $P_S(\c \mid s_{i})$ is the geometric mean of the individual word probabilities $P_S(w_j \mid s_{i})$.
+Consider, if one has two context sentences, $\c=\{w_1,...w_{n_c}\}$ and $\c^\prime=\{w_1^\prime,...w^\prime_{n_{c^\prime}}\}$, such that $n_c^\prime > n_c^\prime$
+then using \Cref{eq:contextprobtrue} to calculate $P(\c \mid s_{i})$ and $P(\c^\prime \mid s_{i})$ will generally result in incomparable results as additional probability terms will dominate -- often significantly more than the the relative values of the probabilities themselves.
+The number of words that can occur in the context of any given sense is very large -- a large portion of the vocabulary. We would expect, averaging across all words, that each addition word in the context would decrease the probability by a factor of $\frac{1}{V}$, for $V$ the vocabulary size. 
+The expected probabilities for $P(\c \mid s_{i}) = \frac{1}{V^{n_c}}$ and for $P(\c^\prime \mid s_{i}) = \frac{1}{V^{n_{c^\prime}}}$. As $n_{c^\prime} > n_c$, thus we expect $P(\c^\prime \mid s_{i}) \ll P(\c^ \mid s_{i})$.
+Taking the $n_{c}$-th and $n_{c^\prime}$-th roots of $P(\c \mid s_{i})$ and $P(\c \mid s_{i})$ normalises these probabilities so that they have the same expected value; thus making a context-length independent comparison possible.
+Further, when this normalisation is applied to \Cref{eq:generalwsd}, we get a smoothing effect. Thus handling our issues with overly sharp posterior estimates.
 
 \section{Experimental Sense Embedding Models}
 We train two sense embedding models, AdaGram \parencite{AdaGrams} and our own independent Greedy Sense Embedding method. We use these to evaluate the performance of our methods on similarity in context (\Cref{SimilarityInContext}) and at word sense disambiguation (\Cref{lexicalWSD}). For consistency these two methods were trained with the same data.
@@ -309,9 +315,9 @@ Both models were trained with a single iteration over the whole data set.
 Also in both cases sub-sampling of $10^{-5}$, and a decreasing learning rate starting at 0.25 was used.
 
 \subsection{AdaGram}
-Most of our evaluation is carried out on Adaptive SkipGrams (AdaGram)\parencite{AdaGrams}. AdaGram is a non-parametric Bayesian extension of Skip-gram. It learns a number of different word senses, as are required to properly model the language.
+Most of our evaluations are carried out on Adaptive SkipGrams (AdaGram)\parencite{AdaGrams}. AdaGram is a non-parametric Bayesian extension of Skip-gram. It learns a number of different word senses, as are required to properly model the language.
 
-We use the AdaGram \parencite{AdaGrams} implementation\footnote{\url{https://github.com/sbos/AdaGram.jl}} provided by Bartunov et al. with minor adjustments for Julia \parencite{Julia} v0.5 compatibility.
+We use the AdaGram  implementation\footnote{\url{https://github.com/sbos/AdaGram.jl}} provided by Bartunov et al. \parencite{AdaGrams} with minor adjustments for Julia \parencite{Julia} v0.5 compatibility.
 
 %\subsubsection{Model Parameters}
 
@@ -343,14 +349,14 @@ Only words with at least 20 occurrences were kept, this gave a total vocabulary 
 %	"dict\_fn" => "../data/corpora/WikiCorp/tokenised\_lowercase\_WestburyLab.wikicorp.201004.1gram
 %}
 
-\subsection{A Baseline Greedy Word Sense Embedding Method}
+\subsection{Greedy Word Sense Embeddings}
 
-To confirm that our techniques are not simply a quirk of the AdaGram method or it's implementation, we defined a new simple baseline word sense embedding method.
+To confirm that our techniques are not merely a quirk of the AdaGram method or its implementation, we defined a new simple baseline word sense embedding method.
 This method starts with a fixed number of randomly initialised sense embeddings, then at each training step greedily assigns each training cases to the sense which predicts that context with the highest probability (using \Cref{eq:generalwsd}). The task remains the same: using skip-grams with hierarchical softmax to predict context words for the input word sense.
 Our implementation is based on a heavily modified version of the Word2Vec.jl package by Tanmay Mohapatra, and Zhixuan Yang \footnote{\url{https://github.com/tanmaykm/Word2Vec.jl/}} for word embeddings.
 
-Due to the greedy nature of this baseline method, it is intrinsically worse than AdaGram. A particular embedding may get an initial lead at predicting a context. It then gets trained more, resulting in it generally predicting high probability of many words. While other embeddings may remain untrained, and may be stuck in part of the vector space that does not correspond to predicting any context that will ever occur. Nothing in the model to encourages diversification and specialisation of the embeddings. As a greedy method it readily falls into traps
-\pdfcomment{A greedy trap is an actual term used in literature, isn't it?} where the most used embedding is the most trained embedding, and thus is likely to receive more training. The random initialisation does help with this. Manual inspection reveals that it does capture a variety of senses, though with significant repetition of common senses, and with rare senses being largely missed. Regardless of its low quality it is a fully independent method from AdaGram, and so is suitable for our use in checking the generalisation of the refitting techniques.
+Due to the greedy nature of this baseline method, it is intrinsically worse than AdaGram. A particular embedding may get an initial lead at predicting a context. It then gets trained more, resulting in it generally predicting a high probability of many words. While other embeddings may remain untrained, and may be stuck in part of the vector space that does not correspond to predicting any context that will ever occur. Nothing in the model to encourages diversification and specialisation of the embeddings.
+ As a greedy method it readily falls into traps where the most used embedding is the most trained embedding, and thus is likely to receive more training. Manual inspection reveals that a variety of senses are captured, though with significant repetition of common senses, and with rare senses being missed. Regardless of its low quality, it is a fully independent method from AdaGram, and so is suitable for our use in checking the generalisation of the refitting techniques.
 %\subsubsection{Model Parameters}
 
 In the trained model we used each sense embedding had 300 dimensions.
@@ -375,9 +381,10 @@ For each of the target words and contexts; we can use refitting on the target wo
 By measuring similarity this way, we are defining a new similarity measure; this competes with the commonly used AvgSimC.
 
 \subsection{AvgSimC}
-In their seminal work on sense vectors representations Reisinger and Mooney define a number of measures for word similarity suitable for use with sense embeddings \parencite{Reisinger2010}. The most successful of which was AvgSimC. This has become the gold standard method for use on similarity tasks; and has been used with great success in many works \cite{Huang2012, Chen2014, tian2014probabilistic}. 
+In their seminal work on sense vectors representations Reisinger and Mooney define a number of measures for word similarity suitable for use with sense embeddings \parencite{Reisinger2010}. The most successful was AvgSimC, which has become the gold standard method for use on similarity tasks. It has been used with great success in many works \cite{Huang2012, Chen2014, tian2014probabilistic}. 
 
-For words $w$ and $w^\prime$ with contexts $\c$ and $\c^\prime$; and for $w$ having senses $\u=\{u_1,...,u_n\}$, and $w^\prime$ having senses $\u^\prime=\{u^\prime_1,...,u\prime_{n^\prime}\}$; and for $d$ the distance function -- normally cosine distance. AvgSimC is defined as:
+
+AvgSimC is defined using distance metric $d$ (normally cosine distance) as: 
 
 \begin{multline} \label{eq:avgsimc}
 \mathrm{AvgSimC}((\u,\c),(u^{\prime},\c^{\prime})) \\
@@ -386,6 +393,8 @@ For words $w$ and $w^\prime$ with contexts $\c$ and $\c^\prime$; and for $w$ hav
 \sum_{u_{j}^{\prime}\in\u^{\prime}}
 P(u_{i}\mid\c)\,P(u_{j}^{\prime}\mid\c^{\prime})\,d(u_{i},u_{j}^{\prime})
 \end{multline}
+
+For contexts $\c$ and $\c^\prime$ the contexts of the two words to be compared and  $\u=\{u_1,...,u_n\}$, $\u^\prime=\{u^\prime_1,...,u\prime_{n^\prime}\}$ the respective senses of the two words.
 
 
 It should be noted that some methods using AvgSimC  do not define  $P(s_{i}\mid\c)$ and $P(s_{j}^{\prime}\mid\c^\prime)$ with a probabilistic language model based method, but rather define them using the distance function \parencite{Reisinger2010, Huang2012}. Context-vector-clustering based sense embeddings interpret the distance from their sense cluster centroid to the context vector, as a soft membership function with that sense's cluster. We note that this has a different distribution to that of which comes directly out of a skip-gram language model.
@@ -423,7 +432,7 @@ AvgSimC has time complexity $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \
 RefittedSim is $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert)$.
 The product of the number of senses of each word $n \times n^\prime$, may be small for dictionary senses, but it is often large for induced senses. Dictionaries tend to define only a few senses per word -- the average\footnote{It should be noted, though, that the number of meanings is not normally distributed \parencite{zipf1945meaning}} number of senses per word in WordNet is less than three for all parts of speech \parencite{miller1995wordnet}. For induced senses, however, it is often desirable to train many more senses, to get better results using the more fine-grained information. In several evaluations performed by Reisinger and Mooney they found optimal results at near to 50 senses \parencite{Reisinger2010}; We found similar results with our own preliminary experiments. In the case of fine grained induced senses, the $O(n \times n^\prime)$ is significant; avoiding it with RefittedSim makes the similarity measure more useful for information retrieval.
 
-It may be desired for retrieving relevant search results to allow the user to provide an example of the term being searched for; so that documents containing only uses of irrelevant meanings of the word can be removed; and documents including effective synonyms included. Consider for example a search for \enquote{Apple} as in \enquote{the fruit I like to eat}, can return different results from \enquote{Apple} as in \enquote{the company that makes the iPod, and the MacBook}. This is the practical use-case for similarity with context.
+It may be desirable for retrieving relevant search results to allow the user to provide an example of the term being searched for. This would allow documents containing only uses of irrelevant meanings of the word can be removed, and documents including effective synonyms included. Consider for example a search for \enquote{Apple} as in \enquote{the fruit I like to eat}, can return different results from \enquote{Apple} as in \enquote{the company that makes the iPod, and the MacBook}. This is the practical use-case for similarity with context.
 In the information retrieval context, the probabilities of the word sense for the context of the document can be done off-line, during indexing. With this assumption, the query-time time complexity for AvgSimC becomes : $O(n\times n^{\prime})$, and for RefittedSim it becomes: $O(1)$.
 We do note however that pre-computing the word sense probabilities for each word in the document during indexing remains expensive (though no more so than for AvgSimC). If this indexing time is considered worthwhile, then RefittedSim is significantly more viable for use in information retrieval tasks than AvgSimC. For many uses however, ignoring word senses in information retrieval is viable, as documents can be differentiated by adding more query terms -- this limits the practical use of both AvgSimC and RefittedSim.
 
@@ -471,7 +480,6 @@ For brevity, we have excluded those results from the tables presented below.
 		every head row/.style={after row = {\toprule}}
 		]{swsc-grid.csv}
 	\end{adjustbox}
-\pdfcomment{Dr Togneri suggests moving this table to the bottom of the page. However I am not sure if the ACM SIG template will allow me to do that -- it really likes having figure at the top. I might be able to hack it by overriding some of the float settings. Maybe}
 
 \caption{Spearman's rank correlation $\rho \times 100$, for various configurations of AgaGram and greedy Sense embeddings, when evaluated on the SCWS task.} \label{swscres}
 \end{table}
@@ -479,10 +487,10 @@ For brevity, we have excluded those results from the tables presented below.
 \Cref{swscres} shows the results of our evaluations on the SCWS similarity task. A significant improvement can be seen by applying our techniques.
 
 The RefittedSim method consistently out performs AvgSimC across all configurations.
-Similarly Geometric Smoothing consistently improves performance, for both AvgSimC and for RefittedSim. The improment is significantly more for RefittedSim than for AvgSimC results.
+Similarly geometric smoothing consistently improves performance both for AvgSimC and for RefittedSim. The improvement is significantly more for RefittedSim than for AvgSimC results.
 In general using the unsupervised sense prior estimate from the AdaGram model, improves performance -- particularly for AvgSimC. The exception to this is with RefittedSim with smoothing, where it makes very little difference. \pdfcomment{Should I workout how to explain this?}
 Unsurprisingly, given its low quality, the Greedy embeddings are always outperformed by AdaGrams.
-It is not clear if these improvements will transform to clustering based methods due to the differences in how the sense probability is estimated, compared to the language model based method evaluated on in \Cref{swscres}.
+It is not clear if these improvements will transfer to clustering based methods due to the differences in how the sense probability is estimated, compared to the language model based method evaluated on in \Cref{swscres}.
 
 \begin{table}
 	\begin{adjustbox}{max width=\columnwidth}
@@ -509,7 +517,7 @@ It is not clear if these improvements will transform to clustering based methods
 \end{table}
 
 \Cref{swscEvery} compares our results with those reported in the literature using other methods. These results are not directly comparable, as each method uses a different training corpus, with different preprocessing steps;  which can have significant effects on performance.
-It can been seen that by applying our techniques we bring the results of our AdaGram model from very poor ($\rho \times 100 = 43.8$) when using normal AvgSimC without smoothing, up to being competitive with other models, when using RefittedSim with smoothing. The method of Chen et al, does have a significant lead on the other results presented \parencite{Chen2014}. This can be attributed to its very effective semi-supervised fine-tuning method. This suggests a possible avenue for future development in using refitted sense vectors to  relabel a corpus, and then performing fine-tuning similar to that done by Chen et al.
+It can been seen that by applying our techniques we bring the results of our AdaGram model from very poor ($\rho \times 100 = 43.8$) when using normal AvgSimC without smoothing, up to being competitive with other models, when using RefittedSim with smoothing. The method of Chen et al\parencite{Chen2014},has a significant lead on the other results presented. This can be attributed to its very effective semi-supervised fine-tuning method. This suggests a possible avenue for future development in using refitted sense vectors to  relabel a corpus, and then performing fine-tuning similar to that done by Chen et al.
 
 
 
@@ -522,12 +530,12 @@ It can been seen that by applying our techniques we bring the results of our Ada
 	\end{adjustbox}
 	\caption{\pdfcomment{This figure is a placeholder} block diagram for performing WSD using refitting \label{WSDBlock}} 
 \end{figure}
-Once refitting has been used to create sense vectors that are matched to lexical word senses, we would like to use them to perform word sense disambiguation. This would show whether or not the refitted embeddings are capturing the lexical information. In this section we refer to the lexical word sense disambiguation problem -- to take a word and find it's dictionary sense; whereas the methods discussed in \Cref{eq:generalwsd} and \Cref{eq:generalwsdsmoothed} consider the more general word sense disambiguation problem, as applicable to disambiguate to lexical word senses, or induced word senses, depending on the inputs.
+Once refitting has been used to create sense vectors that are matched to lexical word senses, we would like to use them to perform word sense disambiguation. This would show whether or not the refitted embeddings are capturing the lexical information. In this section we refer to the lexical word sense disambiguation problem -- to take a word and find its dictionary sense; whereas the methods discussed in \Cref{eq:generalwsd} and \Cref{eq:generalwsdsmoothed} consider the more general word sense disambiguation problem, as applicable to disambiguate to lexical word senses, or induced word senses, depending on the inputs.
 Our overall process must use both: first disambiguating the induced senses as part of refitting, then using the refitted sense vectors to find the most likely dictionary sense.
 The overall process is shown in \Cref{WSDBlock}.
 
 First, we perform refitting, to transform the induced sense vectors, into lexical sense vectors.
-We use the targeted word's lemma (i.e. base form), and part of speech (POS) tag to retrieve all possible definitions of the word (Glosses) from WordNet; there is one gloss per sense. These glosses are uses as the example sentence to perform refitting. By applying refitting to the unsupervised senses using these example sentence, as discussed in \Cref{refitting}, we find embeddings, $\l=\{l_1,..., l_{n_l}\}$ for each of the lexical word senses. These lexical word senses are still supported by the language model, which means one can apply the general WSD method to determine the posterior probability of a word sense, given an observed context. 
+We use the targeted word's lemma (i.e. base form), and part of speech (POS) tag to retrieve all possible definitions of the word (Glosses) from WordNet; there is one gloss per sense. These glosses are used as the example sentence to perform refitting. By applying refitting to the unsupervised senses using these example sentence, as discussed in \Cref{refitting}, we find embeddings, $\l=\{l_1,..., l_{n_l}\}$ for each of the lexical word senses. These lexical word senses are still supported by the language model, which means one can apply the general WSD method to determine the posterior probability of a word sense, given an observed context. 
 
 When given a sentence $\c_{T}$, containing a target word to be disambiguated, 
 the probability of each lexical word sense $P(l_i \mid \c_{T})$, can be found using \Cref{eq:generalwsd} (or the smoothed version \Cref{eq:generalwsdsmoothed}), over the lexically refitted sense embeddings. Then selecting the correct sense is simply selecting the most likely sense:
@@ -538,7 +546,7 @@ l^\star (\l, \c_T) &= \argmax_{\forall l_i \in \l} P(l_i|\c_T) \\
 \end{aligned}
 \end{equation}
 
-It could be argued that lexical word senses are fitted using less than one example per class \pdfcomment{I don't think it is good to start sentences with ``It could be argued...'' It sounds... argumentative. What is an alternative?}. Each lexical word sense shares its gloss with the rest of the set of synonymous (synsets) senses from different words. Similarly as the synsets are defined per lemma (base word), the different lexeme (tenses and other variants) of a word also share the same example sentence. However, in both cases this does not mean that their refitted sense vectors are equal (though they are likely to be similar), as they use different induced sense vectors, as the sense embedding system learns these on a per lexeme basis, as the components of the weighted sums. \pdfcomment{This last sentence is too long. I need to workout how to split it in two.}
+WordNet glosses are less than ideal examples of use. As well as being definitions, rather than pure examples, they are shared across many words. Each lexical word sense shares its gloss with the rest of the set of synonymous senses from different words (synsets). Similarly as the synsets are defined per lemma (base word), the different lexeme (tenses and other variants) of a word also share the same example sentence. However, in both cases this does not mean that their refitted sense vectors are equal (though they are likely to be similar). When refitting the different lexemes correspond to different induced sense vectors, and these as well as the probabilities of the examples, are the contributing factors to the refitting sum. The limitations of the glosses does not prevent our refitting system from functioning.
 
 \subsection{Lexical Sense Prior}
 WordNet includes frequency counts for each word sense based on Semcor \textcite{tengi1998design}. These form a prior for $P(l_i)$.
@@ -555,15 +563,15 @@ Geometric smoothing which serves a different (but related) purpose, of decreasin
 \subsection {Experimental Setup}
 The WSD performance was evaluated on the SemEval 2007 Task 7. 
 WordNet 2.1, was used as the sense inventory.
-All glosses were converted to lower case for use as the example sentences for each lexical sense in the refitting step. They were not clipped to a window around the target word, as the target word often does not occur at all in the gloss; and the glosses are already close to the correct size.
+All glosses were converted to lower case, when used as as the example sentences in the refitting step. They were not clipped to a window around the target word, as the target word often does not occur at all in the gloss; and the glosses are already close to the correct size.
 
 We used the weighted mapping method of Agirre et al \parencite{agirre2006}, as discussed in \Cref{mapping} as a baseline; to compare an alternative method for using WSI senses for WSD.
 When estimating the sense mapping weights we used both of the all-words-annotated subcorpora (Brown1 and Brown2) of SemCor as the mapping corpus.
 While evaluating the map, we do clip to a 10 word context window for each word to be disambiguated.
 
-The second baseline we use is the Most Frequent Sense (MFS). This method simply always disambiguates any word as having it's it's most common meaning. Due to the power law distribution of word senses, this is an effective heuristic \parencite{Kilgarriff2004}.
+The second baseline we use is the Most Frequent Sense (MFS). This method always disambiguates any word as having its  most common meaning. Due to the power law distribution of word senses, this is an effective heuristic \parencite{Kilgarriff2004}.
 
-For the mapping baseline, and the Greedy embedding method, also evaluated there results with a backoff to the MSF. When a method is unable to determine the word sense, the method can report the MFS instead of returning no result (a non-attempt). For embedding methods, this occurs when a polysemous word has only one (or zero) sense embeddings trained. For the mapping method it occurs when the word does not occur in the mapping corpus. We do not report the results for AdaGram with MSF backoff, as it was trained with a high-enough vocabulary, that it has almost complete coverage.
+We also evaluted the performance of the mapping baseline, and the Greedy embedding method with a backoff to the MSF. When a method is unable to determine the word sense, the method can report the MFS instead of returning no result (a non-attempt). For embedding methods, this occurs when a polysemous word has only one (or zero) sense embeddings trained. For the mapping method it occurs when the word does not occur in the mapping corpus. We do not report the results for AdaGram with MSF backoff, as it was trained with a large enough vocabulary, that it has almost complete coverage.
 
 \subsection{Word Sense Disambiguation Results} \label{WSDtask}
 \pgfplotstableset{
@@ -578,6 +586,7 @@ For the mapping baseline, and the Greedy embedding method, also evaluated there 
 \begin{table}
 	\begin{adjustbox}{max width=\columnwidth}
 		\pgfplotstabletypeset[col sep=comma, header=has colnames, string type,
+		every head row/.style={after row = {\toprule}},
 %
 		columns/Method/.style={ 
 			column type=l
@@ -601,7 +610,7 @@ For the mapping baseline, and the Greedy embedding method, also evaluated there 
 	\end{adjustbox}
 
 	\caption{Results on SemEval 2007 Task 7 -- course-all-words disambiguation.
-	The \emph{-S} marks results using Geometric Smoothing.
+	The \emph{-S} marks results using geometric smoothing.
 	the \emph{\textasteriskcentered } marks results with backoff.
 	} \label{samevalres}
 \end{table}
@@ -613,13 +622,13 @@ We found that the mapping method\parencite{agirre2006}  was not up to the task o
 While not directly comparable due to the difference in training data, we note that our Refitted results, are similar in performance, as measured by F1 score, to the results reported by Chen et al \parencite{Chen2014}.
 AdaGram with smoothing, and Greedy embeddings with backoff have close to the same result as reported for L2R with backoff -- with the AdaGram slightly better and the Greedy embeddings slightly worse. They are exceeded by the best method reported in that paper: S2C method with backoff.
 
-Our results are not strong enough for Refitted AdaGram to be used as a WSD method on its own, but the do demonstrate that the senses found by refitting are capturing the information from lexical senses. We have demonstrated that it is now able to perform WSD, which was not possible with the unsupervised senses. 
+Our results are not strong enough for Refitted AdaGram to be used as a WSD method on its own, but do demonstrate that the senses found by refitting are capturing the information from lexical senses. We have demonstrated that it is now able to perform WSD, which was not possible with the unsupervised senses. 
 
 \section{Conclusion}\label{conclusion}
 
 We have presented a new method for taking unsupervised word embeddings, and adapting them to align to particular given uses. This refitting method thus allows us to find word sense embeddings with known meaning. This method can be seen as a one shot learning task, where only a single labelled example of each class is available for training.
 
-We showed how our method could be used to create embeddings to evaluate the similarity of words, given their contexts. This in itself is a new similarity measuring method, RefittedSim, its time complexity is $O(n \times n^\prime)$ less than that of AvgSimC. The performance of RefittedSim on AdaGrams is comparable to the results reported by the proposers of other sense embeddings techniques using AvgSimC.
+We showed how our method could be used to create embeddings to evaluate the similarity of words, given their contexts. This in itself is a new similarity measuring method, RefittedSim.  RefittedSim has time complexity is $O(n \times n^\prime)$ less than that of AvgSimC. The performance of RefittedSim on AdaGrams is comparable to the results reported by the proposers of other sense embeddings techniques using AvgSimC.
 
 We also demonstrated how similar refitting principles could be used to create a set of vectors that are aligned to the meanings in a sense inventory, such as WordNet. We showed how this could be used for word sense disambiguation. On this difficult task, it performed marginally better than the MFS baseline, and significantly better than a general mapping method used for working with WSI senses with lexical WSD tasks,
 

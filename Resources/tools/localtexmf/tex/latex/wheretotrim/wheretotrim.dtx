@@ -1,0 +1,725 @@
+% \iffalse meta-comment
+%
+% Copyright (C) 2013 by Scott Pakin <scott+wtt@pakin.org>
+% -------------------------------------------------------
+%
+% This file may be distributed and/or modified under the
+% conditions of the LaTeX Project Public License, either version 1.3c
+% of this license or (at your option) any later version.
+% The latest version of this license is in:
+%
+%    http://www.latex-project.org/lppl.txt
+%
+% and version 1.3c or later is part of all distributions of LaTeX
+% version 2008/05/04 or later.
+%
+% \fi
+%
+% \iffalse
+%<*driver>
+\ProvidesFile{wheretotrim.dtx}
+%</driver>
+%<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+%<package>\ProvidesPackage{wheretotrim}
+%<*package>
+    [2013/05/15 v1.0 Helper package for the wheretotrim script]
+%</package>
+%
+%<*driver>
+\documentclass{ltxdoc}
+\usepackage{tabularx}
+\usepackage{type1cm}
+\usepackage{pifont}
+\usepackage{needspace}
+\usepackage[bookmarksopen]{hyperref}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+\begin{document}
+  \DocInput{wheretotrim.dtx}
+%  \PrintChanges
+  \makeatletter
+  \let\orig@index@prologue=\index@prologue
+  \def\index@prologue{%
+    \phantomsection\addcontentsline{toc}{section}{Index}
+    \orig@index@prologue
+  }%
+  \makeatother
+  \Needspace{12\baselineskip}
+  \begingroup
+    \catcode`\_=12
+    \PrintIndex
+  \endgroup
+\end{document}
+%</driver>
+% \fi
+%
+% \CheckSum{180}
+%
+% \CharacterTable
+%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%   Digits        \0\1\2\3\4\5\6\7\8\9
+%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%   Dollar        \$     Percent       \%     Ampersand     \&
+%   Acute accent  \'     Left paren    \(     Right paren   \)
+%   Asterisk      \*     Plus          \+     Comma         \,
+%   Minus         \-     Point         \.     Solidus       \/
+%   Colon         \:     Semicolon     \;     Less than     \<
+%   Equals        \=     Greater than  \>     Question mark \?
+%   Commercial at \@     Left bracket  \[     Backslash     \\
+%   Right bracket \]     Circumflex    \^     Underscore    \_
+%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%   Right brace   \}     Tilde         \~}
+%
+%
+% \changes{v1.0}{2013/05/15}{Initial version}
+%
+% \GetFileInfo{wheretotrim.dtx}
+%
+% \DoNotIndex{\",\$,\%,\(,\),!,\D,\d,\n}
+% \DoNotIndex{\addtocounter,\def,\edef,\fi,\gdef,\ifnum,\let}
+% \DoNotIndex{\newcommand,\newcounter,\noexpand,\noindent,\par,\relax}
+% \DoNotIndex{\setcounter,\space,\the,\value,\xdef}
+% \newcommand{\see}[1]{\textit{see} #1}
+% \index{command-line options|see{program options}}
+%
+% ^^A  Define a few logical styles to help typeset the documentation.
+% \DeclareRobustCommand{\pkgname}[1]{^^A
+%   \mbox{\textsf{#1}}^^A
+%   \SortIndex{packages}{packages>\textsf{#1}}^^A
+%   \SortIndex{#1}{\textsf{#1} (package)}}
+% \DeclareRobustCommand{\optname}[1]{^^A
+%   \mbox{\texttt{#1}}^^A
+%   \SortIndex{package options}{package options>\texttt{#1}}^^A
+%   \SortIndex{#1}{\texttt{#1} (package option)}}
+% \DeclareRobustCommand{\progname}[1]{^^A
+%   \mbox{\texttt{#1}}^^A
+%   \SortIndex{programs}{programs>\texttt{#1}}^^A
+%   \SortIndex{#1}{\texttt{#1} (program)}}
+% \DeclareRobustCommand{\longopt}[1]{^^A
+%   \mbox{\textbf{-{}-#1}}^^A
+%   \SortIndex{program options}{program options>\texttt{-{}-#1}}^^A
+%   \SortIndex{#1}{\texttt{-{}-#1} (program option)}}
+%
+% ^^A  Specify this document's metadata.
+% \title{The \textsf{wheretotrim} package\thanks{This document
+%   corresponds to \textsf{wheretotrim}~\fileversion, dated \filedate.}}
+% \author{Scott Pakin \\ \texttt{scott+wtt@pakin.org}}
+% \hypersetup{^^A
+%   pdfauthor={Scott Pakin},
+%   pdftitle={The wheretotrim package},
+%   pdfsubject={Determine where to cut text to most easily reduce page count}
+% }
+%
+% \maketitle
+% \sloppy
+%
+% \section{Introduction}
+% \label{sec:introduction}
+%
+% \progname{wheretotrim} is a tool to help \LaTeX\ users reduce their
+% document's page count.  It is intended to be used with documents that
+% exceed a publisher's specified page-length limitation by a small
+% amount (much less than a full column or page).  \progname{wheretotrim}
+% is therefore similar to the \pkgname{savetrees} package in that both
+% seek to reduce page count.  The two differ in that \pkgname{savetrees}
+% saves space by altering document formatting while
+% \progname{wheretotrim} suggests where text can be removed to reduce
+% page count without altering any formatting.  \progname{wheretotrim}
+% and \pkgname{savetrees} are compatible with each other, though:
+% \progname{wheretotrim} can safely be run on a document that includes a
+% |\usepackage{savetrees}|.
+%
+% \progname{wheretotrim} operates by building the document repeatedly,
+% successively expanding each column on each page by one line height to
+% mimic reducing the amount of text in that column by an equivalent
+% amount.  If doing so does not reduce the page count,
+% \progname{wheretotrim} repeats the process with two line heights'
+% expansion of each column, then three, and so forth until it expands
+% each column in turn by the full height of the column.  The following
+% is some sample output for a single-column document when
+% \progname{wheretotrim} is run with the \longopt{allpages} option
+% (cf.~Section~\ref{sec:cmdline}):
+% \begin{verbatim}
+%    To reduce the page count from 11 to 10, do any of the following:
+%
+%      * Reduce page 2 by 8 lines.
+%      * Reduce page 5 by 7 lines.
+%      * Reduce page 6 by 7 lines.
+%      * Reduce page 7 by 7 lines.
+%      * Reduce page 8 by 7 lines.
+%      * Reduce page 9 by 7 lines.
+%      * Reduce page 10 by 5 lines.
+%      * Reduce page 11 by 5 lines.
+%
+%    Note: 5 lines = 1.0" = 2.5 cm = 11.1% of the page height
+% \end{verbatim}
+%
+% \noindent
+% That is, reducing either page~10 or page~11 by five lines is the most
+% expedient way to reduce the document's page count.  Seven lines would
+% need to be cut from page~5, 6, 7, or~8 to achieve the same effect, and
+% eight lines would need to be cut from page~2.  In contrast, no amount
+% of text trimming on pages~1, 3, or~4 will reduce the page count.
+%
+% \section{Usage}
+% \label{sec:usage}
+%
+% Sections~\ref{sec:cmdline}--\ref{sec:restrictions} explain how to use
+% \progname{wheretotrim}.
+%
+% \subsection{Command-line options}
+% \label{sec:cmdline}
+%
+% Run \progname{wheretotrim} as follows:
+%
+% \DeleteShortVerb{\|}
+% \begin{quote}
+%   \raggedright
+%   \progname{wheretotrim}
+%   [\longopt{allpages}]
+%   [\longopt{verbose} \textbar\ \longopt{quiet}]
+%   [\longopt{debug}=\meta{page},\meta{column},\meta{lines}]
+%   \meta{latex command}
+% \end{quote}
+% \noindent
+% or
+% \begin{quote}
+%   \raggedright
+%   \progname{wheretotrim} [\longopt{verbose}] \longopt{help} \textbar\ \longopt{version}
+% \end{quote}
+% \MakeShortVerb{\|}
+%
+% \progname{wheretotrim} accepts the following command-line options:
+%
+% \begin{description}
+%   \item[-a, \longopt{allpages}] Perform enough extra runs of
+%     \progname{latex} to report the amount of space that must be
+%     trimmed from \emph{each} column or page to reduce page count, not
+%     just the columns or pages to which the page count is the most
+%     sensitive.
+%
+%   \item[-v, \longopt{verbose}] Display the output of each run of
+%     \progname{latex}.  This is useful for troubleshooting and to help
+%     monitor the progress of long \progname{latex} runs.
+%
+%   \item[-q, \longopt{quiet}] Suppress progress updates and output only the
+%     final report.
+%
+%   \item[-d \meta{page},\meta{column},\meta{lines},
+%     \longopt{debug}=\meta{page},\meta{column},\meta{lines}] Debug
+%     \progname{wheretotrim}'s execution by expanding page \meta{page},
+%     column \meta{column} by \meta{lines} line heights and leaving the
+%     \progname{latex} output in that state.
+%
+%   \item[-h, \longopt{help}] Summarize usage information and exit.
+%     These may be used with \longopt{verbose} to display more extended
+%     documentation.
+%
+%   \item[-V, \longopt{version}] Display \progname{wheretotrim}'s version
+%     number and exit.
+% \end{description}
+%
+% In addition to the preceding options, \progname{wheretotrim} requires
+% a \meta{latex command} argument that specifies how to build the
+% document.
+%
+% \subsection{Examples}
+% \label{sec:examples}
+%
+% For the most basic usage, simply provide a \progname{latex} command to
+% run:
+%
+% \begin{verbatim}
+%    wheretotrim latex myfile.tex
+% \end{verbatim}
+%
+% \noindent
+% or, for example,
+%
+% \begin{verbatim}
+%    wheretotrim pdflatex myfile.tex
+% \end{verbatim}
+%
+% \progname{wheretotrim} executes the specified command a large number
+% of times and finally terminates with a report resembling the
+% following:
+%
+% \begin{verbatim}
+%     To reduce the page count from 10 to 9, do any of the following:
+%
+%       * Reduce page 9, column 1 by 12 lines.
+%       * Reduce page 9, column 2 by 12 lines.
+%       * Reduce page 10, column 1 by 12 lines.
+%
+%     Note: 12 lines = 2.4" = 6.1 cm = 26.8% of the column height
+% \end{verbatim}
+%
+% To ask \progname{wheretotrim} to report how much space needs to be
+% trimmed on each column and page to reduce the total page count,
+% specify the \longopt{allpages} option:
+%
+% \begin{verbatim}
+%     wheretotrim --allpages latex myfile.tex
+% \end{verbatim}
+%
+% The output now looks like the following:
+%
+% \begin{verbatim}
+%     To reduce the page count from 10 to 9, do any of the following:
+%
+%       * Reduce page 1, column 1 by 13 lines.
+%       * Reduce page 1, column 2 by 13 lines.
+%       * Reduce page 2, column 1 by 13 lines.
+%       * Reduce page 2, column 2 by 13 lines.
+%       * Reduce page 4, column 1 by 13 lines.
+%       * Reduce page 4, column 2 by 13 lines.
+%       * Reduce page 5, column 1 by 13 lines.
+%       * Reduce page 5, column 2 by 13 lines.
+%       * Reduce page 6, column 1 by 13 lines.
+%       * Reduce page 6, column 2 by 13 lines.
+%       * Reduce page 7, column 1 by 13 lines.
+%       * Reduce page 7, column 2 by 13 lines.
+%       * Reduce page 8, column 1 by 13 lines.
+%       * Reduce page 8, column 2 by 13 lines.
+%       * Reduce page 9, column 1 by 12 lines.
+%       * Reduce page 9, column 2 by 12 lines.
+%       * Reduce page 10, column 1 by 12 lines.
+%
+%     Note: 12 lines = 2.4" = 6.1 cm = 26.8% of the column height
+% \end{verbatim}
+%
+% If you're curious how the document managed to shrink substantially as
+% the result of a relatively minor text reduction, you can typeset the
+% document with a particular page and column enlarged by a given amount:
+%
+% \begin{verbatim}
+%     wheretotrim --debug=9,1,12 latex myfile.tex
+% \end{verbatim}
+%
+% \subsection{Caveats}
+% \label{sec:caveats}
+%
+% \progname{wheretotrim} hooks into \LaTeX's output routines, which are
+% notoriously arcane and somewhat fragile.  As a result, it is quite
+% likely that \progname{wheretotrim} will fail to analyze a large set of
+% documents.  Use the \longopt{verbose} flag to help identify any
+% problems that \progname{latex} encounters.
+%
+% In many cases, \progname{wheretotrim} will recover by simply ignoring
+% a few possible page and column expansions.  For example, certain
+% expansions may result in a
+% \href{http://www.tex.ac.uk/cgi-bin/texfaq2html?label=fllost}{\texttt{Float(s)
+%     lost}} message.  In other cases, \progname{wheretotrim} will fail
+% to analyze any modification to the document.  For example, it may
+% receive an \texttt{Infinite glue shrinkage found in box being split}
+% error from every page and column variation it tries.  In this
+% particular case, see the discussion at
+% \url{http://www.michaelshell.org/tex/ieeetran/}.
+%
+% When \progname{wheretotrim} is used with a \progname{latex} auto-build
+% script you may need to take measures to force the script to rebuild
+% the document even if it appears that no files have changed.  For
+% example, \progname{latexmk} should be given the |-CF| option to force
+% rebuilding:
+%
+% \begin{verbatim}
+%     wheretotrim latexmk -CF myfile.tex
+% \end{verbatim}
+%
+% \subsection{Restrictions}
+% \label{sec:restrictions}
+%
+% \progname{wheretotrim} is implemented as a Perl script with an
+% auxiliary \LaTeXe\ package.  It has been tested only on Linux, but I
+% suspect that it should also work on OS~X.  I doubt it will work
+% under Windows, though, due to the way the script uses a
+% \progname{bash}-specific technique for redirecting the standard error
+% device into the standard output device.
+%
+%
+% \StopEventually{}
+%
+% \iffalse
+%<*package>
+% \fi
+%
+% \section{Package implementation}
+%
+% This section presents the commented \LaTeX\ source code for the
+% \pkgname{wheretotrim} package.  Read this section if you want to learn
+% how the package is implemented.  Note that the package is not intended
+% to be used explicitly (i.e.,~via |\usepackage|) but rather implicitly
+% by the \progname{wheretotrim} Perl script.
+%
+% \subsection{Theory of operation}
+%
+% The \pkgname{wheretotrim} package mimics the effect of reducing a
+% given page and column of a document by a given number of line heights.
+% For simplicity, it does so by enlarging the specified column (so
+% as to fit additional lines of text) rather than by reducing the
+% amount of text in that column.
+%
+% Users are not expected to load the \pkgname{wheretotrim} package
+% explicitly.  Instead, whenever the \progname{wheretotrim} script needs
+% to observe the effect of enlarging a given column, it creates a
+% temporary |.tex| file using the following template:
+%
+% \begingroup
+% \ttfamily
+% \begin{tabbing}
+%  ~~~~\=|\RequirePackage[|\=\kill
+%  \>|\RequirePackage[|\> column={\normalfont\meta{absolute column}}], \\
+%  \> \> expansion={\normalfont\meta{lines}}, \\
+%  \> \> extracols={\normalfont\meta{padding columns}}]|{wheretotrim}| \\
+%  \> |\PassOptionsToPackage{draft}{hyperref}| \\
+%  \> |\input{|{\normalfont\meta{filename}}|}| \\
+% \end{tabbing}
+% \endgroup
+%
+% \noindent
+% where \meta{absolute column} is the absolute column number to expand
+% (with the first column on the first page being numbered~ 1);
+% \meta{lines} is the number of line heights (multiples of
+% |\baselineskip|) by which to enlarge that column; \meta{padding
+%   columns} is the number of extra full columns to append to the
+% document (cf.~Section~\ref{sec:page-spillover}); and \meta{filename}
+% is the name of the user's top-level \LaTeX\ file.
+%
+% The \pkgname{wheretotrim} package works by modifying various \TeX- and
+% \LaTeX-internal commands.  At every |\shipout|, \pkgname{wheretotrim}
+% increases the absolute page counter.  Whenever \LaTeX\ constructs a
+% column using |\@makecol|, \pkgname{wheretotrim} logs the current
+% absolute page and column numbers and invokes \LaTeX's
+% |\enlargethispage| macro when on the target page and column number.
+% Because |\@makecol| is not called for every column,
+% \pkgname{wheretotrim} additionally modifies |\clearpage| and
+% |\maketitle| also to conditionally enlarge the current column.
+%
+% At the end of the document, \pkgname{wheretotrim} outputs
+% |\baselineskip| and |\textheight|, as these are needed by the
+% \progname{wheretotrim} script.
+%
+% \subsection{Package options}
+% \label{sec:pkg-opts}
+%
+% The \pkgname{wheretotrim} package accepts three package
+% options---\optname{column}, \optname{expansion}, and
+% \optname{extracols}---which are described
+% below in the context of, respectively, |\wtt@target@column|,
+% |\wtt@column@expand|, and |\wtt@extra@full@columns|.
+%
+% \begin{macro}{\wtt@target@column}
+% |\wtt@target@column| is set by the \optname{column} option and
+% defaults to nonexistent column~0.  It specifies the absolute column
+% number to expand.
+%    \begin{macrocode}
+\newcommand{\wtt@target@column}{0}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\wtt@column@expand}
+% The |\wtt@column@expand| length---implemented as an ordinary
+% macro---is set by the \optname{expansion} option and defaults to
+% 0\,pt.  It specifies the number of lines by which to expand that
+% column (i.e.,~the multiple of |\baselineskip|).
+%    \begin{macrocode}
+\newcommand{\wtt@column@expand}{0pt}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\wtt@extra@full@columns}
+% |\wtt@extra@full@columns| is set by the \optname{extracols} option and
+% specifies the number of additional, dummy, full columns to append to
+% the end of the document to force spillover onto an additional page.
+%    \begin{macrocode}
+\newcommand{\wtt@extra@full@columns}{0}
+%    \end{macrocode}
+% \end{macro}
+%
+% We use the \pkgname{keyval} package to help with option processing as
+% it's widely available and \pkgname{wheretotrim}'s option-processing
+% needs are fairly simple.
+%    \begin{macrocode}
+\RequirePackage{keyval}
+%    \end{macrocode}
+%    \begin{macrocode}
+\define@key{wtt}{column}{\gdef\wtt@target@column{#1}}
+\define@key{wtt}{expansion}{%
+  \xdef\wtt@column@expand{#1\noexpand\baselineskip}%
+}
+\define@key{wtt}{extracols}{\gdef\wtt@extra@full@columns{#1}}
+%    \end{macrocode}
+%
+% \begin{macro}{\next}
+% Process our options.  We need to expand |\CurrentOption| before
+% passing it to \pkgname{keyval}'s |\setkeys| macro, however.
+%    \begin{macrocode}
+\DeclareOption*{%
+  \edef\next{\noexpand\setkeys{wtt}{\CurrentOption}}%
+  \next
+}
+\ProcessOptions\relax
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{Column enlargement}
+% \label{sec:col-enlarge}
+%
+% \begin{macro}{\c@wtt@true@page}
+% The \pkgname{wheretotrim} package needs to keep track of the current
+% page number.  The |page| counter is unsuitable for this task because
+% it is really a page \emph{name}.  That is, (1)~it is not necessarily
+% numeric (e.g.,~it may be a roman numeral while in the document's front
+% matter), and (2)~it is not necessarily unique (e.g.,~|page| may be~|1|
+% on the title page, abstract, and first page of text).  To address this
+% limitation we define a |wtt@true@page| counter and, with the help of
+% the \pkgname{everyshi} package, prepare for it to be incremented on
+% every \TeX\ page shipout.
+%    \begin{macrocode}
+\newcounter{wtt@true@page}
+\setcounter{wtt@true@page}{1}
+%    \end{macrocode}
+% \end{macro}
+%
+%    \begin{macrocode}
+\RequirePackage{everyshi}
+\EveryShipout{\addtocounter{wtt@true@page}{1}}
+%    \end{macrocode}
+%
+% \begin{macro}{\c@wtt@column@num}
+% The \pkgname{wheretotrim} package also needs to keep track of the
+% current absolute column number.  By ``absolute'' we mean a running
+% column number that does not reset to~1 on each page.  We define a
+% |wtt@column@num| counter to hold the current column number, and,
+% below, we modify \LaTeXe's |\@makecol| macro to increment it.  Note
+% that some pages may contain fewer pages than others due to, for
+% example, |\clearpage| calls that cause pages to ship out early.
+%    \begin{macrocode}
+\newcounter{wtt@column@num}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\wtt@makecol}
+% Before redefining |\@makecol|, we store its old definition in
+% |\wtt@makecol|.
+%    \begin{macrocode}
+\let\wtt@makecol=\@makecol
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\@makecol}
+% |\@makecol| is \LaTeXe's primary mechanism for typesetting a column:
+%
+% \begin{center}
+% \small
+% \begin{tabularx}{\linewidth}{@{}rX@{}}
+%   \hspace{1em}|\@makecol|:
+%   & Makes the contents of |\box||255| plus the accumulated footnotes,
+%     plus the floats in |\@toplist| and |\@botlist|, into a single
+%     column of height |\@colht| (unless the page height has been
+%     locally changed), which it puts into box |\@outputbox|.  It puts
+%     boxes in |\@midlist| back onto |\@freelist| and restores
+%     |\maxdepth|.
+% \end{tabularx}
+% \end{center}
+%
+% Here, we augment |\@makecol| with code to report the current column
+% and page number---and for the user's convenience, page name
+% (|\thepage|).  Our redefined |\@makecol| then increments the current
+% absolute column number and compares it against |\wtt@target@column|.
+% If equal, it uses \LaTeXe's |\enlargethispage| to increase the column
+% height.  Finally, it invokes the original |\@makecol| (stored in
+% |\wtt@makecol| to typeset the column.
+%    \begin{macrocode}
+\def\@makecol{%
+  \PackageInfo{wheretotrim}%
+              {Column \thewtt@column@num\space is on page
+               \thewtt@true@page\space (\thepage)}%
+  \addtocounter{wtt@column@num}{1}%
+  \ifnum\value{wtt@column@num}=\wtt@target@column
+    \enlargethispage{\wtt@column@expand}%
+  \fi
+  \wtt@makecol
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\wtt@clearpage}
+% Before redefining |\clearpage|, we store its old definition in
+% |\wtt@clearpage|.
+%    \begin{macrocode}
+\let\wtt@clearpage=\clearpage
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\clearpage}
+% \LaTeXe's |\clearpage| macro frustrates the \pkgname{wheretotrim}
+% package's attempts to enlarge a given column.  We therefore redefine
+% |\clearpage| first to perform its ordinary behavior (stored in
+% |\wtt@clearpage|, then to check the value of the preceding penalty
+% item.  If the last penalty is -10001 then this is an opportune time to
+% insert an |\enlargethispage| (assuming the current column is equal to
+% |\wtt@target@column|).  Because |\clearpage| may be called multiple
+% times in a row and may be followed by |\@makecol| we restore the
+% column counter to its prior value after comparing it to
+% |\wtt@target@column| so it is not multiply incremented.
+%
+% Note that |\cleardoublepage| internally calls |\clearpage| so it is
+% sufficient to redefine only |\clearpage|.
+%    \begin{macrocode}
+\gdef\clearpage{%
+  \wtt@clearpage
+  \ifnum\lastpenalty=-10001\relax
+    \addtocounter{wtt@column@num}{1}%
+    \ifnum\value{wtt@column@num}=\wtt@target@column
+      \enlargethispage{\wtt@column@expand}%
+    \fi
+    \addtocounter{wtt@column@num}{-1}%
+  \fi
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% Wait until after the |\begin{document}| to redefine |\maketitle| in
+% case |\maketitle| is modified before that point.
+%    \begin{macrocode}
+\AtBeginDocument{%
+%    \end{macrocode}
+% \begin{macro}{\wtt@maketitle}
+% Before redefining |\maketitle|, we store its old definition in
+% |\wtt@maketitle|.
+%    \begin{macrocode}
+  \let\wtt@maketitle=\maketitle
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\maketitle}
+% |\maketitle| is problematic macro for the \pkgname{wheretotrim}
+% package because of the way it switches into two-column mode within a
+% one-column document (via \LaTeXe's |\twocolumn| macro).  For lack of a
+% more general solution we redefine |\maketitle| to enlarge the column
+% only after typesetting the title and only when in two-column mode.
+% Otherwise, the |\enlargethispage| inserted by |\@makecol| already had
+% its intended effect.
+%    \begin{macrocode}
+  \gdef\maketitle{%
+    \wtt@maketitle
+    \if@twocolumn
+      \ifnum\value{wtt@column@num}=\wtt@target@column
+        \enlargethispage{\wtt@column@expand}%
+      \fi
+    \fi
+  }%
+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsection{Page spillover}
+% \label{sec:page-spillover}
+%
+% Normally, it would not be possible to reduce page count by enlarging
+% the last column by any amount.  The trick we use here is to add to the
+% end of the document a full column or two to make the document spill
+% over onto an additional page, as illustrated by
+% Figure~\ref{fig:page-spillover}.  Thus, enlarging the last column by
+% the height of the text it contains will enable a padding column to
+% shift into that column and reduce the page count.
+%
+% \begin{figure}[htbp]
+% \centering
+% \fbox{^^A
+%   \begin{minipage}[t][3cm]{1cm}
+%     \fontsize{2}{2}\selectfont\raggedright
+%     \vspace{4pt}
+%     Quisque fringilla, felis eu ultricies commodo, tortor justo lobortis
+%     est, sit amet molestie ligula lorem at urna. Duis sit amet ligula
+%     odio, sed varius massa. Duis lacinia odio elit. Nam adipiscing orci
+%     eu lectus tincidunt porta rhoncus in nisl. Mauris tincidunt mollis
+%     malesuada.
+%   \end{minipage}
+%   \begin{minipage}[t][3cm]{1cm}
+%   \mbox{}
+%   \end{minipage}
+% }
+% \begin{minipage}[t][3cm]{1cm}
+%   \vspace{1cm}
+%   \fontsize{36}{36}\ding{220}
+% \end{minipage}
+% ~^^A
+% \fbox{^^A
+%   \begin{minipage}[t][3cm]{1cm}
+%     \fontsize{2}{2}\selectfont\raggedright
+%     \vspace{4pt}
+%     Quisque fringilla, felis eu ultricies commodo, tortor justo lobortis
+%     est, sit amet molestie ligula lorem at urna. Duis sit amet ligula
+%     odio, sed varius massa. Duis lacinia odio elit. Nam adipiscing orci
+%     eu lectus tincidunt porta rhoncus in nisl. Mauris tincidunt mollis
+%     malesuada.
+%   \end{minipage}
+%   \begin{minipage}[t][3cm]{1cm}
+%     \rule[-2.9cm]{1cm}{2.8cm}
+%   \end{minipage}
+% }
+% \fbox{^^A
+%   \begin{minipage}[t][3cm]{1cm}
+%     \rule[-2.9cm]{1cm}{2.8cm}
+%   \end{minipage}
+%   \begin{minipage}[t][3cm]{1cm}
+%     \mbox{}
+%   \end{minipage}
+% }
+% \caption{Padding a document with extra columns to induce page spillover}
+% \label{fig:page-spillover}
+% \end{figure}
+%
+%    \begin{macrocode}
+\AtEndDocument{%
+%    \end{macrocode}
+% Add zero, one, or two columns of padding (a |\parbox| of width
+% |\linewidth| and height |\textheight|) based on the value of
+% |\wtt@extra@full@columns| (set by the \optname{extracols} package
+% option).
+%    \begin{macrocode}
+  \ifnum\wtt@extra@full@columns>0\relax
+    \noindent\parbox[t][\textheight]{\linewidth}{%
+      \rule{\linewidth}{\baselineskip}}\par
+    \ifnum\wtt@extra@full@columns>1\relax
+      \noindent\parbox[t][\textheight]{\linewidth}{%
+        \rule{\linewidth}{\baselineskip}}\par
+    \fi
+  \fi
+%    \end{macrocode}
+% Also at the end of the document, output the value of |\baselineskip|
+% and the value of |\textheight|, as these are read by the
+% \progname{wheretotrim} script.
+%    \begin{macrocode}
+  \PackageInfo{wheretotrim}%
+              {Baseline skip: \the\baselineskip}%
+  \PackageInfo{wheretotrim}%
+              {Text height: \the\textheight}%
+}
+%    \end{macrocode}
+%
+% \iffalse
+%</package>
+% \fi
+%
+% \section{Script implementation}
+%
+% This section presents the commented \LaTeX\ source code for the
+% \progname{wheretotrim} Perl script.  Read this section if you want
+% to learn how the script is implemented.
+%
+% \iffalse
+%<*script>
+% \fi
+%
+% \DocInput{wheretotrim-pl.dtx}
+%
+% \iffalse
+%</script>
+% \fi
+%
+% \Finale
+\endinput

@@ -5,6 +5,8 @@
 \input{block-diagram-bits.tex}
 
 \renewcommand{\c}{\mathbf{c}}
+\renewcommand{\l}{\mathbf{l}}
+\renewcommand{\u}{\mathbf{u}}
 \begin{document}
 		
 \begin{tikzpicture}[align=center]
@@ -12,10 +14,10 @@
 \node[input](lemma){Target\\Lemma};
 \node[input, right = 1 of lemma](POS){Target\\POS Tag};
 \node[input, right = 1 of POS](word){Target\\ Word};
-\node[datastore, below=1 of lemma](wordnet){WordNet \\Sense Inventory};
+\node[datastore, below=0.75 of lemma](wordnet){WordNet \\Sense Inventory};
 
-\node[datastore, below=1 of word](embeddings) {Pretrained Unsupervised \\ Sense Embeddings};
-\node[proc, below=4 of POS] (refitting) {Refitting};
+\node[datastore, below=0.75 of word](embeddings) {Pretrained Unsupervised \\ Sense Embeddings};
+\node[proc, below=3 of POS] (refitting) {Refitting};
 
 \node[proc, below = 2 of refitting] (WSD) {Lexical WSD};
 \node[input, right = 2 of word] (sentence) {Sentence};
@@ -28,11 +30,12 @@
 \draw[link] (word) edge (embeddings);
 
 \draw[multi] (wordnet) -> (refitting) node[midway, labe]{Synset Glosses \\ $\{\c_1,\c_2,...\}$};
-\draw[multi] (embeddings) -> (refitting) node[midway, labe]{Induced \\ Sense Embeddings \\$\{u_1,u_2,...\}$};;
+\draw[multi] (embeddings) -> (refitting) node[midway, labe]{Induced \\ Sense Embeddings \\$\u=\{u_1,u_2,...\}$};;
 
-\draw[link] (refitting) -> (WSD) node[midway, labe]{Lexical\\ Sense Embeddings\\ $\{l_1,l_2,..\}$};
+\draw[multi] (refitting) -> (WSD) node[midway, labe]{Lexical\\ Sense Embeddings\\ $\l=\{l_1,l_2,..\}$};
 \draw[link] (sentence) edge[bend left] (WSD);
-\draw[link] (wordnet) edge[bend right] (WSD);
+%\draw[multi, bend right] (wordnet) -> (WSD);
+\triplearrow{arrows={-Implies}}{(wordnet) to[bend right] (WSD)};
 \node[labe, left = 1 of refitting] {Lexical\\Sense Priors\\$\{P(l_1), P(l_2),...\}$}; %hack cos benlines don't label right
 \node[labe, right = 3.5 of refitting] {$\c_T$}; %hack cos benlines don't label right
 
