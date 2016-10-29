@@ -1,16 +1,22 @@
 \documentclass[dvipsnames]{beamer}
 %\usepackage[dvipsnames]{xcolor}
 \usepackage{verbatim}
-\usepackage[subpreambles=false]{standalone}
+
 \usepackage{microtype}
 \usepackage{adjustbox}
-
+\usepackage{amsmath}
 
 \usepackage{tikz}
 
-\input{../figs/block-diagram-bits.tex}
 
 \input{brownbeamer}
+\usepackage{../figs/blockdiagrambits}
+\tikzset{
+	backgroundcolor/.style ={fill=chamois}	
+}
+\usepackage[subpreambles=false]{standalone}
+
+
 \bibliography{master.bib}
 
 
@@ -133,20 +139,19 @@
 			\vspace{1em}
 			\onslide<2->{
 				Conditional Independence:
-				\begin{equation*} \label{eq:contextprobtrue}
+				\[
 				P(\c \mid s_{i})=\prod_{\forall w_{j}\in\c}P(w_{j} \mid s_{i})
-				\end{equation*}
+				\]
 			}
 			\vspace{1em}
 			\onslide<3->{
-				Bayes Theorem:
-				\[ \label{eq:generalwsd}
+				Bayes Theorem:%
+				\[%
 				P(s_{i} \mid \c) =
-				\dfrac{P_S(\c \mid s_{i})P(s_{i})}
-				{\sum_{s_{j}\in\s} P_S(s_{j} \mid \c)P(s_{j})}
-				\] 
+				\dfrac{P(\c \mid s_{i})P(s_{i})}
+				{\sum_{s_{j}\in\s} P(\c \mid s_{j})P(s_{j})}
+				\]
 			}
-			
 		\end{column}
 		\inputcolumn{../figs/refitting.tex}
 	\end{columns}
@@ -154,8 +159,104 @@
 	\sentexample
 \end{frame}
 
-\begin{frame}{Use for word similarity with context}
+\newcommand{\fitmath}[1]{
+	\begin{adjustbox}{max width = \textwidth}	
+		$\displaystyle
+		#1
+		$
+	\end{adjustbox}
+}
+
+\newcommand{\simsentone}{%
+	\fitmath{
+		\overbrace{
+			\obraceword{stone}{w_1}
+			\obraceword{axes}{w_w}
+			\obraceword{was}{w_3}
+			\obraceword{a}{w_4}
+			\obraceword{major}{w_5}
+			\ubraceword{advance}{word\: 1}
+			\obraceword{because}{w_6}
+			\obraceword{it}{w_7}
+			\obraceword{allowed}{w_8}
+			\obraceword{forest}{w_9}
+			\obraceword{clearance}{w_{10}}
+		}^{\c}%
+	}
+}
+
+\newcommand{\simsenttwo}{%
+	\fitmath{
+			\overbrace{
+			\obraceword{forces}{w_1^\prime}
+			\obraceword{could}{w_2^\prime}
+			\obraceword{make}{w_3^\prime}
+			\obraceword{no}{w_4^\prime}
+			\obraceword{further}{w_5^\prime}
+			\ubraceword{headway}{word\: 2}
+			\obraceword{without}{w_6^\prime}
+			\obraceword{resting}{w_7^\prime}
+			\obraceword{and}{w_8^\prime}
+			\obraceword{regrouping}{w_9^\prime}
+			\obraceword{.}{w_{10}^\prime}
+		}^{\c^\prime}%
+	}}
+
+\begin{frame}{Similarity with context, is the task of ranking how similar a word is, given its usage}
 	
+	\vfill
+	\simsentone
+	\vfill
+	\simsenttwo
+	\vfill
+
+\end{frame}
+
+
+\begin{frame}{Use for word similarity with context}
+	\vspace{-1.5em}
+	\begin{adjustbox}{max height=0.5\textheight}
+		\input{../figs/refittedsim}
+	\end{adjustbox}
+	\vfill
+	\fitmath{
+	 \begin{aligned}
+	 	\mathrm{RefittedSim}((\u,\c),(\u^{\prime},\c^{\prime})) 
+	 	&= d(l(\u \mid \c), l(\u^\prime \mid \c^\prime)\\
+	 	\mathrm{RefittedSim}((\u,\c),(\u^{\prime},\c^{\prime}))
+	 	&= d\left(
+	 	\sum_{u_{i}\in\u}u_{i}P(u_{i}\mid\c),\:
+	 	\sum_{u_{j}^{\prime}\in\u^{\prime}}u_{i}P(u_{j}^{\prime}\mid\c^{\prime})\right)
+	 \end{aligned}
+	}
+	\vfill
+
+\end{frame}
+
+\begin{frame}{RefittedSim vs AvgSimC}
+	\vspace{-1em}
+	\vfill
+	\begin{block}{RefittedSim}
+		\fitmath{
+			\mathrm{RefittedSim}((\u,\c),(\u^{\prime},\c^{\prime}))
+			= d\left(
+			\sum_{u_{i}\in\u}u_{i}P(u_{i}\mid\c),\:
+			\sum_{u_{j}^{\prime}\in\u^{\prime}}u_{i}P(u_{j}^{\prime}\mid\c^{\prime})\right)
+		}
+		
+		Time Complexity: 
+	\end{block}
+	\vfill
+	
+	\begin{block}{AvgSimC}
+		\fitmath{
+			\mathrm{AvgSimC}((\u,\c),(\u^{\prime},\c^{\prime})) 
+			=  \frac{1}{n \times n^{\prime}}
+			\sum_{u_{i}\in\u}
+			\sum_{u_{j}^{\prime}\in\u^{\prime}}
+			P(u_{i}\mid\c)\,P(u_{j}^{\prime}\mid\c^{\prime})\,d(u_{i},u_{j}^{\prime})
+		}
+	\end{block}
 \end{frame}
 
 \begin{frame}{Results on word similarity with context}
