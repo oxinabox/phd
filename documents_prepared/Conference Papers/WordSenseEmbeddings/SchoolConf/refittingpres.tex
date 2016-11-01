@@ -23,6 +23,12 @@
 
 
 
+\usepackage{booktabs, array} % Generates table from .csv
+\usepackage{pgfplots, pgfplotstable}
+\pgfplotsset{
+	compat=1.12,
+	/pgfplots/table/search path={.,..,../data}
+}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newcommand{\inputcolumn}[1]{%
@@ -66,8 +72,40 @@
 \date{}
 %\logo{\hfill\includegraphics[scale=0.12]{uwa}\hfill\hspace{1.5cm}\vspace{0.5cm}}
 \begin{document}
-\centering %Center everywhere
+\newcommand{\sentexample}{\fitmath{
+		\overbrace{
+			\obraceword{wow}{w_1}
+			\obraceword{the} {w_2}
+			\obraceword{wool} {w_3}
+			\obraceword{from} {w_4}
+			\obraceword{the} {w_5}
+			\ubraceword{kid} {target\: word}
+			\obraceword{is} {w_6}
+			\obraceword{so}{w_7}
+			\obraceword{soft}{w_8}
+			\obraceword{and} {w_9}
+			\obraceword{fluffy}{w_{10}}
+		}^{\c}
+	}}
+	
+
+%\centering %Center everywhere
 \frame{\maketitle}
+
+
+
+
+\begin{frame}{Words don't only have one meaning}
+	
+	\vspace{1em}
+	\alert{Kid \emph{(Noun)}} \footfullcite{miller1995wordnet}
+	\begin{enumerate}
+		\item (a young person of either sex) "she writes books for children"; "they're just kids"; "`tiddler' is a British term for youngster"
+		\item (English dramatist (1558-1594)) 
+		\item (a human offspring (son or daughter) of any age) "they had three children"; "they were able to send their kids to college"
+		\item (young goat) 
+	\end{enumerate}
+\end{frame}
 
 \begin{frame}{Word embeddings represent each word as a single vector}
 	\begin{block}<1->{SkipGram Language Model:}
@@ -84,26 +122,12 @@
 			\item Back-prop will find a good representation for your input vector -- i.e. word
 		\end{itemize}
 	\end{block}	
+	\sentexample
 \end{frame}
 
-\begin{frame}{Words don't only have one meaning though}
-	
-		\vspace{1em}
-		\alert{Kid \emph{(Noun)}} \footfullcite{miller1995wordnet}
-	\begin{enumerate}
-		\item (a young person of either sex) "she writes books for children"; "they're just kids"; "`tiddler' is a British term for youngster"
-		\item (English dramatist (1558-1594)) 
-		\item (a human offspring (son or daughter) of any age) "they had three children"; "they were able to send their kids to college"
-		\item kid (young goat) 
-	\end{enumerate}
-\end{frame}
+
 
 \begin{frame}{Word sense embeddings represent each word as a multiple vectors}
-	
-	\footfullcite{AdaGrams}
-\end{frame}
-
-\begin{frame}{Many sense embeddings don't know what the senses mean}
 	\begin{itemize}
 		\item Each word has multiple senses $\{u_1, u_2, ..., u_n\}$
 		\item SkipGram Language Model becomes \begin{itemize}
@@ -111,61 +135,72 @@
 			\item \alert{Output} probabilities of words appearing in its context \alert{$P(w_i \mid u_j$}
 		\end{itemize}
 	\end{itemize}
-
+	\footfullcite{AdaGrams}
+	\sentexample
 \end{frame}
+
+\begin{frame}{Many sense embeddings don't produce human recognisable senses}
+	 \begin{itemize}
+	 	\item<1-> Embeddings are learn by modelling what words occur near the sense
+	 	\item<2-> No control over the meanings of the senses \begin{itemize}
+	 		\item Cover overlapping definitions
+	 		\item Find overly narrow meanings
+	 		\item Capture rare jargon uses
+	 	\end{itemize}
+		\item<3-> Useful, but not interoperable with lexical knowledge bases.	
+	 \end{itemize}
+\end{frame}
+
+
 
 \begin{frame}{We will solve this by \emph{refitting} them to be for the sense we mean}
 	\begin{columns}[T]
 		\begin{column}{0.5\textwidth}
 			\begin{itemize}
-				\item<1-> Take in the \alert{word}, the \alert{context}, and the \alert{pretrained senses}
-				\item<2-> Output a \alert{new sense embedding} that is for the meaning present in \alert{that sentence}
-			\end{itemize} 
+				\item \alert{Refitting} constructs new sense embeddings out of the old.
+				
+				\item It uses the \alert{probabilities} of example sentence occuring.
+				
+				\item The new embedding aligns to the meaning in that sentence.
+			\end{itemize}			
 		\end{column}
+		
 		\inputcolumn{../figs/refitting.tex}
+		
 	\end{columns}
 \end{frame}
 
 
-\newcommand{\sentexample}{\fitmath{
-	\overbrace{
-		\obraceword{wow}{w_1}
-		\obraceword{the} {w_2}
-		\obraceword{wool} {w_3}
-		\obraceword{from} {w_4}
-		\obraceword{the} {w_5}
-		\ubraceword{kid} {target\: word}
-		\obraceword{is} {w_6}
-		\obraceword{so}{w_7}
-		\obraceword{soft}{w_8}
-		\obraceword{and} {w_9}
-		\obraceword{fluffy}{w_{10}}
-	}^{\c}
-}}
+
 
 \begin{frame}{Refitting uses a probability weighted sum}
 	\vspace{-1em}
 	\begin{columns}[T]
 	\begin{column}{0.5\textwidth}
-
+		
+		\vfill 		
+		
+		New sense embedding:
 		\begin{equation*} \label{eq:synth}
 			l(\u \mid \c ) = \sum_{\forall u_i \in \u} u_i P(u_i \mid \c)
 		\end{equation*}
 		
 
-		Unsupervised Senses Vectors: $\u = \{u_1,...u_{n_u}\}$ 
-		
-		\vspace{1em}
-		
-		Example Sentence: $\c = \{w_1,...w_{n_c}\}$
+%		Unsupervised Senses Vectors: $\u = \{u_1,...u_{n_u}\}$ 
+%		
+%		\vspace{1em}
+%		
+%		Example Sentence: $\c = \{w_1,...w_{n_c}\}$
+		 \vfill 		
+		 
 		 
 	\end{column}
 	
 	\inputcolumn{../figs/refitting.tex}
 
-\end{columns}
-\vspace{0em}
-\sentexample
+	\end{columns}
+	\vspace{0em}
+	\sentexample
 \end{frame}
 
 \begin{frame}{The probabilities are found using Bayes' theorem}
@@ -191,7 +226,41 @@
 				$
 			}
 		\end{column}
+
 		\inputcolumn{../figs/refitting.tex}
+	\end{columns}
+	\vspace{0em}
+	\sentexample
+\end{frame}
+
+
+\begin{frame}{The posterior distribution (over senses) is too sharp, so we smooth it}
+	\vspace{-1em}
+	\begin{columns}[T]
+		\begin{column}{0.5\textwidth}
+			\begin{block}<1->{Original:}
+				\vspace{1em}
+				\alert{Context Likelihood:}
+				$\displaystyle%
+				P(\c \mid s_{i})=\prod_{\forall w_{j}\in\c}P(w_{j} \mid s_{i})
+				$
+							
+				\vspace{1em}
+				\alert{Sense Likelihood:}
+				$\displaystyle%
+				P(s_{i} \mid \c) =
+				\dfrac{P(\c \mid s_{i})P(s_{i})}
+				{\sum_{s_{j}\in\s} P(\c \mid s_{j})P(s_{j})}
+				$
+						
+			\end{block}
+		\end{column}
+		
+		
+		\begin{column}{0.5\textwidth}
+			\structure{Smoothed:}
+			
+		\end{column}		
 	\end{columns}
 	\vspace{0em}
 	\sentexample
@@ -265,39 +334,42 @@
 
 \end{frame}
 
-\begin{frame}{RefittedSim vs AvgSimC}
-	\vspace{-1em}
-	\vfill
-	\begin{block}{RefittedSim}
-		\fitmath{
-			\mathrm{RefittedSim}((\u,\c),(\u^{\prime},\c^{\prime}))
-			= d\left(
-			\sum_{u_{i}\in\u}u_{i}P(u_{i}\mid\c),\:
-			\sum_{u_{j}^{\prime}\in\u^{\prime}}u_{i}P(u_{j}^{\prime}\mid\c^{\prime})\right)
-		}
 
-		\vspace{0.2em}
-		Time Complexity: 
-		 $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert)$
-	\end{block}
-	\vfill
-	
-	\begin{block}{AvgSimC}
-		\fitmath{
-			\mathrm{AvgSimC}((\u,\c),(\u^{\prime},\c^{\prime})) 
-			=  \frac{1}{n \times n^{\prime}}
-			\sum_{u_{i}\in\u}
-			\sum_{u_{j}^{\prime}\in\u^{\prime}}
-			P(u_{i}\mid\c)\,P(u_{j}^{\prime}\mid\c^{\prime})\,d(u_{i},u_{j}^{\prime})
-		}
-	
-		\vspace{0.2em}
-		Time Complexity: $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert +n\times n^{\prime})$
-	\end{block}
-\end{frame}
 
-\begin{frame}{Results on word similarity with context}
-	
+\begin{frame}[verbatim]{Results on word similarity with context}
+	\pgfplotstabletypeset[col sep=comma, header=has colnames, string type,
+		columns/Smoothing/.style={column name={$\substack{\mathrm{Geometric}\\\mathrm{Smoothing}}$}},
+		columns/Use Prior/.style={column name={$\substack{\mathrm{Use}\\\mathrm{Prior}}$}},
+		%		columns/Use Prior/.style={column name={\small{Use Prior}}},
+		columns/AvgSimC/.style={
+			%column name={\small{AvgSimC}},
+			numeric type,
+			precision=1,
+			fixed zerofill=true,
+			preproc/expr={100*##1},
+			column type=c
+		},
+		columns/RefittedSim/.style={
+			%column name={\small{RefittedSim}},
+			numeric type,
+			precision=1,
+			fixed zerofill=true,
+			preproc/expr={100*##1},
+			column type=c
+		},
+		every row 1 column RefittedSim/.style={
+			postproc cell content/.style={
+				@cell content/.add={$\bf}{$}
+			}
+		},
+		every row 0 column AvgSimC/.style={
+			postproc cell content/.style={
+				@cell content/.add={$\bf}{$}
+			}
+		},
+		every head row/.style={after row = {\toprule}}
+		]{swsc-grid.csv}
+		
 \end{frame}
 
 \begin{frame}{Use of refitted senses for word sense disambiguation }
@@ -337,9 +409,39 @@
 \end{frame}
 
 
-\begin{frame}{A method for refitting sense embeddings}
-	
-\end{frame}
 
+
+\section{Appendix}
+
+\begin{frame}{RefittedSim vs AvgSimC}
+	\vspace{-1em}
+	\vfill
+	\begin{block}{RefittedSim}
+		\fitmath{
+			\mathrm{RefittedSim}((\u,\c),(\u^{\prime},\c^{\prime}))
+			= d\left(
+			\sum_{u_{i}\in\u}u_{i}P(u_{i}\mid\c),\:
+			\sum_{u_{j}^{\prime}\in\u^{\prime}}u_{i}P(u_{j}^{\prime}\mid\c^{\prime})\right)
+		}
+		
+		\vspace{0.2em}
+		Time Complexity: 
+		$O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert)$
+	\end{block}
+	\vfill
+	
+	\begin{block}{AvgSimC}
+		\fitmath{
+			\mathrm{AvgSimC}((\u,\c),(\u^{\prime},\c^{\prime})) 
+			=  \frac{1}{n \times n^{\prime}}
+			\sum_{u_{i}\in\u}
+			\sum_{u_{j}^{\prime}\in\u^{\prime}}
+			P(u_{i}\mid\c)\,P(u_{j}^{\prime}\mid\c^{\prime})\,d(u_{i},u_{j}^{\prime})
+		}
+		
+		\vspace{0.2em}
+		Time Complexity: $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert +n\times n^{\prime})$
+	\end{block}
+\end{frame}
 	
 \end{document}
