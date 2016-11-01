@@ -30,6 +30,17 @@
 	/pgfplots/table/search path={.,..,../data}
 }
 
+\makeatletter
+\pgfplotsset{
+	/pgfplots/flexible xticklabels from table/.code n args={3}{%
+		\pgfplotstableread[#3]{#1}\coordinate@table
+		\pgfplotstablegetcolumn{#2}\of{\coordinate@table}\to\pgfplots@xticklabels
+		\let\pgfplots@xticklabel=\pgfplots@user@ticklabel@list@x
+	}
+}
+\makeatother
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newcommand{\inputcolumn}[1]{%
 	\begin{column}{0.5\textwidth}
@@ -336,7 +347,41 @@
 
 
 
-\begin{frame}[verbatim]{Results on word similarity with context}
+\pgfplotstableread[header=has colnames, string type,
+	columns/AvgSimC/.style={numeric type},
+	columns/RefittedSim/.style={numeric type},
+]{Method	AvgSimC	RefittedSim
+{Greedy \\ Unsmoothed} 0.222228482	0.406756426
+{AdaGram\\Unsmoothed} 0.437692659	0.478328794
+{Greedy \\ Smoothed} 0.235813998	0.497038141
+{AdaGram Smoothed}	0.538424026	0.647537113
+}{\swsc}
+
+
+\begin{frame}[fragile]{Results on word similarity with context}
+	\begin{tikzpicture} 
+		\begin{axis}[
+			ybar,
+			width=\textwidth,height=0.5\textwidth,
+			ymin=0,
+			ymax=1.0,
+			xmin=-0.2,
+			xmax=3.2,
+			ylabel=$\rho$,
+			xticklabels from table={\swsc}{Method},
+			legend style={fill=none},
+			xticklabel style={text width=8em, align=center},
+			xtick = data%
+			] 
+%		
+			\addplot[fill=darkbrown] table[y=AvgSimC, x expr=\coordindex]{\swsc}; 
+			\addplot[fill=UniBlue] table[y=RefittedSim, x expr=\coordindex]{\swsc}; 
+			\legend{AvgSimC, RefittedSim};
+		\end{axis} 
+	\end{tikzpicture}
+\end{frame}
+
+\begin{frame}[fragile]{Results on word similarity with context}
 	\pgfplotstabletypeset[col sep=comma, header=has colnames, string type,
 		columns/Smoothing/.style={column name={$\substack{\mathrm{Geometric}\\\mathrm{Smoothing}}$}},
 		columns/Use Prior/.style={column name={$\substack{\mathrm{Use}\\\mathrm{Prior}}$}},
