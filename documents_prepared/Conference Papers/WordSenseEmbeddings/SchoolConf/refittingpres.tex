@@ -130,7 +130,7 @@
 		\begin{itemize}
 			\item Represent each input word as a \alert{vector}
 			\item Train a neural network to estimate  \alert{$P(w_i \mid w_T)$}
-			\item Back-prop will find a good representation for your input vector -- i.e. word
+			\item Back-prop finds values for the input vector -- i.e. good representation for the word
 		\end{itemize}
 	\end{block}	
 	\sentexample
@@ -152,7 +152,7 @@
 
 \begin{frame}{Many sense embeddings don't produce human recognisable senses}
 	 \begin{itemize}
-	 	\item<1-> Embeddings are learn by modelling what words occur near the sense
+	 	\item<1-> Embeddings are learnt by modelling what words occur near the sense
 	 	\item<2-> No control over the meanings of the senses \begin{itemize}
 	 		\item Cover overlapping definitions
 	 		\item Find overly narrow meanings
@@ -189,22 +189,12 @@
 	\begin{columns}[T]
 	\begin{column}{0.5\textwidth}
 		
-		\vfill 		
-		
+		\vspace{3em}
 		New sense embedding:
 		\begin{equation*} \label{eq:synth}
 			l(\u \mid \c ) = \sum_{\forall u_i \in \u} u_i P(u_i \mid \c)
 		\end{equation*}
 		
-
-%		Unsupervised Senses Vectors: $\u = \{u_1,...u_{n_u}\}$ 
-%		
-%		\vspace{1em}
-%		
-%		Example Sentence: $\c = \{w_1,...w_{n_c}\}$
-		 \vfill 		
-		 
-		 
 	\end{column}
 	
 	\inputcolumn{../figs/refitting.tex}
@@ -252,12 +242,16 @@
 			\begin{block}<1->{Original:}
 				\vspace{1em}
 				\alert{Context Likelihood:}
+				
+				\vspace{1mm}
 				$\displaystyle%
 				P(\c \mid s_{i})=\prod_{\forall w_{j}\in\c}P(w_{j} \mid s_{i})
 				$
 							
 				\vspace{1em}
 				\alert{Sense Likelihood:}
+				
+				\vspace{1mm}
 				$\displaystyle%
 				P(s_{i} \mid \c) =
 				\dfrac{P(\c \mid s_{i})P(s_{i})}
@@ -269,12 +263,31 @@
 		
 		
 		\begin{column}{0.5\textwidth}
-			\structure{Smoothed:}
-			
+			\begin{block}<2->{Smoothed:}
+				\vspace{1em}
+				\alert{Context Likelihood:}
+				
+				\vspace{1mm}
+				$\displaystyle%
+				P_S(\c \mid s_{i})=\prod_{\forall w_{j}\in\c} \sqrt[|\c|]{P(w_{j} \mid s_{i})}
+				$
+				
+				\only<3->{
+					\vspace{1em}
+					\alert{Sense Likelihood:}
+					
+					\vspace{1mm}
+					\fitmath{
+					P(s_{i} \mid \c) =
+					\dfrac{\sqrt[|\c|]{P(\c \mid s_{i})P(s_{i})}}
+					{\sum_{s_{j}\in\s} \sqrt[|\c|]{P(\c \mid s_{j})P(s_{j})}}
+					}
+				}
+			\end{block}			
 		\end{column}		
 	\end{columns}
 	\vspace{0em}
-	\sentexample
+	%\sentexample
 \end{frame}
 
 
@@ -381,41 +394,6 @@
 	\end{tikzpicture}
 \end{frame}
 
-\begin{frame}[fragile]{Results on word similarity with context}
-	\pgfplotstabletypeset[col sep=comma, header=has colnames, string type,
-		columns/Smoothing/.style={column name={$\substack{\mathrm{Geometric}\\\mathrm{Smoothing}}$}},
-		columns/Use Prior/.style={column name={$\substack{\mathrm{Use}\\\mathrm{Prior}}$}},
-		%		columns/Use Prior/.style={column name={\small{Use Prior}}},
-		columns/AvgSimC/.style={
-			%column name={\small{AvgSimC}},
-			numeric type,
-			precision=1,
-			fixed zerofill=true,
-			preproc/expr={100*##1},
-			column type=c
-		},
-		columns/RefittedSim/.style={
-			%column name={\small{RefittedSim}},
-			numeric type,
-			precision=1,
-			fixed zerofill=true,
-			preproc/expr={100*##1},
-			column type=c
-		},
-		every row 1 column RefittedSim/.style={
-			postproc cell content/.style={
-				@cell content/.add={$\bf}{$}
-			}
-		},
-		every row 0 column AvgSimC/.style={
-			postproc cell content/.style={
-				@cell content/.add={$\bf}{$}
-			}
-		},
-		every head row/.style={after row = {\toprule}}
-		]{swsc-grid.csv}
-		
-\end{frame}
 
 \begin{frame}{Use of refitted senses for word sense disambiguation }
 	\begin{adjustbox}{max height=0.5\textheight}
@@ -431,29 +409,56 @@
 
 \end{frame}
 
-\begin{frame}{Results for word sense disambiguation}
-	
+
+
+
+% XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
+
+
+\pgfplotstableread[header=has colnames, string type,
+columns/F1/.style={numeric type},
+]{Method	F1
+{Mapped\\ AdaGram}	0.736007052
+{MFS\\ baseline}	0.7889
+{Refitted\\ Greedy}	0.792860291
+{Refitted\\ AdaGram}	0.798941799
+}{\wsd}
+
+\begin{frame}[fragile]{Results for word sense disambiguation}
+
+	\begin{tikzpicture} 
+	\begin{axis}[
+	ybar,
+	width=\textwidth,height=0.8\textheight,
+	%xmin=-0.2,
+	%xmax=3.2,
+	ylabel=$\rho$,
+	xticklabels from table={\wsd}{Method},
+	legend style={fill=none},
+	xticklabel style={text width=8em, align=center},
+	xtick = data%
+	] 
+	%		
+	\addplot[fill=darkbrown] table[y=F1, x expr=\coordindex]{\wsd}; 
+
+	\end{axis} 
+	\end{tikzpicture}	
 \end{frame}
 
-\begin{frame}{What went wrong? The posterior distribution was too sharp}
-	
+\begin{frame}{Refitting sense-embeedings allows us to know the sense}
+	\vfill
+	\begin{itemize}
+		\item New embeddings are defined as a as a \alert{weighted sum} of unsupervised embeddings.
+		\item The \alert{weights} are determined using the \alert{langauge model}, with a  \alert{example sentence}.
+		\item This lets us find embedding for the sense of the word in \alert{that sentence}.
+		
+		\item<2-> Applications for \alert{similarity with context}, and lexical tasks, such as \alert{Word Sense Disambiguation}.
+	\end{itemize}
+	\vfill
+	\sentexample
 \end{frame}
-
-\begin{frame}{Geometric Smoothing -- Replace products of likelihoods, with the geometric mean of likelihoods}
-	
-\end{frame}
-
-
-\begin{frame}{Improved results on word similarity with context}
-	
-\end{frame}
-
-
-\begin{frame}{Improved results  for word sense disambiguation}
-	
-\end{frame}
-
-
 
 
 \section{Appendix}
@@ -487,6 +492,43 @@
 		\vspace{0.2em}
 		Time Complexity: $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert +n\times n^{\prime})$
 	\end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]{Results on word similarity with context}
+	\pgfplotstabletypeset[col sep=comma, header=has colnames, string type,
+	columns/Smoothing/.style={column name={$\substack{\mathrm{Geometric}\\\mathrm{Smoothing}}$}},
+	columns/Use Prior/.style={column name={$\substack{\mathrm{Use}\\\mathrm{Prior}}$}},
+	%		columns/Use Prior/.style={column name={\small{Use Prior}}},
+	columns/AvgSimC/.style={
+		%column name={\small{AvgSimC}},
+		numeric type,
+		precision=1,
+		fixed zerofill=true,
+		preproc/expr={100*##1},
+		column type=c
+	},
+	columns/RefittedSim/.style={
+		%column name={\small{RefittedSim}},
+		numeric type,
+		precision=1,
+		fixed zerofill=true,
+		preproc/expr={100*##1},
+		column type=c
+	},
+	every row 1 column RefittedSim/.style={
+		postproc cell content/.style={
+			@cell content/.add={$\bf}{$}
+		}
+	},
+	every row 0 column AvgSimC/.style={
+		postproc cell content/.style={
+			@cell content/.add={$\bf}{$}
+		}
+	},
+	every head row/.style={after row = {\toprule}}
+	]{swsc-grid.csv}
+	
 \end{frame}
 	
 \end{document}
