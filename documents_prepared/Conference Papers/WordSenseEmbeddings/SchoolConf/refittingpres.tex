@@ -103,19 +103,21 @@
 %\centering %Center everywhere
 \frame{\maketitle}
 
-
-
-
-\begin{frame}{Words don't only have one meaning}
-	
-	\vspace{1em}
-	\alert{Kid \emph{(Noun)}} \footfullcite{miller1995wordnet}
+\newcommand{\glosses}{
+	\alert{Kid \emph{(Noun)}}
 	\begin{enumerate}
 		\item (a young person of either sex) "she writes books for children"; "they're just kids"; "`tiddler' is a British term for youngster"
 		\item (English dramatist (1558-1594)) 
 		\item (a human offspring (son or daughter) of any age) "they had three children"; "they were able to send their kids to college"
 		\item (young goat) 
 	\end{enumerate}
+}
+
+
+\begin{frame}{Words don't only have one meaning}
+	\vspace{1em}
+	\glosses
+	 \footfullcite{miller1995wordnet}
 \end{frame}
 
 \begin{frame}{Word embeddings represent each word as a single vector}
@@ -143,7 +145,7 @@
 		\item Each word has multiple senses $\{u_1, u_2, ..., u_n\}$
 		\item SkipGram Language Model becomes \begin{itemize}
 			\item \alert{Input} a word sense $u_i$
-			\item \alert{Output} probabilities of words appearing in its context \alert{$P(w_i \mid u_j$}
+			\item \alert{Output} probabilities of words appearing in its context \alert{$P(w_i \mid u_j$)}
 		\end{itemize}
 	\end{itemize}
 	\footfullcite{AdaGrams}
@@ -164,7 +166,7 @@
 
 
 
-\begin{frame}{We will solve this by \emph{refitting} them to be for the sense we mean}
+\begin{frame}[label=refittingslide]{We will solve this by \emph{refitting} them to be for the sense we mean}
 	\begin{columns}[T]
 		\begin{column}{0.5\textwidth}
 			\begin{itemize}
@@ -172,7 +174,7 @@
 				
 				\item It uses the \alert{probabilities} of example sentence occuring.
 				
-				\item The new embedding aligns to the meaning in that sentence.
+				\item The new embedding aligns to the meaning in \alert{that sentence}.
 			\end{itemize}			
 		\end{column}
 		
@@ -209,25 +211,55 @@
 	\begin{columns}[T]
 		\begin{column}{0.5\textwidth}
 			
-			\onslide<1->{Language model: $P(w_i \mid s_{i})$}
+			\onslide<1->{Language model: $P(w_i \mid u_{i})$}
 			\vspace{1em}
 			\onslide<2->{
 				Conditional Independence:
 				$\displaystyle%
-				P(\c \mid s_{i})=\prod_{\forall w_{j}\in\c}P(w_{j} \mid s_{i})
+				P(\c \mid u_{i})=\prod_{\forall w_{j}\in\c}P(w_{j} \mid u_{i})
 				$
 			}
 			\vspace{1em}
 			\onslide<3->{
 				Bayes Theorem: 
 				$\displaystyle%
-				P(s_{i} \mid \c) =
-				\dfrac{P(\c \mid s_{i})P(s_{i})}
-				{\sum_{s_{j}\in\s} P(\c \mid s_{j})P(s_{j})}
+				P(u_{i} \mid \c) =
+				\dfrac{P(\c \mid u_{i})P(u_{i})}
+				{\sum_{u_{j}\in\s} P(\c \mid u_{j})P(u_{j})}
 				$
 			}
+
 		\end{column}
 
+		\inputcolumn{../figs/refitting.tex}
+	\end{columns}
+	\vspace{0em}
+	\sentexample
+\end{frame}
+
+
+\begin{frame}{The probabilities are found using Bayes' theorem}
+	\vspace{-1em}
+	\begin{columns}[T]
+		\begin{column}{0.5\textwidth}
+			
+			\vspace{2em}
+			Bayes Theorem: 
+				$\displaystyle%
+				P(u_{i} \mid \c) =
+				\dfrac{P(\c \mid u_{i})P(u_{i})}
+				{\sum_{u_{j}\in\s} P(\c \mid u_{j})P(u_{j})}
+				$
+				
+			\vspace{2em}
+			Refitted Sense Embedding: 
+				$\displaystyle%
+				l(\u \mid \c ) = \sum_{\forall u_i \in \u} u_i P(u_i \mid \c)
+				$
+
+			\vfill
+		\end{column}
+		
 		\inputcolumn{../figs/refitting.tex}
 	\end{columns}
 	\vspace{0em}
@@ -245,7 +277,7 @@
 				
 				\vspace{1mm}
 				$\displaystyle%
-				P(\c \mid s_{i})=\prod_{\forall w_{j}\in\c}P(w_{j} \mid s_{i})
+				P(\c \mid u_{i})=\prod_{\forall w_{j}\in\c}P(w_{j} \mid u_{i})
 				$
 							
 				\vspace{1em}
@@ -253,9 +285,9 @@
 				
 				\vspace{1mm}
 				$\displaystyle%
-				P(s_{i} \mid \c) =
-				\dfrac{P(\c \mid s_{i})P(s_{i})}
-				{\sum_{s_{j}\in\s} P(\c \mid s_{j})P(s_{j})}
+				P(u_{i} \mid \c) =
+				\dfrac{P(\c \mid u_{i})P(u_{i})}
+				{\sum_{u_{j}\in\u} P(\c \mid u_{j})P(u_{j})}
 				$
 						
 			\end{block}
@@ -269,7 +301,7 @@
 				
 				\vspace{1mm}
 				$\displaystyle%
-				P_S(\c \mid s_{i})=\prod_{\forall w_{j}\in\c} \sqrt[|\c|]{P(w_{j} \mid s_{i})}
+				P_S(\c \mid u_{i})=\prod_{\forall w_{j}\in\c} \sqrt[|\c|]{P(w_{j} \mid u_{i})}
 				$
 				
 				\only<3->{
@@ -278,9 +310,9 @@
 					
 					\vspace{1mm}
 					\fitmath{
-					P(s_{i} \mid \c) =
-					\dfrac{\sqrt[|\c|]{P(\c \mid s_{i})P(s_{i})}}
-					{\sum_{s_{j}\in\s} \sqrt[|\c|]{P(\c \mid s_{j})P(s_{j})}}
+					P_S(s_{i} \mid \c) =
+					\dfrac{\sqrt[|\c|]{P(\c \mid u_{i})P(u_{i})}}
+					{\sum_{u_{j}\in\u} \sqrt[|\c|]{P(\c \mid u_{j})P(u_{j})}}
 					}
 				}
 			\end{block}			
@@ -334,6 +366,9 @@
 	\vfill
 	\simsenttwo
 	\vfill
+	
+	%We use the Stanford Word Similarity in Context (SCWS) dataset to assess this 
+	\footcite{Huang2012}
 
 \end{frame}
 
@@ -355,6 +390,7 @@
 	 \end{aligned}
 	}
 	\vfill
+	
 
 \end{frame}
 
@@ -387,13 +423,19 @@
 			xtick = data%
 			] 
 %		
-			\addplot[fill=darkbrown] table[y=AvgSimC, x expr=\coordindex]{\swsc}; 
-			\addplot[fill=UniBlue] table[y=RefittedSim, x expr=\coordindex]{\swsc}; 
+			\only<1->{\addplot[fill=darkbrown] table[y=AvgSimC, x expr=\coordindex]{\swsc}; }
+			\only<2->{\addplot[fill=UniBlue] table[y=RefittedSim, x expr=\coordindex]{\swsc}; }
 			\legend{AvgSimC, RefittedSim};
 		\end{axis} 
 	\end{tikzpicture}
 \end{frame}
 
+
+
+\begin{frame}{WSD is the task of determining which sense is being used}
+	\glosses
+	\sentexample
+\end{frame}
 
 \begin{frame}{Use of refitted senses for word sense disambiguation }
 	\begin{adjustbox}{max height=0.5\textheight}
@@ -420,18 +462,21 @@
 \pgfplotstableread[header=has colnames, string type,
 columns/F1/.style={numeric type},
 ]{Method	F1
-{Mapped\\ AdaGram}	0.736007052
+{Mapped\footnote{\cite{agirre2006}}\\ AdaGram} 	0.736007052
 {MFS\\ Baseline}	0.7889
 {Refitted\\ Greedy}	0.792860291
 {Refitted\\ AdaGram}	0.798941799
 }{\wsd}
 
 \begin{frame}[fragile]{Results for word sense disambiguation}
-
+	\begin{center}
+		\vspace{-1.5em}
+		\structure{SemEval 2007 Task 7}
+	\end{center} 
 	\begin{tikzpicture} 
 	\begin{axis}[
 	ybar,
-	width=\textwidth,height=0.8\textheight,
+	width=0.9\textwidth,height=0.8\textheight,
 	%xmin=-0.2,
 	%xmax=3.2,
 	ylabel=F1,
@@ -445,20 +490,13 @@ columns/F1/.style={numeric type},
 
 	\end{axis} 
 	\end{tikzpicture}	
+
+    
 \end{frame}
 
-\begin{frame}{Refitting sense-embeedings allows us to know the sense}
-	\vfill
-	\begin{itemize}
-		\item New embeddings are defined as a as a \alert{weighted sum} of unsupervised embeddings.
-		\item The \alert{weights} are determined using the \alert{langauge model}, with a  \alert{example sentence}.
-		\item This lets us find embedding for the sense of the word in \alert{that sentence}.
-		
-		\item<2-> Applications for \alert{similarity with context}, and lexical tasks, such as \alert{Word Sense Disambiguation}.
-	\end{itemize}
-	\vfill
-	\sentexample
-\end{frame}
+\againframe{refittingslide}
+
+
 
 
 \section{Appendix}
@@ -529,6 +567,26 @@ columns/F1/.style={numeric type},
 	every head row/.style={after row = {\toprule}}
 	]{swsc-grid.csv}
 	
+\end{frame}
+
+
+\begin{frame}{Refitting sense-embeedings allows us to know the sense}
+	\vfill
+	\begin{itemize}
+		\item New embeddings are defined as a as a \alert{weighted sum} of unsupervised embeddings.
+		\item The \alert{weights} are determined using the \alert{langauge model}, with a  \alert{example sentence}.
+		\item This lets us find embedding for the sense of the word in \alert{that sentence}.
+		
+		\item<2-> Applications for \alert{similarity with context}, and lexical tasks, such as \alert{Word Sense Disambiguation}.
+	\end{itemize}
+	\vfill
+	\sentexample
+\end{frame}
+
+\renewcommand*{\bibfont}{\scriptsize}
+\begin{frame}{References}
+	\tiny
+	\printbibliography
 \end{frame}
 	
 \end{document}
