@@ -26,7 +26,6 @@
 		postproc cell content/.append code={\pgfkeysalso{@cell content/.add={}{\%}}
 		}},
 		%
-		%
 		every head row/.style={after row=\midrule},
 	}
 	
@@ -73,9 +72,18 @@
 \end{frame}
 
 \begin{frame}{We have turned sentences into numeric vectors, now we want to turn them back.}
-	Input Sentences \hfill Manipulate Numbers \hfill Output Sentences
+	\small  Input Sentences \hfill Manipulate Numbers \hfill Output Sentences
 	\vspace{0.5cm}
 	\includegraphics[scale=0.5]{workflow}
+\end{frame}
+
+\begin{frame}{Related problems}
+	Related problems include
+	\begin{itemize}
+		\item Sequence Memorisation
+		\item Sequence-Sequence Learning
+	\end{itemize}
+	However, sentence generation is district as we go from a vector representation that encodes meaning, rather than from one that encodes memory.
 \end{frame}
 
 \begin{frame}[label=twostep]{We can break the problem down into two subproblems.}
@@ -122,7 +130,9 @@
 	\vfill
 \end{frame}
 
-\newcommand{\vectorselectionproblemdefn}{Find the inclusion vector $\c=[c_1,c_2,...c_n]\in\N_0^n$ that for $\displaystyle f(\c) = \sum_{\x_j\in\V}\:\x_{j}\,c_{j}$ we have $\min d(\s,f(\c))$}
+\newcommand{\vectorselectionproblemdefn}{Find the inclusion vector $\c=[c_1,c_2,...c_n]\in\N_0^n$ to minimise
+	that for $\displaystyle d(\s,\:\: \sum_{\x_j\in\V}\:\x_{j}\,c_{j})$ 
+}
 
 \begin{frame}{We solve the objective function to get a bag of words.}
 	\vectorselectionproblemdefn
@@ -159,76 +169,6 @@
 	\vfill
 \end{frame}
 
-\newcommand{\vectorselectionproblemdefnalt}{Find the bag of vectors $\B$ (a multi-subset of $\V$), such that $\displaystyle \Sigma(\B)=\sum_{\x_a\in\B}\x_a$ we have  $\min d(\s,\Sigma(\B))$}
-
-\begin{frame}{Alternative notation for vector selection problem}
-	Rather than writing:\\
-		\vectorselectionproblemdefn
-	\vfill
-	Write:\\
-		\vectorselectionproblemdefnalt
-	\vfill
-	
-\end{frame}
-
-
-\begin{frame}{Greedy Addition: where you add the best vector to your current bag, and repeat.}
-	\vectorselectionproblemdefnalt
-	\vfill
-	\begin{enumerate}
-		\item For each vector $\x_j$ in the vocabulary consider  $d(\s, \Sigma(\B)+\x_j)$
-		\item Add the vector that gets closest the bag. $\B\leftarrow\B\cup\{\x_\star\}$
-			\begin{itemize}
-				\item unless adding nothing would be better -- then terminate
-			\end{itemize}
-		\item Repeat
-	\end{enumerate}
-	\vfill
-\end{frame}
-
-\begin{frame}{A 1 dimensional example of greedy addition}
-	\vectorselectionproblemdefnalt
-	\vfill
-	Consider $\V=\{24,25,100\}$ \hfill $\s=148$ \hfill $d(x,y)=|x-y|$
-	\begin{enumerate}
-		\item<1-> $\B=[]$ \hfill $d(\s,\Sigma(\B))=|148-0|=149$ 
-		\item<2-> $\B=[100]$ \hfill $d(\s,\Sigma(\B))=|148-100|=48$ 
-		\item<3-> $\B=[100,25]$ \hfill $d(\s,\Sigma(\B))=|148-(100+25)|=23$ 
-		\item<4-> $\B=[100,25,24]$ \hfill $d(\s,\Sigma(\B))=|148-(100+25+24)|=1$ 
-		\item<5-> $\B=[100,25,24]$ \hfill No improvement possible \hfill $d(\s,\Sigma(\B))=1$ 
-	\end{enumerate}
-	\vfill
-	\onslide<5->{Fell for greedy trap}
-	\vfill
-	\note{If we knew the other elements of hte bag would be 100, and 24 then we would not have put in a 25}
-\end{frame}
-
-\begin{frame}{1-Substitution: Lessen the greed by reconsidering past choices}
-	\vectorselectionproblemdefnalt
-	\vfill
-	\begin{enumerate}
-		\item Consider each word vector in the current bag $\x_a\in\B$
-		\item Would deleting it improve the score? $d(\s,\Sigma(\B)-\x_a)<d(\s,\Sigma(\B))$ ?
-		\item Can it be swapped for another word to improve the score?
-		$\exists \x_b\in\V$ such that
-		$d(\s,\Sigma(\B)-\x_a+\x_b))<d(\s,\Sigma(\B))$ ?
-	\end{enumerate}
-\end{frame}
-
-\begin{frame}{A 1 dimensional example of 1-substitution}
-	\vectorselectionproblemdefnalt
-	\vfill
-	Consider $\V=\{24,25,100\}$ \hfill $\s=148$ \hfill $d(x,y)=|x-y|$
-	\begin{enumerate}
-		\item<1-> $\B=[100,25,24]$ \hfill $d(\s,\Sigma(\B))=|148-(100+25+24)|=1$ 
-		\item<2-> $\B=[100,24,24]$ \hfill $d(\s,\Sigma(\B))=|148-(100+24+24)|=0$ 
-		\item<3-> $\B=[100,24,24]$ \hfill Perfect\hfill $d(\s,\Sigma(\B))=0$ 
-	\end{enumerate}
-	\vfill
-	\onslide<3->{Fixed, but there are deeper greed traps, that can be constructed.}
-	\vfill
-\end{frame}
-
 
 \begin{frame}{Run until converance}
 	\vfill
@@ -253,40 +193,6 @@
 		\vfill
 \end{frame}
 
-\begin{frame}{Experimental Setup: Pre-process corpora to only use known words.}
-	\begin{itemize}
-		\item<1-> For word embeddings, we use pretrained GloVe \footfullcite{pennington2014glove}
-		\item<2-> Restrict Vector vocab to only words used in corpora
-		\item<2-> Pre-process Corpora to remove sentences with words not found in vocabulary.
-	\end{itemize}
-\end{frame}
-
-\begin{frame}{Experimental Setup: we used the Brown, and the Books Corpus}
-	\footfullcite{francis1979brown}
-	\footfullcite{moviebook}
-				
-	\begin{columns}[T]
-		\begin{column}{0.5\textwidth}
-			\textbf{Brown}
-			\begin{itemize}
-				\item 40,485 unique words
-				\item 42,004 sentences
-				\item Sentence Length Q3: \\\hfill 25 words
-				\item Extracts from 500 varied works from 1961
-			\end{itemize} 
-		\end{column}
-		\begin{column}{0.5\textwidth}
-			\pause
-			\textbf{Books}
-			\begin{itemize}
-				\item 178,694 unique words
-				\item 66,464 sentences 
-				\item Sentence Length Q3: \\\hfill 17 words
-				\item 11,038 unpublished novels, we use just a small random subset
-			\end{itemize}
-		\end{column}
-	\end{columns}
-\end{frame}
 
 \begin{frame}{Results: The more dimentions used in the word performance, the better the recovery.}
 	\begin{table}
@@ -417,18 +323,27 @@
 
 
 
-\pgfplotstableread[col sep=comma,header=has colnames]{../data/prelim_ordering_len_scores.csv}{\ordlenscores}
-\pgfplotstableread[col sep=comma,header=has colnames]{../data/prelim_ordering_len_scores_oracle.csv}{\ordlenscoresoracle}
+\pgfplotstableread[col sep=comma,ignore chars={"}]{../data/ordering_length_scores.csv}{\ordlenscores}
+\pgfplotstableread[col sep=comma,ignore chars={"}]{../data/ordering_length_scores_oracle.csv}{\ordlenscoresoracle}
+\pgfplotstableread[col sep=comma,ignore chars={"}, header=has colnames]{../data/selection_len_scores.csv}{\sellenscores}
 
-\begin{frame}{Result: The longer the sentence, the worse recovery of order.}
-
+\begin{frame}
+	\frametitle<1>{Results: Word Selection}
+	\frametitle<2>{Results: Ordering with Oracle BOW}
+	\frametitle<3>{Results: Our complete system}
+		
 	\begin{tikzpicture}
 	\begin{axis}[xlabel=Ground Truth Sentence Length,
 	ylabel=Portion Exactly Matched,
-	width=0.9\textwidth,height=0.5\textwidth,cycle list name=exotic]
-	\addplot table [y=Exact_Matches,x=ground_length]{\ordlenscores};
-	\addplot table [y=Exact_Matches,x=ground_length]{\ordlenscoresoracle};
-	\legend{Generated BOWS, Oracle BOWS}
+	width=0.9\textwidth,height=0.6\textwidth,
+	legend style={fill=none,at={(0.5,-0.21)},anchor=north},
+	cycle list name=exotic]
+	only<1->{\addplot table [y=books_0_01_glove300_perfect_mean, x index=0, skip coords between index={18}{1000}]{\sellenscores};}
+	
+	only<2->{\addplot table [y=Perfect Sentences,x=ground_length]{\ordlenscores};}
+	only<3->{\addplot table [y=Perfect Sentences,x=ground_length]{\ordlenscoresoracle};}
+	
+	\legend{Word Selection Only, Ordering Only (Oracle BOWS), Full System}
 	\end{axis}
 	\end{tikzpicture}	
 \end{frame}
@@ -437,21 +352,9 @@
 	\begin{itemize}
 		\item 0.75 BLEU is very good, 62\% perfect recreation is usable.
 		\item This does come from most sentences being short though.
-		\item This is the first work to present quantitative results for sentence generation based on any sentence vector representation.
+		\item This is the first work to present quantitative results for sentence generation based purely on a sentence vector representation.
 		
 	\end{itemize}
-\end{frame}
-
-\begin{frame}{As expected, expodential time taken for ordering}
-	\begin{tikzpicture}
-	\begin{axis}[xlabel=Ground Truth Sentence Length,
-	ylabel=Time Taken (s),
-	width=0.9\textwidth,height=0.5\textwidth,cycle list name=exotic]
-	\addplot table [y=Time_taken,x=ground_length]{\ordlenscores};
-	\addplot table [y=Time_taken,x=ground_length]{\ordlenscoresoracle};
-	%\legend{Generated BOWS, Oracle BOWS}
-	\end{axis}
-	\end{tikzpicture}	
 \end{frame}
 
 \againframe<2>{twostep}
@@ -479,7 +382,96 @@
 	\end{itemize}
 \end{frame}
 
+\section{Appendix}
+
+\newcommand{\vectorselectionproblemdefnalt}{Find the bag of vectors $\B$ (a multi-subset of $\V$), such that $\displaystyle \Sigma(\B)=\sum_{\x_a\in\B}\x_a$ we have  $\min d(\s,\Sigma(\B))$}
+
+\begin{frame}{Alternative notation for vector selection problem}
+	Rather than writing:\\
+	\vectorselectionproblemdefn
+	\vfill
+	Write:\\
+	\vectorselectionproblemdefnalt
+	\vfill
+\end{frame}
 
 
+\begin{frame}{Greedy Addition: where you add the best vector to your current bag, and repeat.}
+	\vectorselectionproblemdefnalt
+	\vfill
+	\begin{enumerate}
+		\item For each vector $\x_j$ in the vocabulary consider  $d(\s, \Sigma(\B)+\x_j)$
+		\item Add the vector that gets closest the bag. $\B\leftarrow\B\cup\{\x_\star\}$
+		\begin{itemize}
+			\item unless adding nothing would be better -- then terminate
+		\end{itemize}
+		\item Repeat
+	\end{enumerate}
+	\vfill
+\end{frame}
+
+\begin{frame}{A 1 dimensional example of greedy addition}
+	\vectorselectionproblemdefnalt
+	\vfill
+	Consider $\V=\{24,25,100\}$ \hfill $\s=148$ \hfill $d(x,y)=|x-y|$
+	\begin{enumerate}
+		\item<1-> $\B=[]$ \hfill $d(\s,\Sigma(\B))=|148-0|=149$ 
+		\item<2-> $\B=[100]$ \hfill $d(\s,\Sigma(\B))=|148-100|=48$ 
+		\item<3-> $\B=[100,25]$ \hfill $d(\s,\Sigma(\B))=|148-(100+25)|=23$ 
+		\item<4-> $\B=[100,25,24]$ \hfill $d(\s,\Sigma(\B))=|148-(100+25+24)|=1$ 
+		\item<5-> $\B=[100,25,24]$ \hfill No improvement possible \hfill $d(\s,\Sigma(\B))=1$ 
+	\end{enumerate}
+	\vfill
+	\onslide<5->{Fell for greedy trap}
+	\vfill
+	\note{If we knew the other elements of hte bag would be 100, and 24 then we would not have put in a 25}
+\end{frame}
+
+\begin{frame}{1-Substitution: Lessen the greed by reconsidering past choices}
+	\vectorselectionproblemdefnalt
+	\vfill
+	\begin{enumerate}
+		\item Consider each word vector in the current bag $\x_a\in\B$
+		\item Would deleting it improve the score? $d(\s,\Sigma(\B)-\x_a)<d(\s,\Sigma(\B))$ ?
+		\item Can it be swapped for another word to improve the score?
+		$\exists \x_b\in\V$ such that
+		$d(\s,\Sigma(\B)-\x_a+\x_b))<d(\s,\Sigma(\B))$ ?
+	\end{enumerate}
+\end{frame}
+
+\begin{frame}{A 1 dimensional example of 1-substitution}
+	\vectorselectionproblemdefnalt
+	\vfill
+	Consider $\V=\{24,25,100\}$ \hfill $\s=148$ \hfill $d(x,y)=|x-y|$
+	\begin{enumerate}
+		\item<1-> $\B=[100,25,24]$ \hfill $d(\s,\Sigma(\B))=|148-(100+25+24)|=1$ 
+		\item<2-> $\B=[100,24,24]$ \hfill $d(\s,\Sigma(\B))=|148-(100+24+24)|=0$ 
+		\item<3-> $\B=[100,24,24]$ \hfill Perfect\hfill $d(\s,\Sigma(\B))=0$ 
+	\end{enumerate}
+	\vfill
+	\onslide<3->{Fixed, but there are deeper greed traps, that can be constructed.}
+	\vfill
+\end{frame}
+
+
+\begin{frame}{Experimental Setup: Pre-process corpora to only use known words.}
+	\begin{itemize}
+		\item<1-> For word embeddings, we use pretrained GloVe \footfullcite{pennington2014glove}
+		\item<2-> Restrict Vector vocab to only words used in corpora
+		\item<2-> Pre-process Corpora to remove sentences with words not found in vocabulary.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Experimental Setup: we used the Brown, and the Books Corpus}
+	\footfullcite{moviebook}
+
+	\begin{itemize}
+		\item 178,694 unique words
+		\item 66,464 sentences 
+		\item Sentence Length Q3: 17 words
+		\item 11,038 unpublished novels, we use just a small random subset
+	\end{itemize}
+
+\end{frame}
 
 \end{document}
