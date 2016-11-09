@@ -3,9 +3,14 @@
 \usepackage{standalone}
 \usepackage{graphicx}
 \graphicspath{{../figs/}}
-
-\usepackage{ amssymb }
+\usepackage{pifont}% http://ctan.org/pkg/pifont
+\usepackage{amsthm}
 \usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{multirow}
+\usepackage{resizegather}
+
 \usepackage{rotating}
 %\usepackage{fontspec}
 \usepackage{microtype}
@@ -37,8 +42,12 @@
 \usepackage{tikz,textcomp}
 \usetikzlibrary{positioning}
 \newcommand{\fullpagetikz}[1]{{\input{#1}}}
-\newcommand{\widthtikz}[2]{\resizebox{#1\textwidth}{!}{\input{#2}}}
-\newcommand{\fullwidthtikz}[1]{\resizebox{0.9\textwidth}{!}{\input{#1}}}
+\newcommand{\widthtikz}[2]{\resizebox{#1\textwidth}{!}{
+		\centering
+		\input{#2}}}
+\newcommand{\fullwidthtikz}[1]{\resizebox{0.9\textwidth}{!}{
+		\centering
+		\input{#1}}}
 
 
 
@@ -51,6 +60,15 @@
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\V}{\mathcal{V}}
 \newcommand{\B}{\mathcal{B}}
+\renewcommand{\s}{w_{\blacktriangleright}}
+\renewcommand{\ss}{w_{\triangleright}}
+\newcommand{\e}{w_{\triangleleft}}
+\newcommand{\ee}{w_{\blacktriangleleft}}
+\newcommand{\W}{\mathcal{W}}
+
+\newcommand{\displayunskip}{\vspace{0pt}}
+
+\bibliography{master}
 
 
 \author{Lyndon White}
@@ -95,7 +113,47 @@
 
 \againframe{task}
 
-\begin{frame}[label=twostep]{We can break the problem down into two subproblems.}
+
+\begin{frame}{Related work: Dependancy Tree RAE}
+	\begin{block}<1->{Method}
+		\begin{itemize}
+			\item Input as tree structured of word embeddings combined with single layer nets
+			\item Output same structure
+			\item Use Back Propagating Through Structure in training
+		\end{itemize}
+	\end{block}
+	\begin{block}<2->{}
+		\begin{itemize}
+			\item Produces fairly clean paraphrases 
+			\item Requires output tree structure to be provided
+		\end{itemize}
+	\end{block}
+	\footfullcite{iyyer2014generating}
+\end{frame}
+
+
+
+\begin{frame}{Related work: LSTM + Variationa AutoEncoder}
+	\begin{block}<1->{Method}
+			\begin{itemize}
+				\item LSTM encoding step
+				\item Variational Autoencoder Representation step
+				\item LSTM decoding step
+			\end{itemize}
+	\end{block}
+	\begin{block}<2->{}
+		\begin{itemize}
+			\item Smooth ``deformation'' between sentences
+			\item Several other uses beyond just generation
+			\item No demonstration on sentences with more than 6 words
+		\end{itemize}
+	\end{block}
+	\footfullcite{Bowman2015SmoothGeneration}
+\end{frame}
+
+\againframe{task}
+
+\begin{frame}[label=twostep]{We break the problem down into two subproblems.}
 	\vfill
 
 	\begin{tikzpicture}[
@@ -180,70 +238,44 @@
 
 
 \begin{frame}{Run until convergence}
-	\vfill
+	\vspace{-1em}
 	\begin{tikzpicture}[
 		every node/.style={ text width=5em,
 			align=center,
 			font=\scriptsize\sffamily,
-			inner sep=1pt,
+			inner sep=3pt,
 		},
 		]
 
 		\node (input) [text width=2em] {$(\s,\V,d)$\\$\B=[]$};
-		\node (addition) [draw, rounded corners, right = 3em of input]{Greedy Addition};
-		\node (substitution) [draw, rounded corners, right = 3em of addition]{1-Substitution};
-		\node (output) [right = 6em of substitution,text width=1em] {$\B$};
+		\node (addition) [draw, rounded corners, right = 2em of input]{Greedy Addition};
+		\node (substitution) [draw, rounded corners, right = 10em of addition]{1-Substitution};
+		\node (output) [right = 2em of substitution,text width=1em] {$\B$};
 		\draw[->] (input) -- (addition);
-		\path[->] (addition) edge [bend left=90,looseness=2] (addition);
+		\path[->] (addition) edge[loop right] (addition);
+		\node [above right=0.4em of addition, text width = 5em] {\scriptsize  until no \\ improvement};
+		\path[->] (substitution) edge[loop left] (substitution);
+		\path[->] (addition) edge[loop right] (addition);
+		\node [below left=0.7em of substitution, text width = 3em] {\scriptsize  per word \\ in $\B$};
 		\path[->] (addition) edge [bend left=90,looseness=1] (substitution);
 		\path[->] (substitution) edge [bend left=90,looseness=1] (addition);
-		\draw[->] (substitution) -- (output) node[midway] {If no change in either step};
+		\draw[->] (substitution) -- (output);
 			
 	\end{tikzpicture}
 	
-	\begin{block}
-%		\begin{itemize}
-%			\item \alert{Greedy Addition}: add word to bag that gets us closest
-%		\end{itemize}
-	\end{block}
+	%\begin{block}
+		\begin{itemize}
+			\item \alert{Greedy Addition}: add word to bag that gets us closest
+			\item \alert{1-Substitution}: Reconsider past choices
+		\end{itemize}
+	%\end{block}
 		
+		\footfullcite{White2015BOWgen}
 	
-		\vfill
+		
 \end{frame}
 
 
-\begin{frame}{Results: The more dimensions used in the word performance, the better the recovery.}
-	\begin{table}
-		\pgfplotstabletypeset[col sep=comma,fixed zerofill, precision=3,column type=C{3em},
-		columns/Corpus/.style={string type},
-		columns/Word Embedding Dimensions/.style={string type},
-		columns/Portion Perfect/.style={percent style, precision=1},
-		every head row/.style={
-			after row=\midrule
-		}]{../data/selection_overall_len_scores.csv}
-	\end{table}
-\end{frame}
-
-
-\begin{frame}{}
-	\only<1>{\frametitle{Result: The longer the sentence, the worse recovery}}
-	\only<2>{\frametitle{Result: The larger the vocabulary, the worse recovery}}
-	
-	\pgfplotstableread[col sep=comma,header=has colnames]{../data/selection_len_scores.csv}{\sellenscores}
-	
-	\begin{tikzpicture}
-	\begin{axis}[xlabel=Ground Truth Sentence Length,
-	ylabel=Mean Jaccard Index,
-	width=0.9\textwidth,height=0.5\textwidth,cycle list name=exotic]
-	\addplot table [y=brown_glove50_jaccard_mean,x=ground_len]{\sellenscores};
-	\addplot table [y=brown_glove100_jaccard_mean,x=ground_len]{\sellenscores};
-	\addplot table [y=brown_glove200_jaccard_mean,x=ground_len]{\sellenscores};
-	\addplot table [y=brown_glove300_jaccard_mean,x=ground_len]{\sellenscores};%
-	\addplot table [y=books_0_01_glove300_jaccard_mean,x=ground_len]{\sellenscores};
-	\legend{50D Brown, 100D Brown, 200D Brown,300D Brown, 300D Books}					
-	\end{axis}
-	\end{tikzpicture}	
-\end{frame}
 
 \againframe<1>{twostep}
 \againframe<3>{twostep}
@@ -275,68 +307,254 @@
 	
 \end{frame}
 
-\begin{frame}<1>{Word Sequencing as a Travelling Salesman Problem}
-	\widthtikz{0.5}{../figs/ordergraphpaper}
-	\begin{itemize}
-		\item an edge $(w_aw_b)\to (w_bw_c)$ has cost $=-\log(P(w_c\:|\:w_aw_b)$
-		\item Variation on Generalised Asymmetric Travelling Salesman (GA-TSP)
-	\end{itemize}
-	\footfullcite{Horvat2014}
-\end{frame}
-
-\begin{frame}{A graph representation of word sequencing problem}
+\begin{frame}{Word Sequencing as a Travelling Salesman Problem}
+	\vspace{-2em}
 	\fullwidthtikz{../figs/ordergraphpaper}
+	\footfullcite{Horvat2014}
+	 
 \end{frame}
 
-\begin{frame}{The problem is defined with certain constrains.}
-	\widthtikz{0.5}{../figs/ordergraphpaper}
-	\begin{description}
-		\item<1-> [Single Path] from $\blacktriangleright\triangleright$ to $\triangleleft\blacktriangleleft$
-		\begin{itemize}
-			\item every word node entered must be exited
-			\item no subtours
-		\end{itemize}
-		\item<2-> [Districts] Every word must be used exactly once
-		\item<3-> [Markov Consistency] $(w_aw_b)\to (w_cw_d) \iff w_b==w_c$
-	\end{description}
+\begin{frame}{Edge Constraints}
+	\vspace{-2em} 
+	\fullwidthtikz{../figs/ordergraphpaper}
+	
+	\alert{Markov Consistency:} $(w_aw_b)\to (w_cw_d) \iff w_b==w_c$
+	\displayunskip
+	\begin{gather*}
+	\tau[\langle w_{i},w_{j}\rangle,\,\langle w_{j},w_{k}\rangle] = %\\
+	\begin{cases}
+	\multirow{2}{*}{1} & \mathrm{if\,transition\,from} \\
+	& \langle w_{i},w_{j}\rangle \to \langle w_{j},w_{k}\rangle
+	\;\mathrm{ occurs} \\
+	0  & \mathrm{otherwise}
+	\end{cases}
+	\end{gather*}
+\end{frame}
+
+
+\begin{frame}{Word sequencing graph objective}
+	\vspace{-1em}
+	\fullwidthtikz{../figs/ordergraphpaper}
+	
+	\alert{Edge cost:} $C[\langle w_{i},w_{j}\rangle,\langle w_{j},w_{k}\rangle]=-\log\left(P(w_{k}|w_{i},w_{j})\right)$
+	\displayunskip
+	\begin{gather*}
+	C_{total}(\tau)= \sum_{\forall w_i,w_j,w_k \in \W^{3}}
+		\;\tau[\langle w_{i},w_{j}\rangle,\,\langle w_{j},w_{k}\rangle] \cdot C[\langle w_{i},w_{j}\rangle,\,\langle w_{j},w_{k}\rangle]
+	\end{gather*}
+
+\end{frame}
+
+
+\begin{frame}{Word Use Constraint}
+	\vspace{-1em}
+	\fullwidthtikz{../figs/ordergraphpaper}
+	
+	\alert{Districts:} Every word must be used exactly once
+	$\forall w_{i}\in\W\backslash\{\s,\ee\}$:
+	\displayunskip
+	\begin{gather*}
+	\sum_{\forall\langle w_{i},w_{j}\rangle\in S(w_{i}\rangle} \:
+	\sum_{\forall\langle w_{h},w_{i}\rangle\in\W^{2}}
+	\tau[\langle w_{h},w_{i}\rangle,\,\langle w_{i},w_{j}\rangle]=1
+	\end{gather*}
 \end{frame}
 
 
 
-\begin{frame}{TSP can be solved with MIPs}
+\begin{frame}{Single Path Constraint}
+	\vspace{-1em}
+	\fullwidthtikz{../figs/ordergraphpaper}
+	
+	\alert{Single Path:} every word node entered must be exited
+	\\$\forall\langle w_{i},w_{j}\rangle\in\W^{2}\backslash\{\langle\s,\ss\rangle,\langle\e,\ee\rangle\}$: 
+	\begin{gather*}%
+	\sum_{\mathrlap{\!\!\!\!\forall\langle w_{a},w_{b}\rangle\in\W^{2}}}\tau[\langle w_{a},w_{b}\rangle,\langle w_{i},w_{j}\rangle]
+	=\sum_{\mathrlap{\!\!\!\!\forall\langle w_{c},w_{d}\rangle\in\W^{2}}}\tau[\langle w_{i},w_{j}\rangle,\langle w_{c},w_{d}\rangle]
+	\end{gather*}
+\end{frame}
+
+\begin{frame}{Single Path Constraints}
+	\vspace{-1em}
+	\fullwidthtikz{../figs/ordergraphpaper}
+	
+	\alert{Single Path:} No Subtours
+	
+	$T\subseteq \W^{2}$ including all nodes connected from $\langle\s,\ss\rangle$
+	\[\{w_{i}\,\mid\,\forall\langle w_{i},w_{j}\rangle\in T\,\}\cup\{\ee\} = \W.\]
+\end{frame}
+
+
+
+\begin{frame}{These constraints  can be solved as Mixed Integer Programming (MIP)}
 	\begin{itemize}
-		\item After rewriting word ordering as a TSP:
-		\item Rewrite it as a Mixed Integer Programming (MIP) Problem
 		\item There exist very fast MIP solvers.
+		\item We used Gurobi
 		\item This gave multiple orders of magnitude improvement over Best First Search.
 	\end{itemize}
 \end{frame}
 
-\begin{frame}{Experimental Setup: Language Modeling}
-	\begin{itemize}
-		\item<1-> Preliminary Investigation on 10\% of the books corpus used in previous investigation ~6000 sentences.
-		\item<1-> Further subset to length 18 or less
-		\vfill
-		\item<2-> Language model trained on ~6 million sentences.
-		\item<2-> Use Kneser Ney Smoothing. \footfullcite{kneser1995improved}
-		
-	\end{itemize}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Examples
+\newcommand{\reftitle}{Reference}
+\newcommand{\iref}{DT-RAE Ref.}
+\newcommand{\ip}{DT-RAE Para.}
+\newcommand{\bm}{VAE Mean}
+\newcommand{\oracletitle}{Ref.~BOW+Ord.}
+\newcommand{\selectiontitle}{Sel.~BOW~(only)}
+\newcommand{\twosteptitle}{Sel.~BOW+Ord.}
+\newcommand{\bs}{VAE Sample}
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%\\
+\newcommand{\namark}{\ding{54}}
+\newcommand{\passmark}{--}
+
+\newcommand{\collenone}{2.3cm}
+\newcommand{\collentwo}{6.5cm}
+\newcommand{\collenthree}{0.5cm}
+
+\begin{frame}{DT-RAE Examples}
+		\scriptsize
+		\hspace*{-6pt}\makebox[\linewidth][c]{
+			 \begin{tabular}{ p{\collenone} p{\collentwo} C{\collenthree} C{\collenthree} }
+			
+			\only<1>{			
+			\textbf{3A \hfill \reftitle}  & name this 1922 novel about leopold bloom written by james joyce . & \textbf{Sel.} & \textbf{Ord.} \\
+			\textbf{\oracletitle}  & written by name this . novel about 1922 bloom leopold james joyce & \passmark & \namark \\
+			\textbf{\twosteptitle}  & written novel by name james about leopold this bloom 1922 joyce . & \cmark & \namark \\
+			\textbf{\iref}  & name this 1906 novel about gottlieb\_fecknoe inspired by james\_joyce &  &  \\
+			\textbf{\ip}  & what is this william golding novel by its written writer &  &  \\
+			}
+			\only<2>{
+			\textbf{3B \hfill \reftitle}  & ralph waldo emerson dismissed this poet as the jingle man and james russell lowell called him three-fifths genius and two-fifths sheer fudge . & \textbf{Sel.} & \textbf{Ord.} \\
+			\textbf{\oracletitle}  & sheer this as james two-fifths emerson fudge lowell poet genius waldo called russell the and ralph and him . dismissed jingle three-fifths man & \passmark & \namark \\
+			\textbf{\twosteptitle}  & him `` james great as emerson genius ralph the lowell and sheer waldo three-fifths man fudge dismissed jingle russell two-fifths and gwalchmai 2009 vice-versa \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ prominent called 21.25 explained & \xmark & \namark \\
+			\textbf{\iref}  & henry\_david\_thoreau rejected this author like the tsar boat and imbalance created known good writing and his own death &  &  \\
+			\textbf{\ip}  & henry\_david\_thoreau rejected him through their stories to go money well inspired stories to write as her writing &  &  \\
+			}
+			\only<3>{
+			\textbf{3C \hfill \reftitle}  & this is the basis of a comedy of manners first performed in 1892 . & \textbf{Sel.} & \textbf{Ord.} \\
+			\textbf{\oracletitle}  & this is the basis of a comedy of manners first performed in 1892 . & \passmark & \cmark \\
+			\textbf{\twosteptitle}  & this is the basis of a comedy of manners first performed in 1892 . & \cmark & \cmark \\
+			\textbf{\iref}  & another is the subject of this trilogy of romance most performed in 1874 &  &  \\
+			\textbf{\ip}  & subject of drama from him about romance  &  &  \\
+			}
+			\only<4>{
+			\textbf{3D \hfill \reftitle}  & in a third novel a sailor abandons the patna and meets marlow who in another novel meets kurtz in the congo . & \textbf{Sel.} & \textbf{Ord.} \\
+			\textbf{\oracletitle}  & kurtz and another meets sailor meets the marlow who abandons a third novel in a novel in the congo in patna . & \passmark & \xmark \\
+			\textbf{\twosteptitle}  & kurtz and another meets sailor meets the marlow who abandons a third novel in a novel in the congo in patna . & \cmark & \xmark \\
+			\textbf{\iref}  & during the short book the lady seduces the family and meets cousin he in a novel dies sister from the mr. &  &  \\
+			\textbf{\ip}  & during book of its author young lady seduces the family to marry old suicide while i marries himself in marriage &  &  \\
+			}
+			\only<5>{
+			\textbf{3E \hfill \reftitle}  & thus she leaves her husband and child for aleksei vronsky but all ends sadly when she leaps in front of a train . & \textbf{Sel.} & \textbf{Ord.} \\
+			\textbf{\oracletitle}  & train front of child vronsky but and for leaps thus sadly all her she she in when aleksei husband ends a . leaves & \passmark & \namark \\
+			\textbf{\twosteptitle}  & she her all when child for leaves front but and train ends husband aleksei leaps of vronsky in a sadly micro-history thus , she the & \xmark & \namark \\
+			\textbf{\iref}  & however she leaves her sister and daughter from former fianc\'e and she ends unfortunately when narrator drives into life of a house &  &  \\
+			\textbf{\ip}  & leaves the sister of man in this novel &  &  \\
+		}
+		\end{tabular}
+	}
+	\footfullcite{iyyer2014generating}
 \end{frame}
 
-\begin{frame}{Results: This seems to work alright, for short sentences.}
-	\begin{table}
-		\pgfplotstabletypeset[col sep=comma, fixed zerofill, precision=3,column type=C{3em},
-		columns/Input/.style={string type},
-		columns/Portion Perfect/.style={percent style, precision=1},
-		columns/Portion Perfect (Feasible only)/.style={percent style, precision=1},
-		columns/Feasible/.style={percent style, precision=1},
+
+\renewcommand{\collenone}{3.1cm}
+\renewcommand{\collentwo}{5.7cm}
+\renewcommand{\collenthree}{0.5cm}
+
+
+\begin{frame}{LSTM-VAE Examples}
+	\small
+	\hspace*{-8pt}\makebox[\linewidth][c]{
+	\begin{tabular}{ p{\collenone} p{\collentwo} C{\collenthree} C{\collenthree} }
+		\only<1>{
+		\textbf{4A \hfill \reftitle}  & we looked out at the setting sun . & \textbf{Sel.} & \textbf{Ord.} \\
+		\textbf{\oracletitle}  & we looked out at the setting sun . & \passmark & \cmark \\
+		\textbf{\twosteptitle}  & we looked out at the setting sun . & \cmark & \cmark \\
+		\textbf{\bm}  & they were laughing at the same time . &  &  \\
+		\textbf{\bs 1}  & ill see you in the early morning . &  &  \\
+		\textbf{\bs 2}  & i looked up at the blue sky . &  &  \\
+		\textbf{\bs 3}  & it was down on the dance floor . &  &  \\
+		}\only<2>{
+		\textbf{4B \hfill \reftitle}  & i went to the kitchen . & \textbf{Sel.} & \textbf{Ord.} \\
+		\textbf{\oracletitle}  & i went to the kitchen . & \passmark & \cmark \\
+		\textbf{\twosteptitle}  & i went to the kitchen . & \cmark & \cmark \\
+		\textbf{\bm}  & i went to the kitchen . &  &  \\
+		\textbf{\bs 1}  & i went to my apartment .  &  &  \\
+		\textbf{\bs 2}  & i looked around the room . &  &  \\
+		\textbf{\bs 3}  & i turned back to the table . &  &  \\
+		}\only<3>{
+		\textbf{4C \hfill \reftitle}  & how are you doing ? & \textbf{Sel.} & \textbf{Ord.} \\
+		\textbf{\oracletitle}  & how are you doing ? & \passmark & \cmark \\
+		\textbf{\twosteptitle}  & how 're do well ? & \xmark & \xmark \\
+		\textbf{\bm}  & what are you doing ? &  &  \\
+		\textbf{\bs 1}  & “ are you sure ? &  &  \\
+		\textbf{\bs 2}  & what are you doing, ? &  &  \\
+		\textbf{\bs 3}  & what are you doing ? &  &  \\
+	}
+	\end{tabular}	
+	}
+	\footfullcite{Bowman2015SmoothGeneration}
+\end{frame}
+
+\begin{frame}{Ambiguous Examples}
+	\small
+	\hspace*{-8pt}\makebox[\linewidth][c]{
+		\begin{tabular}{ p{\collenone} p{\collentwo} C{\collenthree} C{\collenthree} }
+			\only<1>{			
+			\textbf{5A \hfill \reftitle}  & it was the worst of times , it was the best of times . & \textbf{Sel.} & \textbf{Ord.} \\
+			\textbf{\oracletitle}  & it was the worst of times , it was the best of times . & \passmark & \cmark \\
+			\textbf{\twosteptitle}  & it was the best of times , it was the worst of times . & \cmark & \xmark \\
+		}\only<2>{
+			\textbf{5B \hfill \reftitle}  & please give me directions from Paris to London . & \textbf{Sel.} & \textbf{Ord.} \\
+			\textbf{\oracletitle}  & please give me directions to London from Paris . & \passmark & \xmark \\
+			\textbf{\twosteptitle}  & please give me directions to London from Paris . & \cmark & \xmark \\
+		}
+		\end{tabular}
+	}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%% Results
+\pgfplotstableset{%
+	percent style/.style={%
+		preproc/expr={100*##1},
+		postproc cell content/.append code={\pgfkeysalso{@cell content/.add={}{\%}}
+		}},
+		every head row/.style={after row=\midrule},
+		columns/Process/.style={string type,column type=C{6.5em},
+			string replace*={Word Selection}{\selectiontitle},
+			string replace*={Ordering Only}{\oracletitle},
+			string replace*={Ordering}{\oracletitle},
+			string replace*={Two Step}{\twosteptitle},
+		}
+	}
+
+\begin{frame}{Results}
+	\centering
+	%\resizebox{\linewidth}{!}{
+		\setlength{\tabcolsep}{3pt}
+		\pgfplotstabletypeset[skip rows between index={0}{4},
+		col sep=comma,fixed zerofill, precision=3,column type=C{4.5em},
+		columns/Perfect BOWs/.style={percent style, precision=1},
+		every head row/.style={after row=\midrule},
+		create on use/Process/.style={create col/set list={0,0,0,0,Word Selection}},
+		columns={Process, Perfect BOWs, Mean Precision,Mean Jaccard Index}
+		]{../data/selection_overall_len_scores.csv}
+	%}
+	\vfill
+	
+	%\resizebox{\linewidth}{!}{
+		\setlength{\tabcolsep}{3pt}
+		\pgfplotstabletypeset[col sep=comma, ignore chars={"}, fixed zerofill, precision=3,column type=C{4.5em},
+		columns/Perfect Sentences/.style={percent style, precision=1},
+		columns/Portion Feasible/.style={percent style, precision=1},
 		every head row/.style={
 			after row=\midrule
-		}]{../data/prelim_ordering.csv}
-	\end{table}
-	\vfill
-	Prelim results on 6000 examples from Books Corpus. Length 18 or less.
-	\vfill
+		},
+		columns={Process, Perfect Sentences, BLEU Score, Portion Feasible}
+		]{../data/ordering_scores.csv}
+	%}
+	
 \end{frame}
 
 
@@ -346,9 +564,9 @@
 \pgfplotstableread[col sep=comma,ignore chars={"}, header=has colnames]{../data/selection_len_scores.csv}{\sellenscores}
 
 \begin{frame}
-	\frametitle<1>{Results: Word Selection}
-	\frametitle<2>{Results: Ordering with Oracle BOW}
-	\frametitle<3>{Results: Our complete system}
+	\frametitle<1>{Per Length Results: Word Selection}
+	\frametitle<2>{Per Length Results: Ordering with Oracle BOW}
+	\frametitle<3>{Per Length Results: Our complete system}
 		
 	\begin{tikzpicture}
 	\begin{axis}[xlabel=Ground Truth Sentence Length,
@@ -366,12 +584,13 @@
 	\end{tikzpicture}	
 \end{frame}
 
-\begin{frame}{The overall performance is tolerable, particularly for short sentences}
+\begin{frame}{Results Summery}
 	\begin{itemize}
 		\item 0.75 BLEU is very good, 62\% perfect recreation is usable.
 		\item This does come from most sentences being short though.
 		\item This is the first work to present quantitative results for sentence generation based purely on a sentence vector representation.
-		
+		\item It does not produce paraphrases
+		\item Its robustness against noise has not been investigated.
 	\end{itemize}
 \end{frame}
 
@@ -390,7 +609,7 @@
 			\item Output: BOW
 		\end{itemize}
 		\vfill
-		\item<2->Ordering: most likely order over log-likelyhoods 3grams.
+		\item<2->Ordering: most likely order over log-likelyhoods trigrams.
 		\begin{itemize}
 			\item Variation of Traveling Salesman
 			\item Input: BOW
@@ -401,6 +620,19 @@
 \end{frame}
 
 \section{Appendix}
+
+\begin{frame}{Experimental Setup: Language Modeling}
+	\begin{itemize}
+		\item using subset of Books Corpus for Training and Testing
+		\item<1-> Further subset to length 18 or less
+		\vfill
+		\item<2-> Language model trained on ~6 million sentences.
+		\item<2-> Use Kneser Ney Smoothing. \footfullcite{kneser1995improved}
+		
+	\end{itemize}
+\end{frame}
+
+
 
 \newcommand{\vectorselectionproblemdefnalt}{Find the bag of vectors $\B$ (a multi-subset of $\V$), such that $\displaystyle \Sigma(\B)=\sum_{\x_a\in\B}\x_a$ we have  $\min d(\s,\Sigma(\B))$}
 
@@ -480,7 +712,7 @@
 	\end{itemize}
 \end{frame}
 
-\begin{frame}{Experimental Setup: we used the Brown, and the Books Corpus}
+\begin{frame}{Experimental Setup: we used the Books Corpus}
 	\footfullcite{moviebook}
 
 	\begin{itemize}
@@ -491,5 +723,25 @@
 	\end{itemize}
 
 \end{frame}
+
+
+\begin{frame}{Word Selection Results}
+	
+	\pgfplotstableread[col sep=comma,header=has colnames]{../data/selection_len_scores.csv}{\sellenscores}
+	
+	\begin{tikzpicture}
+	\begin{axis}[xlabel=Ground Truth Sentence Length,
+	ylabel=Mean Jaccard Index,
+	width=0.9\textwidth,height=0.5\textwidth,cycle list name=exotic]
+	\addplot table [y=brown_glove50_jaccard_mean,x=ground_len]{\sellenscores};
+	\addplot table [y=brown_glove100_jaccard_mean,x=ground_len]{\sellenscores};
+	\addplot table [y=brown_glove200_jaccard_mean,x=ground_len]{\sellenscores};
+	\addplot table [y=brown_glove300_jaccard_mean,x=ground_len]{\sellenscores};%
+	\addplot table [y=books_0_01_glove300_jaccard_mean,x=ground_len]{\sellenscores};
+	\legend{50D Brown, 100D Brown, 200D Brown,300D Brown, 300D Books}					
+	\end{axis}
+	\end{tikzpicture}	
+\end{frame}
+
 
 \end{document}
