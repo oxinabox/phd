@@ -59,10 +59,9 @@
 \subtitle{A greedy algorithms for sentence generation from sum of word embeddings representations}
 
 \begin{document}
-\centering %Center everywhere
 \frame{\maketitle}
 
-\begin{frame}{We have turned sentences into numeric vectors, now we want to turn them back.}
+\begin{frame}[label=task]{We have turned sentences into numeric vectors, now we want to turn them back.}
 
 	\begin{enumerate}
 		\item<1-> It was the best of times, it was the worst of times
@@ -71,26 +70,36 @@
 	\end{enumerate}
 \end{frame}
 
-\begin{frame}{We have turned sentences into numeric vectors, now we want to turn them back.}
-	\small  Input Sentences \hfill Manipulate Numbers \hfill Output Sentences
+\begin{frame}{The use of an ideal generation system is in allowing manipulation in the vector domain}
+	\small Input Sentences \hfill Manipulate Numbers \hfill Output Sentences
 	\vspace{0.5cm}
 	\includegraphics[scale=0.5]{workflow}
 \end{frame}
 
 \begin{frame}{Related problems}
-	Related problems include
+	\begin{block}{Related problems include}
 	\begin{itemize}
 		\item Sequence Memorisation
 		\item Sequence-Sequence Learning
 	\end{itemize}
-	However, sentence generation is district as we go from a vector representation that encodes meaning, rather than from one that encodes memory.
+	\end{block}
+	\begin{block}{}
+		\begin{itemize}
+			\item Sentence generation is different from either.
+			\item Going from a vector representation that only encodes \alert{meaning}
+			\item Rather than from one that encodes \alert{memory} of meaning.
+		\end{itemize}
+	\end{block}
+
 \end{frame}
+
+\againframe{task}
 
 \begin{frame}[label=twostep]{We can break the problem down into two subproblems.}
 	\vfill
 
 	\begin{tikzpicture}[
-		every node/.style={ text width=4em,
+		every node/.style={ text width=5em,
 			align=center,
 			font=\scriptsize\sffamily,
 			inner sep=1pt
@@ -112,7 +121,7 @@
 		}
 
 		
-		\draw[->] (selection) -- (ordering) node[midway] {Bag of Words};
+		\draw[->] (selection) -- (ordering) node[midway] {Bag of\\Words};
 		\onslide<2,3->{
 			\node (output) [inner sep=-4pt, right=0.7em of ordering] {Natural Language Sentence};
 			\node (lm) [above = 1em of ordering] {Stochastic Language Model};
@@ -122,19 +131,19 @@
 		}
 	\end{tikzpicture}
 	\vfill
-	\only<1>{Vector Selection: Select which word vectors go into the sum}
-	\only<2>{Word Ordering: Find them most likely order of words}
+	\only<1>{\alert{Vector Selection}: Select which word vectors go into the sum}
+	\only<2>{\alert{Word Ordering}: Find them most likely order of words}
 	\only<3>{They are however both NP-Hard
 		%\\But both are similar to well studied problems
 		}
 	\vfill
 \end{frame}
 
-\newcommand{\vectorselectionproblemdefn}{Find the inclusion vector $\c=[c_1,c_2,...c_n]\in\N_0^n$ to minimise
-	that for $\displaystyle d(\s,\:\: \sum_{\x_j\in\V}\:\x_{j}\,c_{j})$ 
+\newcommand{\vectorselectionproblemdefn}{Find the \alert{inclusion vector} $\c=[c_1,c_2,...c_n]\in\N_0^n$ to \alert{minimise}
+	 $\displaystyle d(\s,\:\: \sum_{\x_j\in\V}\:\x_{j}\,c_{j})$ 
 }
 
-\begin{frame}{We solve the objective function to get a bag of words.}
+\begin{frame}{We get a bag of words by minimising an objective function}
 	\vectorselectionproblemdefn
 	\vfill
 	\begin{description}
@@ -159,10 +168,10 @@
 	\vectorselectionproblemdefn
 		\vfill
 	\begin{itemize}
-		\item<1-> Similarities to Knapsack family of problems.
+		\item<1-> Similarities to \alert{Knapsack} family of problems.
 		\item<2-> Very high dimensionality of selection vector\begin{itemize}
 			\item $n$ is given by vocabulary size ($n=|\V|$)
-			\item $\approx40,000$ for Brown Corpus\hfill $\approx170,000$ for Books Corpus\hspace{1em}
+			\item $\approx170,000$ for Books Corpus
 			\end{itemize}
 		\item<3-> A Greedy Algorithm is linear time in $n$ 
 	\end{itemize}
@@ -170,7 +179,7 @@
 \end{frame}
 
 
-\begin{frame}{Run until converance}
+\begin{frame}{Run until convergence}
 	\vfill
 	\begin{tikzpicture}[
 		every node/.style={ text width=5em,
@@ -185,16 +194,25 @@
 		\node (substitution) [draw, rounded corners, right = 3em of addition]{1-Substitution};
 		\node (output) [right = 6em of substitution,text width=1em] {$\B$};
 		\draw[->] (input) -- (addition);
+		\path[->] (addition) edge [bend left=90,looseness=2] (addition);
 		\path[->] (addition) edge [bend left=90,looseness=1] (substitution);
 		\path[->] (substitution) edge [bend left=90,looseness=1] (addition);
 		\draw[->] (substitution) -- (output) node[midway] {If no change in either step};
 			
 	\end{tikzpicture}
+	
+	\begin{block}
+%		\begin{itemize}
+%			\item \alert{Greedy Addition}: add word to bag that gets us closest
+%		\end{itemize}
+	\end{block}
+		
+	
 		\vfill
 \end{frame}
 
 
-\begin{frame}{Results: The more dimentions used in the word performance, the better the recovery.}
+\begin{frame}{Results: The more dimensions used in the word performance, the better the recovery.}
 	\begin{table}
 		\pgfplotstabletypeset[col sep=comma,fixed zerofill, precision=3,column type=C{3em},
 		columns/Corpus/.style={string type},
