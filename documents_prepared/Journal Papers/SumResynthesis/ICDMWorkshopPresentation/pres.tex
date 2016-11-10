@@ -33,7 +33,7 @@
 		%
 		every head row/.style={after row=\midrule},
 	}
-	
+
 %%%%%%%%%%%%%%%%%%%
 
 
@@ -53,14 +53,14 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \renewcommand{\c}{\tilde{c}}
-\newcommand{\s}{\tilde{s}}
+\newcommand{\st}{\tilde{s}}
 \newcommand{\x}{\tilde{x}}
 \renewcommand{\t}{\tilde{t}}
 \newcommand{\N}{\mathbb{N}}
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\V}{\mathcal{V}}
 \newcommand{\B}{\mathcal{B}}
-\renewcommand{\s}{w_{\blacktriangleright}}
+\newcommand{\s}{w_{\blacktriangleright}}
 \renewcommand{\ss}{w_{\triangleright}}
 \newcommand{\e}{w_{\triangleleft}}
 \newcommand{\ee}{w_{\blacktriangleleft}}
@@ -71,7 +71,7 @@
 \bibliography{master}
 
 
-\author{Lyndon White}
+\author{\textbf{Lyndon White},\\ Roberto Togneri, Wei Liu, Mohammed Bennamoun}
 \institute{School of EE\&C Engineering\\The University of Western Australia}
 \title{Generating Sentences from the Sum of their Contents}
 \subtitle{A greedy algorithms for sentence generation from sum of word embeddings representations}
@@ -133,7 +133,7 @@
 
 
 
-\begin{frame}{Related work: LSTM + Variationa AutoEncoder}
+\begin{frame}{Related work: LSTM + Variational Autoencoder}
 	\begin{block}<1->{Method}
 			\begin{itemize}
 				\item LSTM encoding step
@@ -153,7 +153,7 @@
 
 \againframe{task}
 
-\begin{frame}[label=twostep]{We break the problem down into two subproblems.}
+\begin{frame}<1-3>[label=twostep]{We broke the problem down into two subproblems.}
 	\vfill
 
 	\begin{tikzpicture}[
@@ -189,16 +189,18 @@
 		}
 	\end{tikzpicture}
 	\vfill
-	\only<1>{\alert{Vector Selection}: Select which word vectors go into the sum}
-	\only<2>{\alert{Word Ordering}: Find them most likely order of words}
-	\only<3>{They are however both NP-Hard
+	\only<1,4>{\alert{Vector Selection}: Select which word vectors go into the sum}
+	
+	\only<2,4>{\alert{Word Ordering}: Find them most likely order of words}
+	
+	\only<3>{They are however both \alert{NP-Hard}
 		%\\But both are similar to well studied problems
 		}
 	\vfill
 \end{frame}
 
 \newcommand{\vectorselectionproblemdefn}{Find the \alert{inclusion vector} $\c=[c_1,c_2,...c_n]\in\N_0^n$ to \alert{minimise}
-	 $\displaystyle d(\s,\:\: \sum_{\x_j\in\V}\:\x_{j}\,c_{j})$ 
+	 $\displaystyle d(\st,\:\: \sum_{\x_j\in\V}\:\x_{j}\,c_{j})$ 
 }
 
 \begin{frame}{We get a bag of words by minimising an objective function}
@@ -206,7 +208,7 @@
 	\vfill
 	\begin{description}
 		%\item<1->[Target Output] It was the best of times, it was the worst of times
-		\item<2->[Input Vector]  $\s=[−0.79, 1.27, 0.28, ..., −1.29]$
+		\item<2->[Input Vector]  $\st=[−0.79, 1.27, 0.28, ..., −1.29]$
 		\vfill
 		\item<3->[Vector Selection] $\displaystyle
 			\begin{aligned}%
@@ -247,7 +249,7 @@
 		},
 		]
 
-		\node (input) [text width=2em] {$(\s,\V,d)$\\$\B=[]$};
+		\node (input) [text width=2em] {$(\st,\V,d)$\\$\B=[]$};
 		\node (addition) [draw, rounded corners, right = 2em of input]{Greedy Addition};
 		\node (substitution) [draw, rounded corners, right = 10em of addition]{1-Substitution};
 		\node (output) [right = 2em of substitution,text width=1em] {$\B$};
@@ -277,9 +279,7 @@
 
 
 
-\againframe<1>{twostep}
-\againframe<3>{twostep}
-\againframe<2>{twostep}
+\againframe<4>{twostep}
 
 \begin{frame}{Now that we have a bag of words, we need to order them to get a sentence.}
 	\vfill
@@ -298,7 +298,7 @@
 	\begin{itemize}
 		\item based on corpus statistics
 		\item Trigram language model: $P(W_3=buns\:|\:W_1=hot, W_2=crossed)$
-		\item Note the Markov Assumption
+		\item With the the Markov Assumption, that the transition probability only depends on the current state.
 		\pause
 		\item Bayesian Chain Rule: probability of sequence \\$P([w_1,w_2,w_3,w_4,w_5])=$
 		$$\qquad \quad P(w_1,w_2)\cdot P(w_3|w_1,w_2)\cdot P(w_4|w_2,w_3) \cdot P(w_5|w_3,w_2)$$
@@ -307,15 +307,24 @@
 	
 \end{frame}
 
+
+\begin{frame}{We can formulate word ordering as a Mixed Integer Programming (MIP) problem}
+	\begin{itemize}
+		\item There exist very fast MIP solvers.
+		\item This gave multiple orders of magnitude improvement over Best First Search.
+		\item and even over incomplete Beamer Search.
+	\end{itemize}
+\end{frame}
+
 \begin{frame}{Word Sequencing as a Travelling Salesman Problem}
-	\vspace{-2em}
+	\vspace{-1em}
 	\fullwidthtikz{../figs/ordergraphpaper}
 	\footfullcite{Horvat2014}
 	 
 \end{frame}
 
 \begin{frame}{Edge Constraints}
-	\vspace{-2em} 
+	\vspace{-1em} 
 	\fullwidthtikz{../figs/ordergraphpaper}
 	
 	\alert{Markov Consistency:} $(w_aw_b)\to (w_cw_d) \iff w_b==w_c$
@@ -386,22 +395,15 @@
 
 
 
-\begin{frame}{These constraints  can be solved as Mixed Integer Programming (MIP)}
-	\begin{itemize}
-		\item There exist very fast MIP solvers.
-		\item We used Gurobi
-		\item This gave multiple orders of magnitude improvement over Best First Search.
-	\end{itemize}
-\end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% Examples
 \newcommand{\reftitle}{Reference}
 \newcommand{\iref}{DT-RAE Ref.}
 \newcommand{\ip}{DT-RAE Para.}
 \newcommand{\bm}{VAE Mean}
-\newcommand{\oracletitle}{Ref.~BOW+Ord.}
-\newcommand{\selectiontitle}{Sel.~BOW~(only)}
-\newcommand{\twosteptitle}{Sel.~BOW+Ord.}
+\newcommand{\oracletitle}{Ordering Only}
+\newcommand{\selectiontitle}{Selection Only}
+\newcommand{\twosteptitle}{\alert{Full System}}
 \newcommand{\bs}{VAE Sample}
 \newcommand{\cmark}{\ding{51}}%
 \newcommand{\xmark}{\ding{55}}%\\
@@ -412,7 +414,7 @@
 \newcommand{\collentwo}{6.5cm}
 \newcommand{\collenthree}{0.5cm}
 
-\begin{frame}{DT-RAE Examples}
+\begin{frame}<1,3>[label=dtraweg]{DT-RAE Examples}
 		\scriptsize
 		\hspace*{-6pt}\makebox[\linewidth][c]{
 			 \begin{tabular}{ p{\collenone} p{\collentwo} C{\collenthree} C{\collenthree} }
@@ -463,7 +465,7 @@
 \renewcommand{\collenthree}{0.5cm}
 
 
-\begin{frame}{LSTM-VAE Examples}
+\begin{frame}<2-3>[label=lstmeg]{LSTM-VAE Examples}
 	\small
 	\hspace*{-8pt}\makebox[\linewidth][c]{
 	\begin{tabular}{ p{\collenone} p{\collentwo} C{\collenthree} C{\collenthree} }
@@ -535,7 +537,7 @@
 		\setlength{\tabcolsep}{3pt}
 		\pgfplotstabletypeset[skip rows between index={0}{4},
 		col sep=comma,fixed zerofill, precision=3,column type=C{4.5em},
-		columns/Perfect BOWs/.style={percent style, precision=1},
+		columns/Perfect BOWs/.style={percent style, precision=1, column name=Perfect},
 		every head row/.style={after row=\midrule},
 		create on use/Process/.style={create col/set list={0,0,0,0,Word Selection}},
 		columns={Process, Perfect BOWs, Mean Precision,Mean Jaccard Index}
@@ -546,7 +548,7 @@
 	%\resizebox{\linewidth}{!}{
 		\setlength{\tabcolsep}{3pt}
 		\pgfplotstabletypeset[col sep=comma, ignore chars={"}, fixed zerofill, precision=3,column type=C{4.5em},
-		columns/Perfect Sentences/.style={percent style, precision=1},
+		columns/Perfect Sentences/.style={percent style, precision=1, column name=Perfect},
 		columns/Portion Feasible/.style={percent style, precision=1},
 		every head row/.style={
 			after row=\midrule
@@ -563,17 +565,45 @@
 \pgfplotstableread[col sep=comma,ignore chars={"}]{../data/ordering_length_scores_oracle.csv}{\ordlenscoresoracle}
 \pgfplotstableread[col sep=comma,ignore chars={"}, header=has colnames]{../data/selection_len_scores.csv}{\sellenscores}
 
-\begin{frame}
+\pgfplotsset{
+	fullresplot/.style = {
+		xlabel=Ground Truth Sentence Length,
+		ylabel=Portion Exactly Matched,
+		width=0.9\textwidth,height=0.6\textwidth,
+		legend style={fill=none,at={(0.5,-0.21)},anchor=north},
+		cycle list name=exotic
+	}
+}
+
+\begin{frame} %Hack: I can't get \only working within a plot so just repeat it 3 times
 	\frametitle<1>{Per Length Results: Word Selection}
 	\frametitle<2>{Per Length Results: Ordering with Oracle BOW}
 	\frametitle<3>{Per Length Results: Our complete system}
-		
+	\only<1>{%	
 	\begin{tikzpicture}
-	\begin{axis}[xlabel=Ground Truth Sentence Length,
-	ylabel=Portion Exactly Matched,
-	width=0.9\textwidth,height=0.6\textwidth,
-	legend style={fill=none,at={(0.5,-0.21)},anchor=north},
-	cycle list name=exotic]
+		\begin{axis}[fullresplot]
+		only<1->{\addplot table [y=books_0_01_glove300_perfect_mean, x index=0, skip coords between index={18}{1000}]{\sellenscores};}
+		
+		
+		\legend{Word Selection Only, Ordering Only (Oracle BOWS), Full System}
+		\end{axis}
+	\end{tikzpicture}	
+	}
+	\only<2>{%	
+	\begin{tikzpicture}
+	\begin{axis}[fullresplot]
+	only<1->{\addplot table [y=books_0_01_glove300_perfect_mean, x index=0, skip coords between index={18}{1000}]{\sellenscores};}
+	
+	only<2->{\addplot table [y=Perfect Sentences,x=ground_length]{\ordlenscores};}
+	
+	
+	\legend{Word Selection Only, Ordering Only (Oracle BOWS), Full System}
+	\end{axis}
+	\end{tikzpicture}	
+	}
+	\only<3>{%	
+	\begin{tikzpicture}
+	\begin{axis}[fullresplot]
 	only<1->{\addplot table [y=books_0_01_glove300_perfect_mean, x index=0, skip coords between index={18}{1000}]{\sellenscores};}
 	
 	only<2->{\addplot table [y=Perfect Sentences,x=ground_length]{\ordlenscores};}
@@ -582,6 +612,8 @@
 	\legend{Word Selection Only, Ordering Only (Oracle BOWS), Full System}
 	\end{axis}
 	\end{tikzpicture}	
+	}
+
 \end{frame}
 
 \begin{frame}{Results Summery}
@@ -594,9 +626,7 @@
 	\end{itemize}
 \end{frame}
 
-\againframe<2>{twostep}
-\againframe<3>{twostep}
-
+\againframe<4>{twostep}
 
 
 \begin{frame}{Conclusion: Split the sentence generation into selection then ordering.}
@@ -743,5 +773,6 @@
 	\end{tikzpicture}	
 \end{frame}
 
-
+\againframe<1->{dtraweg}
+\againframe<1->{lstmeg}
 \end{document}
