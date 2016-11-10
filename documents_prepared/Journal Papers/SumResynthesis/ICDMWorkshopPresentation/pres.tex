@@ -67,6 +67,20 @@
 \newcommand{\W}{\mathcal{W}}
 
 \newcommand{\displayunskip}{\vspace{0pt}}
+\newcommand{\reftitle}{Reference}
+\newcommand{\iref}{DT-RAE Ref.}
+\newcommand{\ip}{DT-RAE Para.}
+\newcommand{\bm}{VAE Mean}
+\newcommand{\oracletitle}{Ordering Only}
+\newcommand{\selectiontitle}{Selection Only}
+\newcommand{\twosteptitle}{\alert{Full System}}
+\newcommand{\bs}{VAE Sample}
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%\\
+\newcommand{\namark}{\ding{54}}
+\newcommand{\passmark}{--}
+
+
 
 \bibliography{master}
 
@@ -393,22 +407,53 @@
 	\[\{w_{i}\,\mid\,\forall\langle w_{i},w_{j}\rangle\in T\,\}\cup\{\ee\} = \W.\]
 \end{frame}
 
+\pgfplotstableset{%
+percent style/.style={%
+	preproc/expr={100*##1},
+	postproc cell content/.append code={\pgfkeysalso{@cell content/.add={}{\%}}
+}},
+every head row/.style={after row=\midrule},
+columns/Process/.style={string type,column type=C{6.5em},
+	string replace*={Word Selection}{\selectiontitle},
+	string replace*={Ordering Only}{\oracletitle},
+	string replace*={Ordering}{\oracletitle},
+	string replace*={Two Step}{\twosteptitle},
+}
+}
 
+\begin{frame}{Results}
+	
+
+	\centering
+	%\resizebox{\linewidth}{!}{
+	\setlength{\tabcolsep}{3pt}
+	\pgfplotstabletypeset[skip rows between index={0}{4},
+	col sep=comma,fixed zerofill, precision=3,column type=C{4.5em},
+	columns/Perfect BOWs/.style={percent style, precision=1, column name=Perfect},
+	every head row/.style={after row=\midrule},
+	create on use/Process/.style={create col/set list={0,0,0,0,Word Selection}},
+	columns={Process, Perfect BOWs, Mean Precision,Mean Jaccard Index}
+	]{../data/selection_overall_len_scores.csv}
+	%}
+	\vfill
+	
+	%\resizebox{\linewidth}{!}{
+	\setlength{\tabcolsep}{3pt}
+	\pgfplotstabletypeset[col sep=comma, ignore chars={"}, fixed zerofill, precision=3,column type=C{4.5em},
+	columns/Perfect Sentences/.style={percent style, precision=1, column name=Perfect},
+	columns/Portion Feasible/.style={percent style, precision=1},
+	every head row/.style={
+		after row=\midrule
+	},
+	columns={Process, Perfect Sentences, BLEU Score, Portion Feasible}
+	]{../data/ordering_scores.csv}
+	%}
+	
+\end{frame}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% Examples
-\newcommand{\reftitle}{Reference}
-\newcommand{\iref}{DT-RAE Ref.}
-\newcommand{\ip}{DT-RAE Para.}
-\newcommand{\bm}{VAE Mean}
-\newcommand{\oracletitle}{Ordering Only}
-\newcommand{\selectiontitle}{Selection Only}
-\newcommand{\twosteptitle}{\alert{Full System}}
-\newcommand{\bs}{VAE Sample}
-\newcommand{\cmark}{\ding{51}}%
-\newcommand{\xmark}{\ding{55}}%\\
-\newcommand{\namark}{\ding{54}}
-\newcommand{\passmark}{--}
+
 
 \newcommand{\collenone}{2.3cm}
 \newcommand{\collentwo}{6.5cm}
@@ -465,7 +510,7 @@
 \renewcommand{\collenthree}{0.5cm}
 
 
-\begin{frame}<2-3>[label=lstmeg]{LSTM-VAE Examples}
+\begin{frame}<2>[label=lstmeg]{LSTM-VAE Examples}
 	\small
 	\hspace*{-8pt}\makebox[\linewidth][c]{
 	\begin{tabular}{ p{\collenone} p{\collentwo} C{\collenthree} C{\collenthree} }
@@ -499,7 +544,7 @@
 	\footfullcite{Bowman2015SmoothGeneration}
 \end{frame}
 
-\begin{frame}{Ambiguous Examples}
+\begin{frame}<2>[label=ambeg]{Ambiguous Examples}
 	\small
 	\hspace*{-8pt}\makebox[\linewidth][c]{
 		\begin{tabular}{ p{\collenone} p{\collentwo} C{\collenthree} C{\collenthree} }
@@ -516,48 +561,6 @@
 	}
 \end{frame}
 
-%%%%%%%%%%%%%%%%%%%%% Results
-\pgfplotstableset{%
-	percent style/.style={%
-		preproc/expr={100*##1},
-		postproc cell content/.append code={\pgfkeysalso{@cell content/.add={}{\%}}
-		}},
-		every head row/.style={after row=\midrule},
-		columns/Process/.style={string type,column type=C{6.5em},
-			string replace*={Word Selection}{\selectiontitle},
-			string replace*={Ordering Only}{\oracletitle},
-			string replace*={Ordering}{\oracletitle},
-			string replace*={Two Step}{\twosteptitle},
-		}
-	}
-
-\begin{frame}{Results}
-	\centering
-	%\resizebox{\linewidth}{!}{
-		\setlength{\tabcolsep}{3pt}
-		\pgfplotstabletypeset[skip rows between index={0}{4},
-		col sep=comma,fixed zerofill, precision=3,column type=C{4.5em},
-		columns/Perfect BOWs/.style={percent style, precision=1, column name=Perfect},
-		every head row/.style={after row=\midrule},
-		create on use/Process/.style={create col/set list={0,0,0,0,Word Selection}},
-		columns={Process, Perfect BOWs, Mean Precision,Mean Jaccard Index}
-		]{../data/selection_overall_len_scores.csv}
-	%}
-	\vfill
-	
-	%\resizebox{\linewidth}{!}{
-		\setlength{\tabcolsep}{3pt}
-		\pgfplotstabletypeset[col sep=comma, ignore chars={"}, fixed zerofill, precision=3,column type=C{4.5em},
-		columns/Perfect Sentences/.style={percent style, precision=1, column name=Perfect},
-		columns/Portion Feasible/.style={percent style, precision=1},
-		every head row/.style={
-			after row=\midrule
-		},
-		columns={Process, Perfect Sentences, BLEU Score, Portion Feasible}
-		]{../data/ordering_scores.csv}
-	%}
-	
-\end{frame}
 
 
 
@@ -593,9 +596,7 @@
 	\begin{tikzpicture}
 	\begin{axis}[fullresplot]
 	only<1->{\addplot table [y=books_0_01_glove300_perfect_mean, x index=0, skip coords between index={18}{1000}]{\sellenscores};}
-	
-	only<2->{\addplot table [y=Perfect Sentences,x=ground_length]{\ordlenscores};}
-	
+	only<2->{\addplot table [y=Perfect Sentences,x=ground_length]{\ordlenscoresoracle};}
 	
 	\legend{Word Selection Only, Ordering Only (Oracle BOWS), Full System}
 	\end{axis}
@@ -605,9 +606,9 @@
 	\begin{tikzpicture}
 	\begin{axis}[fullresplot]
 	only<1->{\addplot table [y=books_0_01_glove300_perfect_mean, x index=0, skip coords between index={18}{1000}]{\sellenscores};}
-	
-	only<2->{\addplot table [y=Perfect Sentences,x=ground_length]{\ordlenscores};}
-	only<3->{\addplot table [y=Perfect Sentences,x=ground_length]{\ordlenscoresoracle};}
+	only<2->{\addplot table [y=Perfect Sentences,x=ground_length]{\ordlenscoresoracle};}
+	only<3->{\addplot table [y=Perfect Sentences,x=ground_length]{\ordlenscores};}
+
 	
 	\legend{Word Selection Only, Ordering Only (Oracle BOWS), Full System}
 	\end{axis}
@@ -616,7 +617,7 @@
 
 \end{frame}
 
-\begin{frame}{Results Summery}
+\begin{frame}{Results summary}
 	\begin{itemize}
 		\item 0.75 BLEU is very good, 62\% perfect recreation is usable.
 		\item This does come from most sentences being short though.
@@ -775,4 +776,5 @@
 
 \againframe<1->{dtraweg}
 \againframe<1->{lstmeg}
+\againframe<1->{ambeg}
 \end{document}
