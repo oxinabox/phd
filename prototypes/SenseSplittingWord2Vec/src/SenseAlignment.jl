@@ -105,7 +105,7 @@ function synthesize_embedding(ee,context::AbstractVector,
 		ones(Float32,length(wvs))
 	end
 
-	probs = general_wsd(ee, context, wvs;
+	probs = general_wsd(ee, context, wvs, prior;
 			normalise_over_context_length=normalise_over_context_length,
 			normalize_over_prior=normalize_over_prior
 			)
