@@ -1,0 +1,56 @@
+\documentclass{standalone}
+%\usepackage[dvipsnames]{xcolor}
+\usepackage{tikz}
+
+\usepackage{blockdiagrambits}
+
+\renewcommand{\c}{\mathbf{c}}
+\renewcommand{\u}{\mathbf{u}}
+
+
+
+\begin{document}
+
+
+
+		
+\begin{tikzpicture}[align=center]
+\node[input](context1){Sentence containing\\ Word1};
+\node[input, right = 1 of context1](word1){Word1};
+\node[right= 1 of word1](centermark){};
+\node[input, right = 1 of centermark](word2){Word2};
+\node[input, right = 1 of word2](context2){Sentence containing\\ Word2};
+
+
+\node[datastore, below=0.5 of centermark](embeddings) {Pretrained Unsupervised \\ Sense Embeddings};
+\node[proc, below left=1.25 of embeddings] (refitting1) {Refitting};
+\node[proc, below right=1.25 of embeddings] (refitting2) {Refitting};
+
+\node[proc, below = 5.25 of centermark](dist) {Distance};
+\node[input, right = 2 of dist](output){RefittedSim};
+
+
+\draw[link] (word1) -> (embeddings);
+\draw[link] (word2) -> (embeddings);
+
+\draw[multi] (embeddings) -> (refitting1) node[labe,midway, xshift=-5]{$\u={\{u_1,...\}}$};
+\draw[multi] (embeddings) -> (refitting2) node[labe, midway, xshift=15]{$\u^\prime={\{u^\prime_1,...\}}$};
+
+\draw[link] (context1) -> (refitting1) node[labe, midway, above]{$\c$};
+\draw[link] (context2) -> (refitting2)node [labe, midway,above]{$\c^\prime$};
+
+\draw[link] (refitting1) -> (dist) node [labe, midway]{$l(\u \mid \c)$};
+\draw[link] (refitting2) -> (dist) node [labe, midway]{$l(\u^\prime \mid \c^\prime)$};
+\draw[link] (dist) -> (output);
+
+\end{tikzpicture}
+%\[
+%\mathrm{RefittedSim}((\u,\c),(u^{\prime},\c^{\prime}))
+%\begin{aligned}
+%&= d(l(\u \mid \c), l(\u^\prime \mid \c^\prime)\\
+%&= d\left(
+%\sum_{u_{i}\in\u}u_{i}P(u_{i}\mid\c),\:
+%\sum_{u_{j}^{\prime}\in\u^{\prime}}u_{i}P(u_{j}^{\prime}\mid\c^{\prime})\right)
+%\end{aligned}
+%\]
+\end{document}

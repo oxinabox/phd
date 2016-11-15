@@ -1,0 +1,76 @@
+Many word embedding techniques train their word vectors, in a unsupervised fashion, using the task of training a language model \parencite{NPLM, collobert2008unified, mikolov2013efficient}.
+For most applications, this language model is discarded, and only the trained word embeddings are kept and utilised.
+This seems wasteful, as the language model itself contains useful information. In particular we
+
+
+Here, the language models which when given a word sense embedding output the probability of the words that may occur near it are particularly useful. It has been shown that a simple application of Bayes' theorem can be used to move from the language model's context likelihood, to the posterior probability of a particular word sense \cite{tian2014probabilistic,AdaGrams}. We go beyond this to show that it can then be used to generate new sense embeddings, without further training, and show how they can be used for several benchmark applications.
+
+
+
+It is very quick to refit trained senses to new labelled meanings -- but compratively slow to train a word sense embedding model from scratch. We propose that very high-quality unsupervised word senses could be trained over huge amounts of training data taking weeks or even months. Then in only a few hours, they could be refitted to match a new sense inventory.  This is a contrast to word sense embedding systems that incorporate the sense inventory information into their training \parencite{Chen2014, iacobacci2015sensembed} for which matching to a new inventory task requires at least a additional full pass over the training data.
+Being able to be rapidly refitted to a new sense inventory would allow the model to be trained just once on a source language, then any number of currently published translators dictionaries could be directly employed, to allow the model to target suitable WSD for use in any machine translation system. The prototype system we present in this paper does not have the accuracy WSD for immediate utilisation in such a task; but we suggest that future work building upon this has potential for great utility in machine translation systems.
+
+
+
+\subsection{Issues with Lack of Annotated Corpora} \label{corpussize}
+\pdfcomment{This section needs to move. Where to put it}
+A significant issue for WSD, is the lack of annotated corpora suitable for training a machine learning approach.
+There are several reasons for this. One is the difficulty of the task -- it is hard to get high inter-annotator agreement on the correct word sense. Second is the huge size a corpora needs to be to be practically useful.
+
+For a corpus to be useful for training word sense vectors, or for learning the association between context and sense more generally, it would need to show a large number of examples of all the contexts a word could be seen in. Powerful generalising methods for machine learning can decrease the number of examples, but not remove the need for a large corpus.
+Zipf's law \parencite{zipf1949human} applies not only to the frequency of words, but to the frequency of word senses with-in words \parencite{Kilgarriff2004}. Thus an extremely large corpus is required to capture useful information. Creating such a annotated corpus manually is a herculean task. This is one of the key attractions of unsupervised word sense induction -- which can make use of immense corpora without requiring them to be annotated.
+
+This lack of labelled training data makes systems that can work with unsupervised data initially, and then use only a very small amount of labelled training data to get labelled output very desirable.
+The type of problem, where there is only one labelled example of the class, is some this called a one-shot learning problems
+The refitting method we outline can be seen as a one-shot method for learning word sense representations.
+
+
+
+Some word sense embeddings are trained to match match to dictionary senses. The refitting method proposed in this paper is thus not required for these methods.
+They can be said to directly compete with our method, when it comes to creating dictionary senses. However when it comes to applying them to a new fine grained sense from a single example our refitting method remains suitable. This continues to have applications in information retrieval.
+
+
+
+Refitting senses this way also side steps two problems of induced word sense representations that occur in some systems. These are the problems of removing incredibly rare induced senses, and of merging redundant senses.
+Rare senses may occur in a system due to embeddings that are never trained, or that are only applicable to a particular overly fine grained meaning that is induced to only exist in a particularly odd sentences from the training corpus. As these representations will never having a high probability for any real context where the target word occurs they will not contribute to the refitted vector. Related to this are overly similar representation, where the induction may have split a common use of a word into two or more senses base on subtle differences, or coincidences in the training data. Overly similar representations will  predict similar contexts, and will contribute similar vectors shifts -- it will be roughly equivalent to as if a single vectors was twice as likely.
+
+
+\begin{comment}
+We suggest that RefittedSim with geometric smoothing, is a more appropriate method that AvgSimC when working with probabilities directly taken from a word sense language model such as AdaGram or the Greedy embeddings we defined as a baseline.
+The methods presented by Reisinger and Mooney, Huang et al. and Iacobacci et al., do not work with sense probabilities taken from a language model; rather their methods use a distance measure to approximate fuzzy membership of cluster or a degree of relatedness to the sense vector \parencite{Reisinger2010,Huang2012,iacobacci2015sensembed}. The distance measure itself imposes a particular curve onto the distribution of distances i.e. onto the assumed probabilities used in AvgSimC; and this particular distribution, solves the data sparsity problem that we solve with geometric smoothing.
+The method presented by Chen et al. is significantly different, in that it has the predicted sense of the context words as an output (rather than an input) of it's model, and so has a different distribution from either of our methods, or from the  distance methods discussed. Further, it re-label it's training data and then fine tunes it's sense embeddings.
+\end{comment}
+
+
+
+We do note that our method does have lower training time, as it only requires using the training data once, where as relabelling approaches, as uses by Chen et al, require a second training pass, using the boot-strapped labels. We suggest though that this extra time is well worth it, as the results from using it are notably better. It would be possible to apply a similar relabelling method to AdaGram, using our approach to solve the WSD problem to bootstrap the training data.
+
+
+We propose a \emph{refitting} method to allow induced word sense vectors to be converted to labelled word sense vectors, allowing them to be used with lexical knowledge bases.
+We show that technique can be used to allow for word sense disambiguation to a lexical sense inventory -- something which cannot be done with the original induced sense vectors.
+We further demonstrate the usefulness of refitting, and this correctness of the results, by using it to define a new similarity measure for words with context which we call \emph{RefittedSim}, this similarity measure is significantly faster than the commonly used \emph{AvgSimC}.
+We noted that when refitting, often one induced sense overly dominated in finding the refitted sense. We developed a new smoothing method, \emph{geometric smoothing}, suitable for smoothing these. We demonstrated its effectiveness at improving out earlier results.
+
+
+ Further to that, we present an alternative, for estimating a smoothed version of posterior predictive distribution. We find that it is beneficial to smooth the distribution, to prevent a single sense dominating the sum.  pdfcomment{Should I delete this last sentence?}
+ 
+  We have not demonstrated that these improvements will apply to clustering based models, as no clustering based models have been evaluated as part of this study. On our language model based sense embeddings we see a significant improvement.
+  
+  Even the very best methods for WSD do not perform substantially better than the baseline. It has been suggested that a ensemble method as the way forward to improve WSD beyond this level \cite{saarikoski2006building,saarikoski2006defining}.
+  We posit that a method such as ours, based on unsupervised word embeddings, would be well suited to use in an ensemble, as it operates using very different features to more complex WSD systems employing semantic relations.
+  
+  Our refitting method synthesises a new sense vector using the existing induced word sense vectors and the language model.
+  The new vector is formed as an appropriately weighted sum of the original embeddings. A weighting of the induced sense vectors is determined using the language model and the example sentence.
+  The refitted vector approximately corresponds to the meaning given by the example sentence. 
+  Our refitting method is detailed in \Cref{refitting}.
+  
+  
+  We thus propose a method for using a single example of a word in context to synthesise a new embedding for that particular sense. We term this \emph{refitting} the induced senses, as it combines them to fit to the meaning in the example sentence. Our method allows us to use a single labelled example to produce a labelled sense embedding. This allows a shift from a representation that can only work within the system,
+  
+  
+  Our refitting method can be considered as learning lexical sense embeddings, as a one-shot learning task. A alternative is to transform the problem into a supervised or semi-supervised learning task. The difficulty lies in how to get a sufficient number of labelled senses. One option is to use a separate WSD method to artificially label an unlabelled corpus.
+  
+  One of the key reasons, that it is useful to have senses that align with standard lexical senses, is that it allows word sense embeddings to be used for word sense disambiguation. This is demonstrated by Chen et al.  \parencite{Chen2014}, and we discuss how refitted word sense vectors can be used do the same in \Cref{eq:lexicalwsd}. 
+  
+  Future work includes application to more carefully fine tuned underlying word sense embedding methods, and the addition of a semi-supervised fine turning step similar to that presented by Chen et al. \parencite{Chen2014}. If an one-shot learning based method can achieve practical levels of success at WSD, it opens up opportunities for systems that are trained once, on huge datasets, and then refitted many times, to different sense inventories. This has direct applications in machine translation.
+  

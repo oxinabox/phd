@@ -1,0 +1,592 @@
+\documentclass[dvipsnames]{beamer}
+\usepackage{verbatim}
+
+\usepackage{microtype}
+\usepackage{adjustbox}
+\usepackage{amsmath}
+
+\usepackage[subpreambles=false]{standalone}
+\usepackage{tikz}
+
+\newlength\xunit
+
+
+\input{brownbeamer}
+\usepackage[color]{../figs/blockdiagrambits}
+\tikzset{
+	backgroundcolor/.style ={fill=chamois}	
+}
+
+
+
+\bibliography{master.bib}
+
+
+
+\usepackage{booktabs, array} % Generates table from .csv
+\usepackage{pgfplots, pgfplotstable}
+\pgfplotsset{
+	compat=1.12,
+	/pgfplots/table/search path={.,..,../data}
+}
+
+\makeatletter
+\pgfplotsset{
+	/pgfplots/flexible xticklabels from table/.code n args={3}{%
+		\pgfplotstableread[#3]{#1}\coordinate@table
+		\pgfplotstablegetcolumn{#2}\of{\coordinate@table}\to\pgfplots@xticklabels
+		\let\pgfplots@xticklabel=\pgfplots@user@ticklabel@list@x
+	}
+}
+\makeatother
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\inputcolumn}[1]{%
+	\begin{column}{0.5\textwidth}
+		\begin{adjustbox}{max width=\columnwidth}
+			\input{#1}
+		\end{adjustbox}
+	\end{column}%
+}
+
+
+\newcommand{\fitmath}[1]{
+	\begin{adjustbox}{max width = \textwidth}	
+		$\displaystyle
+		#1
+		$
+	\end{adjustbox}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\W}{\mathcal{W}}
+\renewcommand{\c}{\mathbf{c}}
+\newcommand{\s}{\mathbf{s}}
+\renewcommand{\l}{\mathbf{l}}
+\renewcommand{\u}{\mathbf{u}}
+\newcommand{\ci}{\perp\!\!\!\perp} % from Wikipedia
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+\newcommand{\ubraceword}[2]{\underbrace{\mathtt{\alert{#1}}}_{#2}\:}
+\newcommand{\obraceword}[2]{\overbrace{\mathtt{\alert{#1}}}^{#2}\:}
+
+%%%%%%%%%%%%%%%%%%%%%
+
+
+\author{\textbf{Lyndon White},\\ Roberto Togneri, Wei Liu, Mohammed Bennamoun}
+\institute{School of Electical, Electronic and Computer Engineering\\The University of Western Australia}
+\title{Finding Word Sense Embeddings of Known Meaning}
+
+\subtitle{A method for refitting word sense embeddings,  using a single example, by application of Bayes' theorem to the language model}
+\date{}
+%\logo{\hfill\includegraphics[scale=0.12]{uwa}\hfill\hspace{1.5cm}\vspace{0.5cm}}
+\begin{document}
+\newcommand{\sentexample}{\fitmath{
+		\overbrace{
+			\obraceword{wow}{w_1}
+			\obraceword{the} {w_2}
+			\obraceword{wool} {w_3}
+			\obraceword{from} {w_4}
+			\obraceword{the} {w_5}
+			\ubraceword{kid} {target\: word}
+			\obraceword{is} {w_6}
+			\obraceword{so}{w_7}
+			\obraceword{soft}{w_8}
+			\obraceword{and} {w_9}
+			\obraceword{fluffy}{w_{10}}
+		}^{\c}
+	}}
+	
+
+%\centering %Center everywhere
+\frame{\maketitle}
+
+\newcommand{\glosses}{
+	\alert{Kid \emph{(Noun)}}
+	\begin{enumerate}
+		\item (a young person of either sex) "she writes books for children"; "they're just kids"; "`tiddler' is a British term for youngster"
+		\item (English dramatist (1558-1594)) 
+		\item (a human offspring (son or daughter) of any age) "they had three children"; "they were able to send their kids to college"
+		\item (young goat) 
+	\end{enumerate}
+}
+
+
+\begin{frame}{Words don't only have one meaning}
+	\vspace{1em}
+	\glosses
+	 \footfullcite{miller1995wordnet}
+\end{frame}
+
+\begin{frame}{Word embeddings represent each word as a single vector}
+	\begin{block}<1->{SkipGram Language Model:}
+		\begin{itemize}
+			\item \alert{Input} a word $w_T$
+			\item \alert{Output} probabilities of words appearing in its context \alert{$P(w_i \mid w_T)$}
+		\end{itemize}
+	\end{block}
+	
+	\begin{block}<2->{Word Embeddings Implementation}
+		\begin{itemize}
+			\item Represent each input word as a \alert{vector}
+			\item Train a neural network to estimate  \alert{$P(w_i \mid w_T)$}
+			\item Back-prop finds values for the input vector -- i.e. good representation for the word
+		\end{itemize}
+	\end{block}	
+	\sentexample
+\end{frame}
+
+
+
+\begin{frame}{Word sense embeddings represent each word as a multiple vectors}
+	\begin{itemize}
+		\item Each word has multiple senses $\{u_1, u_2, ..., u_n\}$
+		\item SkipGram Language Model becomes \begin{itemize}
+			\item \alert{Input} a word sense $u_i$
+			\item \alert{Output} probabilities of words appearing in its context \alert{$P(w_i \mid u_j$)}
+		\end{itemize}
+	\end{itemize}
+	\footfullcite{AdaGrams}
+	\sentexample
+\end{frame}
+
+\begin{frame}{Many sense embeddings don't produce human recognisable senses}
+	 \begin{itemize}
+	 	\item<1-> Embeddings are learnt by modelling what words occur near the sense
+	 	\item<2-> No control over the meanings of the senses \begin{itemize}
+	 		\item Cover overlapping definitions
+	 		\item Find overly narrow meanings
+	 		\item Capture rare jargon uses
+	 	\end{itemize}
+		\item<3-> Useful, but not interoperable with lexical knowledge bases.	
+	 \end{itemize}
+\end{frame}
+
+
+
+\begin{frame}[label=refittingslide]{We will solve this by \emph{refitting} them to be for the sense we mean}
+	\begin{columns}[T]
+		\begin{column}{0.5\textwidth}
+			\begin{itemize}
+				\item \alert{Refitting} constructs new sense embeddings out of the old.
+				
+				\item It uses the \alert{probabilities} of example sentence occuring.
+				
+				\item The new embedding aligns to the meaning in \alert{that sentence}.
+			\end{itemize}			
+		\end{column}
+		
+		\inputcolumn{../figs/refitting.tex}
+		
+	\end{columns}
+\end{frame}
+
+
+
+
+\begin{frame}{Refitting uses a probability weighted sum}
+	\vspace{-1em}
+	\begin{columns}[T]
+	\begin{column}{0.5\textwidth}
+		
+		\vspace{3em}
+		New sense embedding:
+		\begin{equation*} \label{eq:synth}
+			l(\u \mid \c ) = \sum_{\forall u_i \in \u} u_i P(u_i \mid \c)
+		\end{equation*}
+		
+	\end{column}
+	
+	\inputcolumn{../figs/refitting.tex}
+
+	\end{columns}
+	\vspace{0em}
+	\sentexample
+\end{frame}
+
+\begin{frame}{The probabilities are found using Bayes' theorem}
+	\vspace{-1em}
+	\begin{columns}[T]
+		\begin{column}{0.5\textwidth}
+			
+			\onslide<1->{Language model: $P(w_i \mid u_{i})$}
+			\vspace{1em}
+			\onslide<2->{
+				Conditional Independence:
+				$\displaystyle%
+				P(\c \mid u_{i})=\prod_{\forall w_{j}\in\c}P(w_{j} \mid u_{i})
+				$
+			}
+			\vspace{1em}
+			\onslide<3->{
+				Bayes Theorem: 
+				$\displaystyle%
+				P(u_{i} \mid \c) =
+				\dfrac{P(\c \mid u_{i})P(u_{i})}
+				{\sum_{u_{j}\in\s} P(\c \mid u_{j})P(u_{j})}
+				$
+			}
+
+		\end{column}
+
+		\inputcolumn{../figs/refitting.tex}
+	\end{columns}
+	\vspace{0em}
+	\sentexample
+\end{frame}
+
+
+\begin{frame}{The probabilities are found using Bayes' theorem}
+	\vspace{-1em}
+	\begin{columns}[T]
+		\begin{column}{0.5\textwidth}
+			
+			\vspace{2em}
+			Bayes Theorem: 
+				$\displaystyle%
+				P(u_{i} \mid \c) =
+				\dfrac{P(\c \mid u_{i})P(u_{i})}
+				{\sum_{u_{j}\in\s} P(\c \mid u_{j})P(u_{j})}
+				$
+				
+			\vspace{2em}
+			Refitted Sense Embedding: 
+				$\displaystyle%
+				l(\u \mid \c ) = \sum_{\forall u_i \in \u} u_i P(u_i \mid \c)
+				$
+
+			\vfill
+		\end{column}
+		
+		\inputcolumn{../figs/refitting.tex}
+	\end{columns}
+	\vspace{0em}
+	\sentexample
+\end{frame}
+
+
+\begin{frame}{The posterior distribution (over senses) is too sharp, so we smooth it}
+	\vspace{-1em}
+	\begin{columns}[T]
+		\begin{column}{0.5\textwidth}
+			\begin{block}<1->{Original:}
+				\vspace{1em}
+				\alert{Context Likelihood:}
+				
+				\vspace{1mm}
+				$\displaystyle%
+				P(\c \mid u_{i})=\prod_{\forall w_{j}\in\c}P(w_{j} \mid u_{i})
+				$
+							
+				\vspace{1em}
+				\alert{Sense Likelihood:}
+				
+				\vspace{1mm}
+				$\displaystyle%
+				P(u_{i} \mid \c) =
+				\dfrac{P(\c \mid u_{i})P(u_{i})}
+				{\sum_{u_{j}\in\u} P(\c \mid u_{j})P(u_{j})}
+				$
+						
+			\end{block}
+		\end{column}
+		
+		
+		\begin{column}{0.5\textwidth}
+			\begin{block}<2->{Smoothed:}
+				\vspace{1em}
+				\alert{Context Likelihood:}
+				
+				\vspace{1mm}
+				$\displaystyle%
+				P_S(\c \mid u_{i})=\prod_{\forall w_{j}\in\c} \sqrt[|\c|]{P(w_{j} \mid u_{i})}
+				$
+				
+				\only<3->{
+					\vspace{1em}
+					\alert{Sense Likelihood:}
+					
+					\vspace{1mm}
+					\fitmath{
+					P_S(s_{i} \mid \c) =
+					\dfrac{\sqrt[|\c|]{P(\c \mid u_{i})P(u_{i})}}
+					{\sum_{u_{j}\in\u} \sqrt[|\c|]{P(\c \mid u_{j})P(u_{j})}}
+					}
+				}
+			\end{block}			
+		\end{column}		
+	\end{columns}
+	\vspace{0em}
+	%\sentexample
+\end{frame}
+
+
+
+\newcommand{\simsentone}{%
+	\fitmath{
+		\overbrace{
+			\obraceword{stone}{w_1}
+			\obraceword{axes}{w_w}
+			\obraceword{was}{w_3}
+			\obraceword{a}{w_4}
+			\obraceword{major}{w_5}
+			\ubraceword{advance}{word\: 1}
+			\obraceword{because}{w_6}
+			\obraceword{it}{w_7}
+			\obraceword{allowed}{w_8}
+			\obraceword{forest}{w_9}
+			\obraceword{clearance}{w_{10}}
+		}^{\c}%
+	}
+}
+
+\newcommand{\simsenttwo}{%
+	\fitmath{
+			\overbrace{
+			\obraceword{forces}{w_1^\prime}
+			\obraceword{could}{w_2^\prime}
+			\obraceword{make}{w_3^\prime}
+			\obraceword{no}{w_4^\prime}
+			\obraceword{further}{w_5^\prime}
+			\ubraceword{headway}{word\: 2}
+			\obraceword{without}{w_6^\prime}
+			\obraceword{resting}{w_7^\prime}
+			\obraceword{and}{w_8^\prime}
+			\obraceword{regrouping}{w_9^\prime}
+			\obraceword{.}{w_{10}^\prime}
+		}^{\c^\prime}%
+	}}
+
+\begin{frame}{Similarity with context, is the task of ranking how similar a word is, given its usage}
+	
+	\vfill
+	\simsentone
+	\vfill
+	\simsenttwo
+	\vfill
+	
+	%We use the Stanford Word Similarity in Context (SCWS) dataset to assess this 
+	\footcite{Huang2012}
+
+\end{frame}
+
+
+\begin{frame}{Use for word similarity with context}
+	\vspace{-1.5em}
+	\begin{adjustbox}{max height=0.5\textheight}
+		\input{../figs/refittedsim}
+	\end{adjustbox}
+	\vfill
+	\fitmath{
+	 \begin{aligned}
+	 	\mathrm{RefittedSim}((\u,\c),(\u^{\prime},\c^{\prime})) 
+	 	&= d(l(\u \mid \c), l(\u^\prime \mid \c^\prime)\\
+	 	\mathrm{RefittedSim}((\u,\c),(\u^{\prime},\c^{\prime}))
+	 	&= d\left(
+	 	\sum_{u_{i}\in\u}u_{i}P(u_{i}\mid\c),\:
+	 	\sum_{u_{j}^{\prime}\in\u^{\prime}}u_{i}P(u_{j}^{\prime}\mid\c^{\prime})\right)
+	 \end{aligned}
+	}
+	\vfill
+	
+
+\end{frame}
+
+
+
+\pgfplotstableread[header=has colnames, string type,
+	columns/AvgSimC/.style={numeric type},
+	columns/RefittedSim/.style={numeric type},
+]{Method	AvgSimC	RefittedSim
+{Greedy \\ Unsmoothed} 0.222228482	0.406756426
+{AdaGram\\Unsmoothed} 0.437692659	0.478328794
+{Greedy \\ Smoothed} 0.235813998	0.497038141
+{AdaGram Smoothed}	0.538424026	0.647537113
+}{\swsc}
+
+
+\begin{frame}[fragile]{Results on word similarity with context}
+	\begin{tikzpicture} 
+		\begin{axis}[
+			ybar,
+			width=\textwidth,height=0.8\textheight,
+			ymin=0,
+			ymax=1.0,
+			xmin=-0.2,
+			xmax=3.2,
+			ylabel=$\rho$,
+			xticklabels from table={\swsc}{Method},
+			legend style={fill=none},
+			xticklabel style={text width=8em, align=center},
+			xtick = data%
+			] 
+%		
+			\only<1->{\addplot[fill=darkbrown] table[y=AvgSimC, x expr=\coordindex]{\swsc}; }
+			\only<2->{\addplot[fill=UniBlue] table[y=RefittedSim, x expr=\coordindex]{\swsc}; }
+			\legend{AvgSimC, RefittedSim};
+		\end{axis} 
+	\end{tikzpicture}
+\end{frame}
+
+
+
+\begin{frame}{WSD is the task of determining which sense is being used}
+	\glosses
+	\sentexample
+\end{frame}
+
+\begin{frame}{Use of refitted senses for word sense disambiguation }
+	\begin{adjustbox}{max height=0.5\textheight}
+		\xunit=2.5cm
+		\input{../figs/wsd.tex}
+	\end{adjustbox}
+	\begin{equation*}
+	\begin{aligned}\label{eq:lexicalwsd}
+	l^\star (\l, \c_T) &= \argmax_{\forall l_i \in \l} P(l_i|\c_T) \\
+	l^\star (\l, \c_T) &= \argmax_{\forall l_i \in \l} \frac{P(\c_T \mid l_i)P(l_i)}{\sum_{\forall l_j \in \l} P(\c_T \mid l_j)P(l_j)}
+	\end{aligned}
+	\end{equation*}
+
+\end{frame}
+
+
+
+
+% XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
+
+
+\pgfplotstableread[header=has colnames, string type,
+columns/F1/.style={numeric type},
+]{Method	F1
+{Mapped\footnote{\cite{agirre2006}}\\ AdaGram} 	0.736007052
+{MFS\\ Baseline}	0.7889
+{Refitted\\ Greedy}	0.792860291
+{Refitted\\ AdaGram}	0.798941799
+}{\wsd}
+
+\begin{frame}[fragile]{Results for word sense disambiguation}
+	\begin{center}
+		\vspace{-1.5em}
+		\structure{SemEval 2007 Task 7}
+	\end{center} 
+	\begin{tikzpicture} 
+	\begin{axis}[
+	ybar,
+	width=0.9\textwidth,height=0.8\textheight,
+	%xmin=-0.2,
+	%xmax=3.2,
+	ylabel=F1,
+	xticklabels from table={\wsd}{Method},
+	legend style={fill=none},
+	xticklabel style={text width=8em, align=center},
+	xtick = data%
+	] 
+	%		
+	\addplot[fill=UniBlue] table[y=F1, x expr=\coordindex]{\wsd}; 
+
+	\end{axis} 
+	\end{tikzpicture}	
+
+    
+\end{frame}
+
+\againframe{refittingslide}
+
+
+
+
+\section{Appendix}
+
+\begin{frame}{RefittedSim vs AvgSimC}
+	\vspace{-1em}
+	\vfill
+	\begin{block}{RefittedSim}
+		\fitmath{
+			\mathrm{RefittedSim}((\u,\c),(\u^{\prime},\c^{\prime}))
+			= d\left(
+			\sum_{u_{i}\in\u}u_{i}P(u_{i}\mid\c),\:
+			\sum_{u_{j}^{\prime}\in\u^{\prime}}u_{i}P(u_{j}^{\prime}\mid\c^{\prime})\right)
+		}
+		
+		\vspace{0.2em}
+		Time Complexity: 
+		$O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert)$
+	\end{block}
+	\vfill
+	
+	\begin{block}{AvgSimC}
+		\fitmath{
+			\mathrm{AvgSimC}((\u,\c),(\u^{\prime},\c^{\prime})) 
+			=  \frac{1}{n \times n^{\prime}}
+			\sum_{u_{i}\in\u}
+			\sum_{u_{j}^{\prime}\in\u^{\prime}}
+			P(u_{i}\mid\c)\,P(u_{j}^{\prime}\mid\c^{\prime})\,d(u_{i},u_{j}^{\prime})
+		}
+		
+		\vspace{0.2em}
+		Time Complexity: $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert +n\times n^{\prime})$
+	\end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]{Results on word similarity with context}
+	\pgfplotstabletypeset[col sep=comma, header=has colnames, string type,
+	columns/Smoothing/.style={column name={$\substack{\mathrm{Geometric}\\\mathrm{Smoothing}}$}},
+	columns/Use Prior/.style={column name={$\substack{\mathrm{Use}\\\mathrm{Prior}}$}},
+	%		columns/Use Prior/.style={column name={\small{Use Prior}}},
+	columns/AvgSimC/.style={
+		%column name={\small{AvgSimC}},
+		numeric type,
+		precision=1,
+		fixed zerofill=true,
+		preproc/expr={100*##1},
+		column type=c
+	},
+	columns/RefittedSim/.style={
+		%column name={\small{RefittedSim}},
+		numeric type,
+		precision=1,
+		fixed zerofill=true,
+		preproc/expr={100*##1},
+		column type=c
+	},
+	every row 1 column RefittedSim/.style={
+		postproc cell content/.style={
+			@cell content/.add={$\bf}{$}
+		}
+	},
+	every row 0 column AvgSimC/.style={
+		postproc cell content/.style={
+			@cell content/.add={$\bf}{$}
+		}
+	},
+	every head row/.style={after row = {\toprule}}
+	]{swsc-grid.csv}
+	
+\end{frame}
+
+
+\begin{frame}{Refitting sense-embeedings allows us to know the sense}
+	\vfill
+	\begin{itemize}
+		\item New embeddings are defined as a as a \alert{weighted sum} of unsupervised embeddings.
+		\item The \alert{weights} are determined using the \alert{langauge model}, with a  \alert{example sentence}.
+		\item This lets us find embedding for the sense of the word in \alert{that sentence}.
+		
+		\item<2-> Applications for \alert{similarity with context}, and lexical tasks, such as \alert{Word Sense Disambiguation}.
+	\end{itemize}
+	\vfill
+	\sentexample
+\end{frame}
+
+\renewcommand*{\bibfont}{\scriptsize}
+\begin{frame}{References}
+	\tiny
+	\printbibliography
+\end{frame}
+	
+\end{document}

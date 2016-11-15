@@ -1,0 +1,94 @@
+%%
+%% This is file `wheretotrim.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% wheretotrim.dtx  (with options: `package')
+%% 
+%% This is a generated file.
+%% 
+%% Copyright (C) 2013 by Scott Pakin <scott+wtt@pakin.org>
+%% 
+%% This file may be distributed and/or modified under the conditions of
+%% the LaTeX Project Public License, either version 1.3c of this license
+%% or (at your option) any later version.  The latest version of this
+%% license is in:
+%% 
+%%    http://www.latex-project.org/lppl.txt
+%% 
+%% and version 1.3c or later is part of all distributions of LaTeX
+%% version 2008/05/04 or later.
+%% 
+\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+\ProvidesPackage{wheretotrim}
+    [2013/05/15 v1.0 Helper package for the wheretotrim script]
+\newcommand{\wtt@target@column}{0}
+\newcommand{\wtt@column@expand}{0pt}
+\newcommand{\wtt@extra@full@columns}{0}
+\RequirePackage{keyval}
+\define@key{wtt}{column}{\gdef\wtt@target@column{#1}}
+\define@key{wtt}{expansion}{%
+  \xdef\wtt@column@expand{#1\noexpand\baselineskip}%
+}
+\define@key{wtt}{extracols}{\gdef\wtt@extra@full@columns{#1}}
+\DeclareOption*{%
+  \edef\next{\noexpand\setkeys{wtt}{\CurrentOption}}%
+  \next
+}
+\ProcessOptions\relax
+\newcounter{wtt@true@page}
+\setcounter{wtt@true@page}{1}
+\RequirePackage{everyshi}
+\EveryShipout{\addtocounter{wtt@true@page}{1}}
+\newcounter{wtt@column@num}
+\let\wtt@makecol=\@makecol
+\def\@makecol{%
+  \PackageInfo{wheretotrim}%
+              {Column \thewtt@column@num\space is on page
+               \thewtt@true@page\space (\thepage)}%
+  \addtocounter{wtt@column@num}{1}%
+  \ifnum\value{wtt@column@num}=\wtt@target@column
+    \enlargethispage{\wtt@column@expand}%
+  \fi
+  \wtt@makecol
+}
+\let\wtt@clearpage=\clearpage
+\gdef\clearpage{%
+  \wtt@clearpage
+  \ifnum\lastpenalty=-10001\relax
+    \addtocounter{wtt@column@num}{1}%
+    \ifnum\value{wtt@column@num}=\wtt@target@column
+      \enlargethispage{\wtt@column@expand}%
+    \fi
+    \addtocounter{wtt@column@num}{-1}%
+  \fi
+}
+\AtBeginDocument{%
+  \let\wtt@maketitle=\maketitle
+  \gdef\maketitle{%
+    \wtt@maketitle
+    \if@twocolumn
+      \ifnum\value{wtt@column@num}=\wtt@target@column
+        \enlargethispage{\wtt@column@expand}%
+      \fi
+    \fi
+  }%
+}
+\AtEndDocument{%
+  \ifnum\wtt@extra@full@columns>0\relax
+    \noindent\parbox[t][\textheight]{\linewidth}{%
+      \rule{\linewidth}{\baselineskip}}\par
+    \ifnum\wtt@extra@full@columns>1\relax
+      \noindent\parbox[t][\textheight]{\linewidth}{%
+        \rule{\linewidth}{\baselineskip}}\par
+    \fi
+  \fi
+  \PackageInfo{wheretotrim}%
+              {Baseline skip: \the\baselineskip}%
+  \PackageInfo{wheretotrim}%
+              {Text height: \the\textheight}%
+}
+\endinput
+%%
+%% End of file `wheretotrim.sty'.
