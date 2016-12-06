@@ -87,11 +87,14 @@
 
 \author{\textbf{Lyndon White},\\ Roberto Togneri, Wei Liu, Mohammed Bennamoun}
 \institute{School of EE\&C Engineering\\The University of Western Australia}
-\title{Generating Sentences from the Sum of their Contents}
-\subtitle{A greedy algorithms for sentence generation from sum of word embeddings representations}
+\title{Modelling Sentence Generation from Sum of Word Embedding Vectors as a Mixed Integer Programming Problem}
+\subtitle{Moving from a 300 dimentional meaning space, back to human sentences}
+\date{}
+\logo{\includegraphics[scale=0.12]{uwa}\hspace{1.5cm}}
 
 \begin{document}
 \frame{\maketitle}
+\logo{}
 
 \begin{frame}[label=task]{We have turned sentences into numeric vectors, now we want to turn them back.}
 
@@ -159,7 +162,7 @@
 		\begin{itemize}
 			\item Smooth ``deformation'' between sentences
 			\item Several other uses beyond just generation
-			\item No demonstration on sentences with more than 6 words
+			\item No demonstration on sentences with more than 8 words
 		\end{itemize}
 	\end{block}
 	\footfullcite{Bowman2015SmoothGeneration}
@@ -214,7 +217,7 @@
 \end{frame}
 
 \newcommand{\vectorselectionproblemdefn}{Find the \alert{inclusion vector} $\c=[c_1,c_2,...c_n]\in\N_0^n$ to \alert{minimise}
-	 $\displaystyle d(\st,\:\: \sum_{\x_j\in\V}\:\x_{j}\,c_{j})$ 
+	 $\displaystyle d(\st,\:\: \sum_{\x_j\in\V}\:c_{j}\,\x_{j})$ 
 }
 
 \begin{frame}{We get a bag of words by minimising an objective function}
@@ -226,7 +229,7 @@
 		\vfill
 		\item<3->[Vector Selection] $\displaystyle
 			\begin{aligned}%
-			f(\c)&=\quad1\times[−0.19, 0.50, 0.14, ..., −0.59]\\
+			\sum_{\x_j\in\V}\:c_{j}\,\x_{j})&=\quad1\times[−0.19, 0.50, 0.14, ..., −0.59]\\
 			&\quad+2\times[-0.15, 0.19, 0.03, ..., -0.17]\\
 			&\quad+\qquad...\\
 			&\quad+0\times[−0.19, 2.10, 1.34, ..., 1.20]\\
@@ -250,46 +253,10 @@
 		\item<3-> A Greedy Algorithm is linear time in $n$ 
 	\end{itemize}
 	\vfill
+	\footfullcite{White2015BOWgen}	
 \end{frame}
 
 
-\begin{frame}{Run until convergence}
-	\vspace{-1em}
-	\begin{tikzpicture}[
-		every node/.style={ text width=5em,
-			align=center,
-			font=\scriptsize\sffamily,
-			inner sep=3pt,
-		},
-		]
-
-		\node (input) [text width=2em] {$(\st,\V,d)$\\$\B=[]$};
-		\node (addition) [draw, rounded corners, right = 2em of input]{Greedy Addition};
-		\node (substitution) [draw, rounded corners, right = 10em of addition]{1-Substitution};
-		\node (output) [right = 2em of substitution,text width=1em] {$\B$};
-		\draw[->] (input) -- (addition);
-		\path[->] (addition) edge[loop right] (addition);
-		\node [above right=0.4em of addition, text width = 5em] {\scriptsize  until no \\ improvement};
-		\path[->] (substitution) edge[loop left] (substitution);
-		\path[->] (addition) edge[loop right] (addition);
-		\node [below left=0.7em of substitution, text width = 3em] {\scriptsize  per word \\ in $\B$};
-		\path[->] (addition) edge [bend left=90,looseness=1] (substitution);
-		\path[->] (substitution) edge [bend left=90,looseness=1] (addition);
-		\draw[->] (substitution) -- (output);
-			
-	\end{tikzpicture}
-	
-	%\begin{block}
-		\begin{itemize}
-			\item \alert{Greedy Addition}: add word to bag that gets us closest
-			\item \alert{1-Substitution}: Reconsider past choices
-		\end{itemize}
-	%\end{block}
-		
-		\footfullcite{White2015BOWgen}
-	
-		
-\end{frame}
 
 
 
@@ -310,11 +277,10 @@
 
 \begin{frame}{A language model tells us the probability of a word sequence.}
 	\begin{itemize}
-		\item based on corpus statistics
-		\item Trigram language model: $P(W_3=buns\:|\:W_1=hot, W_2=crossed)$
-		\item With the the Markov Assumption, that the transition probability only depends on the current state.
-		\pause
-		\item Bayesian Chain Rule: probability of sequence \\$P([w_1,w_2,w_3,w_4,w_5])=$
+		\item The language model is based on corpus statistics.
+		\item We use a \alert{trigram language model}: $P(W_3=buns\:|\:W_1=hot, W_2=crossed)$
+		\item<2-> By making a Markov assumption, we can use the trigram probabilities to estimate the \alert{probability of any word sequence.}
+		\item<3-> Bayesian Chain Rule: $P([w_1,w_2,w_3,w_4,w_5])=$
 		$$\qquad \quad P(w_1,w_2)\cdot P(w_3|w_1,w_2)\cdot P(w_4|w_2,w_3) \cdot P(w_5|w_3,w_2)$$
 		
 	\end{itemize}
@@ -325,8 +291,8 @@
 \begin{frame}{We can formulate word ordering as a Mixed Integer Programming (MIP) problem}
 	\begin{itemize}
 		\item There exist very fast MIP solvers.
-		\item This gave multiple orders of magnitude improvement over Best First Search.
-		\item and even over incomplete Beamer Search.
+		\item This gave multiple orders of magnitude improvement over \alert{best first search}.
+		\item and even over incomplete \alert{beam search}.
 	\end{itemize}
 \end{frame}
 
@@ -454,47 +420,87 @@ columns/Process/.style={string type,column type=C{6.5em},
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% Examples
 
-
-\newcommand{\collenone}{2.3cm}
-\newcommand{\collentwo}{6.5cm}
+\newcommand{\collenone}{3.1cm}
+\newcommand{\collentwo}{5.7cm}
 \newcommand{\collenthree}{0.5cm}
 
+\begin{frame}<2>[label=lstmeg]{LSTM-VAE Examples}
+	\small
+	\hspace*{-8pt}\makebox[\linewidth][c]{
+		\begin{tabular}{ p{\collenone} p{\collentwo} C{\collenthree} C{\collenthree} }
+			\only<1>{
+				\textbf{ \reftitle}  & we looked out at the setting sun . & \textbf{Sel.} & \textbf{Ord.} \\
+				%\textbf{\oracletitle}  & we looked out at the setting sun . & \passmark & \cmark \\
+				\textbf{\twosteptitle}  & we looked out at the setting sun . & \cmark & \cmark \\
+				\textbf{\bm}  & they were laughing at the same time . &  &  \\
+				\textbf{\bs 1}  & ill see you in the early morning . &  &  \\
+				\textbf{\bs 2}  & i looked up at the blue sky . &  &  \\
+				\textbf{\bs 3}  & it was down on the dance floor . &  &  \\
+			}\only<2>{
+				\textbf{ \reftitle}  & i went to the kitchen . & \textbf{Sel.} & \textbf{Ord.} \\
+				%\textbf{\oracletitle}  & i went to the kitchen . & \passmark & \cmark \\
+				\textbf{\twosteptitle}  & i went to the kitchen . & \cmark & \cmark \\
+				\textbf{\bm}  & i went to the kitchen . &  &  \\
+				\textbf{\bs 1}  & i went to my apartment .  &  &  \\
+				\textbf{\bs 2}  & i looked around the room . &  &  \\
+				\textbf{\bs 3}  & i turned back to the table . &  &  \\
+			}\only<3>{
+				\textbf{ \reftitle}  & how are you doing ? & \textbf{Sel.} & \textbf{Ord.} \\
+				%\textbf{\oracletitle}  & how are you doing ? & \passmark & \cmark \\
+				\textbf{\twosteptitle}  & how 're do well ? & \xmark & \xmark \\
+				\textbf{\bm}  & what are you doing ? &  &  \\
+				\textbf{\bs 1}  & `` are you sure ? &  &  \\
+				\textbf{\bs 2}  & what are you doing, ? &  &  \\
+				\textbf{\bs 3}  & what are you doing ? &  &  \\
+			}
+		\end{tabular}	
+	}
+	\footfullcite{Bowman2015SmoothGeneration}
+\end{frame}
+
+
+
+\renewcommand{\collenone}{2.3cm}
+\renewcommand{\collentwo}{6.5cm}
+\renewcommand{\collenthree}{0.5cm}
+
+
 \begin{frame}<1,3>[label=dtraweg]{DT-RAE Examples}
-		\scriptsize
+		\small
 		\hspace*{-6pt}\makebox[\linewidth][c]{
 			 \begin{tabular}{ p{\collenone} p{\collentwo} C{\collenthree} C{\collenthree} }
 			
 			\only<1>{			
-			\textbf{3A \hfill \reftitle}  & name this 1922 novel about leopold bloom written by james joyce . & \textbf{Sel.} & \textbf{Ord.} \\
-			\textbf{\oracletitle}  & written by name this . novel about 1922 bloom leopold james joyce & \passmark & \namark \\
+			\textbf{ \reftitle}  & name this 1922 novel about leopold bloom written by james joyce . & \textbf{Sel.} & \textbf{Ord.} \\
+			%\textbf{\oracletitle}  & written by name this . novel about 1922 bloom leopold james joyce & \passmark & \namark \\
 			\textbf{\twosteptitle}  & written novel by name james about leopold this bloom 1922 joyce . & \cmark & \namark \\
 			\textbf{\iref}  & name this 1906 novel about gottlieb\_fecknoe inspired by james\_joyce &  &  \\
 			\textbf{\ip}  & what is this william golding novel by its written writer &  &  \\
 			}
 			\only<2>{
-			\textbf{3B \hfill \reftitle}  & ralph waldo emerson dismissed this poet as the jingle man and james russell lowell called him three-fifths genius and two-fifths sheer fudge . & \textbf{Sel.} & \textbf{Ord.} \\
-			\textbf{\oracletitle}  & sheer this as james two-fifths emerson fudge lowell poet genius waldo called russell the and ralph and him . dismissed jingle three-fifths man & \passmark & \namark \\
+			\textbf{ \reftitle}  & ralph waldo emerson dismissed this poet as the jingle man and james russell lowell called him three-fifths genius and two-fifths sheer fudge . & \textbf{Sel.} & \textbf{Ord.} \\
+			%\textbf{\oracletitle}  & sheer this as james two-fifths emerson fudge lowell poet genius waldo called russell the and ralph and him . dismissed jingle three-fifths man & \passmark & \namark \\
 			\textbf{\twosteptitle}  & him `` james great as emerson genius ralph the lowell and sheer waldo three-fifths man fudge dismissed jingle russell two-fifths and gwalchmai 2009 vice-versa \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ prominent called 21.25 explained & \xmark & \namark \\
 			\textbf{\iref}  & henry\_david\_thoreau rejected this author like the tsar boat and imbalance created known good writing and his own death &  &  \\
 			\textbf{\ip}  & henry\_david\_thoreau rejected him through their stories to go money well inspired stories to write as her writing &  &  \\
 			}
 			\only<3>{
-			\textbf{3C \hfill \reftitle}  & this is the basis of a comedy of manners first performed in 1892 . & \textbf{Sel.} & \textbf{Ord.} \\
-			\textbf{\oracletitle}  & this is the basis of a comedy of manners first performed in 1892 . & \passmark & \cmark \\
+			\textbf{ \reftitle}  & this is the basis of a comedy of manners first performed in 1892 . & \textbf{Sel.} & \textbf{Ord.} \\
+			%\textbf{\oracletitle}  & this is the basis of a comedy of manners first performed in 1892 . & \passmark & \cmark \\
 			\textbf{\twosteptitle}  & this is the basis of a comedy of manners first performed in 1892 . & \cmark & \cmark \\
 			\textbf{\iref}  & another is the subject of this trilogy of romance most performed in 1874 &  &  \\
 			\textbf{\ip}  & subject of drama from him about romance  &  &  \\
 			}
 			\only<4>{
-			\textbf{3D \hfill \reftitle}  & in a third novel a sailor abandons the patna and meets marlow who in another novel meets kurtz in the congo . & \textbf{Sel.} & \textbf{Ord.} \\
-			\textbf{\oracletitle}  & kurtz and another meets sailor meets the marlow who abandons a third novel in a novel in the congo in patna . & \passmark & \xmark \\
+			\textbf{ \reftitle}  & in a third novel a sailor abandons the patna and meets marlow who in another novel meets kurtz in the congo . & \textbf{Sel.} & \textbf{Ord.} \\
+			%\textbf{\oracletitle}  & kurtz and another meets sailor meets the marlow who abandons a third novel in a novel in the congo in patna . & \passmark & \xmark \\
 			\textbf{\twosteptitle}  & kurtz and another meets sailor meets the marlow who abandons a third novel in a novel in the congo in patna . & \cmark & \xmark \\
 			\textbf{\iref}  & during the short book the lady seduces the family and meets cousin he in a novel dies sister from the mr. &  &  \\
 			\textbf{\ip}  & during book of its author young lady seduces the family to marry old suicide while i marries himself in marriage &  &  \\
 			}
 			\only<5>{
-			\textbf{3E \hfill \reftitle}  & thus she leaves her husband and child for aleksei vronsky but all ends sadly when she leaps in front of a train . & \textbf{Sel.} & \textbf{Ord.} \\
-			\textbf{\oracletitle}  & train front of child vronsky but and for leaps thus sadly all her she she in when aleksei husband ends a . leaves & \passmark & \namark \\
+			\textbf{ \reftitle}  & thus she leaves her husband and child for aleksei vronsky but all ends sadly when she leaps in front of a train . & \textbf{Sel.} & \textbf{Ord.} \\
+			%\textbf{\oracletitle}  & train front of child vronsky but and for leaps thus sadly all her she she in when aleksei husband ends a . leaves & \passmark & \namark \\
 			\textbf{\twosteptitle}  & she her all when child for leaves front but and train ends husband aleksei leaps of vronsky in a sadly micro-history thus , she the & \xmark & \namark \\
 			\textbf{\iref}  & however she leaves her sister and daughter from former fianc\'e and she ends unfortunately when narrator drives into life of a house &  &  \\
 			\textbf{\ip}  & leaves the sister of man in this novel &  &  \\
@@ -505,56 +511,20 @@ columns/Process/.style={string type,column type=C{6.5em},
 \end{frame}
 
 
-\renewcommand{\collenone}{3.1cm}
-\renewcommand{\collentwo}{5.7cm}
-\renewcommand{\collenthree}{0.5cm}
 
 
-\begin{frame}<2>[label=lstmeg]{LSTM-VAE Examples}
-	\small
-	\hspace*{-8pt}\makebox[\linewidth][c]{
-	\begin{tabular}{ p{\collenone} p{\collentwo} C{\collenthree} C{\collenthree} }
-		\only<1>{
-		\textbf{4A \hfill \reftitle}  & we looked out at the setting sun . & \textbf{Sel.} & \textbf{Ord.} \\
-		\textbf{\oracletitle}  & we looked out at the setting sun . & \passmark & \cmark \\
-		\textbf{\twosteptitle}  & we looked out at the setting sun . & \cmark & \cmark \\
-		\textbf{\bm}  & they were laughing at the same time . &  &  \\
-		\textbf{\bs 1}  & ill see you in the early morning . &  &  \\
-		\textbf{\bs 2}  & i looked up at the blue sky . &  &  \\
-		\textbf{\bs 3}  & it was down on the dance floor . &  &  \\
-		}\only<2>{
-		\textbf{4B \hfill \reftitle}  & i went to the kitchen . & \textbf{Sel.} & \textbf{Ord.} \\
-		\textbf{\oracletitle}  & i went to the kitchen . & \passmark & \cmark \\
-		\textbf{\twosteptitle}  & i went to the kitchen . & \cmark & \cmark \\
-		\textbf{\bm}  & i went to the kitchen . &  &  \\
-		\textbf{\bs 1}  & i went to my apartment .  &  &  \\
-		\textbf{\bs 2}  & i looked around the room . &  &  \\
-		\textbf{\bs 3}  & i turned back to the table . &  &  \\
-		}\only<3>{
-		\textbf{4C \hfill \reftitle}  & how are you doing ? & \textbf{Sel.} & \textbf{Ord.} \\
-		\textbf{\oracletitle}  & how are you doing ? & \passmark & \cmark \\
-		\textbf{\twosteptitle}  & how 're do well ? & \xmark & \xmark \\
-		\textbf{\bm}  & what are you doing ? &  &  \\
-		\textbf{\bs 1}  & “ are you sure ? &  &  \\
-		\textbf{\bs 2}  & what are you doing, ? &  &  \\
-		\textbf{\bs 3}  & what are you doing ? &  &  \\
-	}
-	\end{tabular}	
-	}
-	\footfullcite{Bowman2015SmoothGeneration}
-\end{frame}
 
 \begin{frame}<2>[label=ambeg]{Ambiguous Examples}
 	\small
 	\hspace*{-8pt}\makebox[\linewidth][c]{
 		\begin{tabular}{ p{\collenone} p{\collentwo} C{\collenthree} C{\collenthree} }
 			\only<1>{			
-			\textbf{5A \hfill \reftitle}  & it was the worst of times , it was the best of times . & \textbf{Sel.} & \textbf{Ord.} \\
-			\textbf{\oracletitle}  & it was the worst of times , it was the best of times . & \passmark & \cmark \\
+			\textbf{ \reftitle}  & it was the worst of times , it was the best of times . & \textbf{Sel.} & \textbf{Ord.} \\
+			%\textbf{\oracletitle}  & it was the worst of times , it was the best of times . & \passmark & \cmark \\
 			\textbf{\twosteptitle}  & it was the best of times , it was the worst of times . & \cmark & \xmark \\
 		}\only<2>{
-			\textbf{5B \hfill \reftitle}  & please give me directions from Paris to London . & \textbf{Sel.} & \textbf{Ord.} \\
-			\textbf{\oracletitle}  & please give me directions to London from Paris . & \passmark & \xmark \\
+			\textbf{ \reftitle}  & please give me directions from Paris to London . & \textbf{Sel.} & \textbf{Ord.} \\
+			%\textbf{\oracletitle}  & please give me directions to London from Paris . & \passmark & \xmark \\
 			\textbf{\twosteptitle}  & please give me directions to London from Paris . & \cmark & \xmark \\
 		}
 		\end{tabular}
@@ -636,15 +606,15 @@ columns/Process/.style={string type,column type=C{6.5em},
 		\begin{itemize}
 			\item Broad generalisation of Knapsack Problem
 			\item Input: vector
-			\item Greedy Addition + 1-Substitution til converge
+			\item Apply greedy iterative method.
 			\item Output: BOW
 		\end{itemize}
 		\vfill
-		\item<2->Ordering: most likely order over log-likelyhoods trigrams.
+		\item<2->Ordering: 
 		\begin{itemize}
-			\item Variation of Traveling Salesman
+			\item Find most likely order using trigrams
 			\item Input: BOW
-			\item Rewrite as GA-TSP, then as MIP
+			\item Rewrite MIP and solve
 			\item Output: Most likely order of words
 		\end{itemize}
 	\end{itemize}
@@ -777,4 +747,42 @@ columns/Process/.style={string type,column type=C{6.5em},
 \againframe<1->{dtraweg}
 \againframe<1->{lstmeg}
 \againframe<1->{ambeg}
+
+
+\begin{frame}{Run until convergence}
+	\vspace{-1em}
+	\begin{tikzpicture}[
+	every node/.style={ text width=5em,
+		align=center,
+		font=\scriptsize\sffamily,
+		inner sep=3pt,
+	},
+	]
+	
+	\node (input) [text width=2em] {$(\st,\V,d)$\\$\B=[]$};
+	\node (addition) [draw, rounded corners, right = 2em of input]{Greedy Addition};
+	\node (substitution) [draw, rounded corners, right = 10em of addition]{1-Substitution};
+	\node (output) [right = 2em of substitution,text width=1em] {$\B$};
+	\draw[->] (input) -- (addition);
+	\path[->] (addition) edge[loop right] (addition);
+	\node [above right=0.4em of addition, text width = 5em] {\scriptsize  until no \\ improvement};
+	\path[->] (substitution) edge[loop left] (substitution);
+	\path[->] (addition) edge[loop right] (addition);
+	\node [below left=0.7em of substitution, text width = 3em] {\scriptsize  per word \\ in $\B$};
+	\path[->] (addition) edge [bend left=90,looseness=1] (substitution);
+	\path[->] (substitution) edge [bend left=90,looseness=1] (addition);
+	\draw[->] (substitution) -- (output);
+	
+	\end{tikzpicture}
+	
+	%\begin{block}
+	\begin{itemize}
+		\item \alert{Greedy Addition}: add word to bag that gets us closest
+		\item \alert{1-Substitution}: Reconsider past choices
+	\end{itemize}
+	%\end{block}
+	
+	\footfullcite{White2015BOWgen}		
+\end{frame}
+
 \end{document}
