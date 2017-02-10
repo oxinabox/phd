@@ -12,7 +12,7 @@
 \usepackage[scaled=.90]{helvet}
 \usepackage{courier}
 
-\usepackage[moderate]{savetrees}
+
 \usepackage{microtype}
 \usepackage{adjustbox}
 \usepackage{flushend}
@@ -55,6 +55,30 @@ compat=1.12,
 \newcommand{\wordquote}[1]{\enquote{\texttt{#1}}}
 
 
+%\usepackage[all=tight,
+%paragraphs=tight,
+%floats=tight,
+%mathspacing=tight,
+%wordspacing=tight,
+%tracking=tight,
+%bibbreaks=tight,
+%leading=tight,
+%margins=normal
+%]{savetrees}
+\usepackage[moderate]{savetrees}
+\makeatletter
+\def\@maketitle{%
+	\newpage
+	\mbox{}%
+	\begingroup
+	\centering
+	{\LARGE\textbf{\@title}\par}
+	\vskip 0.5\baselineskip
+	\vskip 0.5\baselineskip
+	\endgroup
+	\vskip \baselineskip
+}
+\makeatother
 \begin{document}
 
 \title{Finding Word Sense Embeddings Of Known Meaning}
@@ -131,34 +155,18 @@ This relabelled data is then used as training data, for fine tuning the sense em
 
 
 Our refitting method learns a new sense embedding as a weighted sum of existing induced sense embeddings of the target word.
-This is analogous to regression learning or one-shot learning using refitting.
-The key practical difference between the one-shot approach used by refitting, as compared to the supervised and semi-supervised approaches used in existing works, is the time taken to  add a new sense.
-Adding a new sense using our approach is practically instantiations, and replacing the entire sense inventory, of several hundred thousand senses, is only a matter of a few hours.
-Whereas for the existing approaches adding senses would require almost fully repeating the training process, often taking several days.
+Refitting is a one-shot learning solution, as compared to the supervised and semi-supervised approaches used in existing works, is the time taken to  add a new sense.
+Adding a new sense is practically instantiations, and replacing the entire sense inventory, of several hundred thousand senses, is only a matter of a few hours.
+Whereas for the existing approaches adding senses would require repeating the training process, often taking several days.
 Refitting is a process done to sense word embeddings, rather a method for finding sense embeddings from a large corpus. 
-It can be applied to any pretrained sense embeddings, so long as it uses a language model based approach.
-
+It can be applied to any language model based sense-embeddings.
 
 
 \subsection{Mapping induced senses to lexical senses}\label{mapping}
-Rather than learning lexical senses directly, and alternative approach is to form a weighted mapping from induced senses to the lexical senses.
- Agirre et al. \shortcite{agirre2006} give a general method to allow induced word senses to be used for lexical WSD.
-Their method applies to all word sense induction systems, not just word embedding systems, so is more general than the refitting approach that we present.
-Their method maps the induced sense disambiguation scores, to scores for disambiguating standard lexical senses. This method was used in SemEval-2007 Task 02 \parencite{SemEval2007WSIandWSD} to evaluate all entries.
-They use an annotated \emph{mapping corpus} to construct a mapping weight between induced senses probabilities and the lexical sense probabilities.
-
-For $\l=\{l_1,..., l_m\}$ the set of lexically defined senses, $\u=\{u_1,...,u_n\}$ the set of unsupervised induced senses, and a corpus of labelled contexts $\{\c_1, ...,\c_k\}$, Agirre et al. define the mapping weight by a likelihood.
-This likelihood $P(l_i \mid u_j)$ is estimated by counting how often $u_j$ is the most-likely sense as returned by WSD on the induced senses, when $l_i$ is the labelled lexical sense; and applying the definition of conditional probability.
-
-This method requires the mapping corpus to cover every lexical word sense, with enough instances for the frequency count to converge to the actual likelihood.
-
-This is used to disambiguate a target word within a sentence ($\c_T$)  by converting the unsupervised sense scores, $P(u_j \mid \c_T)$, to supervised sense scores, $P(l_j \mid \c_T)$, by
-\begin{equation} \label{eq:agireewsd}
-P(l_i \mid \c_T) = P(l_i | u_j) P(u_j \mid \c_T)
-\end{equation}
-
-
-Agirre et al. demonstrate this method with the small SensEval 3 English Lexical Sample \parencite{mihalcea2004senseval}. However, it is less clear how well this method will work on more complete tasks featuring rarer words and senses. 
+By defining a stochastic map between induced and lexical senses, Agirre et al. \shortcite{agirre2006}, propose a general method for allowing WSI systems to be used for WSD. This is more general than the approach we propose here, which only works for sense embedding based WSI. 
+Their work was used in SemEval-2007 Task 02 \parencite{SemEval2007WSIandWSD} to evaluate all entries. 
+Agirre et al. use a mapping corpus to find the probability of a lexical sense, given the induced sense according the the WSI system.
+It was evaluated on the small SensEval 3 English Lexical Sample \parencite{mihalcea2004senseval}. It is less clear how well this method will work on more complete tasks featuring rarer words and senses. 
 
 
 \section{Proposed Refitting Framework} \label{refitting} \label{Framework}
@@ -188,23 +196,8 @@ l(\u \mid \c ) = \sum_{\forall u_i \in \u} u_i P(u_i \mid \c)
 To do this, we need to estimate the posterior predictive distribution $P(u_i \mid \c)$.
 This can be done by using Bayes' Theorem, as shown in \Cref{generalwsd}; or with our smoothed variation discussed in \Cref{smoothing}
 
-
-In the very first neural network language model paper, Bengio et al. \parencite{NPLM} describe a similar method to \Cref{eq:synth} for finding the word embeddings for words not found in their vocabulary. They suggest that if a word was not present in the training data, they form \enquote{an initial feature vector for such a word, by taking a weighted convex combination of the feature vectors of other words that could have occurred in the same context, with weights proportional to their conditional probability} \parencite{NPLM}. The formula they give is as per \Cref{eq:synth}, but summing over the entire vocabulary of words (rather than just $\u$). To the best of our knowledge, this method has not been used for handling out-of-vocabulary words in any more recent word embedding architectures, nor has it ever been used for sense vectors.
-
-
-\subsection {Fall back for Dictionary Phrases (Collocations)}
-Unless a specialised tokenizing method is used, a word embedding method will not learn embeddings for collocations such as \wordquote{civil war} or \wordquote{martial arts}. Normal tokenizers will split these at the word level, learning embeddings for \wordquote{civil}, and \wordquote{war}, and for \wordquote{martial} and \wordquote{arts}. This issue is often considered minimal for word embeddings, as an approximate embedding can be constructed by summing embeddings for each word in the phrase.
-
-For single-sense word embeddings  summing the word embeddings of the words making up the phrase results in reasonable representation \parencite{mikolovSkip,White2015SentVecMeaning}.
-As we are already creating a weighted sum, in the refitting step (\Cref{eq:synth}), we can facilitate a similar result by adding the additional sense embeddings for each word to the total pool of sense embeddings to be combined ($\u$ above). This allows for the senses of one word to contribute more than the other.
-
-It is likely that one word in a collocation will contain senses with more specialised use in the collocation than the other.
-For example, \wordquote{war} as in \wordquote{civil war} appears in similar contexts to any other senses of \wordquote{war}.
-But \wordquote{civil} as in \wordquote{civil war} appears in rather different contexts to the other uses of \wordquote{civil}. Thus we expect there to be a sense embedding for \wordquote{civil} that is particularly useful in refitting for \wordquote{civil war}.
-
-
-The extreme version of this is if one or more words in the collocation have no embedding defined. In this case we fall back to only using the embeddings from the remaining words An example of this would be \wordquote{Fulton County Court}, while \wordquote{County} and \wordquote{Court} are common words, \wordquote{Fulton} is a rare proper noun. We use the remaining words: \wordquote{County} and \wordquote{Court} to determine the meaning of the whole.
-
+Bengio et al. \shortcite{NPLM} describe a similar method to \Cref{eq:synth} for finding the word embeddings for words not found in their vocabulary.
+The formula they give is as per \Cref{eq:synth}, but summing over the entire vocabulary of words (rather than just $\u$).
 
 
 \subsection{A General WSD method} \label{generalwsd}
@@ -316,7 +309,7 @@ In both cases, sub-sampling of $10^{-5}$, and a decreasing learning rate startin
 \subsection{AdaGram}
 Most of our evaluations are carried out on Adaptive SkipGrams (AdaGram) \parencite{AdaGrams}. AdaGram is a non-parametric Bayesian extension of Skip-gram. It learns a number of different word senses, as are required to properly model the language.
 
-We use the AdaGram  implementation\footnote{\url{https://github.com/sbos/AdaGram.jl}} provided by Bartunov et al. \parencite{AdaGrams} with minor adjustments for Julia \parencite{Julia} v0.5 compatibility.
+We use implementation\footnote{\url{https://github.com/sbos/AdaGram.jl}} provided by the authors with minor adjustments for Julia \parencite{Julia} v0.5 compatibility.
 
 %\subsubsection{Model Parameters}
 
@@ -355,12 +348,7 @@ To confirm that our techniques are not merely a quirk of the AdaGram method or i
 This method starts with a fixed number of randomly initialised sense embeddings, then at each training step greedily assigns each training case to the sense which predicts that context with the highest probability (using \Cref{eq:generalwsd}). The task remains the same: using skip-grams with hierarchical softmax to predict context words for the input word sense.
 Our implementation is based on a heavily modified version of the Word2Vec.jl\footnote{\url{https://github.com/tanmaykm/Word2Vec.jl/}} package by Tanmay Mohapatra, and Zhixuan Yang  for word embeddings.
 
-Due to the greedy nature of this baseline method, it is intrinsically worse than AdaGram. A particular embedding may get an initial lead at predicting a context. 
-It then gets trained more, resulting in it generally predicting a high probability of many words.
-While other embeddings may remain untrained, and may be stuck in part of the vector space that does not correspond to predicting any context that will ever occur.
-Nothing in the model encourages diversification and specialisation of the embeddings.
-As a greedy method it readily falls into traps where the most used embedding is the most trained embedding, and thus is likely to receive more training. Manual inspection reveals that a variety of senses are captured, though with significant repetition of common senses, and with rare senses being missed. Regardless of its low quality, it is a fully independent method from AdaGram, and so is suitable for our use in checking the generalisation of the refitting techniques.
-%\subsubsection{Model Parameters}
+Due to the greedy nature of this baseline method, it is intrinsically worse than AdaGram. Nothing in the model encourages diversification and specialisation of the embeddings. Manual inspection reveals that a variety of senses are captured, though with significant repetition of common senses, and with rare senses being missed. Regardless of its low quality, it is a fully independent method from AdaGram, and so is suitable for our use in checking the generalisation of the refitting techniques.
 
 Sense embeddings of 300 dimensions are used.
 The vocabulary is restricted to only words with at least 250 occurrences, which results in a vocabulary size of 88,262. Words with at least 20,000 occurrences, are giving 20 senses, and the remainder just a single sense.
@@ -434,12 +422,6 @@ AvgSimC has time complexity $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \
 while RefittedSim has $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert)$.
 The product of the number of senses of each word $n \times n^\prime$, may be small for dictionary senses, but it is often large for induced senses. Dictionaries tend to define only a few senses per word -- the average\footnote{It should be noted, though, that the number of meanings is not normally distributed \parencite{zipf1945meaning}.} number of senses per word in WordNet is less than three for all parts of speech \parencite{miller1995wordnet}. For induced senses, however, it is often desirable to train many more senses, to get better results using the more fine-grained information. In several evaluations performed by Reisinger and Mooney they found optimal results at near 50 senses \parencite{Reisinger2010}. We found similar results with our own preliminary experiments.
 In the case of fine grained induced senses, the $O(n \times n^\prime)$ is significant, avoiding it with RefittedSim makes the similarity measure more useful for information retrieval.
-
-It may be desirable for retrieving relevant search results to allow the user to provide an example of the term being searched for. This would allow documents containing only uses of irrelevant meanings of the word can be filtered, while  including documents containing effective synonyms. Consider for example a search for \wordquote{Apple} as in \wordquote{the fruit I like to eat}, can return different results from \wordquote{Apple} as in \wordquote{the company that makes the iPod, and the MacBook}. 
-Alternatively, the same technique can be used to present results to the user grouped by the sense of their query terms.
-These are the practical use-case for similarity with context.
-In the information retrieval context, the probabilities of the word sense for the context of the document can be done off-line, during indexing. With this assumption, the query-time time complexity for AvgSimC becomes : $O(n\times n^{\prime})$, and for RefittedSim it becomes: $O(1)$.
-We do note however that pre-computing the word sense probabilities for each word in the document during indexing remains expensive (though no more so than for AvgSimC). If this indexing time is considered worthwhile, then RefittedSim is significantly more viable for use in information retrieval tasks than AvgSimC.
 
 \subsection{Experimental Setup}
 We evaluate our refitting method using Stanford's Contextual Word Similarities (SCWS) dataset \parencite{Huang2012}.
@@ -554,11 +536,8 @@ WordNet glosses are less than ideal examples sentences. As well as being definit
 \subsection{Lexical Sense Prior}
 WordNet includes frequency counts for each word sense based on Semcor \parencite{tengi1998design}. These form a prior for $P(l_i)$.
 
-However, Semcor is not an immense corpus, being only a subset of the Brown corpus. The comparatively small size of Semcor means that many word senses do not occur at all. As counted by WordNet 2.1, there are counts for just  36,973 word senses, out of a total 207,016 senses in WordNet; i.e. 82\% of all senses have no count information.
+However, Semcor is not an immense corpus, being only a subset of the Brown corpus. The comparatively small size of Semcor means that many word senses do not occur at all. 82\% of all senses have no count information.
 
-An additional issue is that Semcor's underling texts from Brown are now significantly ageing. They are all from 1961 \cite{francis1979brown} -- it is not unreasonable to suggest that the frequency of word sense use has changed significantly in the last half century.
-
-Never-the-less, the word count is the best prior readily available. Given the highly unbalanced distribution of sense occurrence a uniform prior would not be a reasonable approximation.
 We apply add-one smoothing to find the prior, to remove any zero counts.
 This is in addition to using our proposed geometric smoothing as an optional part of the general WSD.
 Geometric smoothing serves a different (but related) purpose, of decreasing the sharpness of the likelihood function -- not of removing impossibilities from the prior.
@@ -649,7 +628,7 @@ More generally it allows a sense embedding to be created to model the meaning a 
 
 
 %\flushcolsend
-%\clearpage
+\clearpage
 \microtypesetup{protrusion=false}
 \bibliographystyle{named}
 \bibliography{master}
