@@ -108,7 +108,7 @@ We show how our techniques improve the performance of the Adaptive Skip-Gram sen
 \section{Introduction}
 
 
-Popular word embedding vectors, such as Word2Vec \parencite{mikolov2013efficient} and GLoVE \parencite{pennington2014glove}, represent a word's semantic meaning and its syntactic role as a point in a vector space. As each word is only given one embedding such methods are restricted to only representing a single combined sense, or meaning, of the word. \emph{Word sense embeddings} are the generalisation of word embeddings to handle polysemous and homonymous  words. Often these sense embeddings are learnt through unsupervised word sense induction \parencite{Reisinger2010,Huang2012,tian2014probabilistic,AdaGrams}. The induced sense embeddings are unlikely to directly coincide with any set of human defined meaning at all, i.e. they will not match lexical senses such as those defined in a lexical dictionary, eg WordNet \parencite{miller1995wordnet}. These induced senses can be more specific, more broad, or include the meanings of jargon not in common use.
+Popular word embedding vectors, such as Word2Vec and GLoVE, represent a word's semantic meaning and its syntactic role as a point in a vector space \parencite{mikolov2013efficient, pennington2014glove}. As each word is only given one embedding such methods are restricted to only representing a single combined sense, or meaning, of the word. \emph{Word sense embeddings} are the generalisation of word embeddings to handle polysemous and homonymous  words. Often these sense embeddings are learnt through unsupervised word sense induction \parencite{Reisinger2010,Huang2012,tian2014probabilistic,AdaGrams}. The induced sense embeddings are unlikely to directly coincide with any set of human defined meaning at all, i.e. they will not match lexical senses such as those defined in a lexical dictionary, eg WordNet \parencite{miller1995wordnet}. These induced senses can be more specific, more broad, or include the meanings of jargon not in common use.
 
 
 It can be argued that many word sense induction (WSI) systems may capture better word senses than human lexicographers do manually, however this does not mean that induced senses can replace standard lexical senses. While the induced senses may cover the space of meanings more comprehensively, or with better granularity than the lexical senses, it is important to appreciate the vast wealth of existing knowledge defined around lexical senses. Methods to link induced senses to lexical senses allow us to take advantage of both worlds.
@@ -122,10 +122,10 @@ With the refitting, the induced sense embeddings are now able to be used in more
 Refitting word sense vectors to match a lexicographical sense inventory, such as WordNet or a translator's dictionary, is possible if the sense inventory features at least one example of the target senses use. The new lexically refitted sense embedding can then be used for Word Sense Disambiguation (WSD). 
 Applying WSD is almost indispensable in any unstructured document understanding.
 For example, a machine translation system: to properly translate a word, the correct sense should be determined, as different senses in the source language, often translate to entirely different words in the target language.
-We demonstrate how the refitting method can be successfully applied for WSD in \Cref{lexicalWSD}.
+We demonstrate how the refitting method can be applied for WSD in \Cref{lexicalWSD}.
 
 %\microtypesetup{protrusion=false, tracking=false}
-Refitting can also be used to fit to an user prodived example, giving a specific sense vector for that use.
+Refitting can also be used to fit to an user provided example, giving a specific sense vector for that use.
 This has applications in information retrieval. 
 The user can provide an example of an use of the word they are interested in. For example, searching for documents about 
 \wordquote{banks} as in \enquote{the river banks were very muddy.}. By generating an embedding for that specific sense, and by comparing with the generated embeddings in the indexed documents, we can not also pick up on suitable uses of other-words for example \wordquote{beach} and \wordquote{shore},
@@ -142,7 +142,7 @@ Towards this end, we develop a smoothing method, which we call \emph{geometric s
 We demonstrate the refitting method on sense embedding vectors induced using Adaptive Skip-Grams (AdaGram) \parencite{AdaGrams}, as well as our own simple greedy word sense embeddings. The method is applicable to any skip-gram-like language model that can take a sense vector as its input, and can output the probability of a word appearing in that sense's context.
 
 
-The rest of the paper is organised as follows: \Cref{relatedwords} briefly discusses two areas of related works. \Cref{Framework} presents our refitting method, as well as the geometric smoothing method used with it. \Cref{Models} described the WSI embedding models used in the evaluations. \Cref{SimilarityInContext} describes the RefittedSim measure for word similarity in context, and presents its results. \Cref{lexicalWSD} shows how the refitted sense vectors can be used for lexical word sense disambiguation. Finally, the paper concludes with outlook to future works in \Cref{conclusion}.
+The rest of the paper is organised as follows: \Cref{relatedwords} briefly discusses two areas of related works. \Cref{Framework} presents our refitting method, as well as the geometric smoothing method used with it. \Cref{Models} described the WSI embedding models used in the evaluations. \Cref{SimilarityInContext} describes the RefittedSim measure for word similarity in context, and presents its results. \Cref{lexicalWSD} shows how the refitted sense vectors can be used for lexical WSD. Finally, the paper concludes with outlook to future works in \Cref{conclusion}.
 
 \section{Related Works} \label{relatedwords}
 
@@ -205,17 +205,16 @@ The formula they give is as per \Cref{eq:synth}, but summing over the entire voc
 
 
 \subsection{A General WSD method} \label{generalwsd}
-Using the language model, and application of Bayes' theorem, we define a general word sense disambiguation method that can be used for refitting (\Cref{eq:synth}), and also can be used for lexical word sense disambiguation (see \Cref{lexicalWSD}). This is a standard approach of using Bayes' theorem \parencite{tian2014probabilistic, AdaGrams}. We present it here for completeness.
+Using the language model and application of Bayes' theorem, we define a general word sense disambiguation method that can be used for refitting (\Cref{eq:synth}), and also can be used for lexical word sense disambiguation (see \Cref{lexicalWSD}). This is a standard approach of using Bayes' theorem \parencite{tian2014probabilistic,AdaGrams}. We present it here for completeness.
 
 The context is used to determine which sense is the most suitable for this use of the \emph{target word} (the word being disambiguated).
 Let $\s=(s_{1},...,s_{n})$, be the collection of senses for the target word\footnote{As this part of our method is used with both the unsupervised senses and the lexical senses, referred to as $\u$ and $\l$ respectively in other parts of the paper, here we use a general sense $\s$ to avoid confusion.}.
 
-Let $\c=(w_{1},...,w_{n_c})$ be a sequence of words the context of the target word.
+Let $\c=(w_{1},...,w_{n_c})$ be a sequence of words making up the context of the target word.
 For example for the target word \emph{kid}, the context could be $\c=($ \emph{ wow the wool from the, is, so, soft, and, fluffy}$)$, where \emph{kid} is the central word taken from between \emph{the} and \emph{fluffy}.
 
 For any particular sense, $s_i$, the multiple sense skip-gram language model can be used to
-find the probability of a word $w_j$ occurring in the context: $P(w_j \mid s_i)$
-\parencite{tian2014probabilistic,AdaGrams}.
+find the probability of a word $w_j$ occurring in the context: $P(w_j \mid s_i)$.
 By assuming the conditional independence of each word $w_j$ in the context, given the sense embedding $s_i$, the probability of the context can be calculated:
 \begin{equation} \label{eq:contextprobtrue}
 P(\c \mid s_{i})=\prod_{\forall w_{j}\in\c}P(w_{j} \mid s_{i})
@@ -231,7 +230,7 @@ P(s_{i} \mid \c) =
 {\sum_{s_{j}\in\s} P(\c \mid s_{j})P(s_{j})}
 \end{equation}
 
-This is the probability of the sense, given the context.
+This is the probability of the sense given the context.
 Further to \Cref{eq:generalwsd}, we also developed a method for estimating a smoothed version of the posterior predictive distribution.
 
 
@@ -245,12 +244,12 @@ While \wordquote{CEO} is linked to a financial bank, and \wordquote{river} is li
 This use of \wordquote{bank} does refer to a financial institution, but there are other sentences with very similar words that would refer to a river bank.
 
 To resolve such dominance problems, we propose a new \emph{geometric smoothing} function applying to the general WSD equation (\Cref{eq:generalwsd}).
-We posit that this geometric smoothing function is suitable for smoothing posterior probability estimates derived from products of conditionally independent likelihoods.
+We posit that this function is suitable for smoothing posterior probability estimates derived from products of conditionally independent likelihoods.
 It smooths the resulting distribution, by shifting all probabilities to be closer to the uniform distribution,  -- more-so the further away they are from being uniform.
 
-We hypothesize that the sharpness of probability estimates from \Cref{eq:generalwsd} is a result of data sparsity, and of a false independence assumption in \Cref{eq:contextprobtrue}. False independence and training data sparsity cause overly sharp posterior distribution estimates. A problem that was particularly common for for n-gram language models \cite{rosenfeld2000two}.
+We hypothesize that the sharpness of probability estimates from \Cref{eq:generalwsd} is a result of data sparsity, and of a false independence assumption in \Cref{eq:contextprobtrue}. This sharpness is a problem that was particularly noted for for for n-gram language models \cite{rosenfeld2000two}.
 Word  embeddings language models largely overcome the data sparsity problem due to weight sharing effects \parencite{NPLM}.
-We posit that these problems remain for word sense embeddings, where there are many times more classes.
+We posit that the problem remains for word sense embeddings, where there are many more classes.
 Thus the training data must be split further between each sense than it was when split for each word. 
 Further to this, the frequency of words \parencite{zipf1949human}  and word senses \parencite{Kilgarriff2004} within a corpus both follow a approximate power law distribution (Zipf's Law).
 Thus rare word senses are extremely rare.
@@ -591,7 +590,7 @@ The mapping method \parencite{agirre2006}  was not up to the task of mapping uns
 While not directly comparable due to the difference in training data, we note that our Refitted results, are similar in performance, as measured by F1 score, to the results reported by Chen et al \shortcite{Chen2014}.
 AdaGram with smoothing, and Greedy embeddings with backoff have close to the same result as reported for L2R with backoff -- with the AdaGram slightly better and the Greedy embeddings slightly worse. They are exceeded by the best method reported in that paper: S2C method with backoff.
 Comparison to non-embedding based methods is not discussed here for brevity.
-Historically, the state of the art systems are very different in functioning \parencite{Navigli:2007:STC:1621474.1621480,moro2015semeval,navigli2013semeval}.
+Historically, the state of the art systems are very different in functioning, and are directly approaching the task. %\parencite{Navigli:2007:STC:1621474.1621480,moro2015semeval,navigli2013semeval}.
 
 
 Our results are not strong enough for Refitted AdaGram to be used as a WSD method on its own, but do demonstrate that the senses found by refitting are capturing the information from lexical senses.  It is now evident that the refitted sense embeddings are able to perform WSD, which was not possible with the unsupervised senses. 
