@@ -363,8 +363,8 @@ With these greedy embeddings, we always use a uniform prior, as the model does n
 \section{Similarity of Words in Context} \label{SimilarityInContext}
 Estimating word similarity with context is the task of determining how similar words are, when presented with the context they occur in. The goal of this task is to match human judgements of word similarity.
 
-For each of the target words and contexts; we can use refitting on the target word to create a word sense embedding specialised for the meaning in the context provided. Then the similarity of the refitted vectors can be measured using cosine distance (or similar).
-By measuring similarity this way, we are defining a new similarity measure, which competes with the commonly used AvgSimC.
+For each of the target words and contexts; we use refitting on the target word to create a word sense embedding specialised for the meaning in the context provided. Then the similarity of the refitted vectors can be measured using cosine distance (or similar).
+By measuring similarity this way, we are defining a new similarity measure.
 
 \subsection{AvgSimC}
 In their seminal work on sense vectors representations Reisinger and Mooney define a number of measures for word similarity suitable for use with sense embeddings \parencite{Reisinger2010}. The most successful was AvgSimC, which has become the gold standard method for use on similarity tasks. It has been used with great success in many works \cite{Huang2012,Chen2014,tian2014probabilistic}. 
@@ -519,13 +519,12 @@ l^\star (\l, \c_T) &= \argmax_{\forall l_i \in \l} P(l_i|\c_T) \\
 \end{equation}
 
 WordNet glosses are less than ideal examples sentences. They are definitions, rather than examples of use. They are also shared across many words -- one gloss per set of synonyms, across all lexemes (eg tenses).
-However the different words, sharing the same gloss, still have unique their refitted sense vectors.
-This is because they are made from different inducted sense vectors.
-The limitations of WordNet glosses does not prevent our refitting system from functioning.
+Different words, sharing the same gloss, still have unique refitted sense vectors as they are made from combinations of different inducted sense vectors.
+The limitations of WordNet glosses does not prevent our system from functioning.
 
 \subsection{Lexical Sense Prior}
 WordNet includes frequency counts for each word sense based on Semcor \parencite{tengi1998design}. These form a prior for $P(l_i)$.
-The comparatively small size of Semcor means that many word senses do not occur at all. 82\% of all senses have no count information.
+The comparatively small size of Semcor means that many word senses do not occur at all.
 We apply add-one smoothing to find the prior, to remove any zero counts.
 This is in addition to using our proposed geometric smoothing as an optional part of the general WSD.
 Geometric smoothing serves a different (but related) purpose, of decreasing the sharpness of the likelihood function -- not of removing impossibilities from the prior.
@@ -533,12 +532,11 @@ Geometric smoothing serves a different (but related) purpose, of decreasing the 
 \subsection {Experimental Setup}
 The WSD performance is evaluated on the SemEval 2007 Task 7. 
 WordNet 2.1, is used as the sense inventory.
-All glosses are converted to lower case, when used as the example sentences in the refitting step. 
 They are not clipped to a window around the target word, as the target word often does not occur at all in the gloss; and the glosses are already close to the correct size.
 
 We use the weighted mapping method of Agirre et al \shortcite{agirre2006}, (see \Cref{mapping}) as a baseline alternative method for using WSI senses for WSD.
-When estimating the sense mapping weights we used both of the all-words-annotated subcorpora (Brown1 and Brown2) of Semcor as the mapping corpus.
-While calculating the weights for the map, we do clip to a 10 word context window for each target word to be disambiguated.
+When estimating the sense mapping weights we use Semcor as the mapping corpus.
+While calculating the weights for the map, we clip to a 10 word context window for each target word to be disambiguated.
 
 The second baseline we use is the Most Frequent Sense (MFS). This method always disambiguates any word as having its  most common meaning. Due to the power law distribution of word senses, this is an effective heuristic \parencite{Kilgarriff2004}.
 
@@ -586,11 +584,11 @@ We also evaluated the performance of the mapping baseline, and the Greedy embedd
 	} \label{samevalres}
 \end{table}
 
-The results of employing our method for WSD , are shown in \Cref{samevalres}. Our results using smoothed refitting, both with AdaGram and Greed Embeddings with backoff, outperform the MSF baseline -- noted as a surprisingly hard baseline to beat \parencite{Chen2014}. 
+The results of employing our method for WSD , are shown in \Cref{samevalres}. Our results using smoothed refitting, both with AdaGram and Greed Embeddings with backoff, outperform the MSF baseline -- noted as a surprisingly hard baseline to beat \parencite{Chen2014}.
 
 The mapping method \parencite{agirre2006}  was not up to the task of mapping unsupervised senses to supervised senses, on this large scale task. The Refitting method worked significantly better. Though refitting is only usable for language-model embedding WSI, whereas the mapping method is suitable for all WSI systems.
 
-While not directly comparable due to the difference in training data, we note that our Refitted results, are similar in performance, as measured by F1 score, to the results reported by Chen et al \parencite{Chen2014}.
+While not directly comparable due to the difference in training data, we note that our Refitted results, are similar in performance, as measured by F1 score, to the results reported by Chen et al \shortcite{Chen2014}.
 AdaGram with smoothing, and Greedy embeddings with backoff have close to the same result as reported for L2R with backoff -- with the AdaGram slightly better and the Greedy embeddings slightly worse. They are exceeded by the best method reported in that paper: S2C method with backoff.
 Comparison to non-embedding based methods is not discussed here for brevity.
 Historically, the state of the art systems are very different in functioning \parencite{Navigli:2007:STC:1621474.1621480,moro2015semeval,navigli2013semeval}.
