@@ -1,9 +1,3 @@
- latexdiff --exclude-safecmd="section,subsection,subsubsection" --exclude-textcmd="section,subsection,subsubsection" www_version.tex "AligningWordSenseEmbeddings.tex"  > diff.tex
- 
-# GOTO LABEL
+latexdiff --exclude-safecmd="section,subsection,subsubsection" --exclude-textcmd="section,subsection,subsubsection" www_version.tex "AligningWordSenseEmbeddings.tex"  > diff.tex
 
-# %\usepackage[subpreambles=true]{standalone}
-# \usepackage{environ}
-# \RenewEnviron{adjustbox}{Nothing here}
- 
-# :LABEL
+sed -i 's|\\usepackage\[subpreambles=\w*\]{standalone}|%\\usepackage[subpreambles=true]{standalone}\n\\usepackage{environ}\n\\RenewEnviron{adjustbox}{Nothing here}|g' diff.tex
