@@ -1,4 +1,4 @@
 LATEXDIFF="/home/wheel/oxinabox/build/latexdiff/latexdiff"
-$LATEXDIFF -V --exclude-safecmd="section,subsection,subsubsection" --exclude-textcmd="section,subsection,subsubsection" www_version.tex "AligningWordSenseEmbeddings.tex"  > diff.tex
+$LATEXDIFF -V --math-markup=1 --exclude-safecmd="section,subsection,subsubsection" --exclude-textcmd="section,subsection,subsubsection" www_version.tex "AligningWordSenseEmbeddings.tex"  > diff.tex
 
 sed -i 's|\\usepackage\[subpreambles=\w*\]{standalone}|%\\usepackage[subpreambles=true]{standalone}\n\\usepackage{environ}\n\\RenewEnviron{adjustbox}{Nothing here}|g' diff.tex
