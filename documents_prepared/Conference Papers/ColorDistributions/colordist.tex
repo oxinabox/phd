@@ -1,0 +1,66 @@
+\documentclass[]{article}
+
+%opening
+\title{Distributions of Colorful Meaning}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+When a speaker says the name of a color, the color they picture is not necessarily the same color the hearer imagines.
+Color is a grounded semantic task, but that grounding is not a single value, but rather a range of possible values that could be meant.
+
+
+\end{abstract}
+
+\section{Introduction}
+When a person says \emph{tan} they may mean a number of colors: From the bronze of a tanned sunbather, to the brown of tanned leather. When they say \emph{green} they may mean anything from \emph{aquamarine} to \emph{forest green}; and \emph{forest green} itself may mean the shades of a rain-forest, or of a fir-wood, or of a particular branded crayon the speaker had as a child.
+
+The mapping from color name to color could be considered a regression problem. Solving to find a function that when input some text such as ``forest green'', outputs a numerical value in a color space such as HSV or RGB.
+However, regression discards information about the distribution.
+If the distributions in color space were mono-modal and symmetric with consistently small variance, then considering the problem as regression with noise would be adequate.
+If the distribution were multi-model (e.g. a mixture model), or non-symmetric (e.g. a truncated distribution) or with varying and wide variances, then regression is loosing valuable information and is unable to produce a model that aligns well with reality.
+At the other end from regression, is classification.
+
+A classifier will output probabilities for each of the possible categories an input could belong to.
+By dividing color space into thresholded bins, where each bin is its own category.
+Then by classifying a color, one gets getting probabilities of it laying in each bin. The output of the classifier defines an empirical distribution in color-space.
+Basic classification models consider each category as being distinct and unrelated.
+However, we know that if a color name has a high probability of corresponding to a particular point in color space, then it should have a similar probability for other points in that neighbourhood -- this is a notion of continuousness.
+A variety of approaches called ordinal regression or ordinal classification exist to handle this case, where there is a order to the categories.
+However, there is no natural total ordering of colors.
+In in Hue-Saturation-Value (HSV) color space; we think of the hue dimension as being cyclic: \emph{red}, \emph{orange}, \emph{yellow}, \emph{green}, \emph{blue}, \emph{purple}, and back to \emph{red}.
+One solution would be to move to a color-space which is orderable in all dimensions: for example Red-Green-Blue (RGB).
+However, some of these space do not well align to human perception; or exhibit strong correlation between the values on different dimensions.
+Further, to handle non-independence of the dimensions of color space, it is natural to consider the categories as regions of a 2D or 3D space (Much like a 2D histogram) for bins of two or three color space dimensions at one.
+Again, there is no ordering on such multiple dimensional points.
+So classical ordinal classification methods have limitted utility on the problem.
+We instead look to helping a normal classifier learn the continuous relationship between adjacent bins by enhancing the training data.
+Rather than representing each observation as a one-hot output with the hot cell being the bin it lays in, we represent it as a histogram of values for a continuous probability distribution with the expected value being the original value of the observation.
+This can be seen as bluring a one-hot representation.
+By adding this blur to all observations, it encourages the classifier to learn at lower level the tied value between the adjunct bins.
+For repressentations of the HSV Saturation and Value dimensions a truncated Gaussian distribution is used for the representation, restricting the value to between 0 and 1.
+For the Hue dimension wrapped normal distribution is used \footnote{In implementation, we initially approximated the wrapped normal distribution with a von Mises distribution with support between 0 and 1; however the CDF for this was computationally expensive; so we switched to a truncated gaussian with the support between -1 and 2, which allowed for very fast implementation by aliasing the memoryy locations outside the true value's support of 0 to 1. The difference in value is negligible until variance becomes much large than we consider here.}
+
+
+
+
+
+ 
+\section{Related Work}
+\subsection{Ordinal Regression}
+\subsection{Image Generation}
+\subsection{Color Naming}
+\subsection{Color Generation}
+
+
+\section{Method}
+
+\section{Experimental Setup}
+\section{Results and Discussion}
+\section{Conclusion}
+
+\end{document}
