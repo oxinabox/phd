@@ -18,6 +18,7 @@ Color is a grounded semantic task, but that grounding is not a single value, but
 
 \section{Introduction}
 When a person says \emph{tan} they may mean a number of colors: From the bronze of a tanned sunbather, to the brown of tanned leather. When they say \emph{green} they may mean anything from \emph{aquamarine} to \emph{forest green}; and \emph{forest green} itself may mean the shades of a rain-forest, or of a fir-wood, or of a particular branded crayon the speaker had as a child.
+Here we will disregard issues of illumination and perceived color based on context, to focus on the core problem of the color of a single patch.
 
 The mapping from color name to color could be considered a regression problem. Solving to find a function that when input some text such as ``forest green'', outputs a numerical value in a color space such as HSV or RGB.
 However, regression discards information about the distribution.
@@ -43,7 +44,18 @@ Rather than representing each observation as a one-hot output with the hot cell 
 This can be seen as bluring a one-hot representation.
 By adding this blur to all observations, it encourages the classifier to learn at lower level the tied value between the adjunct bins.
 For repressentations of the HSV Saturation and Value dimensions a truncated Gaussian distribution is used for the representation, restricting the value to between 0 and 1.
-For the Hue dimension wrapped normal distribution is used \footnote{In implementation, we initially approximated the wrapped normal distribution with a von Mises distribution with support between 0 and 1; however the CDF for this was computationally expensive; so we switched to a truncated gaussian with the support between -1 and 2, which allowed for very fast implementation by aliasing the memoryy locations outside the true value's support of 0 to 1. The difference in value is negligible until variance becomes much large than we consider here.}
+For the Hue dimension wrapped normal distribution is used \footnote{In implementation, we initially approximated the wrapped normal distribution with a von Mises distribution with support between 0 and 1; however the CDF for this was computationally expensive; so we switched to a truncated gaussian with the support between -1 and 2, which allowed for very fast implementation by aliasing the memory locations outside the true value's support of 0 to 1. The difference in value is negligible until variance becomes much large than we consider here.}
+
+
+
+
+\section{Highly multimodal colors}
+One of the core motivating factors of this work is to be able to handle the color names which have multiple distinct modes.
+That is to say there are distinct peaks of the most likely region in color space.
+This is not the solo motivation -- there is also the important factors of knowing the confidance of a particular sample of colorspace, and understanding the other factors of the distribution, eg spread and more general shape.
+As well as the linquistic interest in how the modifier words influence the colours, and the capacity to combine terms in ways never seen in the training data.
+However, a core interest here is in colors with a multi-modal distribution; such colors can not be considered as targets for regression as they do not have a symmetric "noise" variation around their mode.
+
 
 
 
@@ -52,12 +64,15 @@ For the Hue dimension wrapped normal distribution is used \footnote{In implement
  
 \section{Related Work}
 \subsection{Ordinal Regression}
-\subsection{Image Generation}
 \subsection{Color Naming}
 \subsection{Color Generation}
+\subsection{Image Generation}
 
 
 \section{Method}
+\section{Conditional Independence Assumption}
+For HSV colors we make the assumption that given the name of the color, then the distribution of the H, S and V components are independent.
+That is to say, we assume that if knowing the value of one component would not inform us as to the value of the other if we already know the name of the color.
 
 \section{Experimental Setup}
 \section{Results and Discussion}
