@@ -1,7 +1,7 @@
 \documentclass[]{article}
 
 %opening
-\title{Distributions of Colorful Meaning}
+\title{Learning Distributions of Meant Color}
 \author{}
 \date{}
 
@@ -12,6 +12,9 @@
 \begin{abstract}
 When a speaker says the name of a color, the color they picture is not necessarily the same color the hearer imagines.
 Color is a grounded semantic task, but that grounding is not a single value, but rather a range of possible values that could be meant.
+To handle this case, we predict a estimated distribution of values, for any given description.
+This work further generalises to predict distributions for multi-word descriptions never scene during training.
+
 
 
 \end{abstract}
@@ -38,13 +41,14 @@ One solution would be to move to a color-space which is orderable in all dimensi
 However, some of these space do not well align to human perception; or exhibit strong correlation between the values on different dimensions.
 Further, to handle non-independence of the dimensions of color space, it is natural to consider the categories as regions of a 2D or 3D space (Much like a 2D histogram) for bins of two or three color space dimensions at one.
 Again, there is no ordering on such multiple dimensional points.
-So classical ordinal classification methods have limitted utility on the problem.
+So classical ordinal classification methods have limited utility on the problem.
+
 We instead look to helping a normal classifier learn the continuous relationship between adjacent bins by enhancing the training data.
 Rather than representing each observation as a one-hot output with the hot cell being the bin it lays in, we represent it as a histogram of values for a continuous probability distribution with the expected value being the original value of the observation.
-This can be seen as bluring a one-hot representation.
+This can be seen as blurring a one-hot representation.
 By adding this blur to all observations, it encourages the classifier to learn at lower level the tied value between the adjunct bins.
-For repressentations of the HSV Saturation and Value dimensions a truncated Gaussian distribution is used for the representation, restricting the value to between 0 and 1.
-For the Hue dimension wrapped normal distribution is used \footnote{In implementation, we initially approximated the wrapped normal distribution with a von Mises distribution with support between 0 and 1; however the CDF for this was computationally expensive; so we switched to a truncated gaussian with the support between -1 and 2, which allowed for very fast implementation by aliasing the memory locations outside the true value's support of 0 to 1. The difference in value is negligible until variance becomes much large than we consider here.}
+For representations of the HSV Saturation and Value dimensions a truncated Gaussian distribution is used for the representation, restricting the value to between 0 and 1.
+For the Hue dimension wrapped normal distribution is used \footnote{In implementation, we initially approximated the wrapped normal distribution with a von Mises distribution with support between 0 and 1; however the CDF for this was computationally expensive; so we switched to a truncated Gaussian with the support between -1 and 2, which allowed for very fast implementation by aliasing the memory locations outside the true value's support of 0 to 1. The difference in value is negligible until variance becomes much large than we consider here.}
 
 
 
@@ -52,8 +56,8 @@ For the Hue dimension wrapped normal distribution is used \footnote{In implement
 \section{Highly multimodal colors}
 One of the core motivating factors of this work is to be able to handle the color names which have multiple distinct modes.
 That is to say there are distinct peaks of the most likely region in color space.
-This is not the solo motivation -- there is also the important factors of knowing the confidance of a particular sample of colorspace, and understanding the other factors of the distribution, eg spread and more general shape.
-As well as the linquistic interest in how the modifier words influence the colours, and the capacity to combine terms in ways never seen in the training data.
+This is not the solo motivation -- there is also the important factors of knowing the confidence of a particular sample of color-space, and understanding the other factors of the distribution, eg spread and more general shape.
+As well as the linguistic interest in how the modifier words influence the colours, and the capacity to combine terms in ways never seen in the training data.
 However, a core interest here is in colors with a multi-modal distribution; such colors can not be considered as targets for regression as they do not have a symmetric "noise" variation around their mode.
 
 
@@ -74,7 +78,25 @@ However, a core interest here is in colors with a multi-modal distribution; such
 For HSV colors we make the assumption that given the name of the color, then the distribution of the H, S and V components are independent.
 That is to say, we assume that if knowing the value of one component would not inform us as to the value of the other if we already know the name of the color.
 
+Superficial checks were carried out the the accuracy of this assumption.
+The Spearman's correlation on the training datas suggest that for over three quarters of all color names, there is only weak to zero pairwise correlation (Q3 < 0.20) between the H,S, and V components.
+This was the lowest, when compared amongst 16 color spaces RGB, HSV, HSI, HSL, xyY, XYZ, Lab, Luv, LCHab, LCHuv, DIN99, DIN99d, DIN99o, LMS, YIQ, YCbCr.
+However, Speakman correlation is underestimated for values that have circular relative value, such as hue.
+For the investigation here, we consider the conditional independence assumption sufficient. Better results may be obtained by attempting to output a 3D joint distribution.
+
 \section{Experimental Setup}
+\subsection{Data Preparation}
+We use the Monroe dataset \parencite{Monroe2010XKCDdataset}, as prepared by McMahan and Stone \parencite{mcmahan2015bayesian}.
+This data has minor cleaning, and a standard division into test, development, and train subdatasets. It is also used by \textcite{2016arXiv160603821M} and \textcite{DBLP:journals/corr/KawakamiDRS16}.
+
+The text descriptions are loosely tokenised into separate words and affixes.
+Beyond simply breaking up a description ``greenish blue'' into words: ``greenish'', ``blue'', we further separate the suffix as it's own token: ``green'', ``ish'', ``blue''.
+This tokenization is achieved through a short list of word replacement rules.
+We also separate `-` into a distinct token. ``blue-green'' becomes ``blue'', ``-'', ``green''.
+We do not demarcate the beginning or end of the color description with any for of marker token.
+
+
+
 \section{Results and Discussion}
 \section{Conclusion}
 
