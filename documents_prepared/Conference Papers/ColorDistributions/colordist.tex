@@ -25,7 +25,9 @@ Here we will disregard issues of illumination and perceived color based on conte
 
 The mapping from color name to color could be considered a regression problem. Solving to find a function that when input some text such as ``forest green'', outputs a numerical value in a color space such as HSV or RGB.
 However, regression discards information about the distribution.
-If the distributions in color space were mono-modal and symmetric with consistently small variance, then considering the problem as regression with noise would be adequate.
+If the distributions in color space were mono-modal
+\footnote{It should be understood that in this paper, when say \emph{mono-modal} or \emph{multimodal} it is meant in the sense of the number of peaks in the probability distribution; not in the sense of the number of modalities of the data -- e.g. multimodal audio-visual data.}
+ and symmetric with consistently small variance, then considering the problem as regression with noise would be adequate.
 If the distribution were multi-model (e.g. a mixture model), or non-symmetric (e.g. a truncated distribution) or with varying and wide variances, then regression is loosing valuable information and is unable to produce a model that aligns well with reality.
 At the other end from regression, is classification.
 
@@ -67,13 +69,52 @@ However, a core interest here is in colors with a multi-modal distribution; such
 
  
 \section{Related Work}
+\pdfcomment
 \subsection{Ordinal Regression}
 \subsection{Color Naming}
+Color naming is the reverse of the task we investigate in this work.
+The color naming task takes a point in color-space as in input, and outputs a probability distribution over possible names for that color.
+There a three notable recent works on color-naming.
+\cite{mcmahan2015bayesian} presents a full description Bayesian approach, which outputs the probability of a whole description.
+\cite{2016arXiv160603821M} presents a per-word LSTM approach, which produces a conditional language model -- sequentially outputting a probability of each word in the description.
+\cite{DBLP:journals/corr/KawakamiDRS16} presents a per-character LSTM and Variational Autoencoder approach, which products a conditional character language model -- sequentially outputting a probability of each character in the description.
+This work by Kawakami et al, also includes a method for generating colours.
+
 \subsection{Color Generation}
+Color generation closely related to the primary task considered here.
+The process of going from the name of a color, to an actual color -- a single point in a color space.
+\cite{DBLP:journals/corr/KawakamiDRS16} presents a method using RNN, and LSTM, as well as baselines using unigram and bigrams, over characters, to predict a point in \emph{Lab} color space \cite{hunter1958photoelectric}.
+Color generation is the single output version of our task of color distribution estimation.
+
+The work we present here, goes beyond just color generation.
+As given a color name, we generate probability distributions in color space,
+these distributions can be sampled, or the peaks selected, to generate colours.
+However, they have further use, as we have the whole distribution.
+For example, as a subsystem in image processing, when asked to select the ``dark bluish green'' object, each object can be ranked based on how likely it's color is according to the distribution.
+This way if extra information eliminates the most-likely object, the second most likely object can immediately be determined.
+Further, as the probability of the color of the object being the color being described by the user input is known, a threshold can be given to report no object found, or to ask for additional confirmation.
+
+Color generation system systems outputting a single color can approximate this by using the distance in color space, from a observed color to the predicted color as a proxy for the probability of the observed color. However, this does not handle asymmetric, or multimodal distributions, nor does it take into account that the range of values reasonable for one color description, often significantly differs in width from that reasonable for another.
+
 \subsection{Image Generation}
+
+Recent works on image generation produce very impressive images based on sentence inputs\cite{reed2016generative,2015arXiv151102793M}.
+These end-to-end systems take in a sentence and synthesize a full image.
+They have been demonstrated to be able to generate images taking into account the colors described.
+Like color generation, this is a single output, or a sampling of outputs rather than distribution.
+These works show that it is possible to encode complex information about color based on the wrods being used.
 
 
 \section{Method}
+
+\section{The Models}
+
+\subsection{GRU Model}
+
+\subsection{Baseline Empirical Model}
+For comparison we define an additional model  
+
+
 \section{Conditional Independence Assumption}
 For HSV colors we make the assumption that given the name of the color, then the distribution of the H, S and V components are independent.
 That is to say, we assume that if knowing the value of one component would not inform us as to the value of the other if we already know the name of the color.
