@@ -1,9 +1,16 @@
 \documentclass[]{article}
+\usepackage[subpreambles=true]{standalone}
+\usepackage{graphicx}
+
+\graphicspath{figs/}
 
 %opening
 \title{Learning Distributions of Meant Color}
 \author{}
 \date{}
+
+\def\parencite\cite
+\def\textcite\cite
 
 \begin{document}
 
@@ -38,7 +45,7 @@ Basic classification models consider each category as being distinct and unrelat
 However, we know that if a color name has a high probability of corresponding to a particular point in color space, then it should have a similar probability for other points in that neighbourhood -- this is a notion of continuousness.
 A variety of approaches called ordinal regression or ordinal classification exist to handle this case, where there is a order to the categories.
 However, there is no natural total ordering of colors.
-In in Hue-Saturation-Value (HSV) color space; we think of the hue dimension as being cyclic: \emph{red}, \emph{orange}, \emph{yellow}, \emph{green}, \emph{blue}, \emph{purple}, and back to \emph{red}.
+In Hue-Saturation-Value (HSV) color space; we think of the hue dimension as being cyclic: \emph{red}, \emph{orange}, \emph{yellow}, \emph{green}, \emph{blue}, \emph{purple}, and back to \emph{red}.
 One solution would be to move to a color-space which is orderable in all dimensions: for example Red-Green-Blue (RGB).
 However, some of these space do not well align to human perception; or exhibit strong correlation between the values on different dimensions.
 Further, to handle non-independence of the dimensions of color space, it is natural to consider the categories as regions of a 2D or 3D space (Much like a 2D histogram) for bins of two or three color space dimensions at one.
@@ -69,7 +76,7 @@ However, a core interest here is in colors with a multi-modal distribution; such
 
  
 \section{Related Work}
-\pdfcomment
+
 \subsection{Ordinal Regression}
 \subsection{Color Naming}
 Color naming is the reverse of the task we investigate in this work.
@@ -102,7 +109,7 @@ Recent works on image generation produce very impressive images based on sentenc
 These end-to-end systems take in a sentence and synthesize a full image.
 They have been demonstrated to be able to generate images taking into account the colors described.
 Like color generation, this is a single output, or a sampling of outputs rather than distribution.
-These works show that it is possible to encode complex information about color based on the wrods being used.
+These works show that it is possible to encode complex information about color based on the words being used.
 
 
 \section{Method}
@@ -111,8 +118,21 @@ These works show that it is possible to encode complex information about color b
 
 \subsection{GRU Model}
 
-\subsection{Baseline Empirical Model}
-For comparison we define an additional model  
+\begin{figure}
+	\input{./figs/network}
+	\caption{The GRU Model for predicting the color-space probability distributions of color }
+\end{figure}
+
+\subsection{Empirical Model}
+For comparison we define an additional model based only on summing the data, without the machine learning component.
+We call this the empirical model, as an allusion to the empirical models used in approximating distributions.
+For this model, where produce the estimated distribution for each color description simply by summing all of that colors discretized observations.
+For what we will call the \emph{Baseline Empirical Model} this a sum of the observations from the training case, featuring the same blurring, as in the GRU Model.
+We also establish an upper-bound on the performance in what we call the \emph{Oracle Empirical Model}.
+In the \emph{Oracle Empirical Model}, discretized observations from the test-set are used, without any blurring.
+This give the upper-bound on how well any model with this output resolution could theoretically perform.
+
+
 
 
 \section{Conditional Independence Assumption}
@@ -120,10 +140,14 @@ For HSV colors we make the assumption that given the name of the color, then the
 That is to say, we assume that if knowing the value of one component would not inform us as to the value of the other if we already know the name of the color.
 
 Superficial checks were carried out the the accuracy of this assumption.
-The Spearman's correlation on the training datas suggest that for over three quarters of all color names, there is only weak to zero pairwise correlation (Q3 < 0.20) between the H,S, and V components.
+The Spearman's correlation on the training datas suggest that for over three quarters of all color names, there is only weak to zero pairwise correlation between the H,S, and V components (Q3 < 0.20).
 This was the lowest, when compared amongst 16 color spaces RGB, HSV, HSI, HSL, xyY, XYZ, Lab, Luv, LCHab, LCHuv, DIN99, DIN99d, DIN99o, LMS, YIQ, YCbCr.
-However, Speakman correlation is underestimated for values that have circular relative value, such as hue.
-For the investigation here, we consider the conditional independence assumption sufficient. Better results may be obtained by attempting to output a 3D joint distribution.
+However, Spearman's correlation is underestimated for values that have circular relative value, such as hue.
+For the investigation here, we consider the conditional independence assumption sufficient.
+
+Note that the evaluation metrics choses do not assume conditional independence.
+Though the models -- including the Oracle Empirical Model -- do.
+Better results may be obtained by outputting a 3D joint distribution.
 
 \section{Experimental Setup}
 \subsection{Data Preparation}
@@ -158,5 +182,21 @@ This produces a dataset suitable for evaluating the capacity of our model to ext
 
 \section{Results and Discussion}
 \section{Conclusion}
+
+
+\subsection{Future-work}
+To enhance the capacity to model the different ways a word can be used in a color description we suggest a parsing step could be added prior to any modelling.
+This would label each token with a linguistic roll.
+We suggest that this would improve the capacity of this, and other related models to handle cases such as ``greenish''.
+We note the our model currently performs less than ideally for ``greenish'' as an color description on its own -- it should have two peaks on either side of the green hue.
+We suggest that this is because the representation for ``greenish'' in the embedding layer is shared both for its use on its own, and for its use as a modifier to other colors -- eg ``greenish blue''.
+By adding additional role labels by a parsing step these cases could be distinguished and given separate representations.
+
+
+The discretization process representing a continuous probability distribution as a discrete distribution is pragmatically effective, but unsatisfying.
+We suggest there are avenues for advancement here by the extension of \textcite{magdon1998neural} to handle conditional distributions.
+
+
+
 
 \end{document}
