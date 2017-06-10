@@ -1,16 +1,37 @@
-\documentclass[]{article}
-\usepackage[subpreambles=true]{standalone}
+\documentclass[11pt,letterpaper]{article}
+\usepackage{ijcnlp2017}
+%\ijcnlpfinalcopy % Uncomment this line for the final submission:
+
+\usepackage{newtxtext}
+\usepackage[author={Lyndon}]{pdfcomment}
+
+
+
+%  Enter the IJCNLP Paper ID here:
+\def\ijcnlppaperid{***}
+
+\usepackage{verbatim}
+\usepackage{tikz}
+\usetikzlibrary{positioning, fit,  shapes.geometric}
 \usepackage{graphicx}
 
-\graphicspath{figs/}
+\graphicspath{{./figs/}, {./}}
+
+\usepackage[subpreambles=false]{standalone}
+
+\usepackage{cleveref}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\parencite}{\cite}
+\newcommand{\textcite}{\newcite}
+
 
 %opening
 \title{Learning Distributions of Meant Color}
 \author{}
 \date{}
 
-\def\parencite\cite
-\def\textcite\cite
 
 \begin{document}
 
@@ -20,15 +41,16 @@
 When a speaker says the name of a color, the color they picture is not necessarily the same color the hearer imagines.
 Color is a grounded semantic task, but that grounding is not a single value, but rather a range of possible values that could be meant.
 To handle this case, we predict a estimated distribution of values, for any given description.
-This work further generalises to predict distributions for multi-word descriptions never scene during training.
-
-
+This work further generalities to predict distributions for multi-word descriptions never scene during training.
 
 \end{abstract}
 
 \section{Introduction}
 When a person says \emph{tan} they may mean a number of colors: From the bronze of a tanned sunbather, to the brown of tanned leather. When they say \emph{green} they may mean anything from \emph{aquamarine} to \emph{forest green}; and \emph{forest green} itself may mean the shades of a rain-forest, or of a fir-wood, or of a particular branded crayon the speaker had as a child.
+Thus the color can not be deterministically known from the color name.
+However, based on the knowledge of the population's use of the words, a probability distribution as to the color intended can be found.
 Here we will disregard issues of illumination and perceived color based on context, to focus on the core problem of the color of a single patch.
+
 
 The mapping from color name to color could be considered a regression problem. Solving to find a function that when input some text such as ``forest green'', outputs a numerical value in a color space such as HSV or RGB.
 However, regression discards information about the distribution.
@@ -57,8 +79,8 @@ Rather than representing each observation as a one-hot output with the hot cell 
 This can be seen as blurring a one-hot representation.
 By adding this blur to all observations, it encourages the classifier to learn at lower level the tied value between the adjunct bins.
 For representations of the HSV Saturation and Value dimensions a truncated Gaussian distribution is used for the representation, restricting the value to between 0 and 1.
-For the Hue dimension wrapped normal distribution is used \footnote{In implementation, we initially approximated the wrapped normal distribution with a von Mises distribution with support between 0 and 1; however the CDF for this was computationally expensive; so we switched to a truncated Gaussian with the support between -1 and 2, which allowed for very fast implementation by aliasing the memory locations outside the true value's support of 0 to 1. The difference in value is negligible until variance becomes much large than we consider here.}
-
+For the Hue dimension wrapped normal distribution is used
+\pdfcomment{Workout how to merge this with descetisation section}
 
 
 
@@ -77,7 +99,6 @@ However, a core interest here is in colors with a multi-modal distribution; such
  
 \section{Related Work}
 
-\subsection{Ordinal Regression}
 \subsection{Color Naming}
 Color naming is the reverse of the task we investigate in this work.
 The color naming task takes a point in color-space as in input, and outputs a probability distribution over possible names for that color.
@@ -114,14 +135,56 @@ These works show that it is possible to encode complex information about color b
 
 \section{Method}
 
+\section{Blurring and Discretization}
+To allow the network to readily learn the distribution of the colors we change the problem from a task of learning a conditional continuous distribution to the well-established problem of learning a conditional discrete distribution.
+First we add a blur to each observation.
+This is done by defining a distribution with expected value equal to the observation,
+and with variance defined as a hyper-parameter of our process.
+Saturation and Value are given truncated Gaussian distributions.
+Hue is given a wrap-around Gaussian \footnote{In implementation, we initially approximated the wrapped normal distribution with a von Mises distribution with support between 0 and 1; however the CDF for this was computationally expensive; so we switched to a truncated Gaussian with the support between -1 and 2, which allowed for very fast implementation by aliasing the memory locations outside the true value's support of 0 to 1. The difference in value is negligible until variance becomes much large than we consider here.}.
+To discretize the distribution, we partition the support into a number of equally sized bins -- the resolution of our output.
+We then evaluate the cumulative distribution between each bin boundary, resulting in a vector of values between zero and one -- summing to one.
+Functionally, this is very similar to converting to a one-hot representation, based on bin boundaries, but with some blurring to shift part of the mass into adjacent indices.
+
+
+
+\section{Conditional Independence Assumption}
+For HSV colors we make the assumption that given the name of the color, then the distribution of the H, S and V components are independent.
+That is to say, we assume that if knowing the value of one component would not inform us as to the value of the other if we already know the name of the color.
+This assumption is incorrect, but not as incorrect as might be suspected.
+
+Superficial checks were carried out the the accuracy of this assumption.
+The Spearman's correlation on the training data suggests that for over three quarters of all color names, there is only weak to zero pairwise correlation between the H,S, and V components (\mbox{Q3 < 0.20}).
+This was the lowest, when compared amongst 16 color spaces RGB, HSV, HSI, HSL, xyY, XYZ, Lab, Luv, LCHab, LCHuv, DIN99, DIN99d, DIN99o, LMS, YIQ, and YCbCr.
+However, this measure underestimates correlation for values that have circular relative value, such as hue.
+For the investigation here, we consider the conditional independence assumption sufficient.
+
+Note that the evaluation metrics choses do not assume conditional independence.
+Though the models -- including the Oracle Empirical Model -- do.
+Better results may be obtained by outputting a 3D joint distribution.
+
 \section{The Models}
 
 \subsection{GRU Model}
 
 \begin{figure}
-	\input{./figs/network}
-	\caption{The GRU Model for predicting the color-space probability distributions of color }
+	\resizebox{\columnwidth}{!}{	\input{./figs/neuralnet}}
+
+	\caption{\label{network}
+		The GRU Model for predicting the color-space probability distributions of color.
+		The section in the dotted-boxes is repeated for each time step.
+		}
 \end{figure}
+
+We present a neural network based model, with sequential inputs which predicts the 3 separate output distributions. The general structure of this network is similar to \cite{2016arXiv160603821M}, or to most other word sequence learning models.
+It is shown in \Cref{network}.
+Each word first is transformed to an embedding representation.
+This representation is randomly initialized and is trained with the rest of the network.
+The embedding is used as the input for a Gated Recurrent Unit (GRU) \parencite{cho2014properties,chung2014empirical}.
+The output of final time-step is feed to a Rectified Linear Unit (ReLU) \parencite{dahl2013reludropout}.
+Finally, the this used as the input the three distinct softmax output layers -- one for each of hue, saturation and value.
+The network was trained to minimize to sum of the three cross-entropy losses of these output layers.
+
 
 \subsection{Empirical Model}
 For comparison we define an additional model based only on summing the data, without the machine learning component.
@@ -134,27 +197,14 @@ This give the upper-bound on how well any model with this output resolution coul
 
 
 
-
-\section{Conditional Independence Assumption}
-For HSV colors we make the assumption that given the name of the color, then the distribution of the H, S and V components are independent.
-That is to say, we assume that if knowing the value of one component would not inform us as to the value of the other if we already know the name of the color.
-
-Superficial checks were carried out the the accuracy of this assumption.
-The Spearman's correlation on the training datas suggest that for over three quarters of all color names, there is only weak to zero pairwise correlation between the H,S, and V components (Q3 < 0.20).
-This was the lowest, when compared amongst 16 color spaces RGB, HSV, HSI, HSL, xyY, XYZ, Lab, Luv, LCHab, LCHuv, DIN99, DIN99d, DIN99o, LMS, YIQ, YCbCr.
-However, Spearman's correlation is underestimated for values that have circular relative value, such as hue.
-For the investigation here, we consider the conditional independence assumption sufficient.
-
-Note that the evaluation metrics choses do not assume conditional independence.
-Though the models -- including the Oracle Empirical Model -- do.
-Better results may be obtained by outputting a 3D joint distribution.
-
 \section{Experimental Setup}
 \subsection{Data Preparation}
 We use the Monroe dataset \parencite{Monroe2010XKCDdataset}, as prepared by McMahan and Stone \parencite{mcmahan2015bayesian}.
 This data has minor cleaning, and a standard division into test, development, and train subdatasets. It is also used by \textcite{2016arXiv160603821M} and \textcite{DBLP:journals/corr/KawakamiDRS16}.
+The color space is HSV, with all values between zero and one.
+Each is pair with a short name for the color, and provided by participants in the Color Survey.
 
-The text descriptions are loosely tokenised into separate words and affixes.
+The text descriptions are loosely tokenized into separate words and affixes.
 Beyond simply breaking up a description ``greenish blue'' into words: ``greenish'', ``blue'', we further separate the suffix as it's own token: ``green'', ``ish'', ``blue''.
 We separate the ``-ish'' and the ``-y'' suffixes.
 This tokenization is achieved through a short list of word replacement rules.
@@ -185,7 +235,7 @@ This produces a dataset suitable for evaluating the capacity of our model to ext
 
 
 \subsection{Future-work}
-To enhance the capacity to model the different ways a word can be used in a color description we suggest a parsing step could be added prior to any modelling.
+To enhance the capacity to model the different ways a word can be used in a color description we suggest a parsing step could be added prior to any modeling.
 This would label each token with a linguistic roll.
 We suggest that this would improve the capacity of this, and other related models to handle cases such as ``greenish''.
 We note the our model currently performs less than ideally for ``greenish'' as an color description on its own -- it should have two peaks on either side of the green hue.
@@ -198,5 +248,7 @@ We suggest there are avenues for advancement here by the extension of \textcite{
 
 
 
+\bibliography{master}
+\bibliographystyle{ijcnlp2017nourl}
 
 \end{document}
