@@ -59,6 +59,7 @@ If the distributions in color space were mono-modal
  and symmetric with consistently small variance, then considering the problem as regression with noise would be adequate.
 If the distribution were multi-model (e.g. a mixture model), or non-symmetric (e.g. a truncated distribution) or with varying and wide variances, then regression is loosing valuable information and is unable to produce a model that aligns well with reality.
 At the other end from regression, is classification.
+\pdfcomment{Relate this to McMalan and Stone's use of Convex -- Symstric is a stronger requirement than convex, and monomodal suggests that }
 
 A classifier will output probabilities for each of the possible categories an input could belong to.
 By dividing color space into thresholded bins, where each bin is its own category.
@@ -72,6 +73,7 @@ One solution would be to move to a color-space which is orderable in all dimensi
 However, some of these space do not well align to human perception; or exhibit strong correlation between the values on different dimensions.
 Further, to handle non-independence of the dimensions of color space, it is natural to consider the categories as regions of a 2D or 3D space (Much like a 2D histogram) for bins of two or three color space dimensions at one.
 Again, there is no ordering on such multiple dimensional points.
+We do not investigate the 2D or 3D joint distributions in this work, but we note that the extension of our work to such cases is trivial.
 So classical ordinal classification methods have limited utility on the problem.
 
 We instead look to helping a normal classifier learn the continuous relationship between adjacent bins by enhancing the training data.
@@ -92,6 +94,35 @@ As well as the linguistic interest in how the modifier words influence the colou
 However, a core interest here is in colors with a multi-modal distribution; such colors can not be considered as targets for regression as they do not have a symmetric "noise" variation around their mode.
 
 
+\newcommand{\multimodalfig}[1]{
+\begin{figure}
+	\IfFileExists{figs/multimodal/empiri#1.pdf}	%This is Fragile, might need to replace with a condtion based on arguments
+	{\includegraphics[width=\columnwidth]{multimodal/empiri#1}}
+	{}
+
+	\includegraphics[width=\columnwidth]{multimodal/gru#1}
+	
+	\caption{\label{fig#1} #1}
+\end{figure}
+}
+	
+\multimodalfig{grey}
+\multimodalfig{lightgrey}
+\multimodalfig{darkgrey}
+\multimodalfig{verylightgrey}
+\multimodalfig{verydarkgrey}
+
+
+
+One such color with a significant bi-modal distribution is ``grey''.
+Traditionally, ``grey'' has been considered to be achromatic -- that is to say its hue component does not matter.
+However, by looking at the data from the Monroe dataset \parencite{Monroe2010XKCDdataset} in \Cref{figgrey} it can be seen that that a the hue distribution significantly favors blues and reds over greens and purples.
+Further, ``light grey'' increases the yellow peak (\Cref{figlightgrey}), and ``dark grey'' (\Cref{figdarkgrey}) increases the ``blue'' peak, while also changing the value dimension, as expected.
+Beyond this, there is no empirical data, however, our GRU model suggests that that the distribution for `very light grey'' would be similar to that of ``light grey'' increases the yellow peak (\Cref{figverylightgrey}), and ``dark grey'' (\Cref{figverydarkgrey}), though we note that this extrapolation without training data seems rather loose it's precision.
+
+
+
+
 
 
 
@@ -102,8 +133,8 @@ However, a core interest here is in colors with a multi-modal distribution; such
 \subsection{Color Naming}
 Color naming is the reverse of the task we investigate in this work.
 The color naming task takes a point in color-space as in input, and outputs a probability distribution over possible names for that color.
-There a three notable recent works on color-naming.
-\cite{mcmahan2015bayesian} presents a full description Bayesian approach, which outputs the probability of a whole description.
+There a several notable recent works on color-naming.
+\cite{mcmahan2015bayesian,meomcmahanstone:color} present a full description Bayesian approach, which outputs the probability of a whole description.
 \cite{2016arXiv160603821M} presents a per-word LSTM approach, which produces a conditional language model -- sequentially outputting a probability of each word in the description.
 \cite{DBLP:journals/corr/KawakamiDRS16} presents a per-character LSTM and Variational Autoencoder approach, which products a conditional character language model -- sequentially outputting a probability of each character in the description.
 This work by Kawakami et al, also includes a method for generating colours.
@@ -123,6 +154,24 @@ This way if extra information eliminates the most-likely object, the second most
 Further, as the probability of the color of the object being the color being described by the user input is known, a threshold can be given to report no object found, or to ask for additional confirmation.
 
 Color generation system systems outputting a single color can approximate this by using the distance in color space, from a observed color to the predicted color as a proxy for the probability of the observed color. However, this does not handle asymmetric, or multimodal distributions, nor does it take into account that the range of values reasonable for one color description, often significantly differs in width from that reasonable for another.
+
+\section{Color Identification}
+
+\cite{DBLP:journals/corr/MonroeHGP17} presents a neural network solution to communication game, where a is presented with three color patchs and ask to descibe one of them, 
+such that when the listener is presented with the same color patchs that can select the one the speaker was describing.
+In this game, the color descriptions have context, for example the speaker can say ``the darker blue one, not the cyan''.
+Both speaker and listener models are trained, using and LSTM based decoder and encoders respectively.
+They present several variants of their models, including pragmatic models, and models that combine knowledge.
+The base listener model is of particular relevance to the distribution modeling task.
+The final time-step of the base listener LSTM produces a 100 dimensional representation of description provided.
+From this, a Gaussian distributed score function, over the Fourier-transform based color-space of \cite{2016arXiv160603821M}.
+By normalizing the scores of the three colors the listener is to choose from, the conditional probability of each can be found.
+It should be noted that while this method does output a probability distribution, as a by-product of the task
+it is Gaussian distributed for all inputs -- both symmetric and mono-modal, albeit in a high-dimensional non-linear color space.
+This is a reasonable distribution for use in this color-game, where the speaker is expressly trying to avoid ambiguity,
+and where color descriptions can feature reference to other colors in the context.
+Without this contextual information in the color-naming, distributions over all colors are required,
+and these distributions are not expected to be symmetric in any consistent color space.
 
 \subsection{Image Generation}
 
@@ -159,9 +208,20 @@ This was the lowest, when compared amongst 16 color spaces RGB, HSV, HSI, HSL, x
 However, this measure underestimates correlation for values that have circular relative value, such as hue.
 For the investigation here, we consider the conditional independence assumption sufficient.
 
+
+
 Note that the evaluation metrics choses do not assume conditional independence.
 Though the models -- including the Oracle Empirical Model -- do.
 Better results may be obtained by outputting a 3D joint distribution.
+
+The assumption is not intrinsic to our method.
+The discretization and blurring function identically in 3D joint distribution space,
+as in three, 1D independent distribution spaces.
+However, the independence assumption significantly decreases the computational requirements.
+For $$n_{res}$$ the resolution (number of bins) used in discretization:
+Assuming independence allows use to work with 3 output layers, each containing $$n_{res}$$.
+Rather than one output layer containing $n_{res}^3$ elements.
+
 
 \section{The Models}
 
@@ -217,15 +277,15 @@ Using the tokenization described above, we break each description into between o
 This results in a total of 311 unique tokens.
 
 \subsection{Extrapolation Sub-Dataset}
-One of the key advantages of our proposed system is its ability to predict the distribution for never before scene descriptions of colours.
+One of the key advantages of our proposed system is its ability to predict the distribution for never before scene descriptions of colors.
 For example, based on the learned understanding of ``bright'', from examples like ``bright green'' and ``bright red'', and of ``salmon'', our system can suggest the distribution in color space of ``bright salmon'', even though that color never occurs in the training data.
 To evaluate this, we derive a new dataset from Monroe dataset, which we will call the extrapolation sub-dataset.
 To define this, we select the rarest 100 color descriptions,
 with the restriction that every token in a selected description must still have at least 8 uses in other descriptions.
 The selected examples include multi-token descriptions such as: ``"bright yellow green'' and also some single tokens that occur more commonly as modifiers that as stand alone descriptions: ``pale''.
-We restrict the original test and development datasets to contain only observations of these selected colour descriptions.
+We restrict the original test and development datasets to contain only observations of these selected color descriptions.
 Conversely, we remove all observations of these color descriptions from the training set.
-This produces a dataset suitable for evaluating the capacity of our model to extrapolate the distributions for colour descriptions not seen in training.
+This produces a dataset suitable for evaluating the capacity of our model to extrapolate the distributions for color descriptions not seen in training.
 
 
 
