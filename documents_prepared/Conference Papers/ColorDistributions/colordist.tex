@@ -19,6 +19,7 @@
 
 \usepackage[subpreambles=false]{standalone}
 
+\usepackage{amsmath}
 \usepackage{cleveref}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -210,7 +211,7 @@ For the investigation here, we consider the conditional independence assumption 
 
 
 
-Note that the evaluation metrics choses do not assume conditional independence.
+Note that the evaluation metrics chosen do not assume conditional independence.
 Though the models -- including the Oracle Empirical Model -- do.
 Better results may be obtained by outputting a 3D joint distribution.
 
@@ -218,8 +219,8 @@ The assumption is not intrinsic to our method.
 The discretization and blurring function identically in 3D joint distribution space,
 as in three, 1D independent distribution spaces.
 However, the independence assumption significantly decreases the computational requirements.
-For $$n_{res}$$ the resolution (number of bins) used in discretization:
-Assuming independence allows use to work with 3 output layers, each containing $$n_{res}$$.
+For $n_{res}$ the resolution (number of bins) used in discretization:
+Assuming independence allows use to work with 3 output layers, each containing $n_{res}$.
 Rather than one output layer containing $n_{res}^3$ elements.
 
 
@@ -287,10 +288,59 @@ We restrict the original test and development datasets to contain only observati
 Conversely, we remove all observations of these color descriptions from the training set.
 This produces a dataset suitable for evaluating the capacity of our model to extrapolate the distributions for color descriptions not seen in training.
 
+\subsection{GRU Model Parameters}
+For the GRU model, regardless of output resolution, we use the same network parameters.
+Hidden layer size of 128 neuron for all hidden layers, except the embedding layer, which we give 16 neurons to.
+These values were found on a coarse search of the hyper parameters using the development portion of the data set with the output resolution being 64 bins.
+We note that accuracy continued to improve as  we increased the size of the hidden layers,
+however significantly diminishing returns for the increased computational time to work with the larger layers.
+We use dropout \parencite{srivastava2014dropout} with a probability of 0.5, on all hidden layers, except the embedding layer.
+
+
+\subsection{Evaluation Metrics}
+We propose two key measures of evaluation: Perplexity, and Mean Squared Error.
+The Perplexity allows us to evaluate how well our estimated distribution matches the distribution of the observations in the testset.
+Perplexity is commonly used for evaluating language models, however here it is being used to evaluate the descrited distribution.
+It can loosely be through of as to how well the model's distribution does compared to a uniform distribution -- which has a perplexity equal to the number of bins.
+
+We define perplexity per dimension of the color-space, and also report the geometric mean of the perplexities, to give the perplexity of the whole space.
+For $\tau$ the test-set made up of pairs consisting of a color name $c$, and color-space observation $v$ from the dimension of interest.
+We define $p_n(v\mid c)$ the output of our model with resolution $n$, which tells the predicted probability of the observation $v$ given the color name being $c$,
+by determining which of the $n$ bin the $v$ would lay in, and giving the probability of that bin.
+From this perplexity is given by
+\[
+ PP_n(\tau) = 2^{-\left(\displaystyle\frac{1}{|\tau|} \displaystyle\sum_{\forall(c,v) \in \tau} \log_2 p_n(v\mid c)\right)}
+\]
+As the perplexity varies depending on the output resolution,
+we further define a standardised value of $PP_{std}(\tau) = \frac{PP_n(\tau)}{n}$, which is comparable between different resolutions.
+This has the property that $PP_{std}$ on the uniform distribution is 1.0 for any resolution of discretization.
+Perplexity is a measure of how well the distribution matches reality.
+
+As a second measure, we use the mean squared error to peak.
+This is useful in the mono-modal symmetric case, and allows out model to be compared to regression models.
+To do this we fine the bin with the highest probability, according to $p_n(v\mid c)$ and then convert it's index into the continuous space value at the center of the bins range.
+Then we take the mean over each observation in the test set, of the mean of the squared error in each of the dimensions of the color space.
+A limitation of the reverse discretization is that it not able to represent the terminal values -- the peak point of the first bin is $\frac{1}{2n}$, and of the last is $$\frac{n-1}{2n}$$.
+This measurement of the error to peak is the error that would be obtained if the highest peak answer was always used.
+
+
+
+
+
 
 
 
 \section{Results and Discussion}
+
+\subsection{Qualitative Comparison of the Distribution}
+
+
+\subsection{Extrapolation}
+
+
+
+
+
 \section{Conclusion}
 
 
