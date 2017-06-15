@@ -20,6 +20,9 @@
 \usepackage[subpreambles=false]{standalone}
 
 \usepackage{amsmath}
+\usepackage{mathtools}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
 \usepackage{cleveref}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -261,7 +264,8 @@ This give the upper-bound on how well any model with this output resolution coul
 \section{Experimental Setup}
 \subsection{Data Preparation}
 We use the Monroe dataset \parencite{Monroe2010XKCDdataset}, as prepared by McMahan and Stone \parencite{mcmahan2015bayesian}.
-This data has minor cleaning, and a standard division into test, development, and train subdatasets. It is also used by \textcite{2016arXiv160603821M} and \textcite{DBLP:journals/corr/KawakamiDRS16}.
+This data has minor cleaning, and a standard division into test, development, and training partitions.
+It is also used by \textcite{2016arXiv160603821M} and \textcite{DBLP:journals/corr/KawakamiDRS16}.
 The color space is HSV, with all values between zero and one.
 Each is pair with a short name for the color, and provided by participants in the Color Survey.
 
@@ -299,29 +303,54 @@ We use dropout \parencite{srivastava2014dropout} with a probability of 0.5, on a
 
 \subsection{Evaluation Metrics}
 We propose two key measures of evaluation: Perplexity, and Mean Squared Error.
-The Perplexity allows us to evaluate how well our estimated distribution matches the distribution of the observations in the testset.
-Perplexity is commonly used for evaluating language models, however here it is being used to evaluate the descrited distribution.
+The Perplexity allows us to evaluate how well our estimated distribution matches the distribution of the observations in the test set.
+Perplexity is commonly used for evaluating language models, however here it is being used to evaluate the discretized distribution.
 It can loosely be through of as to how well the model's distribution does compared to a uniform distribution -- which has a perplexity equal to the number of bins.
 
 
 We define perplexity per dimension of the color-space, and also report the geometric mean of the perplexities, to give the perplexity of the whole space.
-For $\tau$ the test-set made up of pairs consisting of a color name $c$, and color-space observation $v$ from the dimension of interest.
-We define $p_n(v\mid c)$ the output of our model with resolution $n$, which tells the predicted probability of the observation $v$ given the color name being $c$,
-by determining which of the $n$ bin the $v$ would lay in, and giving the probability of that bin.
+For $\tau$ the test-set made up of pairs consisting of a color name $c$, and color-space observation $(v_{H}, v_{S}, v_{V})$.
+We define $p_{d}(v_{d}\mid c)$ the output of the model giving the predicted probability of the observation $v_{d}$ being the color described by the color name $c$, in the given dimension ${d}$.
+This is found by determining which of the discretized bins the $v_{d}$ would lay in, and giving the probability mass of that bin.
 From this perplexity is given by
 \[
- PP_n(\tau) = 2^{-\left(\displaystyle\frac{1}{|\tau|} \displaystyle\sum_{\forall(c,v) \in \tau} \log_2 p_n(v\mid c)\right)}
+ PP_{d}(\tau) = 2^{-\left(
+ 	\displaystyle\frac{1}{|\tau|} 
+ 	\displaystyle\sum_{\mathclap{\qquad\qquad\quad
+	 		\forall(c,(v_{H}, v_{S}, v_{V})) \in \tau}}
+ 	 \log_2 p_{d}(v_{d}\mid c)\right)}
+\]
+We also define the over-all perplexity by the geometric mean: 
+\[
+PP(\tau) = \sqrt[3]{PP_{H}(\tau)+PP_S(\tau)+PP_V(\tau)}
 \]
 As the perplexity varies depending on the output resolution,
-we further define a standardised value of $PP_{std}(\tau) = \frac{PP_n(\tau)}{n}$, which is comparable between different resolutions.
+we will also consider when comparing models of different resolution the standardized value of $\frac{PP_d(\tau)}{n}$, where $n$ is the output resolution of the model.
 This has the property that $PP_{std}$ on the uniform distribution is 1.0 for any resolution of discretization.
-Perplexity is a measure of how well the distribution matches reality.
+Perplexity is a measure of how well the distribution estimated by the model, matches reality.
 
-\pdfcomment{Maybe rewrite this as p_dimm where dim is sat, hue or val, and leave the n implict. and call PP_std tilde(PP). That would let the MSE also be described with the same set of definitions}
 
 As a second measure, we use the mean squared error to peak (MSE).
 This is useful in the mono-modal symmetric case, and allows out model to be compared to regression models.
-To do this we fine the bin with the highest probability, according to $p_n(v\mid c)$ and then convert it's index into the continuous space value at the center of the bins range.
+To do this we fine the bin with the highest probability, according to $p_d(v_d\mid c)$ and then convert it's index into the continuous space value at the center of the bins range.
+That is to say, with the definitions as before:
+\[
+binpeak_d(c)=\argmax_{1\le i \le n}{p_d\left(\tfrac{i}{n} \mid c\right)}
+\]
+\[
+peak_d(c)=\frac{binpeak(c)-1}{2n}
+\]
+\[
+SE(c, (v_{H}, v_{S}, v_{V})) = \frac{1}{3}
+	\sum_{\mathclap{\forall d\in{H,S,V}}} (peak_d(c) - v_d)^2
+\]
+\[
+MSE(\tau) =\frac{1}{|\tau|}
+	\sum_{\mathclap{\qquad\qquad\quad
+		\forall(c,(v_{H}, v_{S}, v_{V})) \in \tau}}
+	 SE(c,(v_{H}, v_{S}, v_{V}))
+\]
+
 Then we take the mean over each observation in the test set, of the mean of the squared error in each of the dimensions of the color space.
 A limitation of the reverse discretization is that it not able to represent the terminal values -- the peak point of the first bin is $\frac{1}{2n}$, and of the last is $$\frac{n-1}{2n}$$.
 This measurement of the error to peak is the error that would be obtained if the highest peak answer was always used.
@@ -337,6 +366,29 @@ This measurement of the error to peak is the error that would be obtained if the
 
 \subsection{Qualitative Comparison of the Distribution}
 
+\multimodalfig{yellow}
+\multimodalfig{greenishyellow}
+\multimodalfig{greenish}
+
+
+Shown in \Cref{figyellow},\Cref{figgreenishyellow},\Cref{figgreenish}, and earlier in \Cref{grey}, \Cref{lightgrey}, \Cref{darkgrey}, \Cref{verylightgrey}, \Cref{verydarkgrey} are side by-side comparisons of the output of the 64 bin GRU model, compared to the Empirical Model, both with blurring factor of $\frac{1}{128}$.
+Overall it can be seen the Empirical Model is a lot sharper, with more spikes,
+where as the GRU model tends to be much smoother, even though both use the same blurring during discretization.
+Close together peaks, seem to be leveled out, with the valley between being filled.
+It can be noted in \Cref{figyellow},\Cref{figgreenishyellow},\Cref{figgreenish}, that small close peaks tend to be smoothed between.
+Where-as more seperated peaks, as in the hue component in \Cref{grey}, \Cref{lightgrey}, \Cref{darkgrey}, \Cref{verylightgrey}, \Cref{verydarkgrey}, more distinct peaks remain separate.
+We note that smoothing, by partially filling valleys is functionally similar to the fuzzy rectangles used in the input processing of \textcite{mcmahan2015bayesian}.
+Also like in there work, this filling in results in ``greenish'' being filled in.
+
+
+To enhance the capacity to model the different ways a word can be used in a color description we suggest a parsing step could be added prior to any modeling.
+This would label each token with a linguistic roll.
+We suggest that this would improve the capacity of this, and other related models to handle cases such as ``greenish''.
+We note the our model currently performs less than ideally for ``greenish'' as an color description on its own -- it should have two peaks on either side of the green hue.
+We suggest that this is because the representation for ``greenish'' in the embedding layer is shared both for its use on its own, and for its use as a modifier to other colors -- eg ``greenish blue''.
+Making it difficult for the output final layers to determine the shape of the curve when it is used on its own.
+By adding additional role labels by a parsing step these cases could be distinguished and given separate representations.
+
 
 \subsection{Extrapolation}
 
@@ -348,12 +400,7 @@ This measurement of the error to peak is the error that would be obtained if the
 
 
 \subsection{Future-work}
-To enhance the capacity to model the different ways a word can be used in a color description we suggest a parsing step could be added prior to any modeling.
-This would label each token with a linguistic roll.
-We suggest that this would improve the capacity of this, and other related models to handle cases such as ``greenish''.
-We note the our model currently performs less than ideally for ``greenish'' as an color description on its own -- it should have two peaks on either side of the green hue.
-We suggest that this is because the representation for ``greenish'' in the embedding layer is shared both for its use on its own, and for its use as a modifier to other colors -- eg ``greenish blue''.
-By adding additional role labels by a parsing step these cases could be distinguished and given separate representations.
+
 
 
 The discretization process representing a continuous probability distribution as a discrete distribution is pragmatically effective, but unsatisfying.
