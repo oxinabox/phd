@@ -223,9 +223,10 @@ The assumption is not intrinsic to our method.
 The discretization and blurring function identically in 3D joint distribution space,
 as in three, 1D independent distribution spaces.
 However, the independence assumption significantly decreases the computational requirements.
-For $n_{res}$ the resolution (number of bins) used in discretization:
-Assuming independence allows use to work with 3 output layers, each containing $n_{res}$.
+For $n$ the resolution (number of bins) used in discretization:
+Assuming independence allows use to work with 3 output layers, each containing $n$ elements.
 Rather than one output layer containing $n_{res}^3$ elements.
+This saves a lot of memory during the training.
 
 
 \section{The Models}
@@ -250,16 +251,21 @@ The output of final time-step is feed to a Rectified Linear Unit (ReLU) \parenci
 Finally, the this used as the input the three distinct softmax output layers -- one for each of hue, saturation and value.
 The network was trained to minimize to sum of the three cross-entropy losses of these output layers.
 
+We choose GRU as the basis of our reused structure in the recurrent network.
+GRU has fewer parameters to learn than the more established LSTM.
+It has generally been found to preform similarly well to LSTM \parencite{chung2014empirical};
+including on the color naming problem \parencite{2016arXiv160603821M}.
+The GRU forms the basis of the our sequence-of-terms to color-space-probability- distribution network.
+
+
 
 \subsection{Empirical Model}
-For comparison we define an additional model based only on summing the data, without the machine learning component.
+For comparison we define an additional model based directly on the training data --  without the machine learning component.
 We call this the empirical model, as an allusion to the empirical models used in approximating distributions.
-For this model, where produce the estimated distribution for each color description simply by summing all of that colors discretized observations.
-For what we will call the \emph{Baseline Empirical Model} this a sum of the observations from the training case, featuring the same blurring, as in the GRU Model.
-We also establish an upper-bound on the performance in what we call the \emph{Oracle Empirical Model}.
-In the \emph{Oracle Empirical Model}, discretized observations from the test-set are used, without any blurring.
-This give the upper-bound on how well any model with this output resolution could theoretically perform.
-
+For this model, we produce the estimated distribution for each color description simply by averaging all of that colors discretized observations.
+For what we will call the \emph{Empirical Model} this a sum of the observations from the training case, featuring the same blurring, as in the GRU Model.
+The Empirical Model is inferior in generalisability to the GRU model, as it can only handle color names from the training set. 
+However, without the requirement to learn the how the compositional structure of the terms in the color name function, it is a much simpler modeling problem, as such we suggest it is a strong baseline for evaluational.
 
 
 \section{Experimental Setup}
@@ -309,61 +315,97 @@ Perplexity is commonly used for evaluating language models, however here it is b
 It can loosely be through of as to how well the model's distribution does compared to a uniform distribution -- which has a perplexity equal to the number of bins.
 
 
-We define perplexity per dimension of the color-space, and also report the geometric mean of the perplexities, to give the perplexity of the whole space.
-For $\tau$ the test-set made up of pairs consisting of a color name $c$, and color-space observation $(v_{H}, v_{S}, v_{V})$.
-We define $p_{d}(v_{d}\mid c)$ the output of the model giving the predicted probability of the observation $v_{d}$ being the color described by the color name $c$, in the given dimension ${d}$.
-This is found by determining which of the discretized bins the $v_{d}$ would lay in, and giving the probability mass of that bin.
+We define perplexity per channel of the color-space, and also report the geometric mean of the perplexities, to give the perplexity of the whole space.
+For $\tau$ the test-set made up of pairs consisting of a textual color name $t$, and color-space observation $(v_{H}, v_{S}, v_{V})$.
+We define $p_{c}(v_{c}\mid t)$ giving the predicted probability of the observation $v_{c}$ being the color described by the color name $t$, in the given channel ${c}$.
+This is found by determining which of the discretized bins from the model's output the $v_{c}$ would lay in, and giving the probability mass of that bin.
 From this perplexity is given by
 \[
- PP_{d}(\tau) = 2^{-\left(
+ PP_{c}(\tau) = 2^{-\left(
  	\displaystyle\frac{1}{|\tau|} 
  	\displaystyle\sum_{\mathclap{\qquad\qquad\quad
-	 		\forall(c,(v_{H}, v_{S}, v_{V})) \in \tau}}
- 	 \log_2 p_{d}(v_{d}\mid c)\right)}
+	 		\forall(t,(v_{H}, v_{S}, v_{V})) \in \tau}}
+ 	 \log_2 p_{c}(v_{c}\mid t)\right)}
 \]
 We also define the over-all perplexity by the geometric mean: 
 \[
-PP(\tau) = \sqrt[3]{PP_{H}(\tau)+PP_S(\tau)+PP_V(\tau)}
+PP(\tau) = \sqrt[3]{PP_H(\tau)+PP_S(\tau)+PP_V(\tau)}
 \]
 As the perplexity varies depending on the output resolution,
-we will also consider when comparing models of different resolution the standardized value of $\frac{PP_d(\tau)}{n}$, where $n$ is the output resolution of the model.
-This has the property that $PP_{std}$ on the uniform distribution is 1.0 for any resolution of discretization.
-Perplexity is a measure of how well the distribution estimated by the model, matches reality.
+we will also consider when comparing models of different resolution the standardized value of $\frac{PP_c(\tau)}{n}$, where $n$ is the output resolution of the model.
+Using this standardized perplexity, if the model always output a uniform distribution then no matter the output resolution $n$ it would always be true that  $\frac{PP_c(\tau)}{n}=1.0$.
+Perplexity is a measure of how well the distribution estimated by the model, matches reality according to the observations in the test set.
 
 
 As a second measure, we use the mean squared error to peak (MSE).
 This is useful in the mono-modal symmetric case, and allows out model to be compared to regression models.
-To do this we fine the bin with the highest probability, according to $p_d(v_d\mid c)$ and then convert it's index into the continuous space value at the center of the bins range.
+To do this we fine the bin with the highest probability, according to $p_c(v_c\mid t)$ and then convert it's index into the continuous space value at the center of the bins range.
+We then find the mean square error in the transitional way, averaging over channels.
 That is to say, with the definitions as before:
 \[
-binpeak_d(c)=\argmax_{1\le i \le n}{p_d\left(\tfrac{i}{n} \mid c\right)}
+binpeak_c(t)=\argmax_{1\le i \le n}{p_c\left(\tfrac{i}{n} \mid t\right)}
 \]
 \[
-peak_d(c)=\frac{binpeak(c)-1}{2n}
+peak_c(t)=\frac{binpeak(t)}{n} - \frac{1}{2n}
 \]
 \[
-SE(c, (v_{H}, v_{S}, v_{V})) = \frac{1}{3}
-	\sum_{\mathclap{\forall d\in{H,S,V}}} (peak_d(c) - v_d)^2
+SE(t, (v_{H}, v_{S}, v_{V})) = \frac{1}{3}
+	\sum_{\mathclap{\forall d\in{H,S,V}}} (peak_c(t) - v_d)^2
 \]
 \[
 MSE(\tau) =\frac{1}{|\tau|}
 	\sum_{\mathclap{\qquad\qquad\quad
-		\forall(c,(v_{H}, v_{S}, v_{V})) \in \tau}}
-	 SE(c,(v_{H}, v_{S}, v_{V}))
+		\forall(t,(v_{H}, v_{S}, v_{V})) \in \tau}}
+	 SE(t,(v_{H}, v_{S}, v_{V}))
 \]
 
 Then we take the mean over each observation in the test set, of the mean of the squared error in each of the dimensions of the color space.
-A limitation of the reverse discretization is that it not able to represent the terminal values -- the peak point of the first bin is $\frac{1}{2n}$, and of the last is $$\frac{n-1}{2n}$$.
-This measurement of the error to peak is the error that would be obtained if the highest peak answer was always used.
-
-
-
-
-
+This measurement of the error to peak is the error that would be obtained if a single color output was required, and that color was chosen in a greedy way.
 
 
 
 \section{Results and Discussion}
+
+\subsection{Blurring Level}
+The blurring during the discretization serves two related purposes.
+It is both used as prior knowledge to be added to the model, and as a tool to enhance learning.
+to enhance learning, and as prior knowledge incorporated into the model. 
+The prior knowledge it encodes is the understanding that there is a continuous distribution for the likelihood of a color.
+That given the probability of one point in color space, then the probability of another point within the neighborhood, is going to be similar.
+There are few sharp jumps in probability.
+Its second purpose is to help the model learn the existence of neighborhoods.
+
+By blurring the training samples, we inform the model about the nearness of the discretized outputs.
+The outputs from softmax output layer are intrinsically unordered and purely categorical.
+By adding blurring the training output, we ensure that the network learns the relationship between the nearby output neurons.
+Such that when one is activated, neurons representing  adjacent points in colors space are also activated (to a lesser strength).
+By adding this to all training terms this information is trained into the model
+A nearly equivalent alternative would be to define the same requirement as an additional term in the loss function, similar to L2-regularization, penalizing the networks that have sharp differenced between adjacent neurons.
+This would be more difficult to tune.
+We suggest that modifying the training data is a more elegant way to train this information into the model.
+
+However, there is a trade-off, in blurring.
+Without any blurring, the training data is one-hot encoded, and we do not get the benefits of encoding prior knowledge about smoothness, nor do we help the model effectively learn the relative position of the neurons.
+The more blur that is added the more information is added about the structure of the space,
+but the less information is available from each training datum about its precise point.
+For example if the blurring made the target output have 5 adjacent neurons valued at \texttt{[0.1, 0.2, 0.4, 0.2, 0.1]}, then the loss from the network outputting a distribution shifted one place to the left, is much less than it would be for a less blurred case: \texttt{[0.01, 0.04, 0.9, 0.04, 0.01]}.
+Thus the level of blurring is a hyper-parameter that needs to be set.
+
+
+To determine the blurring level we conducted a hyper-parameter sweep.
+We checked a range of values and evaluated on the development dataset.
+We evaluated both for the output resolution of 64 and 256,
+and both on the full task, and the extrapolation task.
+We consistently found that best results for was to set the standard deviation of the distributions used in the discretization process to be $\frac{1}{2n}$, where $n$ is the output resolution.
+Decreasing or increasing the standard deviation from this consistently produced higher perplexity and mean squared error to peak on when evaluated on the development datasets.
+For a training point that would be at the center of a bin, this roughly corresponds to 68.3\% of the probably mass assigned to the central bin, 15.7\% assigned to the bin on each side, and the remaining 0.3\% distributed to the remaining bins.
+However, in general points are not aligned to the center of bins, so they generate asymmetric training cases.
+All results presented here are for this value of the blurring hyper parameter.
+
+
+
+
+
 
 \subsection{Qualitative Comparison of the Distribution}
 
@@ -390,18 +432,29 @@ We suggest that this is because the representation for ``greenish'' in the embed
 Making it difficult for the output final layers to determine the shape of the curve when it is used on its own.
 By adding additional role labels by a parsing step these cases could be distinguished and given separate representations.
 
+\subsection{Distribution}
 
 \subsection{Extrapolation}
 
 
 
-
-
 \section{Conclusion}
+We have presented a method for estimating the probably distribution of colors that may be ascribed an input name.
+This methods uses a discretization process based on treating each training point as the center of a Gaussian, or wrap-around Gaussian distribution, and finding the CDF for discrete regions of the color-space.
+The blurring in the discretized training points helps the model's softmax output to learn a reasonable continuous probability distribution, as approximated using a discrete distribution.
+Working with probability distributions, rather than regression to a single color-space point on color, allows for better handling of colors with observed distributions that are asymmetric, wide variance or multimodal in the color-space -- most colors.
+
+The model learns the compositional structure of a color name, which it is able to use to predict distributions for colors not seen given during training.
+The input terms learn separate representations, which are together used to estimate the distribution.
+For example: the color ``dirty brown'' does not occur in the training data, but there are many used of ``dirt'', the suffix ``y'' and ``brown'' in other combinations.
+So the GRU model can estimate a distribution.
+
+
+
+
 
 
 \subsection{Future-work}
-
 
 
 The discretization process representing a continuous probability distribution as a discrete distribution is pragmatically effective, but unsatisfying.
