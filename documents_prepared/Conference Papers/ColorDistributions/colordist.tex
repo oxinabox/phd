@@ -179,7 +179,7 @@ Without this contextual information in the color-naming, distributions over all 
 and these distributions are not expected to be symmetric in any consistent color space.
 
 \subsection{Image Generation}
-
+\pdfcomment{move to introduction.}
 Recent works on image generation produce very impressive images based on sentence inputs\cite{reed2016generative,2015arXiv151102793M}.
 These end-to-end systems take in a sentence and synthesize a full image.
 They have been demonstrated to be able to generate images taking into account the colors described.
@@ -260,12 +260,23 @@ The GRU forms the basis of the our sequence-of-terms to color-space-probability-
 
 
 \subsection{Empirical Model}
-For comparison we define an additional model based directly on the training data --  without the machine learning component.
+For comparison we define an additional model based more directly on the training data --  without the machine learning component.
 We call this the empirical model, as an allusion to the empirical models used in approximating distributions.
 For this model, we produce the estimated distribution for each color description simply by averaging all of that colors discretized observations.
 For what we will call the \emph{Empirical Model} this a sum of the observations from the training case, featuring the same blurring, as in the GRU Model.
 The Empirical Model is inferior in generalisability to the GRU model, as it can only handle color names from the training set. 
 However, without the requirement to learn the how the compositional structure of the terms in the color name function, it is a much simpler modeling problem, as such we suggest it is a strong baseline for evaluational.
+
+During testing on the development dataset, we found that the empirical model would occasionally return a predicted probability of zero for one of the observations.
+This causes the perplexity to be undefined, or $$\inf$$ when evaluated using IEEE Floating point math.
+To handle this we propose an additional variant of the Empirical model featuring Add-one, or Laplace Smoothing.
+In this, we add an number additional observations to each color name, prior to taking the mean.
+We add an extra element for each output bin, with a probability mass of one.
+This is a very common technique in language modelling, 
+but here we apply it to smoothing the discretized probability estimates in color-space.
+
+
+
 
 
 \section{Experimental Setup}
@@ -303,6 +314,7 @@ This produces a dataset suitable for evaluating the capacity of our model to ext
 For the GRU model, regardless of output resolution, we use the same network parameters.
 Hidden layer size of 128 neuron for all hidden layers, except the embedding layer, which we give 16 neurons to.
 These values were found on a coarse search of the hyper parameters using the development portion of the data set with the output resolution being 64 bins.
+These parameters were also used for the 256 bin output resolution, to simplify comparison, though we suggest increasing the hidden layer size would give additional benefit for the higher output resolution case.
 We note that accuracy continued to improve as  we increased the size of the hidden layers,
 however significantly diminishing returns for the increased computational time to work with the larger layers.
 We use dropout \parencite{srivastava2014dropout} with a probability of 0.5, on all hidden layers, except the embedding layer.
@@ -394,10 +406,13 @@ Thus the level of blurring is a hyper-parameter that needs to be set.
 
 To determine the blurring level we conducted a hyper-parameter sweep.
 We checked a range of values and evaluated on the development dataset.
-We evaluated both for the output resolution of 64 and 256,
-and both on the full task, and the extrapolation task.
-We consistently found that best results for was to set the standard deviation of the distributions used in the discretization process to be $\frac{1}{2n}$, where $n$ is the output resolution.
-Decreasing or increasing the standard deviation from this consistently produced higher perplexity and mean squared error to peak on when evaluated on the development datasets.
+We evaluated both for the output resolution of 64 and 256, and both on the full distribution estimation task, and the extrapolation task.
+We found that best results for was to set the standard deviation of the distributions used in the discretization process to be $\sigma=\frac{1}{2n}$, where $n$ is the output resolution.
+We found an exception to this when checking the blurring hyper-parameters the full task at 256 output bins; in this case $\sigma=\frac{1}{4n}$, however the different was very small.
+As such in all further investigations we used a blurring with $\sigma=\frac{1}{2n}$ in all desecration, except as noted otherwise.
+
+Decreasing or increasing the standard deviation from this produced higher perplexity and mean squared error to peak on when evaluated on the development datasets.
+The blurring of $\sigma=\frac{1}{2n}$, redistributes the probability mass assigned in the discretization, to the surrounding bins.
 For a training point that would be at the center of a bin, this roughly corresponds to 68.3\% of the probably mass assigned to the central bin, 15.7\% assigned to the bin on each side, and the remaining 0.3\% distributed to the remaining bins.
 However, in general points are not aligned to the center of bins, so they generate asymmetric training cases.
 All results presented here are for this value of the blurring hyper parameter.
@@ -414,17 +429,30 @@ All results presented here are for this value of the blurring hyper parameter.
 \multimodalfig{greenish}
 
 
-Shown in \Cref{figyellow},\Cref{figgreenishyellow},\Cref{figgreenish}, and earlier in \Cref{grey}, \Cref{lightgrey}, \Cref{darkgrey}, \Cref{verylightgrey}, \Cref{verydarkgrey} are side by-side comparisons of the output of the 64 bin GRU model, compared to the Empirical Model, both with blurring factor of $\frac{1}{128}$.
+
+Shown in \Cref{figyellow}, \Cref{figgreenishyellow}, \Cref{figgreenish}, and earlier in \Cref{grey}, \Cref{figlightgrey}, \Cref{figdarkgrey}, \Cref{figverylightgrey}, \Cref{figverydarkgrey} are side by-side comparisons of the output of the 64 bin GRU model, compared to the Empirical Model, both with blurring factor of $\frac{1}{128}$.
 Overall it can be seen the Empirical Model is a lot sharper, with more spikes,
 where as the GRU model tends to be much smoother, even though both use the same blurring during discretization.
 Close together peaks, seem to be leveled out, with the valley between being filled.
 It can be noted in \Cref{figyellow},\Cref{figgreenishyellow},\Cref{figgreenish}, that small close peaks tend to be smoothed between.
-Where-as more seperated peaks, as in the hue component in \Cref{grey}, \Cref{lightgrey}, \Cref{darkgrey}, \Cref{verylightgrey}, \Cref{verydarkgrey}, more distinct peaks remain separate.
+Where-as more separated peaks, as in the hue component in \Cref{figgrey}, \Cref{figlightgrey}, \Cref{figdarkgrey}, \Cref{figverylightgrey}, \Cref{figverydarkgrey}, more distinct peaks remain separate.
 We note that smoothing, by partially filling valleys is functionally similar to the fuzzy rectangles used in the input processing of \textcite{mcmahan2015bayesian}.
-Also like in there work, this filling in results in ``greenish'' being filled in.
+Also like in their work, this filling in results in ``greenish'' being filled in.
+
+\begin{figure}
+	
+	\includegraphics[width=\columnwidth]{highresgreenishlowblur}
+	\caption{\label{fighighresgreenishlowblur} The distribution output by GRU model with resolution 256, and blurring $\sigma=\frac{1}{8n}$}
+\end{figure}
+We did find that when the blurring level was made very small, it was possible to see the two peaks in ``greenish''.
+This can be seen in \Cref{fighighresgreenishlowblur}.
+However, this comes at the cost of overall worse performance, as the model does not learn about the smoothness of the distribution.
 
 
-To enhance the capacity to model the different ways a word can be used in a color description we suggest a parsing step could be added prior to any modeling.
+
+
+
+To enhance the capacity to model the different ways a word can be used in a color description we suggest a parsing step could be added prior to any modelling.
 This would label each token with a linguistic roll.
 We suggest that this would improve the capacity of this, and other related models to handle cases such as ``greenish''.
 We note the our model currently performs less than ideally for ``greenish'' as an color description on its own -- it should have two peaks on either side of the green hue.
