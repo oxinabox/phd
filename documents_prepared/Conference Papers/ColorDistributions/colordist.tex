@@ -1,16 +1,16 @@
 \documentclass[11pt,letterpaper]{article}
 \usepackage{ijcnlp2017}
+\def\ijcnlppaperid{***} %  Enter the IJCNLP Paper ID here:
+
 %\ijcnlpfinalcopy % Uncomment this line for the final submission:
 
 \usepackage{newtxtext}
 \usepackage[author={Lyndon}]{pdfcomment}
 
+\usepackage{pgfplotstable}
 
 
-%  Enter the IJCNLP Paper ID here:
-\def\ijcnlppaperid{***}
 
-\usepackage{verbatim}
 \usepackage{tikz}
 \usetikzlibrary{positioning, fit,  shapes.geometric}
 \usepackage{graphicx}
@@ -23,6 +23,8 @@
 \usepackage{mathtools}
 \DeclareMathOperator*{\argmin}{arg\,min}
 \DeclareMathOperator*{\argmax}{arg\,max}
+
+\usepackage{verbatim}
 \usepackage{cleveref}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -259,24 +261,20 @@ The GRU forms the basis of the our sequence-of-terms to color-space-probability-
 
 
 
-\subsection{Empirical Model}
+\subsection{Baseline Model}
 For comparison we define an additional model based more directly on the training data --  without the machine learning component.
-We call this the empirical model, as an allusion to the empirical models used in approximating distributions.
+This is a simpler model with no machine learning component.
 For this model, we produce the estimated distribution for each color description simply by averaging all of that colors discretized observations.
-For what we will call the \emph{Empirical Model} this a sum of the observations from the training case, featuring the same blurring, as in the GRU Model.
-The Empirical Model is inferior in generalisability to the GRU model, as it can only handle color names from the training set. 
+This features the same blurring, as in the GRU Model.
+During our investigations we found that a model based simply taking on the mean would, for some of observations in the development dataset, return a predicted probability of zero.
+This causes the perplexity to be undefined ($$\inf$$ when evaluated using IEEE Floating point math.)
+To handle this we apply add-one smoothing to each color names output distribution.
+Effectively this is adding an number number of additional training observations for each color name,
+corresponding to a one-hot vectors for each output bin.
+The result of this is that when the mean over all observations is taken, there a no output bins with a probability mass of zero.
+With this smoothing the Baseline model can be used to predict distributions for all color descriptions in the training set.
+This is inferior in generalisability to the GRU model, which can handle any combination of tokens from the training set.
 However, without the requirement to learn the how the compositional structure of the terms in the color name function, it is a much simpler modeling problem, as such we suggest it is a strong baseline for evaluational.
-
-During testing on the development dataset, we found that the empirical model would occasionally return a predicted probability of zero for one of the observations.
-This causes the perplexity to be undefined, or $$\inf$$ when evaluated using IEEE Floating point math.
-To handle this we propose an additional variant of the Empirical model featuring Add-one, or Laplace Smoothing.
-In this, we add an number additional observations to each color name, prior to taking the mean.
-We add an extra element for each output bin, with a probability mass of one.
-This is a very common technique in language modelling, 
-but here we apply it to smoothing the discretized probability estimates in color-space.
-
-
-
 
 
 \section{Experimental Setup}
@@ -460,11 +458,30 @@ We suggest that this is because the representation for ``greenish'' in the embed
 Making it difficult for the output final layers to determine the shape of the curve when it is used on its own.
 By adding additional role labels by a parsing step these cases could be distinguished and given separate representations.
 
-\subsection{Distribution}
+\subsection{Distribution Estimation}
+
+
+\pgfplotstabletypeset[
+	col sep=tab,
+	header=has colnames,
+	ignore chars={"},
+	columns/model/.style={string type}
+	]{results/full.tsv}
+
+The primary task of estimating the distribution in color-space.
+
 
 \subsection{Extrapolation}
 
+%\pgfplotstableread{results/extrapo.tsv}\resextrapo
 
+A core motivation of using the GRU model is its ability to learn to combine tokens in a description in ways not seen in training.
+
+To evaluate how well the model does at predicting distributions,
+we compare a GRU model trained and evaluated on the Extrapolation dataset
+ -- that is to say the set where the rare color descriptions do not show up in training, only in testing --
+ to a GRU and a Baseline model that are trained on the full dataset, but evaluated on the Extrapolation test set.
+These results are shown in 
 
 \section{Conclusion}
 We have presented a method for estimating the probably distribution of colors that may be ascribed an input name.
