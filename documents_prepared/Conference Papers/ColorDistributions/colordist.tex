@@ -7,6 +7,7 @@
 \usepackage{newtxtext}
 \usepackage[author={Lyndon}]{pdfcomment}
 
+\usepackage{booktabs}
 \usepackage{pgfplotstable}
 
 
@@ -68,7 +69,7 @@ At the other end from regression, is classification.
 \pdfcomment{Relate this to McMalan and Stone's use of Convex -- Symstric is a stronger requirement than convex, and monomodal suggests that }
 
 A classifier will output probabilities for each of the possible categories an input could belong to.
-By dividing color space into thresholded bins, where each bin is its own category.
+By dividing color space into threshold bins, where each bin is its own category.
 Then by classifying a color, one gets getting probabilities of it laying in each bin. The output of the classifier defines an empirical distribution in color-space.
 Basic classification models consider each category as being distinct and unrelated.
 However, we know that if a color name has a high probability of corresponding to a particular point in color space, then it should have a similar probability for other points in that neighbourhood -- this is a notion of continuousness.
@@ -164,14 +165,14 @@ Color generation system systems outputting a single color can approximate this b
 
 \section{Color Identification}
 
-\cite{DBLP:journals/corr/MonroeHGP17} presents a neural network solution to communication game, where a is presented with three color patchs and ask to descibe one of them, 
+\textcite{DBLP:journals/corr/MonroeHGP17} presents a neural network solution to communication game, where a is presented with three color patchs and ask to descibe one of them, 
 such that when the listener is presented with the same color patchs that can select the one the speaker was describing.
 In this game, the color descriptions have context, for example the speaker can say ``the darker blue one, not the cyan''.
 Both speaker and listener models are trained, using and LSTM based decoder and encoders respectively.
 They present several variants of their models, including pragmatic models, and models that combine knowledge.
-The base listener model is of particular relevance to the distribution modeling task.
+The base listener model is of particular relevance to the distribution modelling task.
 The final time-step of the base listener LSTM produces a 100 dimensional representation of description provided.
-From this, a Gaussian distributed score function, over the Fourier-transform based color-space of \cite{2016arXiv160603821M}.
+From this, a Gaussian distributed score function, over the Fourier-transform based color-space of \textcite{2016arXiv160603821M}.
 By normalizing the scores of the three colors the listener is to choose from, the conditional probability of each can be found.
 It should be noted that while this method does output a probability distribution, as a by-product of the task
 it is Gaussian distributed for all inputs -- both symmetric and mono-modal, albeit in a high-dimensional non-linear color space.
@@ -218,7 +219,7 @@ For the investigation here, we consider the conditional independence assumption 
 
 
 Note that the evaluation metrics chosen do not assume conditional independence.
-Though the models -- including the Oracle Empirical Model -- do.
+Though the models, including the baseline model, do.
 Better results may be obtained by outputting a 3D joint distribution.
 
 The assumption is not intrinsic to our method.
@@ -236,7 +237,7 @@ This saves a lot of memory during the training.
 \subsection{GRU Model}
 
 \begin{figure}
-	\resizebox{\columnwidth}{!}{	\input{./figs/neuralnet}}
+	\resizebox{\columnwidth}{!}{\input{./figs/neuralnet}}
 
 	\caption{\label{network}
 		The GRU Model for predicting the color-space probability distributions of color.
@@ -267,7 +268,7 @@ This is a simpler model with no machine learning component.
 For this model, we produce the estimated distribution for each color description simply by averaging all of that colors discretized observations.
 This features the same blurring, as in the GRU Model.
 During our investigations we found that a model based simply taking on the mean would, for some of observations in the development dataset, return a predicted probability of zero.
-This causes the perplexity to be undefined ($$\inf$$ when evaluated using IEEE Floating point math.)
+This causes the perplexity to be undefined ($\infty$ when evaluated using IEEE Floating point math.)
 To handle this we apply add-one smoothing to each color names output distribution.
 Effectively this is adding an number number of additional training observations for each color name,
 corresponding to a one-hot vectors for each output bin.
@@ -370,6 +371,7 @@ MSE(\tau) =\frac{1}{|\tau|}
 \]
 
 Then we take the mean over each observation in the test set, of the mean of the squared error in each of the dimensions of the color space.
+The space that the error is measured in is the 0-1 scaled HSV space that is used in the source dataset.
 This measurement of the error to peak is the error that would be obtained if a single color output was required, and that color was chosen in a greedy way.
 
 
@@ -428,11 +430,11 @@ All results presented here are for this value of the blurring hyper parameter.
 
 
 
-Shown in \Cref{figyellow}, \Cref{figgreenishyellow}, \Cref{figgreenish}, and earlier in \Cref{grey}, \Cref{figlightgrey}, \Cref{figdarkgrey}, \Cref{figverylightgrey}, \Cref{figverydarkgrey} are side by-side comparisons of the output of the 64 bin GRU model, compared to the Empirical Model, both with blurring factor of $\frac{1}{128}$.
-Overall it can be seen the Empirical Model is a lot sharper, with more spikes,
+Shown in \Cref{figyellow}, \Cref{figgreenishyellow}, \Cref{figgreenish}, and earlier in \Cref{figgrey}, \Cref{figlightgrey}, \Cref{figdarkgrey}, \Cref{figverylightgrey}, \Cref{figverydarkgrey} are side by-side comparisons of the output of the 64 bin GRU model, compared to the Baseline Model, both with blurring factor of $\frac{1}{128}$.
+Overall it can be seen the Baseline model is a lot sharper, with more spikes,
 where as the GRU model tends to be much smoother, even though both use the same blurring during discretization.
 Close together peaks, seem to be leveled out, with the valley between being filled.
-It can be noted in \Cref{figyellow},\Cref{figgreenishyellow},\Cref{figgreenish}, that small close peaks tend to be smoothed between.
+It can be noted in \Cref{figyellow}, \Cref{figgreenishyellow}, \Cref{figgreenish}, that small close peaks tend to be smoothed between.
 Where-as more separated peaks, as in the hue component in \Cref{figgrey}, \Cref{figlightgrey}, \Cref{figdarkgrey}, \Cref{figverylightgrey}, \Cref{figverydarkgrey}, more distinct peaks remain separate.
 We note that smoothing, by partially filling valleys is functionally similar to the fuzzy rectangles used in the input processing of \textcite{mcmahan2015bayesian}.
 Also like in their work, this filling in results in ``greenish'' being filled in.
@@ -459,29 +461,84 @@ Making it difficult for the output final layers to determine the shape of the cu
 By adding additional role labels by a parsing step these cases could be distinguished and given separate representations.
 
 \subsection{Distribution Estimation}
-
-
-\pgfplotstabletypeset[
+\pgfkeys{/pgf/number format/.cd, fixed relative,precision=4}
+\pgfplotstableset{
 	col sep=tab,
 	header=has colnames,
 	ignore chars={"},
-	columns/model/.style={string type}
-	]{results/full.tsv}
+	column type={l},
+	every head row/.style={before row=\toprule,	after row=\midrule},
+	columns/model/.style={string type},
+	columns/resolution/.style={column name=$n$},
+	columns/perp/.style={column name=$PP$},
+	columns/perphue/.style={column name=$PP_{H}$},
+	columns/perpsat/.style={column name=$PP_{S}$},
+	columns/perpval/.style={column name=$PP_{V}$},
+	columns/perpstd/.style={column name=$\frac{PP}{n}$},
+	columns/msetopeak/.style={column name=$MSE$}
+}
+
+\begin{table*}
+	\centering
+	%\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[
+		every row 2 column 7/.style={
+			postproc cell content/.style={@cell content/.add={$\bf}{$}}}
+		]{results/full.tsv}
+	%}
+	\caption{\label{tblresfull} The results of evaluation on the full Monroe color dataset. Here $n$ is the output resolution of the model, $PP$ is the perplexity, and $MSE$ is the mean squared error to the peak of the output distribution.}
+\end{table*}
 
 The primary task of estimating the distribution in color-space.
-
+The results as showing in \Cref{tblresfull}.
+It can be seen that all models perform similarly.
+This shows that the GRU model is fitting correctly.
+The predictions of the distribution given by the GRU model based on its input sequence of color tokens,
+are as reflective of the real uses, as the predictions from the baseline model model based on counting uses of that exact color name.
+We note, across all models that the perplexity for the hue channel is much smaller than for the saturation or value channel.
+This suggests that in the data there is more consistency in the hue, associated with a color name, than with the 
+This aligns with the notion that people describe color primarily with reference to the hue, rather than the chroma or shade.
+It also aligns with the notion that how \emph{dark} for example ``dark blue'' is, is not a precise quantity.
+%By a small margin the best performing model, in terms of standardised perplexity, was the GRU with resolution 256.
+The GRU model performs similarly to similarly to the baseline, when trained on a full set of color terms with all combinations of terms present in the training data.
+The key advantage of the GRU model is its ability to predict a distribution for an unseen combination of colors, we evaluate this using the extrapolation task.
 
 \subsection{Extrapolation}
 
-%\pgfplotstableread{results/extrapo.tsv}\resextrapo
+\begin{table*}
+	\centering
+	%\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[
+		every row 0 column 0/.style={
+			postproc cell content/.style={@cell content/.add={\it}{}}}
+		]{results/extrapo.tsv}
+	%}
+	\caption{\label{tblresextrapo} The results of evaluation on the full Monroe color dataset. Here $n$ is the output resolution of the model, $PP$ is the perplexity, and $MSE$ is the mean squared error to the peak of the output distribution.}
+\end{table*}
+
 
 A core motivation of using the GRU model is its ability to learn to combine tokens in a description in ways not seen in training.
-
 To evaluate how well the model does at predicting distributions,
-we compare a GRU model trained and evaluated on the Extrapolation dataset
- -- that is to say the set where the rare color descriptions do not show up in training, only in testing --
- to a GRU and a Baseline model that are trained on the full dataset, but evaluated on the Extrapolation test set.
-These results are shown in 
+we compare a GRU model trained Extrapolation dataset, to the models trained on the full set.
+Both the non-extrapolating, and extrapolating models are evaluated on the same set of rare color descriptions,
+but the non-extrapolating models are also shown these rare descriptions during training.
+The extrapolating model has never been trained on these combinations of color terms,
+and instead must use the knowledge of how those color terms influence the colors in other cases.
+
+The results for estimating the distributions for the rare color descriptions in the Extrapolation dataset are shown in \Cref{tblresextrapo}.
+It can be seen that the Extrapolation is successful, the results on the Extrapolation sub-dataset are similar to the overall results for the whole dataset in \Cref{tblresfull}.
+The non-extrapolating results are better than the extrapolation model results.
+This is to be expected, as they have the additional training data for the rare terms.
+It in interesting that most of the non-extrapolating results for the extrapolation dataset are better than for the overall dataset in \Cref{tblresfull}.
+it can be seen in particular that the non-extrapolating GRU models perform better than the non-extrapolating Baseline models.
+This suggests that they are successfully able to transfer the knowledge of the tokens used in other contexts, to the rare uses in the extrapolation dataset, and also while benefiting from the small number of examples of use in the fine-tuning using the small number training case for the rare descriptions.
+The baseline model is unable to do this, relying only on the small number of training cases for that exact color description.
+This in-particular shows for the Baseline with output resolution of 256.
+Given the high number of output bins, and the small number of training case, many bins would be empty.
+The GRU model can use its knowledge of the terms in other uses to predict the distribution for bins not seen in training.
+
+
+
 
 \section{Conclusion}
 We have presented a method for estimating the probably distribution of colors that may be ascribed an input name.
