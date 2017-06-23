@@ -46,17 +46,39 @@
 
 \begin{abstract}
 When a speaker says the name of a color, the color they picture is not necessarily the same color the hearer imagines.
-Color is a grounded semantic task, but that grounding is not a single value, but rather a range of possible values that could be meant.
-To handle this case, we predict a estimated distribution of values, for any given description.
-This work further generalities to predict distributions for multi-word descriptions never scene during training.
+Color is a grounded semantic task, but that grounding is not a single value, but rather a range of possible values that could be intended.
+To handle this case, we propose a model that given a input color description such as ``light greenish blue'' produces an estimated probability distribution across HSV color space.
+This work presents a method for estimating probability distributions, based on samples using a description processes.
+Predicting distributions  is useful beyond regressing to a single output for handling cases where the distribution is not simply a true value plus noise, but rather is actual feature of the population's varying conception featuring wide variance, and a potentially multimodal nature.
+We demonstrate a GRU-based neural network learning the grounded compositional semantics of the terms used with in a the color description.
+By learning per-term, rather than per whole description, the model is able to predict distributions that for combinations of terms that are not seen in the training data.
+The ability to predict distributions is useful as a component in human computer interaction systems.
+
 
 \end{abstract}
 
 \section{Introduction}
-When a person says \emph{tan} they may mean a number of colors: From the bronze of a tanned sunbather, to the brown of tanned leather. When they say \emph{green} they may mean anything from \emph{aquamarine} to \emph{forest green}; and \emph{forest green} itself may mean the shades of a rain-forest, or of a fir-wood, or of a particular branded crayon the speaker had as a child.
+When a person says ``tan'' they may mean a number of colors: From the bronze of a tanned sunbather, to the brown of tanned leather.
+When they say ``green'' they may mean anything from ``aquamarine'' to ``forest green'';
+ and even ``forest green'' itself may mean the shades of a ``rain-forest'', or of a ``fir-wood''.
 Thus the color can not be deterministically known from the color name.
-However, based on the knowledge of the population's use of the words, a probability distribution as to the color intended can be found.
+However, based on knowledge of the population's use of the words, a probability distribution as to the color intended can be found.
 Here we will disregard issues of illumination and perceived color based on context, to focus on the core problem of the color of a single patch.
+
+
+Color is a core subtask in natural language understanding.
+The color language sub-domain displays many of the same features and difficulties as natural language as a whole.
+Every word has shades of meaning.
+No one understands colors exactly the same.
+Words occupy multiple roles: ``pale'' can be used to describe a all \emph{pale} colors, or as a modifier: ``pale blue''.
+Basic colors themselves can act both as modifiers, and as targets: ``blue green'' -- this a example of nouns being put into service as adjectives.
+Modifiers do not act on all colors constantly.
+New color descriptions are brought in from other sources, such as ``seashell'', ``salmon'', ``coral'' which come from the colors of the objects they describe.
+We note the noxious examples of ``puke'', ``vomit'' and ``yuck'' which not only are as consistently used as any color like ``bright orange'', but are also examples of nearly perfect synonyms describing the same area in color-space.
+Many of the problems of natural language are exemplified in their use in colors.
+Recent state of the art systems for image generation has demonstrated their capacity by generating from texts containing complex color descriptions such as ``the flower has petals that 
+are bright pinkish purple with white stigma'' \parencite{reed2016generative, 2015arXiv151102793M}.
+Understanding color is crucial to understanding language. 
 
 
 The mapping from color name to color could be considered a regression problem. Solving to find a function that when input some text such as ``forest green'', outputs a numerical value in a color space such as HSV or RGB.
@@ -66,72 +88,66 @@ If the distributions in color space were mono-modal
  and symmetric with consistently small variance, then considering the problem as regression with noise would be adequate.
 If the distribution were multi-model (e.g. a mixture model), or non-symmetric (e.g. a truncated distribution) or with varying and wide variances, then regression is loosing valuable information and is unable to produce a model that aligns well with reality.
 At the other end from regression, is classification.
-\pdfcomment{Relate this to McMalan and Stone's use of Convex -- Symstric is a stronger requirement than convex, and monomodal suggests that }
+\pdfcomment{Relate this to McMalan and Stone's use of Convex -- Symstric is a stronger requirement than convex.
+In general when we say multimodel they say convex, I could replace all uses.}
 
 A classifier will output probabilities for each of the possible categories an input could belong to.
 By dividing color space into threshold bins, where each bin is its own category.
 Then by classifying a color, one gets getting probabilities of it laying in each bin. The output of the classifier defines an empirical distribution in color-space.
 Basic classification models consider each category as being distinct and unrelated.
-However, we know that if a color name has a high probability of corresponding to a particular point in color space, then it should have a similar probability for other points in that neighbourhood -- this is a notion of continuousness.
+However, we know that if a color name has a high probability of corresponding to a particular point in color space, then it should have a similar probability for other points in that neighborhood -- this is a notion of continuousness.
 A variety of approaches called ordinal regression or ordinal classification exist to handle this case, where there is a order to the categories.
 However, there is no natural total ordering of colors.
 In Hue-Saturation-Value (HSV) color space; we think of the hue channel 
  as being cyclic: \emph{red}, \emph{orange}, \emph{yellow}, \emph{green}, \emph{blue}, \emph{purple}, and back to \emph{red}.
 One solution would be to move to a color-space which is orderable in all channels: for example Red-Green-Blue (RGB).
 However, some of these space do not well align to human perception; or exhibit strong correlation between the values on different channels.
-Further, to handle non-independence of the channels of color space, it is natural to consider the categories as regions of a 2D or 3D space (Much like a 2D histogram) for bins of two or three color space channels at one.
-Again, there is no ordering on such multiple dimensional points.
-2D and 3D joint distributions are not investigated in this work, but we note that the extension of this work to such cases is trivial.
 So classical ordinal classification methods have limited utility on the problem.
 
-We instead look to helping a normal classifier learn the continuous relationship between adjacent bins by enhancing the training data.
-Rather than representing each observation as a one-hot output with the hot cell being the bin it lays in, we represent it as a histogram of values for a continuous probability distribution with the expected value being the original value of the observation.
-This can be seen as blurring a one-hot representation.
-By adding this blur to all observations, it encourages the classifier to learn at lower level the tied value between the adjunct bins.
-For representations of the Saturation and Value channels a truncated Gaussian distribution is used for the representation, restricting the value to between 0 and 1.
-For the Hue channel wrapped normal distribution is used
-\pdfcomment{Workout how to merge this with descetisation section}
+We instead look to helping a normal classifier learn the continuous relationship between adjacent bins by enhancing the training data through a blurring process.
+
+The core of this work is mapping from natural language space, to color space.
+This goes beyond direct one-to-one color generation.
+Given a color name, we generate probability distributions in color space,
+these distributions can be sampled, or the peaks selected, to generate colors.
+However, they have further use, as we have the whole distribution.
+For example, as a subsystem in human interfacing image processing, when asked to select the ``dark bluish green'' object, each object can be ranked based on how likely it's color is according to the distribution.
+This way if extra information eliminates the most-likely object, the second most likely object can immediately be determined.
+Further, as the probability of the color of the object being the color being described by the user input is known, a threshold can be given to report no object found, or to ask for additional confirmation.
 
 
 
 \section{Highly multimodal colors}
 One of the core motivating factors of this work is to be able to handle the color names which have multiple distinct modes.
 That is to say there are distinct peaks of the most likely region in color space.
-This is not the solo motivation -- there is also the important factors of knowing the confidence of a particular sample of color-space, and understanding the other factors of the distribution, eg spread and more general shape.
-As well as the linguistic interest in how the modifier words influence the colours, and the capacity to combine terms in ways never seen in the training data.
-However, a core interest here is in colors with a multi-modal distribution; such colors can not be considered as targets for regression as they do not have a symmetric "noise" variation around their mode.
+This is not the sole motivation -- there is also the important factors of knowing the confidence of a particular sample of color-space, and understanding the other factors of the distribution, eg spread and more general shape.
+As well as the linguistic interest in how the modifier words influence the colors, and the capacity to combine terms in ways never seen in the training data.
+However, a core interest here is in colors with a multi-modal and asymmetric distributions; such colors can not be considered as targets for regression as they do not have a symmetric noise around their mode.
+As such they can not be estimated by using distance in color-space as a proxy for the probability of intent.
 
 
 \newcommand{\multimodalfig}[1]{
 \begin{figure}
-	\IfFileExists{figs/multimodal/empiri#1.pdf}	%This is Fragile, might need to replace with a condtion based on arguments
-	{\includegraphics[width=\columnwidth]{multimodal/empiri#1}}
-	{}
-
-	\includegraphics[width=\columnwidth]{multimodal/gru#1}
-	
+	\includegraphics[width=\columnwidth]{multimodal/empiri#1}
+	\includegraphics[width=\columnwidth]{multimodal/gru#1}	
 	\caption{\label{fig#1} #1}
 \end{figure}
 }
-	
+
 \multimodalfig{grey}
 \multimodalfig{lightgrey}
 \multimodalfig{darkgrey}
-\multimodalfig{verylightgrey}
-\multimodalfig{verydarkgrey}
 
 
+\pdfcomment{TODO: once I work out which images are being kept, give them captions.}
 
 One such color with a significant bi-modal distribution is ``grey''.
 Traditionally, ``grey'' has been considered to be achromatic -- that is to say its hue component does not matter.
 However, by looking at the data from the Monroe dataset \parencite{Monroe2010XKCDdataset} in \Cref{figgrey} it can be seen that that a the hue distribution significantly favors blues and reds over greens and purples.
 Further, ``light grey'' increases the yellow peak (\Cref{figlightgrey}), and ``dark grey'' (\Cref{figdarkgrey}) increases the ``blue'' peak, while also changing the value dimension, as expected.
-Beyond this, there is no empirical data, however, our GRU model suggests that that the distribution for `very light grey'' would be similar to that of ``light grey'' increases the yellow peak (\Cref{figverylightgrey}), and ``dark grey'' (\Cref{figverydarkgrey}), though we note that this extrapolation without training data seems rather loose it's precision.
-
-
-
-
-
+Other multimodal colors include ``greenish'' which is less likely to be a pure green, than to be on the blue or yellow side of the color; 
+and ``purplish grey'' which has a dip at ``magenta``.
+These colors are discussed further in \Cref{resultsdistributions}.
 
 
 
@@ -142,52 +158,38 @@ Beyond this, there is no empirical data, however, our GRU model suggests that th
 Color naming is the reverse of the task we investigate in this work.
 The color naming task takes a point in color-space as in input, and outputs a probability distribution over possible names for that color.
 There a several notable recent works on color-naming.
-\cite{mcmahan2015bayesian,meomcmahanstone:color} present a full description Bayesian approach, which outputs the probability of a whole description.
-\cite{2016arXiv160603821M} presents a per-word LSTM approach, which produces a conditional language model -- sequentially outputting a probability of each word in the description.
-\cite{DBLP:journals/corr/KawakamiDRS16} presents a per-character LSTM and Variational Autoencoder approach, which products a conditional character language model -- sequentially outputting a probability of each character in the description.
-This work by Kawakami et al, also includes a method for generating colours.
+\textcite{meomcmahanstone:color} and \textcite{mcmahan2015bayesian} present a full description Bayesian approach, which outputs the probability of a whole description.
+\textcite{2016arXiv160603821M} presents a per-word LSTM approach, which produces a conditional language model -- sequentially outputting a probability of each word in the description.
+\textcite{DBLP:journals/corr/KawakamiDRS16} presents a per-character LSTM and Variational Autoencoder approach, which products a conditional character language model -- sequentially outputting a probability of each character in the description.
+The work by Kawakami et al, also includes a method for generating colors.
 
 \subsection{Color Generation}
 Color generation closely related to the primary task considered here.
 The process of going from the name of a color, to an actual color -- a single point in a color space.
-\cite{DBLP:journals/corr/KawakamiDRS16} presents a method using RNN, and LSTM, as well as baselines using unigram and bigrams, over characters, to predict a point in \emph{Lab} color space \cite{hunter1958photoelectric}.
+\textcite{DBLP:journals/corr/KawakamiDRS16} presents a method using RNN, and LSTM, as well as baselines using unigram and bigrams, over characters, to predict a point in \emph{Lab} color space \cite{hunter1958photoelectric}.
 Color generation is the single output version of our task of color distribution estimation.
 
-The work we present here, goes beyond just color generation.
-As given a color name, we generate probability distributions in color space,
-these distributions can be sampled, or the peaks selected, to generate colours.
-However, they have further use, as we have the whole distribution.
-For example, as a subsystem in image processing, when asked to select the ``dark bluish green'' object, each object can be ranked based on how likely it's color is according to the distribution.
-This way if extra information eliminates the most-likely object, the second most likely object can immediately be determined.
-Further, as the probability of the color of the object being the color being described by the user input is known, a threshold can be given to report no object found, or to ask for additional confirmation.
 
-Color generation system systems outputting a single color can approximate this by using the distance in color space, from a observed color to the predicted color as a proxy for the probability of the observed color. However, this does not handle asymmetric, or multimodal distributions, nor does it take into account that the range of values reasonable for one color description, often significantly differs in width from that reasonable for another.
+Color generation system systems outputting a single color can approximate a probability distribution by using the distance in color space, from a observed color to the predicted color as a proxy for the probability of the observed color. However, this does not handle asymmetric, or multimodal distributions, nor does it take into account that the range of values reasonable for one color description, often significantly differs in width from that reasonable for another.
 
 \section{Color Identification}
 
-\textcite{DBLP:journals/corr/MonroeHGP17} presents a neural network solution to communication game, where a is presented with three color patchs and ask to descibe one of them, 
-such that when the listener is presented with the same color patchs that can select the one the speaker was describing.
+\textcite{DBLP:journals/corr/MonroeHGP17} presents a neural network solution to communication game, where a is presented with three color patches and ask to describe one of them, 
+such that when the listener is presented with the same color patches in randomized order they can select the one the speaker was describing.
 In this game, the color descriptions have context, for example the speaker can say ``the darker blue one, not the cyan''.
 Both speaker and listener models are trained, using and LSTM based decoder and encoders respectively.
 They present several variants of their models, including pragmatic models, and models that combine knowledge.
-The base listener model is of particular relevance to the distribution modelling task.
+The base listener model is of particular relevance to the distribution modeling task.
 The final time-step of the base listener LSTM produces a 100 dimensional representation of description provided.
-From this, a Gaussian distributed score function, over the Fourier-transform based color-space of \textcite{2016arXiv160603821M}.
+From this, a Gaussian distributed score function, over the Fourier-transform based color space of \textcite{2016arXiv160603821M}.
 By normalizing the scores of the three colors the listener is to choose from, the conditional probability of each can be found.
 It should be noted that while this method does output a probability distribution, as a by-product of the task
 it is Gaussian distributed for all inputs -- both symmetric and mono-modal, albeit in a high-dimensional non-linear color space.
-This is a reasonable distribution for use in this color-game, where the speaker is expressly trying to avoid ambiguity,
+This is arguably reasonable distribution for use in this color-game, where the speaker is expressly trying to avoid ambiguity,
 and where color descriptions can feature reference to other colors in the context.
 Without this contextual information in the color-naming, distributions over all colors are required,
 and these distributions are not expected to be symmetric in any consistent color space.
 
-\subsection{Image Generation}
-\pdfcomment{move to introduction.}
-Recent works on image generation produce very impressive images based on sentence inputs\cite{reed2016generative,2015arXiv151102793M}.
-These end-to-end systems take in a sentence and synthesize a full image.
-They have been demonstrated to be able to generate images taking into account the colors described.
-Like color generation, this is a single output, or a sampling of outputs rather than distribution.
-These works show that it is possible to encode complex information about color based on the words being used.
 
 
 \section{Method}
@@ -198,10 +200,13 @@ First we add a blur to each observation.
 This is done by defining a distribution with expected value equal to the observation,
 and with variance defined as a hyper-parameter of our process.
 Saturation and Value are given truncated Gaussian distributions.
-Hue is given a wrap-around Gaussian \footnote{In implementation, we initially approximated the wrapped normal distribution with a von Mises distribution with support between 0 and 1; however the CDF for this was computationally expensive; so we switched to a truncated Gaussian with the support between -1 and 2, which allowed for very fast implementation by aliasing the memory locations outside the true value's support of 0 to 1. The difference in value is negligible until variance becomes much large than we consider here.}.
+Hue is given a wrap-around Gaussian \footnote{In implementation, we initially approximated the wrapped normal distribution with a von Mises distribution with support between 0 and 1; however the calculating cumulative distribution for this was computationally expensive; so we switched to a truncated Gaussian with the support between -1 and 2, which allowed for very fast implementation by aliasing the memory locations outside the true value's support of 0 to 1. The difference in value is negligible until variance becomes much large than we consider here.}.
 To discretize the distribution, we partition the support into a number of equally sized bins -- the resolution of our output.
+We evaluate on result ion 64, and 256 bins per channel.
+For the case of 256 bins per channel, we note there there is effectively no information lost in a discretized representation as the original data was collected using a web interface displaying 24 bit color \parencite{Monroe2010XKCDdataset}.
 We then evaluate the cumulative distribution between each bin boundary, resulting in a vector of values between zero and one -- summing to one.
 Functionally, this is very similar to converting to a one-hot representation, based on bin boundaries, but with some blurring to shift part of the mass into adjacent indices.
+
 
 
 
@@ -211,25 +216,25 @@ That is to say, we assume that if knowing the value of one component would not i
 This assumption is incorrect, but not as incorrect as might be suspected.
 
 Superficial checks were carried out the the accuracy of this assumption.
-The Spearman's correlation on the training data suggests that for over three quarters of all color names, there is only weak to zero pairwise correlation between the H,S, and V components (\mbox{Q3 < 0.20}).
-This was the lowest, when compared amongst 16 color spaces RGB, HSV, HSI, HSL, xyY, XYZ, Lab, Luv, LCHab, LCHuv, DIN99, DIN99d, DIN99o, LMS, YIQ, and YCbCr.
+The Spearman's correlation on the training data suggests that for over three quarters of all color names, there is only weak to zero maximum pairwise absolute correlation between the H,S, and V components (\mbox{Q3 = 0.187}).
 However, this measure underestimates correlation for values that have circular relative value, such as hue.
+This correlation measure was the lowest by a large margin  when compared amongst 16 color spaces; RGB, HSV, HSI, HSL, xyY, XYZ, CIELab, Luv, LCHab, LCHuv, DIN99, DIN99d, DIN99o, LMS, YIQ, and YCbCr; by a full 100\%.
+The table is available in the supplementary materials.
+\pdfcomment{TODO: Add the table to the supplementary matrials}
+Given the limitations of the evaluation methodology, these results are suggestive, rather than solidly indicative of the degree of correctness of the conditional independence assumption.
 For the investigation here, we consider the conditional independence assumption sufficient.
-
-
 
 Note that the evaluation metrics chosen do not assume conditional independence.
 Though the models, including the baseline model, do.
 Better results may be obtained by outputting a 3D joint distribution.
 
-The assumption is not intrinsic to our method.
+The conditional independence assumption is not intrinsic to our method.
 The discretization and blurring function identically in 3D joint distribution space,
 as in three, 1D independent distribution spaces.
 However, the independence assumption significantly decreases the computational requirements.
-For $n$ the resolution (number of bins) used in discretization:
-Assuming independence allows use to work with 3 output layers, each containing $n$ elements.
+Assuming independence allows the model to be defined with 3 output layers each containing $n$ elements, where $n$ is the output resolution (number of bins).
 Rather than one output layer containing $n_{res}^3$ elements.
-This saves a lot of memory during the training.
+This saves a large amount of memory during the training.
 
 
 \section{The Models}
@@ -245,14 +250,16 @@ This saves a lot of memory during the training.
 		}
 \end{figure}
 
-We present a neural network based model, with sequential inputs which predicts the 3 separate output distributions. The general structure of this network is similar to \cite{2016arXiv160603821M}, or to most other word sequence learning models.
+We present a neural network based model, with sequential inputs which predicts the 3 separate output distributions. The general structure of this network is similar to \textcite{2016arXiv160603821M}, or indeed to most other word sequence learning models.
 It is shown in \Cref{network}.
 Each word first is transformed to an embedding representation.
 This representation is randomly initialized and is trained with the rest of the network.
-The embedding is used as the input for a Gated Recurrent Unit (GRU) \parencite{cho2014properties,chung2014empirical}.
-The output of final time-step is feed to a Rectified Linear Unit (ReLU) \parencite{dahl2013reludropout}.
+The embedding is used as the input for a Gated Recurrent Unit (GRU)  \parencite{cho2014properties,chung2014empirical}.
+The output of final time-step is feed to a Rectified Linear Unit (ReLU)  \parencite{dahl2013reludropout}.
 Finally, the this used as the input the three distinct softmax output layers -- one for each of hue, saturation and value.
 The network was trained to minimize to sum of the three cross-entropy losses of these output layers.
+The multiple output layers commonly occur joint learning and related transfer learning problems.
+\pdfcomment{I was sure I had a good citation from something by Bengio for this techneque in transfer learning. But I can't seem to find ti}
 
 We choose GRU as the basis of our reused structure in the recurrent network.
 GRU has fewer parameters to learn than the more established LSTM.
@@ -263,17 +270,17 @@ The GRU forms the basis of the our sequence-of-terms to color-space-probability-
 
 
 \subsection{Baseline Model}
-For comparison we define an additional model based more directly on the training data --  without the machine learning component.
+For comparison we define an additional model based more directly on the training data.
 This is a simpler model with no machine learning component.
-For this model, we produce the estimated distribution for each color description simply by averaging all of that colors discretized observations.
+For this model, we produce the estimated distribution for each color description by averaging all of that colors discretized observations.
 This features the same blurring, as in the GRU Model.
-During our investigations we found that a model based simply taking on the mean would, for some of observations in the development dataset, return a predicted probability of zero.
-This causes the perplexity to be undefined ($\infty$ when evaluated using IEEE Floating point math.)
-To handle this we apply add-one smoothing to each color names output distribution.
+During our investigations we found that a model based onlytaking on the mean would, for some of observations in the development dataset, return a predicted probability of zero.
+This causes the perplexity to be undefined (or $\infty$ when evaluated using IEEE floating point math.)
+To handle this we apply add-one smoothing to each output distribution.
 Effectively this is adding an number number of additional training observations for each color name,
 corresponding to a one-hot vectors for each output bin.
 The result of this is that when the mean over all observations is taken, there a no output bins with a probability mass of zero.
-With this smoothing the Baseline model can be used to predict distributions for all color descriptions in the training set.
+The Baseline model can be used to predict distributions for all color descriptions in the training set.
 This is inferior in generalisability to the GRU model, which can handle any combination of tokens from the training set.
 However, without the requirement to learn the how the compositional structure of the terms in the color name function, it is a much simpler modeling problem, as such we suggest it is a strong baseline for evaluational.
 
@@ -281,8 +288,9 @@ However, without the requirement to learn the how the compositional structure of
 \section{Experimental Setup}
 \subsection{Data Preparation}
 We use the Monroe dataset \parencite{Monroe2010XKCDdataset}, as prepared by McMahan and Stone \parencite{mcmahan2015bayesian}.
-This data has minor cleaning, and a standard division into test, development, and training partitions.
-It is also used by \textcite{2016arXiv160603821M} and \textcite{DBLP:journals/corr/KawakamiDRS16}.
+This dataset is partitioned into test, development, and training sets; and has had some cleaning from the original data collected by Randell \textcite{Monroe2010XKCDdataset}.
+It is also used by Will \textcite{2016arXiv160603821M} and \textcite{DBLP:journals/corr/KawakamiDRS16}.
+\pdfcomment{I'm not sure how to make it clear that the two Monroes involved are not the same person.}
 The color space is HSV, with all values between zero and one.
 Each is pair with a short name for the color, and provided by participants in the Color Survey.
 
@@ -291,7 +299,7 @@ Beyond simply breaking up a description ``greenish blue'' into words: ``greenish
 We separate the ``-ish'' and the ``-y'' suffixes.
 This tokenization is achieved through a short list of word replacement rules.
 We also separate `-` into a distinct token. ``blue-green'' becomes ``blue'', ``-'', ``green''.
-We do not demarcate the beginning or end of the color description with any for of marker token.
+We do not demarcate the beginning or end of the color description with any form of marker token.
 
 The Monroe dataset has 829 unique color descriptions.
 Each description has a varying number of observations, where each observation is a pairing of description and a point in HSV space.
@@ -422,15 +430,16 @@ All results presented here are for this value of the blurring hyper parameter.
 
 
 
-\subsection{Qualitative Comparison of the Distribution}
+\subsection{Qualitative Comparison of the Distribution}\label{resultsdistributions}
 
 \multimodalfig{yellow}
 \multimodalfig{greenishyellow}
 \multimodalfig{greenish}
+\multimodalfig{purplishgrey}
 
 
 
-Shown in \Cref{figyellow}, \Cref{figgreenishyellow}, \Cref{figgreenish}, and earlier in \Cref{figgrey}, \Cref{figlightgrey}, \Cref{figdarkgrey}, \Cref{figverylightgrey}, \Cref{figverydarkgrey} are side by-side comparisons of the output of the 64 bin GRU model, compared to the Baseline Model, both with blurring factor of $\frac{1}{128}$.
+Shown in \Cref{figyellow}, \Cref{figgreenishyellow}, \Cref{figgreenish}, \Cref{purplishgrey}, and earlier in \Cref{figgrey}, \Cref{figlightgrey}, \Cref{figdarkgrey}, \Cref{figverylightgrey}, \Cref{figverydarkgrey} are side by-side comparisons of the output of the 64 bin GRU model, compared to the Baseline Model, both with blurring factor of $\frac{1}{128}$.
 Overall it can be seen the Baseline model is a lot sharper, with more spikes,
 where as the GRU model tends to be much smoother, even though both use the same blurring during discretization.
 Close together peaks, seem to be leveled out, with the valley between being filled.
@@ -519,19 +528,19 @@ The key advantage of the GRU model is its ability to predict a distribution for 
 
 A core motivation of using the GRU model is its ability to learn to combine tokens in a description in ways not seen in training.
 To evaluate how well the model does at predicting distributions,
-we compare a GRU model trained Extrapolation dataset, to the models trained on the full set.
+we compare a GRU model trained on e the extrapolation sub-dataset, to the models trained on the full data set.
 Both the non-extrapolating, and extrapolating models are evaluated on the same set of rare color descriptions,
 but the non-extrapolating models are also shown these rare descriptions during training.
 The extrapolating model has never been trained on these combinations of color terms,
 and instead must use the knowledge of how those color terms influence the colors in other cases.
 
-The results for estimating the distributions for the rare color descriptions in the Extrapolation dataset are shown in \Cref{tblresextrapo}.
-It can be seen that the Extrapolation is successful, the results on the Extrapolation sub-dataset are similar to the overall results for the whole dataset in \Cref{tblresfull}.
+The results for estimating the distributions for the rare color descriptions in the extrapolation sub-dataset are shown in \Cref{tblresextrapo}.
+It can be seen that the extrapolation is successful, the results on the extrapolation sub-dataset are similar to the overall results for the whole dataset in \Cref{tblresfull}.
 The non-extrapolating results are better than the extrapolation model results.
 This is to be expected, as they have the additional training data for the rare terms.
-It in interesting that most of the non-extrapolating results for the extrapolation dataset are better than for the overall dataset in \Cref{tblresfull}.
+It in interesting that most of the non-extrapolating results for the extrapolation sub-dataset are better than for the overall dataset in \Cref{tblresfull}.
 it can be seen in particular that the non-extrapolating GRU models perform better than the non-extrapolating Baseline models.
-This suggests that they are successfully able to transfer the knowledge of the tokens used in other contexts, to the rare uses in the extrapolation dataset, and also while benefiting from the small number of examples of use in the fine-tuning using the small number training case for the rare descriptions.
+This suggests that they are successfully able to transfer the knowledge of the tokens used in other contexts, to the rare uses in the extrapolation sub-dataset, and also while benefiting from the small number of examples of use in the fine-tuning using the small number training case for the rare descriptions.
 The baseline model is unable to do this, relying only on the small number of training cases for that exact color description.
 This in-particular shows for the Baseline with output resolution of 256.
 Given the high number of output bins, and the small number of training case, many bins would be empty.
