@@ -7,3 +7,42 @@ By adding this blur to all observations, it encourages the classifier to learn a
 For representations of the Saturation and Value channels a truncated Gaussian distribution is used for the representation, restricting the value to between 0 and 1.
 For the Hue channel wrapped normal distribution is used
 \pdfcomment{Workout how to merge this with descetisation section}
+
+
+
+By blurring the training samples, we inform the model about the nearness of the discretized outputs.
+The outputs from softmax output layer are intrinsically unordered and purely categorical.
+By adding blurring the training output, we ensure that the network learns the relationship between the nearby output neurons.
+Such that when one is activated, neurons representing  adjacent points in colors space are also activated (to a lesser strength).
+By adding this to all training terms this information is trained into the model
+A nearly equivalent alternative would be to define the same requirement as an additional term in the loss function, similar to L2-regularization, penalizing the networks that have sharp differenced between adjacent neurons.
+This would be more difficult to tune.
+We suggest that modifying the training data is a more elegant way to train this information into the model.
+
+However, there is a trade-off, in blurring.
+Without any blurring, the training data is one-hot encoded, and we do not get the benefits of encoding prior knowledge about smoothness, nor do we help the model effectively learn the relative position of the neurons.
+The more blur that is added the more information is added about the structure of the space,
+but the less information is available from each training datum about its precise point.
+For example if the blurring made the target output have 5 adjacent neurons valued at \texttt{[0.1, 0.2, 0.4, 0.2, 0.1]}, then the loss from the network outputting a distribution shifted one place to the left, is much less than it would be for a less blurred case: \texttt{[0.01, 0.04, 0.9, 0.04, 0.01]}.
+Thus the level of blurring is a hyper-parameter that needs to be set.
+
+
+To determine the blurring level we conducted a hyper-parameter sweep.
+We checked a range of values and evaluated on the development dataset.
+We evaluated both for the output resolution of 64 and 256, and both on the full distribution estimation task, and the extrapolation task.
+We found that best results for was to set the standard deviation of the distributions used in the discretization process to be $\sigma=\frac{1}{2n}$, where $n$ is the output resolution.
+We found an exception to this when checking the blurring hyper-parameters the full task at 256 output bins; in this case $\sigma=\frac{1}{4n}$, however the different was very small.
+As such in all further investigations we used a blurring with $\sigma=\frac{1}{2n}$ in all desecration, except as noted otherwise.
+
+Decreasing or increasing the standard deviation from this produced higher perplexity and mean squared error to peak on when evaluated on the development datasets.
+The blurring of $\sigma=\frac{1}{2n}$, redistributes the probability mass assigned in the discretization, to the surrounding bins.
+For a training point that would be at the center of a bin, this roughly corresponds to 68.3\% of the probably mass assigned to the central bin, 15.7\% assigned to the bin on each side, and the remaining 0.3\% distributed to the remaining bins.
+However, in general points are not aligned to the center of bins, so they generate asymmetric training cases.
+All results presented here are for this value of the blurring hyper parameter.
+
+
+
+In Hue-Saturation-Value (HSV) color space; we think of the hue channel 
+as being cyclic: \emph{red}, \emph{orange}, \emph{yellow}, \emph{green}, \emph{blue}, \emph{purple}, and back to \emph{red}.
+One solution would be to move to a color-space which is orderable in all channels: for example Red-Green-Blue (RGB).
+However, some of these space do not well align to human perception; or exhibit strong correlation between the values on different channels.
