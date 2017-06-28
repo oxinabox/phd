@@ -235,15 +235,33 @@ Better results may be obtained by outputting a 3D joint distribution -- which is
 though practically the increased memory use renders it computationally infeasible on most hardware.
 
 
+
+\subsection{Baseline Model}
+We define a new simplistic model to evaluate the capacity to model color distributions.
+This model loosely resembles the histogram model used by \textcite{mcmahan2015bayesian} in their Baseline model to characterise their input space.
+
+
+
+
+For comparison we define an additional model based more directly on the training data.
+This is a simpler model with no machine learning component.
+For this Baseline model, the estimated distribution for each color description is produced by averaging all of that colors discretized observations per output bin.
+This features the same blurring, as in the CDEST model.
+During our investigations we found that a model based only taking on the mean would return a predicted probability of zero for some of observations in the development dataset.
+To handle this add-one smoothing is applied to each output distribution.
+The Baseline model can be used to predict distributions for all color descriptions in the training set.
+This is inferior in generalisability to the CDEST model, which can handle any combination of tokens from the training set.
+Without the requirement to learn the how the compositional structure of the terms in the color name function, it is a much simpler modeling problem, as such we suggest it is a strong baseline for evaluational.
+
 \subsection{CDEST Model}
 
 \begin{figure}
 	\resizebox{\columnwidth}{!}{\input{./figs/neuralnet}}
-
+	
 	\caption{\label{network}
 		The CDEST model for predicting the color-space probability distributions of color.
 		The section in the dotted-boxes is repeated for each time step.
-		}
+	}
 \end{figure}
 
 We present a neural network based model, with sequential inputs which predicts the 3 separate output distributions shown in \Cref{network}. The general structure of this network is similar to \textcite{2016arXiv160603821M}, or indeed to most other word sequence learning models.
@@ -270,20 +288,6 @@ The layers prior to the output are shared, allowing common patterns to be learne
 This model is the primary contribution of this work.
 
 
-\subsection{Baseline Model}
-For comparison we define an additional model based more directly on the training data.
-This is a simpler model with no machine learning component.
-For this Baseline model, the estimated distribution for each color description is produced by averaging all of that colors discretized observations per output bin.
-This features the same blurring, as in the CDEST model.
-During our investigations we found that a model based only taking on the mean would return a predicted probability of zero for some of observations in the development dataset.
-This causes the perplexity to be undefined (or $\infty$ when evaluated using IEEE floating point math.)
-To handle this add-one smoothing is applied to each output distribution.
-Effectively this is adding an number number of additional training observations for each color name,
-corresponding to a one-hot vectors for each output bin.
-The result of this is that when the mean over all observations is taken, there a no output bins with a probability mass of zero.
-The Baseline model can be used to predict distributions for all color descriptions in the training set.
-This is inferior in generalisability to the CDEST model, which can handle any combination of tokens from the training set.
-Without the requirement to learn the how the compositional structure of the terms in the color name function, it is a much simpler modeling problem, as such we suggest it is a strong baseline for evaluational.
 
 
 \section{Experimental Setup}\label{sec:experimental-setup}
@@ -308,13 +312,14 @@ The Baseline model does not function per term, so uses the original 829 descript
 \subsection{Extrapolation Sub-Dataset}
 The key advantage of CDEST over the Baseline model is its ability to predict the distribution for never before seen descriptions of colors.
 For example, based on the learned understanding of ``bright'', from examples like ``bright green'' and ``bright red'', and of ``salmon'', our system can suggest the distribution in color space of ``bright salmon'', even though that color never occurs in the training data.
-To evaluate this, a new dataset is derived from Monroe dataset, which we will call the extrapolation sub-dataset.
+To evaluate this generalisation capacity a new dataset is derived from Monroe dataset, which we will call the extrapolation sub-dataset.
 This is defined by selecting the rarest 100 color descriptions from the dataset,
 with the restriction that every token in a selected description must still have at least 8 uses in other descriptions.
 The selected examples include multi-token descriptions such as: ``"bright yellow green'' and also some single tokens that occur more commonly as modifiers than as stand-alone descriptions: ``pale''.
 The test and development datasets are restricted to contain only observations of these selected color descriptions.
 Conversely, the extrapolation training set has no observations of these color descriptions.
 This produces a dataset suitable for evaluating the capacity of our model to estimate the distributions for color descriptions not seen in training.
+A similar approach for testing generalisation of compositional models by removing items from the from the training set that occur in the test set can be seen in \textcite{DBLP:journals/corr/AtzmonBKGC16,DBLP:journals/corr/Hassanien16}.
 
 \subsection{CDEST Model Parameters}
 For the CDEST model, regardless of output resolution the same network parameters are used.

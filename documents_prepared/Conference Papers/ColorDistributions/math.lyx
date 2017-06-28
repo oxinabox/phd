@@ -1,0 +1,291 @@
+#LyX 2.2 created this file. For more info see http://www.lyx.org/
+\lyxformat 508
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 1cm
+\topmargin 1cm
+\rightmargin 1cm
+\bottommargin 1cm
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Subsection
+Discretization and Blurring
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\mathcal{D}(\mu,\sigma^{2})$
+\end_inset
+
+ some monomodal distribution, characterised by having expected value 
+\begin_inset Formula $\mu$
+\end_inset
+
+ and variance parameter 
+\begin_inset Formula $\sigma^{2}$
+\end_inset
+
+.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+For the case of hue 
+\begin_inset Formula $\mathcal{D}$
+\end_inset
+
+ is a wrap around gaussian,
+\end_layout
+
+\begin_layout Itemize
+for saturation and value 
+\begin_inset Formula $\mathcal{D}$
+\end_inset
+
+ is a truncated gaussian,
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+\begin_inset Formula $P(x_{1}<y\le x\mid y\sim\mathcal{D}(\mu,\sigma^{2}))$
+\end_inset
+
+ given by the CDF of a variable distributed by
+\begin_inset Formula $\mathcal{D}(\mu,\sigma^{2})$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $n$
+\end_inset
+
+ is the output resolution
+\end_layout
+
+\begin_layout Itemize
+The discretization function outputs a vector of binned values: 
+\begin_inset Formula $discretize(v,n,\mathcal{D},\sigma)=\left(P\left(\dfrac{i-1}{n}<y\le\dfrac{i}{n}\mid y\sim\mathcal{D}(v,\sigma^{2})\right)\right)_{i=1}^{i=n}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Contrast this to 
+\begin_inset Formula $onehot(v,n)=\left(\begin{cases}
+1 & \dfrac{i-1}{n}<v\le\dfrac{i}{n}\\
+0 & \mathrm{otherwise}
+\end{cases}\right)_{i=1}^{i=n}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+It can be seen that this is the limit of 
+\begin_inset Formula $discretize(v,n,\mathcal{D},\sigma)\underset{\sigma\to0}{\longrightarrow}onehot(v,n)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Baseline model
+\end_layout
+
+\begin_layout Itemize
+Training data 
+\begin_inset Formula $V=\{((v_{H},v_{S},v_{V}),\,t)\in[[0,1]^{3}\times T\}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Where 
+\begin_inset Formula $[0,1]^{3}\subset\mathbb{R}^{3}$
+\end_inset
+
+ is the color space, and 
+\begin_inset Formula $T$
+\end_inset
+
+ is the natural language space of color descriptions
+\end_layout
+
+\begin_layout Itemize
+The subset of training data for the description 
+\begin_inset Formula $t$
+\end_inset
+
+ is guien by
+\begin_inset Formula $V_{|t}=\{(v_{H},v_{S},v_{V})\mid\:((v_{H},v_{S},v_{V}),\,t_{i})\in V\:\wedge\:t_{i}=t\}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Per channel the baseline model is defined by 
+\begin_inset Formula $q_{c}(x_{c}\mid t)=\dfrac{\sum_{\forall(v_{H},v_{S},v_{V})\in V_{|t}}discretize(v_{c},n,\mathcal{D},\sigma)\cdot onehot(x_{c},n)+1}{\left|V_{|t}\right|+n}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+By the conditional independance assumption: 
+\begin_inset Formula $q(x_{H},x_{S},x_{V}\mid t)=q_{H}(x_{H}\mid t)\times q_{S}(x_{S}\mid t)\times q_{V}(x_{V}\mid t)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+If 
+\begin_inset Formula $t$
+\end_inset
+
+ does not occur in the training set, then 
+\begin_inset Formula $\forall x_{H},x_{S},x_{V}$
+\end_inset
+
+ , 
+\begin_inset Formula $q(x_{H},x_{S},x_{V}\mid t)=\dfrac{1}{n^{3}}$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Thus effectively no ability to handle color descriptions not seen during
+ training.
+\end_layout
+
+\end_deeper
+\begin_layout Subsection
+CDEST model
+\end_layout
+
+\begin_layout Itemize
+Neural network outputting 
+\begin_inset Formula $\hat{y}_{c}(t)\in[0,1]^{n}$
+\end_inset
+
+ a probability mass vector for the discritized color space in channel 
+\begin_inset Formula $c$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Defined using a sequence model over the tokens in 
+\begin_inset Formula $t$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+from this the probability can be found by selecting the element for the
+ bin 
+\begin_inset Formula $x_{c}$
+\end_inset
+
+can be found in:
+\begin_inset Formula $\hat{p}_{c}(x_{c}\mid t)=\hat{y}_{c}(t)\cdot onehot(x_{c},n)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+By the conditional independance assumption: 
+\begin_inset Formula $\hat{p}(x_{H},x_{S},x_{V}\mid t)=\hat{p}_{H}(x_{H}\mid t)\times\hat{p}_{S}(x_{S}\mid t)\times\hat{p}_{V}(x_{V}\mid t)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $t$
+\end_inset
+
+ is not restricted to color descriptions that occur in the training set,
+ but can be any combinations of tokens from the training set.
+\end_layout
+
+\end_body
+\end_document
