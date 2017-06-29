@@ -18,13 +18,10 @@
 
 \graphicspath{{./figs/}, {./}}
 
-\newcommand{\multimodalfig}[1]{
-	\begin{figure}
-		\includegraphics[width=\columnwidth]{multimodal/empiri256#1}
-		\includegraphics[width=\columnwidth]{multimodal/gru256#1}	
-		\caption{\label{fig#1} #1}
-	\end{figure}
-}
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\@fpbot}{0pt plus 1fil}
+\makeatother
 
 
 
@@ -87,13 +84,19 @@ are bright pinkish purple with white stigma'' \parencite{reed2016generative, 201
 It is a challenging domain, due to ambiguity, multiple roles taken by the same words, many modifiers, and shades of meaning.
 Understanding color is crucial to understanding language. 
 
+Properly understanding color language requires a model capable of understanding linguistic constitutionality.
+It must understand how modifiers such as ``dark'' modify basic colors; and must understand how other modifiers such as ``very'' would interact as a modifier to modifiers.
+It also must understand the functioning of affixes such as ``-ish'' in ``greenish''.
+This compositional understanding is needed both as a point of theory: a model without it is not interesting; and practically: the generalisation ability from a compositional model allows it to handle color descriptions not seen in training.
+Due to the combinatorial nature of language a data-sparsity problem exists where there are very few example in any given corpus of a very large number of combinations of words -- a well known problem in n-gram language modelling for example \parencite{kneser1995improved,chen1996empirical,rosenfeld2000two}.
+To handle this we take inspiration from a solution used in language modelling: the use of recurrent neural network \parencite{mikolov2010recurrent,mikolov2011RnnLM} to process each color description a compositional sequence of terms.
+
 
 The mapping from color name to color could be considered a regression problem, solving to find a function that when input some text such as ``forest green'', outputs a numerical value in a color space such as HSV or RGB.
 However, regression discards information about the distribution.
 If the distributions in color space were mono-modal
 \footnote{It should be understood that in this paper, when say \emph{mono-modal} or \emph{multimodal} it is meant in the sense of the number of peaks in the probability distribution; not in the sense of the number of modalities of the data -- e.g. multimodal audio-visual data. 
-\textcite{mcmahan2015bayesian} call this convex, we prefer the term multimodal.
-	}
+\textcite{mcmahan2015bayesian} call this convex, we prefer the term multimodal.}
 and symmetric with consistently small variance, then considering the problem as regression with noise would be adequate.
 However, the distributions in color space are generally non-systematic, wide variance, and are often multi-model.
 Thus regression to a single value is inadequate.
@@ -107,7 +110,6 @@ A classifier will output probabilities for each of the possible categories its i
 Basic classification model consider each category as being distinct and unrelated.
 In discretization the notion of continuousness is lost.
 To counter this, we employ a novel blurring strategy, to train the model to learn that points near in color space, should be similar in likelihood.
-\pdfcomment{Is it worth highlighting the links between this and the mathematical neighbourhood definition of continous?}
 
 
 Understanding color distributions has a clear use as a subsystem many systems.
@@ -123,7 +125,6 @@ The core contribution of this work is a method for estimating probability distri
 To handle distribution estimation we employ a novel discretization and blurring procedure.
 To allow for the capacity to predict distributions for colors never seen in training we define a GRU-based neural network which learns the compositional relationship expressed by the sequence terms making up the color description.
 We call this model the Color Distribution Estimation from Sequence of Terms (CDEST) model.
-\pdfcomment{SHADES -- Sequence Heuristic Allochroous Distribution Estimation System}
 
 
 
@@ -171,57 +172,19 @@ and these distributions are not expected to be symmetric in any consistent color
 
 \section{Color Distribution Estimation Framework}\label{sec:method}
 
-\subsection{Discretization and Blurring}
-The core of this task is to estimate a conditional probability distribution.
-Estimating conditional discrete probability distributions is a very-well established neural network task.
-We thus transform the task of learning a continuous distribution to the well-established problem of learning a discrete distribution by discretizing the output space.
-In evaluation we discretize to a resolutions of 64, and to 256 bins per channel.
-For the case of 256 bins per channel, there is effectively no information lost in a discretized representation as the original data was collected using a web interface displaying 24 bit color \parencite{Monroe2010XKCDdataset}.
-The estimation of a discretized distribution is very similar to outputting a histogram for the distribution.
-However, we do not discretize the training data sharply, but rather add a blur.
-The purpose of the blur is to encourage smoothness between adjacent output bins, thus capturing some of the notion of continuousness.
-
-Blur is added to each observation in the training set by treating each point as the expected value of a distribution, with the variance given as a hyper-parameter of training.
-Saturation and Value are given truncated Gaussian distributions.
-Hue is given a wrap-around Gaussian \footnote{In implementation, the wrapped normal distribution was initially approximated with a von Mises distribution with support between 0 and 1; however the calculating cumulative distribution for this was computationally expensive; so it was switched to a truncated Gaussian with the support between -1 and 2, which allowed for very fast implementation by aliasing the memory locations outside the true value's support of 0 to 1. The difference in value is negligible until variance becomes much large than is considered here, as the values become zero far before reaching the ends of the extended supports}.
-To discretize the distribution, the support is partitioned into a number of equally sized bins.
-The cumulative distribution is evaluated between each bin boundary, resulting in a vector of values between zero and one -- summing to one.
-Functionally, this is very similar to converting to a one-hot representation, based on bin boundaries, but with some blurring to shift part of the mass into adjacent indices.
-
-The blurring during the discretization encoded the prior knowledge of the smooth relationship between adjacent output bins.
-The outputs from softmax output layer are intrinsically unordered and purely categorical, this relationship must be trained into the network.
-By blurring all training cases, it ensures that knowledge learned.
-This effectively penalizes the network for outputting very different values for adjacent output bins.
-A nearly equivalent formulation could be defined for the loss function, were one-hot output encoding used.
-The blurring level is effectively a hyper-parameter in training.
-
-There is a trade-off, in blurring level.
-With very small blurring level the model is not informed of the smoothness -- there is no penalty for sharp differences.
-With high blurring there is less overall penalty for incorrect predictions,
-and the model is unable to fit sharper shaped curves.
-
-To determine the blurring level we conducted a coarse hyper-parameter sweep using the development dataset.
-Best results were found for were to set the standard deviation of the distributions used in the discretization process to be $\sigma=\frac{1}{2n}$, where $n$ is the output resolution.
-The blurring of $\sigma=\frac{1}{2n}$, redistributes the probability mass assigned in the discretization, to the surrounding bins.
-For a training point that would be at the center of a bin, this roughly corresponds to 68.3\% of the probably mass assigned to the central bin, 15.7\% assigned to the bin on each side, and the remaining 0.3\% distributed to the remaining bins.
-However, in general points are not aligned to the center of bins, so they generate asymmetric training cases.
-All results presented here are for this value of the blurring hyper parameter.
-Further tuning of this parameter might enable better results -- particularly using different blurring levels for the difference channels.
-
-
 \subsection{Conditional Independence Assumption}\label{sec:conditional-independence-assumption}
 For HSV colors we make the assumption that given the name of the color, then the distribution of the H, S and V components are independent.
 That is to say, it is assumed if the color name is known, then  knowing the value of one channel would provide any additional information as to the value  of the other channels.
 This assumption is not made in related works such as \textcite{DBLP:journals/corr/MonroeHGP17,DBLP:journals/corr/KawakamiDRS16}.
 These works do not attempt to fully model the distribution,
-and instead make other assumptions -- such as assuming symmetrical distributions, identical up to translation.
+and instead make other assumptions suitable to their own related tasks -- such as assuming symmetrical distributions, identical up to translation.
 When attempting to fully model the distributions, the assumption of conditional independence allows considerable saving in computational resources.
 Approximating the 3D joint distribution as the product of three 1D distributions decreases the space complexity from $O(n^3)$ to $O(n)$.
 
 
 
 Superficial checks were carried out the the accuracy of this assumption.
-The Spearman's correlation on the training data suggests that for over three quarters of all color names, there is only weak to zero maximum pairwise absolute correlation between the H,S, and V components (\mbox{Q3 = 0.187}).
+Spearman's correlation on the training data suggests that for over three quarters of all color names, there is only weak to zero maximum pairwise absolute correlation between the H,S, and V components (\mbox{Q3 = 0.187}).
 However, this measure underestimates correlation for values that have circular relative value, such as hue.
 This correlation measure was the lowest by a large margin  when compared amongst 16 color spaces; RGB, HSV, HSI, HSL, xyY, XYZ, CIELab, Luv, LCHab, LCHuv, DIN99, DIN99d, DIN99o, LMS, YIQ, and YCbCr; by a full 100\%.
 The table is available in the supplementary materials.
@@ -236,7 +199,52 @@ though practically the increased memory use renders it computationally infeasibl
 
 
 
-\subsection{Baseline Model}
+\subsection{Discretization and Blurring}
+The core problem is estimating a continuous  probability distribution, conditional on the color name.
+Estimating conditional discrete distribution is a significantly more studied application of neural networks
+-- this is the basic function of any softmax classifier.
+As such, to simplify the problem, we transform it to be a discrete distribution estimation task, by discretizing the colorspace.
+This allows us to use the well established classification techniques,
+however discretization intrinsically loses the notion of continuousness
+The particular feature we will miss is captured in the neighbourhood definition of continuousness:
+points in color-space within a neighbourhood, have probabilities within a neighbourhood.
+This can be informally considered as the smoothness of the output.
+The probability of two nearby points in color space, should be similar --not sharply jumping.
+A discrete distribution can not truely be continuousness ,
+however the output can be encouraged to be smoother as a form of prior knowledge addition.
+
+
+
+The prior knowledge of the smoothness of adjacent outputs is added to the models by enhancing the training data.
+Prior knowledge can be added to the model either by modifying the training objective penalize outputs with sharp differences in adjaence output bins,
+or by ensuring the knowledge is present in the training data.
+As directly penalizing outputs based on lack smoothness would require modifying the loss function in ways not feasible for simpler models (See the Baseline model),
+we modify the training data by introducing a blur.
+
+The naive method to discretize continous observations is to use one-hot encoding.
+One-hot encoding the observations would be to partition the color space into evenly sized patchs, 
+and convert each observation into a vector that is zero everwhere,
+except in the bin corresponding to the patch in color space where the observation lies -- which is set to one.
+This looses all notions of smoothness of adjacent bins.
+To add the knowledge back, we distribute the probability mass from hot bin, to the adjacent bins, via our novel blurring method.
+
+The blurred discretization method functions by repressenting each training observation as a histogram of a continous distribution, with expected value equal to the value of the observation, and varience determined by the blurring factor.
+The majority of the probability mass is in the bin containing the training observation, with a decreasing amount in each adjacent bin.
+This method naturally allows restrictions on the continous space being approximated to be encodes by using different distribution when finding the blurred repressentation.
+As the saturation and value channels are bounded, we use a truncated Gaussian distribution.
+As the hue channel is circular -- with red being both the smallest and largest value --  we use a wrap-around Gaussian distribution.
+By adjusting the varience of these distributions we can adjust the priority of smoothness vs sharpness.
+
+If the varience of the distributions is very small the output distributions become sharper with more spikes and discontinousalities,
+when the varience is large the model is smoother but can't repressent sharp changes.
+We conducted a hyper-parameter sweep on the development dataset and found the best results were for having the blurring level given by $\sigma = \frac{1}{2n}$ where $n$ is the number of bins used in discretization.
+For a training point that would be at the center of a bin, this roughly corresponds to 68.3\% of the probably mass assigned to the central bin, 15.7\% assigned to the bin on each side, and the remaining 0.3\% distributed to the remaining bins.
+However, in general points are not aligned to the center of bins, so they generate asymmetric training cases.
+All results presented here are for this value of the blurring hyper parameter.
+Further tuning of this parameter might enable better results -- particularly using different blurring levels for the difference channels, or tuning the blurring based on the number of observations for a particular color name.
+
+
+\subsection{Baseline Model}\label{sec:baseline-model}
 We define a new simplistic model to evaluate the capacity to model color distributions.
 This model loosely resembles the histogram model used by \textcite{mcmahan2015bayesian} in their Baseline model to characterise their input space.
 
@@ -332,34 +340,34 @@ Dropout \parencite{srivastava2014dropout} with a probability of 0.5 was used dur
 
 
 \subsection{Evaluation Metrics}
-We propose two key measures of evaluation: Perplexity, and Mean Squared Error.
+We propose two key measures of evaluation: Perplexity, and Mean Squared Error to peak.
 The Perplexity allows us to evaluate how well our estimated distribution matches the distribution of the observations in the test set.
 Perplexity is commonly used for evaluating language models, however here it is being used to evaluate the discretized distribution.
 It can loosely be through of as to how well the model's distribution does compared to a uniform distribution -- which has a perplexity equal to the number of bins.
 
 
-We define perplexity per channel of the color-space, and also report the geometric mean of the perplexities, to give the perplexity of the whole space.
 For $\tau$ the test-set made up of pairs consisting of a textual color name $t$, and color-space observation $(v_{H}, v_{S}, v_{V})$.
-We define $p_{c}(v_{c}\mid t)$ giving the predicted probability of the observation $v_{c}$ being the color described by the color name $t$, in the given channel ${c}$.
-This is found by determining which of the discretized bins from the model's output the $v_{c}$ would lay in, and giving the probability mass of that bin.
-From this perplexity is given by
+Given an observation as a color description $t$ and a point in color space $\tilde{v}$
+We define $p(\tilde{v}\mid t)$ being the output of the evaluated model.
+From this the perplexity is defined in the normal way:
+
 \[
- PP_{c}(\tau) = 2^{-\left(
+ PP(\tau) = 2^{-\left(
  	\displaystyle\frac{1}{|\tau|} 
- 	\displaystyle\sum_{\mathclap{\qquad\qquad\quad
-	 		\forall(t,(v_{H}, v_{S}, v_{V})) \in \tau}}
- 	 \log_2 p_{c}(v_{c}\mid t)\right)}
+ 	\displaystyle\sum_{
+	 		\forall(t,(\tilde{v})) \in \tau}
+ 	 \log_2 p(\tilde{v}\mid t)\right)}
 \]
-We also define the over-all perplexity by the geometric mean: 
-\[
-PP(\tau) = \sqrt[3]{PP_H(\tau) \cdot PP_S(\tau) \cdot PP_V(\tau)}
-\]
+
+
 As the perplexity varies depending on the output resolution,
-we will also consider when comparing models of different resolution the standardized value of $\frac{PP(\tau)}{n}$, where $n$ is the output resolution of the model.
-Using this standardized perplexity, if the model always output a uniform distribution then no matter the output resolution $n$ it would always be true that  $\frac{PP(\tau)}{n}=1.0$.
+we also define a standardized perplexity $\frac{PP(\tau)}{n^3}$, where $n$ is the per channel output resolution of the model.
+This standardised perplexity allows us to compare models of different output resolution.
+It is equivalent to comparing the relative performance of the model to that of a uniform distribution over color-space of that resolution: $PP_{uniform}=n^3$.
 Perplexity is a measure of how well the distribution estimated by the model, matches reality according to the observations in the test set.
 
 
+\pdfcomment{TODO: Rewrite this to not assume conditional independance as part of evalation}
 As a second measure, we use the mean squared error to peak (MSE).
 This is useful in the mono-modal symmetric case, and allows our model to be compared to regression models.
 To do this, the output bin with the maximum probability according to $p_c(v_c\mid t)$ is found the continuous space value at the center of the bin's range is selected.
@@ -395,9 +403,21 @@ The full source code is included in the supplementary materials.
 
 \subsection{Qualitative Comparison of the Distribution}\label{resultsdistributions}
 
-\multimodalfig{indigo}
-\multimodalfig{greenish}
-\multimodalfig{purplishgrey}
+
+\newcommand{\multimodalfig}[2]{
+	\begin{figure}
+		\includegraphics[width=\columnwidth]{multimodal/empiri256#1}
+		
+		\vspace{3mm}
+		
+		\includegraphics[width=\columnwidth]{multimodal/gru256#1}	
+		\caption{\label{fig#1} Distribution estimate for \mbox{``#2''}}
+	\end{figure}
+}
+
+\multimodalfig{indigo}{indigo}
+\multimodalfig{greenish}{greenish}
+\multimodalfig{purplishgrey}{purplish grey}
 
 
 
@@ -426,13 +446,14 @@ The neural model of CDEST can, by knowledge sharing, better estimate the values 
 	ignore chars={"},
 	column type={l},
 	every head row/.style={before row=\toprule,	after row=\midrule},
+	columns={model,resolution,msetopeak,perp,perpstd},
 	columns/model/.style={string type},
 	columns/resolution/.style={column name=$n$},
 	columns/perp/.style={column name=$PP$},
-	columns/perphue/.style={column name=$PP_{H}$},
-	columns/perpsat/.style={column name=$PP_{S}$},
-	columns/perpval/.style={column name=$PP_{V}$},
-	columns/perpstd/.style={column name=$\frac{PP}{n}$},
+	%columns/perphue/.style={column name=$PP_{H}$},
+	%columns/perpsat/.style={column name=$PP_{S}$},
+	%columns/perpval/.style={column name=$PP_{V}$},
+	columns/perpstd/.style={column name=$\frac{PP}{n^3}$},
 	columns/msetopeak/.style={column name=$MSE$}
 }
 
@@ -440,11 +461,11 @@ The neural model of CDEST can, by knowledge sharing, better estimate the values 
 	\centering
 	%\resizebox{\columnwidth}{!}{
 	\pgfplotstabletypeset[
-		every row 2 column 7/.style={
+		every row 2 column perpstd/.style={
 			postproc cell content/.style={@cell content/.add={$\bf}{$}}}
 		]{results/full.tsv}
 	%}
-	\caption{\label{tblresfull} The results of evaluation on the full Monroe color dataset. Here $n$ is the output resolution of the model, $PP$ is the perplexity, and $MSE$ is the mean squared error to the peak of the output distribution.}
+	\caption{\label{tblresfull} The results of evaluation on the full Monroe color dataset. Here $n$ is the output resolution of the model in each channel, $PP$ is the perplexity, and $MSE$ is the mean squared error to the peak of the output distribution.}
 \end{table*}
 
 The primary task here is the estimation the distribution in color-space for a given color description.
