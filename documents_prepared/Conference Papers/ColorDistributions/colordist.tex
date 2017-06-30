@@ -27,6 +27,7 @@
 
 \usepackage[subpreambles=false]{standalone}
 
+\usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{mathtools}
 \DeclareMathOperator*{\argmin}{arg\,min}
@@ -74,7 +75,7 @@ When they say ``green'' they may mean anything from ``aquamarine'' to ``forest g
  and even ``forest green'' itself may mean the shades of a ``rain-forest'', or of a ``fir-wood''.
 Thus the color can not be deterministically known from the color name.
 However, based on knowledge of the population's use of the words, a probability distribution as to the color intended can be found.
-Here issues of illumination and perceived color based on context will be disregarded, to focus on the core problem of the color of a single patch.
+Issues of illumination and perceived color based on context will be disregarded, to focus on the core problem of the color of a single patch as characterized by a color space such as RGB or HSV \parencite{smith1978color}.
 
 
 Color understanding is a core subtask in natural language understanding.
@@ -203,60 +204,94 @@ though practically the increased memory use renders it computationally infeasibl
 The core problem is estimating a continuous  probability distribution, conditional on the color name.
 Estimating conditional discrete distribution is a significantly more studied application of neural networks
 -- this is the basic function of any softmax classifier.
-As such, to simplify the problem, we transform it to be a discrete distribution estimation task, by discretizing the colorspace.
-This allows us to use the well established classification techniques,
-however discretization intrinsically loses the notion of continuousness
-The particular feature we will miss is captured in the neighbourhood definition of continuousness:
-points in color-space within a neighbourhood, have probabilities within a neighbourhood.
-This can be informally considered as the smoothness of the output.
-The probability of two nearby points in color space, should be similar --not sharply jumping.
-A discrete distribution can not truely be continuousness ,
-however the output can be encouraged to be smoother as a form of prior knowledge addition.
+As such, to simplify the problem, we transform it to be a discrete distribution estimation task, by Discretization the color-space.
+We consider discretization to a resolution of 64 and 256 bins per channel.
+At resolution of 256 bins, there is no information being lost, as the original data was collected using 24 bit colors.
+Discretization allows the use of well established classification techniques.
 
+Discretization to resolution $n$ is the process by which a scalar observation $v$ from one of the continuous color channels hue, supersaturation or value is converted into a $n$-vector with the properties expected of a probability mass function.
+A naive approach is onehot binning:
+\[\Omega_{n}^{1hot}(v)=\left(\begin{cases}
+1 & \mathrm{if}\:\:\frac{i-1}{n}<v\le\frac{i}{n}\\
+0 & \:\:\:\:\mathrm{otherwise}
+\end{cases}\right)_{i=1}^{i=n}
+\].
+This gives a $n$-vector that is zero everywhere, except for in the element corresponding to the patch of color space that the value $v$ lies with-in.
+Discretization in this way loses all notion of continuousness of the color-space.
 
+The distribution in color-space is intrinsically continuous.
+If a nearby points in color-space have similar probabilities of being the color intended when a person says a particular color name.
+While discretization intrinsically renders the space discrete, it is desirable to bring back this notion of smoothness as prior knowledge.
 
-The prior knowledge of the smoothness of adjacent outputs is added to the models by enhancing the training data.
-Prior knowledge can be added to the model either by modifying the training objective penalize outputs with sharp differences in adjaence output bins,
-or by ensuring the knowledge is present in the training data.
-As directly penalizing outputs based on lack smoothness would require modifying the loss function in ways not feasible for simpler models (See the Baseline model),
-we modify the training data by introducing a blur.
+The training data is enhanced by adding a blur during discretization.
+Consider $\mathcal{D}(\mu,\sigma^{2})$ some monomodal distribution, characterised by having expected value $\mu$ and variance parameter $\sigma^{2}$
+For the saturation and value parameters this is a truncated Gaussian.
+For hue it can elegantly be handled be a wrap-around Gaussian%
+\footnote{We initially implemented the wrap -around Gaussian this using 
+ the von Mises distribution, however calculating this is computationally expensive.
+Instead we handle it by defining a truncated Gaussian with a support 3 times the the true range of values for hue, then during discretization alias the memory location used for the output bins for the extensions of the support.
+The results are indistinguishable for the very small variance level used here.}.
+As a abuse of notation we write $P(y_{1}<Y\le y_{2}\mid Y\sim\mathcal{D}(\mu,\sigma^{2}))$ to mean the probability of a value distributed according to $\mathcal{D}(\mu,\sigma^{2})$ being in the patch bordered by $y_1$ and $y_2$.
+Using this the blurred-binning function is defined: 
+%
+\begin{equation*}%
+\resizebox{\columnwidth}{!}{$
+	\Omega_{n}^{blur}(v,\mathcal{D},\sigma)=\left(P\left(\frac{i-1}{n}<Y\le\frac{i}{n}\mid Y\sim\mathcal{D}(v,\sigma^{2})\right)\right)_{i=1}^{i=n}
+$}
+\end{equation*}
+This function maps points $v$ in the continuous color space, to probability mass histogram vectors of length $n$.
+The majority of the mass will be in the bin that the value $v$ would be in,
+but some will be shared with the bins either side, and further.
+The variance $\sigma$ controls the level of blurring.
 
-The naive method to discretize continous observations is to use one-hot encoding.
-One-hot encoding the observations would be to partition the color space into evenly sized patchs, 
-and convert each observation into a vector that is zero everwhere,
-except in the bin corresponding to the patch in color space where the observation lies -- which is set to one.
-This looses all notions of smoothness of adjacent bins.
-To add the knowledge back, we distribute the probability mass from hot bin, to the adjacent bins, via our novel blurring method.
-
-The blurred discretization method functions by repressenting each training observation as a histogram of a continous distribution, with expected value equal to the value of the observation, and varience determined by the blurring factor.
-The majority of the probability mass is in the bin containing the training observation, with a decreasing amount in each adjacent bin.
-This method naturally allows restrictions on the continous space being approximated to be encodes by using different distribution when finding the blurred repressentation.
-As the saturation and value channels are bounded, we use a truncated Gaussian distribution.
-As the hue channel is circular -- with red being both the smallest and largest value --  we use a wrap-around Gaussian distribution.
-By adjusting the varience of these distributions we can adjust the priority of smoothness vs sharpness.
-
-If the varience of the distributions is very small the output distributions become sharper with more spikes and discontinousalities,
-when the varience is large the model is smoother but can't repressent sharp changes.
-We conducted a hyper-parameter sweep on the development dataset and found the best results were for having the blurring level given by $\sigma = \frac{1}{2n}$ where $n$ is the number of bins used in discretization.
+By using more or less blurring applied to the training data, the priority of smoothness vs exact matching is controlled.
+This can be seen as similar to adjusting a regularisation parameter.
+Considering the limits:
+for all $\mathcal{D}$ and values $v$:
+$\Omega_n^{blur}(v, \mathcal{D}) \underset{\sigma\to0}{\longrightarrow} \Omega_n^{1hot}(v)$,
+and $\Omega_n^{blur}(v, \mathcal{D}) \underset{\sigma\to\infty}{\longrightarrow} \left(\frac{1}{n}\right)_{i=1}^{i=n}$.
+A coarse parameter sweep was carried out using the development portion of the dataset (see \Cref{sec:data-preparation}).
+Best results were found for $\sigma = \frac{1}{2n}$ where $n$ is the number of bins used in discretization.
 For a training point that would be at the center of a bin, this roughly corresponds to 68.3\% of the probably mass assigned to the central bin, 15.7\% assigned to the bin on each side, and the remaining 0.3\% distributed to the remaining bins.
-However, in general points are not aligned to the center of bins, so they generate asymmetric training cases.
-All results presented here are for this value of the blurring hyper parameter.
+All results presented here are for this level of blurring.
 Further tuning of this parameter might enable better results -- particularly using different blurring levels for the difference channels, or tuning the blurring based on the number of observations for a particular color name.
 
 
+
+
 \subsection{Baseline Model}\label{sec:baseline-model}
-We define a new simplistic model to evaluate the capacity to model color distributions.
+While the main interest in this work in compositionally modelling the color language,
+we define a new non-compositional baseline model to allow for comparison of our method.
 This model loosely resembles the histogram model used by \textcite{mcmahan2015bayesian} in their Baseline model to characterise their input space.
+We are unable to use the work of \textcite{DBLP:journals/corr/KawakamiDRS16} or \textcite{DBLP:journals/corr/MonroeHGP17} for direct comparison,
+as neither aims to produce a general distribution.
+Our baseline must be able to estimate multi-modal and asymmetric color distributions.
 
+We define the baseline based off the the element-wise mean of discretized  training observations.
+For training data $V \subset \left[ 0,1 \right] ^{3}\times T$, where $\left[ 0,1 \right] ^{3} \subset \mathbb{R}^{3}$ is the scaled HSV color-space,\footnote{The 0-1 scaled HSV color-space is as provided in the dataset from \textcite{mcmahan2015bayesian} see \Cref{sec:data-preparation}.} and $T$ is the natural language space of color descriptions.
+The subset of training data for the description $t \in T$ is given by
+$V_{|t}=\{(\tilde{v}_i,\,t_i) \in V \: \mid \: t_{i}=t\}$.
+Per channel the baseline model is defined by 
+%
+\begin{equation*}%
+\resizebox{\columnwidth}{!}{$
+	q_{c}(x_{c}\mid t)=\frac{\displaystyle
+		\sum_{\mathrlap{\!\!\forall((v_{H},v_{S},v_{V}),t)\in V_{|t}}}
+			\Omega_n^{blur}(v_{c},\mathcal{D}_c,\sigma)
+			\cdot
+			\Omega_n^{1hot}(x_{c})		
+			+1}
+		{\left|V_{|t}\right|+n}
+		$}
+\end{equation*}
 
+In this equation taking the dot-product with $\Omega_n^{1hot}(x_{c})$ is simply selecting the bin containing $x_c$.
+By the conditional independence assumption we define the overall baseline model by: $q(x_H,x_S,x_V\mid t) = \prod_{c\in {\{H,S,V\}}} q_c(x_c\mid t)$
 
-
-For comparison we define an additional model based more directly on the training data.
-This is a simpler model with no machine learning component.
-For this Baseline model, the estimated distribution for each color description is produced by averaging all of that colors discretized observations per output bin.
-This features the same blurring, as in the CDEST model.
 During our investigations we found that a model based only taking on the mean would return a predicted probability of zero for some of observations in the development dataset.
 To handle this add-one smoothing is applied to each output distribution.
+
+
 The Baseline model can be used to predict distributions for all color descriptions in the training set.
 This is inferior in generalisability to the CDEST model, which can handle any combination of tokens from the training set.
 Without the requirement to learn the how the compositional structure of the terms in the color name function, it is a much simpler modeling problem, as such we suggest it is a strong baseline for evaluational.
@@ -272,12 +307,24 @@ Without the requirement to learn the how the compositional structure of the term
 	}
 \end{figure}
 
-We present a neural network based model, with sequential inputs which predicts the 3 separate output distributions shown in \Cref{network}. The general structure of this network is similar to \textcite{2016arXiv160603821M}, or indeed to most other word sequence learning models.
+The CDEST Model is the main focus of this work.
+It is a recurrent neural network based model which learns the compositional interactions of the terms making up a color description and outputs a distribution estimate in color-space.
+The general structure of this network, shown in \Cref{network} is similar to \textcite{2016arXiv160603821M}, or indeed to most other word sequence learning models.
 Each word first is transformed to an embedding representation.
 This representation is randomly initialized and is trained with the rest of the network allowing a per word information to be efficiently learned.
 The embedding is used as the input for a Gated Recurrent Unit (GRU)  \parencite{cho2014properties}.
 The output of final time-step is feed to a Rectified Linear Unit (ReLU)  \parencite{dahl2013reludropout}.
 Finally, the this used as the input the three distinct softmax output layers -- one for each of hue, saturation and value.
+These outputs are vectors $\hat{y}_{H}(t)$, $\hat{y}_{s}(t)$, and $\hat{y}_{V}(t)$.
+Using the conditional independence assumption the probability estimate is given by
+\begin{equation*}%
+%\resizebox{\columnwidth}{!}{%
+	\hat{p}(x_H,x_S,x_V\mid t) = \displaystyle\prod_{
+		\mathclap{c\in {\{H,S,V\}}}}
+	 \hat{y}_{c}(t)\cdot \Omega_{n}^{1hot}(x,c))
+%	}%
+\end{equation*}
+
 The distinguishing features of this model compared to other word sequence learning models, is the use of GRU, rather than Long Short Term Memory (LSTM), and the split into three output layers.
 
 
@@ -288,18 +335,16 @@ including on the color naming problem \parencite{2016arXiv160603821M}.
 A component for processing per-term such as the GRU, is essential in allowing the model to learn the compositional function of each term,  and thus to learn to handle color descriptions from outside the training set.
 
 The three output layers are used to predict the distributions for the three channels -- hue, saturation and value.
-Seperating them like this requires a conditional independence assumption (see \Cref{sec:conditional-independence-assumption}).
+Separating them like this requires a conditional independence assumption (see \Cref{sec:conditional-independence-assumption}).
 The network was trained to minimize to sum of the three cross-entropy losses of these output layers.
 The multiple output layers commonly occur joint learning and related transfer learning problems.
 \pdfcomment{I was sure I had a good citation from something by Bengio for this techneque in transfer learning. But I can't seem to find it}
 The layers prior to the output are shared, allowing common patterns to be learned.
-This model is the primary contribution of this work.
-
 
 
 
 \section{Experimental Setup}\label{sec:experimental-setup}
-\subsection{Data Preparation}
+\subsection{Data Preparation}\label{sec:data-preparation}
 We use the Monroe dataset \parencite{Monroe2010XKCDdataset}, as prepared by McMahan and Stone \parencite{mcmahan2015bayesian}.
 This dataset is partitioned into test, development, and training sets; and has had some cleaning from the original data collected by Randell \textcite{Monroe2010XKCDdataset}.
 It is also used by Will \textcite{2016arXiv160603821M} and \textcite{DBLP:journals/corr/KawakamiDRS16}.
@@ -339,8 +384,7 @@ however significantly diminishing returns in terms of training time vs accuracy 
 Dropout \parencite{srivastava2014dropout} with a probability of 0.5 was used during training, on all hidden layers, except the embedding layer.
 
 
-\subsection{Evaluation Metrics}
-We propose two key measures of evaluation: Perplexity, and Mean Squared Error to peak.
+\subsection{Perplexity in Color-Space}
 The Perplexity allows us to evaluate how well our estimated distribution matches the distribution of the observations in the test set.
 Perplexity is commonly used for evaluating language models, however here it is being used to evaluate the discretized distribution.
 It can loosely be through of as to how well the model's distribution does compared to a uniform distribution -- which has a perplexity equal to the number of bins.
@@ -367,32 +411,6 @@ It is equivalent to comparing the relative performance of the model to that of a
 Perplexity is a measure of how well the distribution estimated by the model, matches reality according to the observations in the test set.
 
 
-\pdfcomment{TODO: Rewrite this to not assume conditional independance as part of evalation}
-As a second measure, we use the mean squared error to peak (MSE).
-This is useful in the mono-modal symmetric case, and allows our model to be compared to regression models.
-To do this, the output bin with the maximum probability according to $p_c(v_c\mid t)$ is found the continuous space value at the center of the bin's range is selected.
-The mean square error is found in the transitional way, averaging over the three channels.
-That is to say, with the definitions as before:
-\[
-binpeak_c(t)=\argmax_{1\le i \le n}{p_c\left(\tfrac{i}{n} \mid t\right)}
-\]
-\[
-peak_c(t)=\frac{binpeak(t)}{n} - \frac{1}{2n}
-\]
-\[
-SE(t, (v_{H}, v_{S}, v_{V})) = \frac{1}{3}
-	\sum_{\mathclap{\forall d\in{H,S,V}}} (peak_c(t) - v_d)^2
-\]
-\[
-MSE(\tau) =\frac{1}{|\tau|}
-	\sum_{\mathclap{\qquad\qquad\quad
-		\forall(t,(v_{H}, v_{S}, v_{V})) \in \tau}}
-	 SE(t,(v_{H}, v_{S}, v_{V}))
-\]
-
-The space that the error is measured in is the 0-1 scaled HSV space that is used in the source dataset.
-This measurement of the error to peak is the error that would be obtained if a single color output was greedily chosen.
-
 
 \subsection{Implementation}
 The implementation of the models and all evaluations was made in the julia programming language \parencite{Julia},
@@ -402,7 +420,6 @@ The full source code is included in the supplementary materials.
 \section{Results and Discussion}\label{sec:results-and-discussion}
 
 \subsection{Qualitative Comparison of the Distribution}\label{resultsdistributions}
-
 
 \newcommand{\multimodalfig}[2]{
 	\begin{figure}
@@ -446,7 +463,7 @@ The neural model of CDEST can, by knowledge sharing, better estimate the values 
 	ignore chars={"},
 	column type={l},
 	every head row/.style={before row=\toprule,	after row=\midrule},
-	columns={model,resolution,msetopeak,perp,perpstd},
+	columns={model,resolution,perp,perpstd},
 	columns/model/.style={string type},
 	columns/resolution/.style={column name=$n$},
 	columns/perp/.style={column name=$PP$},
@@ -454,19 +471,19 @@ The neural model of CDEST can, by knowledge sharing, better estimate the values 
 	%columns/perpsat/.style={column name=$PP_{S}$},
 	%columns/perpval/.style={column name=$PP_{V}$},
 	columns/perpstd/.style={column name=$\frac{PP}{n^3}$},
-	columns/msetopeak/.style={column name=$MSE$}
+	%columns/msetopeak/.style={column name=$MSE$}
 }
 
-\begin{table*}
+\begin{table}
 	\centering
-	%\resizebox{\columnwidth}{!}{
+	\resizebox{\columnwidth}{!}{
 	\pgfplotstabletypeset[
 		every row 2 column perpstd/.style={
 			postproc cell content/.style={@cell content/.add={$\bf}{$}}}
 		]{results/full.tsv}
-	%}
-	\caption{\label{tblresfull} The results of evaluation on the full Monroe color dataset. Here $n$ is the output resolution of the model in each channel, $PP$ is the perplexity, and $MSE$ is the mean squared error to the peak of the output distribution.}
-\end{table*}
+	}
+	\caption{\label{tblresfull} The results of evaluation on the full Monroe color dataset. Here $n$ is the output resolution of the model in each channel, $PP$ is the perplexity.}
+\end{table}
 
 The primary task here is the estimation the distribution in color-space for a given color description.
 The results are shown in \Cref{tblresfull}.
@@ -485,18 +502,18 @@ The key advantage of the CDEST model is its ability to predict a distribution fo
 
 \subsection{Extrapolation}
 
-\begin{table*}
+\begin{table}
 	\centering
-	%\resizebox{\columnwidth}{!}{
+	\resizebox{\columnwidth}{!}{
 	\pgfplotstabletypeset[
 		every row 0 column 0/.style={
 			postproc cell content/.style={@cell content/.add={\it}{}}},
 		every row 3 column 0/.style={
 			postproc cell content/.style={@cell content/.add={\it}{}}}
 		]{results/extrapo.tsv}
-	%}
-	\caption{\label{tblresextrapo} The results of evaluation on the extrapolation sub-dataset. Here $n$ is the output resolution of the model, $PP$ is the perplexity, and $MSE$ is the mean squared error to the peak of the output distribution.}
-\end{table*}
+	}
+	\caption{\label{tblresextrapo} The results of evaluation on the extrapolation sub-dataset. Here $n$ is the output resolution of the model, $PP$ is the perplexity}
+\end{table}
 
 
 A core motivation of using the CDEST model, over the Baseline, is its ability to learn to combine tokens in a description in ways not seen in training.
