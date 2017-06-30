@@ -1,0 +1,40 @@
+The core problem is estimating a continuous  probability distribution, conditional on the color name.
+Estimating conditional discrete distribution is a significantly more studied application of neural networks
+ -- this is the basic function of any softmax classifier.
+ As such, to simplify the problem, we transform it to be a discrete distribution estimation task, by discretizing the colorspace.
+ This allows us to use the well established classification techniques,
+ however distretization intrinsically loses the notion of continousness.
+ The particular feature we will miss is captured in the neighbourhood defintion of continousness:
+ points in color-space within a neighbourhood, have probabilities within a neighbourhood.
+ This can be informally considered as the smoothness of the output.
+ The probability of two nearby points in colorspace, should be similar --not sharply jumping.
+ A discrete distribution can not truely be continousness of-course,
+ however the output can be encouraged to be smoother as a form of prior knowledge addition.
+ 
+The prior knowledge of the smoothness of adjacent outputs is added to the models by enhancing the training data.
+Prior knowledge can be added to the model either by modifying the training objective penalize outputs with sharp differences in adjaence output bins,
+or by ensuring the knowledge is present in the training data.
+As directly penalizing outputs based on lack smoothness would require modifying the loss function in ways not feasible for simpler models (See the Baseline model),
+we modify the training data by introducing a blur.
+
+The naive method to discretize continous observations is to use one-hot encoding.
+One-hot encoding the observations would be to partition the color space into evenly sized patchs, 
+and convert each observation into a vector that is zero everwhere,
+except in the bin corresponding to the patch in color space where the observation lies -- which is set to one.
+This looses all notions of smoothness of adjacent bins.
+To add the knowledge back, we distribute the probability mass from hot bin, to the adjacent bins, via our novel blurring method.
+
+The blurred discretization method functions by repressenting each training observation as a histogram of a continous distribution, with expected value equal to the value of the observation, and varience determined by the blurring factor.
+The majority of the probability mass is in the bin containing the training observation, with a decreasing amount in each adjacent bin.
+This method naturally allows restrictions on the continous space being approximated to be encodes by using different distribution when finding the blurred repressentation.
+As the saturation and value channels are bounded, we use a truncated Gaussian distribution.
+As the hue channel is circular -- with red being both the smallest and largest value --  we use a wrap-around Gaussian distribution.
+By adjusting the varience of these distributions we can adjust the priority of smoothness vs sharpness.
+
+If the varience of the distributions is very small the output distributions become sharper with more spikes and discontinousalities,
+when the varience is large the model is smoother but can't repressent sharp changes.
+We conducted a hyper-parameter sweep on the development dataset and found the best results were for having the blurring level given by $\sigma = \frac{1}{2n}$ where $n$ is the number of bins used in discretization.
+For a training point that would be at the center of a bin, this roughly corresponds to 68.3\% of the probably mass assigned to the central bin, 15.7\% assigned to the bin on each side, and the remaining 0.3\% distributed to the remaining bins.
+However, in general points are not aligned to the center of bins, so they generate asymmetric training cases.
+All results presented here are for this value of the blurring hyper parameter.
+Further tuning of this parameter might enable better results -- particularly using different blurring levels for the difference channels, or tuning the blurring based on the number of observations for a particular color name.
