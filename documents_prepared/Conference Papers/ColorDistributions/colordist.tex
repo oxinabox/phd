@@ -73,46 +73,36 @@ The ability to predict distributions is useful as a component in human computer 
 \section{Introduction}
 When a person says ``tan'' they may mean a number of colors: From the bronze of a tanned sunbather, to the brown of tanned leather.
 When they say ``green'' they may mean anything from ``aquamarine'' to ``forest green'';
- and even ``forest green'' itself may mean the shades of a ``rain-forest'', or of a ``fir-wood''.
-Thus the color can not be deterministically known from the color name.
-However, based on knowledge of the population's use of the words, a probability distribution as to the color intended can be found.
-Issues of illumination and perceived color based on context will be disregarded, to focus on the core problem of the color of a single patch as characterized by a color space such as RGB or HSV \parencite{smith1978color}.
+ and even ``forest green'' may mean the shades of a rain-forest, or of a fir-wood.
+Thus the color intended can not be deterministically known from the color name.
+However, based on knowledge of the population's use of the words a probability distribution as to the color intended can be found.
+Issues of illumination and perceived color based on context will be disregarded in this work, to focus on the core problem of the color of a single patch as characterized by a color space such as RGB or HSV \parencite{smith1978color}.
 
 
-Color understanding is a core subtask in natural language understanding.
+Color understanding is a important subtask in natural language understanding.
 The color language sub-domain displays many of the same features and difficulties as natural language as a whole.
 Recent state of the art systems for image generation has demonstrated their capacity by generating from texts containing complex color descriptions such as ``the flower has petals that 
 are bright pinkish purple with white stigma'' \parencite{reed2016generative, 2015arXiv151102793M}.
 It is a challenging domain, due to ambiguity, multiple roles taken by the same words, many modifiers, and shades of meaning.
 Understanding color is crucial to understanding language. 
 
-Properly understanding color language requires a model capable of understanding linguistic constitutionality.
+Properly understanding color language requires a model capable of understanding linguistic compositionality.
 It must understand how modifiers such as ``dark'' modify basic colors; and must understand how other modifiers such as ``very'' would interact as a modifier to modifiers.
 It also must understand the functioning of affixes such as ``-ish'' in ``greenish''.
 This compositional understanding is needed both as a point of theory: a model without it is not interesting; and practically: the generalisation ability from a compositional model allows it to handle color descriptions not seen in training.
-Due to the combinatorial nature of language a data-sparsity problem exists where there are very few example in any given corpus of a very large number of combinations of words -- a well known problem in n-gram language modelling for example \parencite{kneser1995improved,chen1996empirical,rosenfeld2000two}.
-To handle this we take inspiration from a solution used in language modelling: the use of recurrent neural network \parencite{mikolov2010recurrent,mikolov2011RnnLM} to process each color description a compositional sequence of terms.
+It is also required practically: due to the combinatorial nature of language a data-sparsity problem exists.
+There are few example in any given corpus for a large number of word combinations.
+This is a well known problem in n-gram language modelling \parencite{kneser1995improved,chen1996empirical,rosenfeld2000two}.
+To handle this we take inspiration from a solution used in that area: the use of a recurrent neural network \parencite{mikolov2010recurrent,mikolov2011RnnLM} to process each color description a compositional sequence of terms.
+This allows the compositional understanding that is required for color understanding.
 
-
-The mapping from color name to color could be considered a regression problem, solving to find a function that when input some text such as ``forest green'', outputs a numerical value in a color space such as HSV or RGB.
-However, regression discards information about the distribution.
-If the distributions in color space were mono-modal
-\footnote{It should be understood that in this paper, when say \emph{mono-modal} or \emph{multimodal} it is meant in the sense of the number of peaks in the probability distribution; not in the sense of the number of modalities of the data -- e.g. multimodal audio-visual data. 
-\textcite{mcmahan2015bayesian} call this convex, we prefer the term multimodal.}
-and symmetric with consistently small variance, then considering the problem as regression with noise would be adequate.
-However, the distributions in color space are generally non-systematic, wide variance, and are often multi-model.
-Thus regression to a single value is inadequate.
- 
-Rather than attempting to predict a single point in color space, an estimate of the distribution in color space must be produced.
-To do this we divide the color space into a number of even sized regions, i.e.  bins, and then discretize color observations from the training data into thethe probability distribution into these bins.
-This transforms the problem of estimating a distribution in color-space,
-into the very well understood problem of classification into categories -- where each category is a region of color-space.
-
-A classifier will output probabilities for each of the possible categories its input could belong to, thus fulfilling the goal of learning a probability distribution.
-Basic classification model consider each category as being distinct and unrelated.
-In discretization the notion of continuousness is lost.
-To counter this, we employ a novel blurring strategy, to train the model to learn that points near in color space, should be similar in likelihood.
-
+Understanding color properly also requires considering the color intended as a random variable.
+For full understanding, one can not simply map from a name to a point or even a region in color space, but rather to a distribution.
+The color meant by a name could be any number of color, with some being more or less likely than others.
+Or equivalently, up to interpretation, it may intend a region but the likelihood of what points are covered is variable and uncertain.
+Thus proper understanding can not simply map a name to a single point in color-space, it must estimate a probability distribution for all of color-space.
+To qualify our estimate of the distribution we discretize the color-space into a large number of patches, and produce an output much like a histogram.
+This allows us to take advantage of the well known methods for estimating a probability mass distribution.
 
 Understanding color distributions has a clear use as a subsystem many systems.
 For example, in a human-interfacing image-processing system, when asked to select the ``dark bluish green'' object, each object can be ranked based on how likely it's color is according to the distribution.
@@ -120,19 +110,36 @@ This way if extra information eliminates the most-likely object, the second most
 Further, as the probability of the color of the object being the color being described by the user input is known, a threshold can be given to report no object found, or to ask for additional confirmation.
 
 
-The set of all possible color descriptions form a much large space of multiword descriptions than can reasonably be collected in detail.
-Possible 
-
 The core contribution of this work is a method for estimating probability distributions in color-space given a color names which is able to handle color descriptions that are never seen during training.
 To handle distribution estimation we employ a novel discretization and blurring procedure.
 To allow for the capacity to predict distributions for colors never seen in training we define a GRU-based neural network which learns the compositional relationship expressed by the sequence terms making up the color description.
 We call this model the Color Distribution Estimation from Sequence of Terms (CDEST) model.
 
 
-
-
  
 \section{Related Work}\label{sec:related-work}
+
+The understanding of color names has long been a concern of psycholinguistics and anthropology  \parencite{berlin1969basic,heider1972universals,HEIDER1972337,mylonas2015use}.
+From this has come the corresponding area in natural language processing.
+
+The ISCC-NBS color system \parencite{kelly1955iscc} has been key to these developments.
+It maps a vocabulary of 26 words, including modifiers, that are composed according to a context free grammar, to points in color space.
+\textcite{Berk:1982:HFS:358589.358606} defines a variant which is used as a basis for the thresholding based color naming work of \textcite{conway1992experimental}.
+The models of \textcite{conway1992experimental} define regions on some channels of the color-space to determine if modifiers such as ``pale'' are to be added to the color name -- thus achieving a basic compositional model.
+\textcite{mojsilovic2005computational} uses another variant for a non-compositional color naming system based on defining a similarity metric.
+
+There is also a many works based on learning to name the 11 basic colors of \textcite{berlin1969basic}.
+
+The thesis of \textcite{ele1994computational} proposed to use a Gaussian Categorical Model to name the colors.
+This functions by defining a Gaussian distribution across color-space for each named color.
+They propose, but do not verify, an extension to multi-word color names similar to \textcite{conway1992experimental} based on using additional Gaussian categories to determine if additional modifiers are to be added to the color name.
+
+\textcite{menegaz2007discrete} partitioned the color-space using Delaunay triangulation and assigned probabilities for each name to the vertexes based on response of 6 subjects to 424 color patches.
+
+\textcite{van2009learning} learns a generative topic based model from real world images, rather than color patches in isolation learning again.
+They use a probabilistic latent semantic analysis based model generate to continuous probability distributions which they restrict to be unimodel -- which is correct for the set of colors being considered.
+
+More recent works function with much larger number of colors, larger vocabularies, and are larger pools of respondents. They also generally feature more sophisticated compositional understanding.
 
 \subsection{Color Naming}
 Color naming is the reverse of the task investigated in this work.
@@ -163,8 +170,8 @@ The base listener model is of particular relevance to the distribution modeling 
 The final time-step of the base listener LSTM produces a 100 dimensional representation of description provided.
 From this, a Gaussian distributed score function, over the Fourier-transform based color space of \textcite{2016arXiv160603821M}.
 By normalizing the scores of the three colors the listener is to choose from, the conditional probability of each can be found.
-It should be noted that while this method does output a probability distribution, as a by-product of the task
-it is Gaussian distributed for all inputs -- both symmetric and mono-modal, albeit in a high-dimensional non-linear color space.
+It should be noted that while this method does work with a probability distribution, as a step in matching the names to the three patchs,
+this distrubution it is Gaussian distributed for all inputs -- both symmetric and unimodal, albeit in a high-dimensional non-linear color space.
 This is arguably reasonable distribution for use in this color-game, where the speaker is expressly trying to avoid ambiguity,
 and where color descriptions can feature reference to other colors in the context.
 Without this contextual information in the color-naming, distributions over all colors are required,
@@ -225,14 +232,14 @@ If a nearby points in color-space have similar probabilities of being the color 
 While discretization intrinsically renders the space discrete, it is desirable to bring back this notion of smoothness as prior knowledge.
 
 The training data is enhanced by adding a blur during discretization.
-Consider $\mathcal{D}(\mu,\sigma^{2})$ some monomodal distribution, characterised by having expected value $\mu$ and variance parameter $\sigma^{2}$
+Consider $\mathcal{D}(\mu,\sigma^{2})$ some unimodal distribution, characterised by having expected value $\mu$ and variance parameter $\sigma^{2}$
 For the saturation and value parameters this is a truncated Gaussian.
 For hue it can elegantly be handled be a wrap-around Gaussian%
 \footnote{We initially implemented the wrap -around Gaussian this using 
  the von Mises distribution, however calculating this is computationally expensive.
 Instead we handle it by defining a truncated Gaussian with a support 3 times the the true range of values for hue, then during discretization alias the memory location used for the output bins for the extensions of the support.
 The results are indistinguishable for the very small variance level used here.}.
-As a abuse of notation we write $P(y_{1}<Y\le y_{2}\mid Y\sim\mathcal{D}(\mu,\sigma^{2}))$ to mean the probability of a value distributed according to $\mathcal{D}(\mu,\sigma^{2})$ being in the patch bordered by $y_1$ and $y_2$.
+We write $P_{}(y_{1}<Y\le y_{2}\mid Y\sim\mathcal{D}(\mu,\sigma^{2}))$ to mean the probability of a value distributed according to $\mathcal{D}(\mu,\sigma^{2})$ being in the patch bordered by $y_1$ and $y_2$.
 Using this the blurred-binning function is defined: 
 %
 \begin{equation*}%
@@ -295,7 +302,7 @@ To handle this add-one smoothing is applied to each output distribution.
 
 The Baseline model can be used to predict distributions for all color descriptions in the training set.
 This is inferior in generalisability to the CDEST model, which can handle any combination of tokens from the training set.
-Without the requirement to learn the how the compositional structure of the terms in the color name function, it is a much simpler modeling problem, as such we suggest it is a strong baseline for evaluational.
+Without the requirement to learn the how the compositional structure of the terms in the color name function, it is a much simpler modelling problem, as such we suggest it is a strong baseline for evaluational.
 
 \subsection{CDEST Model}
 
@@ -373,7 +380,7 @@ The selected examples include multi-token descriptions such as: ``"bright yellow
 The test and development datasets are restricted to contain only observations of these selected color descriptions.
 Conversely, the extrapolation training set has no observations of these color descriptions.
 This produces a dataset suitable for evaluating the capacity of our model to estimate the distributions for color descriptions not seen in training.
-A similar approach for testing generalisation of compositional models by removing items from the from the training set that occur in the test set can be seen in \textcite{DBLP:journals/corr/AtzmonBKGC16,DBLP:journals/corr/Hassanien16}.
+A similar approach for testing generalisation of compositional models by removing items from the from the training set that occur in the test set can be seen in \textcite{DBLP:journals/corr/AtzmonBKGC16}
 
 \subsection{CDEST Model Parameters}
 For the CDEST model, regardless of output resolution the same network parameters are used.
