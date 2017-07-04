@@ -104,6 +104,12 @@ Thus proper understanding can not simply map a name to a single point in color-s
 To qualify our estimate of the distribution we discretize the color-space into a large number of patches, and produce an output much like a histogram.
 This allows us to take advantage of the well known methods for estimating a probability mass distribution.
 
+In this work we are particular interested in supporting distributions that are multimodal, asymmetric and wide variance.
+The consideration of multimodal distributions may seem a rejection of the convexity of color categories put forward by \textcite{Gardenfors2000Cs} and evaluated by \textcite{jager2010natural}, however we note that those works were primarily concerned with the boundaries of the space covered by a color category, whereas we are concerned with the distribution.
+The boundaries of possible values of a category with probability given by a multimodal distribution can be convex, so long as nowhere within that distribution does the probability fall to back to zero after being raised above. We note several colors with multiple peaks in their distributions: including ``greenish'', ``bluish'', and ``purplish grey'', though these are the exception rather than the rule.
+Regardless, in handling the very common asymmetric distributions, our method intrinsically handles multimodal color distributions
+
+
 Understanding color distributions has a clear use as a subsystem many systems.
 For example, in a human-interfacing image-processing system, when asked to select the ``dark bluish green'' object, each object can be ranked based on how likely it's color is according to the distribution.
 This way if extra information eliminates the most-likely object, the second most likely object can immediately be determined.
@@ -139,16 +145,40 @@ They propose, but do not verify, an extension to multi-word color names similar 
 \textcite{van2009learning} learns a generative topic based model from real world images, rather than color patches in isolation learning again.
 They use a probabilistic latent semantic analysis based model generate to continuous probability distributions which they restrict to be unimodel -- which is correct for the set of colors being considered.
 
-More recent works function with much larger number of colors, larger vocabularies, and are larger pools of respondents. They also generally feature more sophisticated compositional understanding.
+More recent works including our own function with much larger number of colors, larger vocabularies, and are larger pools of respondents. 
+They also generally feature more sophisticated compositional understanding.
 
-\subsection{Color Naming}
-Color naming is the reverse of the task investigated in this work.
-The color naming task takes a point in color-space as in input, and outputs a probability distribution over possible names for that color.
-There a several notable recent works on color-naming.
-\textcite{meomcmahanstone:color} and \textcite{mcmahan2015bayesian} present a full description Bayesian approach, which outputs the probability of a whole description.
-\textcite{2016arXiv160603821M} presents a per-word LSTM approach, which produces a conditional language model -- sequentially outputting a probability of each word in the description.
-\textcite{DBLP:journals/corr/KawakamiDRS16} presents a per-character LSTM and Variational Autoencoder approach, which products a conditional character language model -- sequentially outputting a probability of each character in the description.
+
+The XKCD color survey \parencite{Monroe2010XKCDdataset}, collected over 3.4 million observations, in the form of color-name pairs, from 222,500 respondents, using this Monroe identified 954 color names.
+\textcite{mcmahan2015bayesian} subset this to produce what is commonly known as the Monroe Dataset.
+They remove response from non-native English speakers, 
+and remove names with less than 100 uses,
+this gives a total of 2,176,417 observations and 829 color names. 
+McMahan and Stone also define a standard test, development and train split, which we use in this paper.
+
+\textcite{mcmahan2015bayesian} and the closely related \textcite{meomcmahanstone:color} use the Monroe dataset to evaluate their color naming methods.
+These works are based on defining fuzzy rectangular distributions in color-space to cover the distribution estimated from the data, then using these as part of a Baysian system to determine the color name, non-compositonaly, from the full set of color names.
+
+
+\pdfcomment{The two mcmahan and stone papers are antichronistic the earlier paper cites the later paper as an unpublished work}
+
+
+\pdfcomment{During the similar time-period another online color naming survey was conducted.
+\textcite{mylonas2010online,mylonas2012colour} collected a total of 50,000 observations from 2500 respondents in 7 languages.
+In this work we use the larger, more publically available, Monroe dataset.}
+
+\textcite{2016arXiv160603821M} extends upon all prior discussed color naming systems to produce a color namer capable of true compositional reasoning on the Monroe dataset.
+Their method uses a recurrent neural network (RNN), which takes as input a point in color space, and the previous output word, and gives a probability of the next word to be output -- this is a conditional language model.
+The color spaced used is a novel high dimensional Fourier inspired representation.
+Our CDEST model can be considered as inverse of their conditional language model -- we map a sequence of color terms to a distribution over colors.
+\textcite{2016arXiv160603821M} maps a point in color space, to a sequence of distributions over color terms.
+The methods are similar.
+
+\textcite{DBLP:journals/corr/KawakamiDRS16} also produces color naming model capable of compositional reasoning.
+This is a per-character RNN and Variational Autoencoder approach.
+It is in principle very similar to \textcite{2016arXiv160603821M}, but functioning on a character, rather than a word level.
 The work by Kawakami et al, also includes a method for generating colors.
+
 
 \subsection{Color Generation}
 Color generation closely related to the primary task considered here.
@@ -184,18 +214,18 @@ and these distributions are not expected to be symmetric in any consistent color
 \subsection{Conditional Independence Assumption}\label{sec:conditional-independence-assumption}
 For HSV colors we make the assumption that given the name of the color, then the distribution of the H, S and V components are independent.
 That is to say, it is assumed if the color name is known, then  knowing the value of one channel would provide any additional information as to the value  of the other channels.
-This assumption is not made in related works such as \textcite{DBLP:journals/corr/MonroeHGP17,DBLP:journals/corr/KawakamiDRS16}.
+This assumption is made, though not remarked upon in \textcite{meomcmahanstone:color} and \textcite{mcmahan2015bayesian}.
+It is not made in related works such as \textcite{DBLP:journals/corr/MonroeHGP17,DBLP:journals/corr/KawakamiDRS16}.
 These works do not attempt to fully model the distribution,
 and instead make other assumptions suitable to their own related tasks -- such as assuming symmetrical distributions, identical up to translation.
 When attempting to fully model the distributions, the assumption of conditional independence allows considerable saving in computational resources.
 Approximating the 3D joint distribution as the product of three 1D distributions decreases the space complexity from $O(n^3)$ to $O(n)$.
 
 
-
 Superficial checks were carried out the the accuracy of this assumption.
 Spearman's correlation on the training data suggests that for over three quarters of all color names, there is only weak to zero maximum pairwise absolute correlation between the H,S, and V components (\mbox{Q3 = 0.187}).
 However, this measure underestimates correlation for values that have circular relative value, such as hue.
-This correlation measure was the lowest by a large margin  when compared amongst 16 color spaces; RGB, HSV, HSI, HSL, xyY, XYZ, CIELab, Luv, LCHab, LCHuv, DIN99, DIN99d, DIN99o, LMS, YIQ, and YCbCr; by a full 100\%.
+When this correlation measure was compared amongst 16 color spaces it was found to be the lowest by a very large margin.
 The table is available in the supplementary materials.
 \pdfcomment{TODO: Add the table to the supplementary matrials}
 Given the limitations of the evaluation methodology, these results are suggestive, rather than solidly indicative of the degree of correctness of the conditional independence assumption.
@@ -204,16 +234,16 @@ For the investigation here, we consider the conditional independence assumption 
 Note that the evaluation metrics chosen do not assume conditional independence.
 Though the models, including the baseline model, do.
 Better results may be obtained by outputting a 3D joint distribution -- which is implementation wise a trivial extension of the models, 
-though practically the increased memory use renders it computationally infeasible on most hardware.
+though practically the increased memory use renders it computationally difficult.
 
 
 
 \subsection{Discretization and Blurring}
 The core problem is estimating a continuous  probability distribution, conditional on the color name.
-Estimating conditional discrete distribution is a significantly more studied application of neural networks
+Estimating discrete conditional distribution is a significantly more studied application of neural networks
 -- this is the basic function of any softmax classifier.
-As such, to simplify the problem, we transform it to be a discrete distribution estimation task, by Discretization the color-space.
-We consider discretization to a resolution of 64 and 256 bins per channel.
+To simplify the problem we thus transform it to be a discrete distribution estimation task, by Discretization the color-space.
+Discretization to a resolution of 64 and 256 bins per channel is considered.
 At resolution of 256 bins, there is no information being lost, as the original data was collected using 24 bit colors.
 Discretization allows the use of well established classification techniques.
 
@@ -232,20 +262,20 @@ If a nearby points in color-space have similar probabilities of being the color 
 While discretization intrinsically renders the space discrete, it is desirable to bring back this notion of smoothness as prior knowledge.
 
 The training data is enhanced by adding a blur during discretization.
-Consider $\mathcal{D}(\mu,\sigma^{2})$ some unimodal distribution, characterised by having expected value $\mu$ and variance parameter $\sigma^{2}$
-For the saturation and value parameters this is a truncated Gaussian.
-For hue it can elegantly be handled be a wrap-around Gaussian%
-\footnote{We initially implemented the wrap -around Gaussian this using 
+Consider $\mathcal{D}(\mu,\sigma^{2})$ some unimodal distribution, characterised by having expected value $\mu$ and variance parameter $\sigma^{2}$.
+For saturation and value this is a truncated Gaussian.
+Hue can elegantly be handled using a wrap-around Gaussian%
+\footnote{We initially implemented the wrap-around Gaussian this using 
  the von Mises distribution, however calculating this is computationally expensive.
 Instead we handle it by defining a truncated Gaussian with a support 3 times the the true range of values for hue, then during discretization alias the memory location used for the output bins for the extensions of the support.
-The results are indistinguishable for the very small variance level used here.}.
-We write $P_{}(y_{1}<Y\le y_{2}\mid Y\sim\mathcal{D}(\mu,\sigma^{2}))$ to mean the probability of a value distributed according to $\mathcal{D}(\mu,\sigma^{2})$ being in the patch bordered by $y_1$ and $y_2$.
+The results are indistinguishable for the small variance level used here.}.
+We write $P_{\mathcal{D}}(y_{1}<Y\le y_{2}\mid M=\mu,\,\Sigma=\sigma)$ to mean the probability of a value distributed according to $\mathcal{D}(\mu,\sigma^{2})$ being in the patch bordered by $y_1$ and $y_2$.
 Using this the blurred-binning function is defined: 
 %
 \begin{equation*}%
-\resizebox{\columnwidth}{!}{$
-	\Omega_{n}^{blur}(v,\mathcal{D},\sigma)=\left(P\left(\frac{i-1}{n}<Y\le\frac{i}{n}\mid Y\sim\mathcal{D}(v,\sigma^{2})\right)\right)_{i=1}^{i=n}
-$}
+\resizebox{\columnwidth}{!}{%
+$\Omega_{n}^{blur}(v,\mathcal{D},\sigma)=\left(P_{\mathcal{D}}\left(\dfrac{i-1}{n}<Y\le\dfrac{i}{n}\mid M=v,\,\Sigma=\sigma\right)\right)_{i=1}^{i=n}$
+}%
 \end{equation*}
 This function maps points $v$ in the continuous color space, to probability mass histogram vectors of length $n$.
 The majority of the mass will be in the bin that the value $v$ would be in,
@@ -270,9 +300,8 @@ Further tuning of this parameter might enable better results -- particularly usi
 \subsection{Baseline Model}\label{sec:baseline-model}
 While the main interest in this work in compositionally modelling the color language,
 we define a new non-compositional baseline model to allow for comparison of our method.
-This model loosely resembles the histogram model used by \textcite{mcmahan2015bayesian} in their Baseline model to characterise their input space.
-We are unable to use the work of \textcite{DBLP:journals/corr/KawakamiDRS16} or \textcite{DBLP:journals/corr/MonroeHGP17} for direct comparison,
-as neither aims to produce a general distribution.
+This model loosely resembles the histogram model discussed in \textcite{meomcmahanstone:color} and \textcite{mcmahan2015bayesian}.
+As there is no existing work aiming to estimate a general distribution we are required to define this new baseline to allow for comparison.
 Our baseline must be able to estimate multi-modal and asymmetric color distributions.
 
 We define the baseline based off the the element-wise mean of discretized  training observations.
@@ -354,12 +383,8 @@ The layers prior to the output are shared, allowing common patterns to be learne
 \section{Experimental Setup}\label{sec:experimental-setup}
 \subsection{Data Preparation}\label{sec:data-preparation}
 We use the Monroe dataset \parencite{Monroe2010XKCDdataset}, as prepared by McMahan and Stone \parencite{mcmahan2015bayesian}.
-This dataset is partitioned into test, development, and training sets; and has had some cleaning from the original data collected by Randell \textcite{Monroe2010XKCDdataset}.
-It is also used by Will \textcite{2016arXiv160603821M} and \textcite{DBLP:journals/corr/KawakamiDRS16}.
-\pdfcomment{I'm not sure how to make it clear that the two Monroes involved are not the same person.}
-The color space is HSV, with all values between zero and one.
-Each is paired with one of 829 color description, as provided by participants in the Color Survey.
 
+Each observation in the dataset is a text color descriotion, paired with a point in HSV color-space, scaled to be between zero and one.
 The text descriptions are loosely tokenized into separate words and affixes.
 Beyond simply breaking up a description ``greenish blue'' into words: ``greenish'', ``blue'', the suffixes ``-ish'' and ``-y' are also separated at their own tokens: ``green'', ``ish'', ``blue''.
 This tokenization is achieved through a short list of word replacement rules.
@@ -394,7 +419,7 @@ Dropout \parencite{srivastava2014dropout} with a probability of 0.5 was used dur
 
 \subsection{Perplexity in Color-Space}
 The Perplexity allows us to evaluate how well our estimated distribution matches the distribution of the observations in the test set.
-Perplexity is commonly used for evaluating language models, however here it is being used to evaluate the discretized distribution.
+Perplexity is commonly used for evaluating language models, however here it is being used to evaluate the discretized distribution estimate.
 It can loosely be through of as to how well the model's distribution does compared to a uniform distribution -- which has a perplexity equal to the number of bins.
 
 
@@ -415,13 +440,13 @@ From this the perplexity is defined in the normal way:
 As the perplexity varies depending on the output resolution,
 we also define a standardized perplexity $\frac{PP(\tau)}{n^3}$, where $n$ is the per channel output resolution of the model.
 This standardised perplexity allows us to compare models of different output resolution.
-It is equivalent to comparing the relative performance of the model to that of a uniform distribution over color-space of that resolution: $PP_{uniform}=n^3$.
-Perplexity is a measure of how well the distribution estimated by the model, matches reality according to the observations in the test set.
+It is equivalent to comparing the relative performance of the model to that of a uniform distribution $PP_{uniform}=n^3$.
+Perplexity is a measure of how well the distribution estimated by the model matches reality according to the observations in the test set.
 
 
 
 \subsection{Implementation}
-The implementation of the models and all evaluations was made in the julia programming language \parencite{Julia},
+The implementation of the models and all evaluations were in the julia programming language \parencite{Julia},
 using the bindings for TensorFlow \parencite{tensorflow2015-whitepaper}.
 The full source code is included in the supplementary materials.
 
@@ -445,10 +470,9 @@ The full source code is included in the supplementary materials.
 \multimodalfig{purplishgrey}{purplish grey}
 
 
-
 Shown in \Cref{figindigo,figgreenish,figpurplishgrey} are side by-side comparisons of the output of the CDEST and the Baseline models.
 Overall, it can be seen the Baseline model is a lot sharper, with more spikes,
-where as the CDEST model tends to be much smoother, even though both use the same blurring during discretization.
+whereas the CDEST model tends to be much smoother, even though both use the same blurring during discretization.
 Smoothness is generally desirable, the increased smoothness particularly as seen in the saturation and value channels, is intuitively correct.
 Though not always.
 
