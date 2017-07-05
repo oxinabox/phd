@@ -30,13 +30,30 @@
 \setlength{\completemargin}{6cm}
 
 \RequirePackage{geometry}
+\savegeometry{basegeo}
 \geometry{
+  marginpar = 5.5cm,
   inner  = 21cm /  \pagedivisions,
   outer  = 21cm / \pagedivisions + \completemargin,
   top    = 29.7cm / \pagedivisions,
   bottom = 29.7cm / \pagedivisions,
   heightrounded
 }
+\savegeometry{contentgeo}
+
+
+%%%%%
+% Make chapter titles not restricted by main width
+\renewcommand*{\chapterlinesformat}[3]{%
+	\makebox[\textwidth][l]{% avoid overfull \hbox
+		\parbox[t]{\dimexpr\textwidth+\marginparsep+\marginparwidth}{% use more width
+			\raggedchapter
+			\@hangfrom{#2}{#3}%
+		}%
+	}%
+}
+
+%%%%%
 
 % Use scrlayer-scrpage, so that package notecolumn works
 \RequirePackage[
@@ -63,3 +80,12 @@
 	\ifvmode\leavevmode\fi
 	\makenote[notes]{#1}
 }
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% customize dictum format:
+\setkomafont{dictumtext}{\itshape\small\sffamily}
+\setkomafont{dictumauthor}{\normalfont\small\sffamily}
+\renewcommand*\dictumwidth{0.8\linewidth}
+\renewcommand*\dictumauthorformat[1]{--- #1}
+\renewcommand*\dictumrule{}
