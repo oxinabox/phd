@@ -6,11 +6,16 @@
 \RequirePackage{blindtext}
 \RequirePackage{leading}
 \RequirePackage{calc}
+
 \RequirePackage{color}
 \definecolor{blue}{rgb}{0.2, 0.2, 1.0}
-\newcommand\pagedivisions{14}
+
+%\RequirePackage{scrextend}
+
 
 % Page Layout
+
+\newcommand\pagedivisions{14}
 \LoadClass[
   a4paper,
   twoside,
@@ -72,14 +77,23 @@
 \DeclareNewNoteColumn[
   normalmarginpar,
   width = \notescolwidth,
-  font = \raggedleft\small\sffamily\color{blue}
+  font = \ifthispageodd{\raggedleft}{\raggedright}\small\sffamily\color{blue}
 ]{notes}
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
 \newcommand{\aside}[1]{
 	\ifvmode\leavevmode\fi
 	\makenote[notes]{#1}
 }
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Bibliography Commands
+
+\newcommand{\tcite}[1]{
+	\textcite{#1}
+	\aside{\fullcite{#1}}
+} 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%
