@@ -89,12 +89,31 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Bibliography Commands
+%
+\RequirePackage[
+	backend=bibtex,
+	url=false,  
+	style=alphabetic,
+	citestyle=authoryear 
+]{biblatex}
 
-\newcommand{\tcite}[1]{
-	\textcite{#1}
-	\aside{\fullcite{#1}}
-} 
-
+\DeclareCiteCommand{\tcite}
+{	% prenote
+	\usebibmacro{prenote}%
+}
+{	%loopcode
+	\printnames{author}, %
+	\printfield{year} %
+	\asside{
+		\printnames{author}, % 
+		\printfield{year}.  %
+		\printfield{title}	%
+	}
+}
+{	%sepcode
+	\multicitedelim%
+}
+{\usebibmacro{postnote}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 % customize dictum format:
