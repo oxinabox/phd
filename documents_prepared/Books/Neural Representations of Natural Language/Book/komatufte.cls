@@ -5,7 +5,10 @@
 % General setup
 \RequirePackage{blindtext}
 \RequirePackage{leading}
+
 \RequirePackage{calc}
+\RequirePackage{xparse}
+
 
 \RequirePackage{color}
 \definecolor{blue}{rgb}{0.2, 0.2, 1.0}
@@ -82,9 +85,13 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-\DeclareRobustCommand{\aside}[1]{
-	\ifvmode\leavevmode\fi
-	\makenote[notes]{#1}
+
+\DeclareDocumentCommand{\aside}{o +m}{
+	\makenote[notes]{
+		\IfNoValueTF{#1}
+		{#2}
+		{\textbf{#1}\\#2}
+	}
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -96,6 +103,12 @@
 	style=alphabetic,
 	citestyle=authoryear 
 ]{biblatex}
+
+
+\newcommand{\tcite}[1]{
+	\textcite{#1}
+	\aside{\textcite{#1}, \citetitle{#1}}
+}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%
