@@ -82,7 +82,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-\newcommand{\aside}[1]{
+\DeclareRobustCommand{\aside}[1]{
 	\ifvmode\leavevmode\fi
 	\makenote[notes]{#1}
 }
@@ -97,23 +97,6 @@
 	citestyle=authoryear 
 ]{biblatex}
 
-\DeclareCiteCommand{\tcite}
-{	% prenote
-	\usebibmacro{prenote}%
-}
-{	%loopcode
-	\printnames{author}, %
-	\printfield{year} %
-	\asside{
-		\printnames{author}, % 
-		\printfield{year}.  %
-		\printfield{title}	%
-	}
-}
-{	%sepcode
-	\multicitedelim%
-}
-{\usebibmacro{postnote}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 % customize dictum format:
