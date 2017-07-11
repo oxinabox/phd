@@ -13,9 +13,7 @@
 \RequirePackage{color}
 \definecolor{blue}{rgb}{0.2, 0.2, 1.0}
 
-%\RequirePackage{scrextend}
-
-
+%%%%%%%%%%%%%%%
 % Page Layout
 
 \newcommand\pagedivisions{14}
@@ -89,26 +87,32 @@
 \DeclareDocumentCommand{\aside}{o +m}{
 	\makenote[notes]{
 		\IfNoValueTF{#1}
-		{#2}
-		{\textbf{#1}\\#2}
+		{} %Do nothing if not set
+		{\textbf{#1}\\}
+	#2\\	
 	}
+	
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Bibliography Commands
 %
 \RequirePackage[
-	backend=bibtex,
 	url=false,  
 	style=alphabetic,
 	citestyle=authoryear 
 ]{biblatex}
 
 
+\newcommand{\pcite}[1]{
+	\parencite{#1}
+	\aside{\textcite{#1}, \citetitle{#1}}
+}
 \newcommand{\tcite}[1]{
 	\textcite{#1}
 	\aside{\textcite{#1}, \citetitle{#1}}
 }
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%

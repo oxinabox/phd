@@ -13,19 +13,89 @@
 
 
 \aside[Word Vector or Word Embedding?]{Note that older literature in the area will use the term \emph{word~vector} to refer to representations from LDA and LSA etc. Whereas in a lot of newer work the term is used synonymously with \emph{word~embedding}.}
-We begin the consideration of the representation of words using neural networks with work on language modeling.
+We begin the consideration of the representation of words using neural networks with work on language modelling
 This is not the only place one could begin the consideration: the information retrieval (IR) models such as LDA and LSA based on word co-location would be the other obvious starting point.
 However, as will be discussed there models are closer to the end point of of the chapter than the begin.
-For the language modeling works, comes the contextual language model works such as skip-gram, which in turn lead to the post-neural network co-occurrence based works.
-These model fundamentally are in fact more similar to the information retrieval co-location works than the language modeling from which we began.
+For the language modelling works, comes the contextual language model works such as skip-gram, which in turn lead to the post-neural network co-occurrence based works.
+These model fundamentally are in fact more similar to the information retrieval co-location works than the language modelling from which we began.
 
 
-\section{Representations for Language Modeling}
-\tcite{NPLM} a
-BROWN CLUSTERS
+\section{Representations for Language Modelling}
 
-\tcite{collobert2008unified} a
+\aside[Random Variable Naming Convention]{We follow convention that capitalised $W_i$ is a random variable, and $w_i$ is a particular value which $W_i$ may take. Writing $P(\ldots W_i{=}w_i)$.
+	Often though we will make uses of the abridged (abuse-of)notation and simply write $P(\ldots w_i)$, allowing the random variable to be implicitly given by the name of its value.
+}
 
+The language modelling task it to predict the next word given the words that came prior \pcite{rosenfeld2000two}.
+For example, if a sentence begins \natlang{For lunch I will have a hot}, then there is a high probability that the next word will be \natlang{dog} or \natlang{meal},
+and lower probabilities of words such as \natlang{day} or \natlang{are}.
+Mathematically it is formulated: 
+\begin{equation}\label{equ:langmodel}
+	P(W_n{=}w_n \mid W_{n-1}{=}w_{n-1}, \ldots, W_1=w_1)
+\end{equation}
+or to use the compact notation 
+\begin{equation}\label{equ:langmodelcompact}
+P(w_n \mid w_{n-1}, \ldots, w_1)
+\end{equation}
+$P(w_n \mid \natlang{hot}, \natlang{a}, \natlang{want}, \natlang{I}, \natlang{lunch}, \natlang{For})$.
+The task is to find the probabilities for the various words that $w_n$ could represent.
+
+\aside[Google n-gram corpora]{Google has created several very large scale corpora of 1,2,3,4, and 5-grams from over $10^{11}$ words.
+Including the 2006 Web corpus from the public internet (Available for fees at \url{https://catalog.ldc.upenn.edu/LDC2006T13},
+and the 2010-2012 Books corpus made words from the Google Books project (available freely from \url{https://books.google.com/ngrams/datasets}), as described in \textcite{lin2012syntactic}.
+These very large corpora also used outside of statistical language modelling by corpus linguists investigating the use of language.
+}
+
+  
+The classical approach is trigram statistical language modelling.
+In this, the number of word triples in a corpus is counted,
+then given the previous two words, the next is predicted based on those counts.
+This is making the Markov assumption that the next state depends only on the current state,
+and that that state can be described by previous two words.
+Under this assumption \Cref{equ:langmodelcompact} becomes:
+\begin{equation}\label{equ:trigramlangmodel}
+P(w_n \mid w_{n-1}, \ldots, w_1) = P(w_n \mid w_{n-1}, w_{n-2})
+\end{equation}
+More generally, one can use $n$-gram language model where for any value if $n$,
+this is simply a matter of defining the Markov state to contain fewer or greater numbers of previous words than in the trigram case.
+
+This Markov assumption is, of-course, an approximation.
+In the previous example, a trigram language model is finding $P(w_n \mid \natlang{hot}, \natlang{a})$.
+It can be seen that the approximation has lost key information.
+Based only on the previous 2 words the next word $w_i$ could now reasonably be \natlang{day}, but the sentence: \natlang{For lunch I will have a hot day} makes no sense.
+However, the Markov assumption in using $n$-grams is required in order to make the problem tractable -- otherwise an unbound amount of information would need to be stored. 
+
+They key issue with n-gram language models in that in training them there is a data-sparsity problem.
+Most combinations of words occur very rarely \pcite{ha2009extending}.
+It is thus hard to estimate their occurrence probability.
+Combinations of words that do not occur in the model is derived from as naturally given a probability of zero.
+This is unlikely to be true though -- it is simply a matter of rare words never occurring together in a finite corpus.
+Several approaches have been taken to handle this.
+Simplest is add-one smoothing which adds an extra pseudo-observation of every combination of terms.
+In common use is are various back-off methods \pcite{katz1987estimation,kneser1995improved} which use the bigram probabilities to estimate the probabilities of unseen trigrams.
+However, these methods are merely clever statistical tricks -- ways to reassign probability mass after the fact to leave some left-over for unseen cases.
+Back-off is smarter than add-one smoothing, as it portions the probability fairly based of the $n{-}1$-gram probability.
+Better still would be a method which can learn to see the common-role of words.
+By looking at the fragment: \natlang{For lunch I want a hot}, any reader knows that the next word is most likely going to be a food.
+We know this for the same reason we know the next word in \natlang{For elevenses  I had a cold ...} is also going to be a food.
+Even though \natlang{elevenses} is a vary rare word, we know from the context that it is a meal (more on this later), and we know it shares other traits with meals, and similarly \natlang{have} / \natlang{had}, and \natlang{hot} / \natlang{cold}.
+These traits influence the words that can occur after them.
+Thus the motivation is for a language modelling method that use these common properties of the words in the language modelling.
+We need representation that holds this information.
+
+\tcite{NPLM} presents a method that uses neural network representations in a language model, where this representations implicitly learn the crucial traits of words.
+Capturing the trait information in the representation of a word for use in language modelling is not an idea exclusive to neural network approaches.
+Almost a decade earlier was the work of  \tcite{brown1992class}.
+The method of \tcite{NPLM} implictly learns this information in doing the language modelling task.
+
+
+
+\tcite{NPLM} 
+
+
+\tcite{collobert2008unified}
+
+\tcite{turian2010word}
 
 
 \subsection{RNN Language Models}
@@ -47,12 +117,8 @@ BROWN CLUSTERS
 
 \aside[Pretrained Word-Embeddings]{
 Pretrained Word Embeddings are available for most models discussed here.
-
 There trained on a lot more data than most people have access too.
-
-It can be useful to subsitute word embeddings are a repressentation in most systems. 
-
-}
+It can be useful to subsitute word embeddings are a repressentation in most systems.}
 
 \subsection{Glove}
 
