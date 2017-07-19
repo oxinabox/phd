@@ -89,7 +89,8 @@
 		\IfNoValueTF{#1}
 		{} %Do nothing if not set
 		{\textbf{#1}\\}
-	#2\\	
+	#2
+	\bigskip
 	}
 	
 }
@@ -98,19 +99,26 @@
 % Bibliography Commands
 %
 \RequirePackage[
+	backend=bibtex,
 	url=false,  
 	style=alphabetic,
 	citestyle=authoryear 
 ]{biblatex}
 
 
+\newcommand{\sidecite}[1]{
+	%\ifentryseen{#1}
+	{\aside{\textcite{#1}, \citetitle{#1}}}
+	%{}%do nothing if already shown this chapter	
+}
+
 \newcommand{\pcite}[1]{
 	\parencite{#1}
-	\aside{\textcite{#1}, \citetitle{#1}}
+	\sidecite{#1}
 }
 \newcommand{\tcite}[1]{
 	\textcite{#1}
-	\aside{\textcite{#1}, \citetitle{#1}}
+	\sidecite{#1}
 }
 
 

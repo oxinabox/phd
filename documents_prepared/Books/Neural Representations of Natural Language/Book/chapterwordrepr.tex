@@ -1,11 +1,11 @@
 \documentclass[parskip]{komatufte}
 \include{preamble}
 
+\graphicspath{{./figs/chapterwordrepr}, {./}}
 
 
 \begin{document}
 \chapter{Word Representations}\label{sec:word-representations}
-%\begin{addmargin}[0pt]{.3\textwidth}
 %•	Chapter 4: Word Representations (10 pages)
 %o	The core work that began to draw a lot of attention to this area.
 %o	This will cover crucial works such as Skip-Grams, CBOW, GLoVe, and of course the original neural probabilistic language model.
@@ -13,25 +13,25 @@
 
 
 \aside[Word Vector or Word Embedding?]{Note that older literature in the area will use the term \emph{word~vector} to refer to representations from LDA and LSA etc. Whereas in a lot of newer work the term is used synonymously with \emph{word~embedding}.}
-We begin the consideration of the representation of words using neural networks with work on language modelling
+We begin the consideration of the representation of words using neural networks with work on language modeling
 This is not the only place one could begin the consideration: the information retrieval (IR) models such as LDA and LSA based on word co-location would be the other obvious starting point.
 However, as will be discussed there models are closer to the end point of of the chapter than the begin.
-For the language modelling works, comes the contextual language model works such as skip-gram, which in turn lead to the post-neural network co-occurrence based works.
-These model fundamentally are in fact more similar to the information retrieval co-location works than the language modelling from which we began.
+For the language modeling works, comes the contextual language model works such as skip-gram, which in turn lead to the post-neural network co-occurrence based works.
+These model fundamentally are in fact more similar to the information retrieval co-location works than the language modeling from which we began.
 
 
-\section{Representations for Language Modelling}
+\section{Representations for Language Modeling}
 
 \aside[Random Variable Naming Convention]{We follow convention that capitalised $W_i$ is a random variable, and $w_i$ is a particular value which $W_i$ may take. Writing $P(\ldots W_i{=}w_i)$.
-	Often though we will make uses of the abridged (abuse-of)notation and simply write $P(\ldots w_i)$, allowing the random variable to be implicitly given by the name of its value.
+	Often though we will make uses of the abridged (abuse-of) notation and simply write $P(\ldots w_i)$, allowing the random variable to be implicitly given by the name of its value.
 }
 
-The language modelling task it to predict the next word given the words that came prior \pcite{rosenfeld2000two}.
+The language modeling task it to predict the next word given the words that came prior \pcite{rosenfeld2000two}.
 For example, if a sentence begins \natlang{For lunch I will have a hot}, then there is a high probability that the next word will be \natlang{dog} or \natlang{meal},
 and lower probabilities of words such as \natlang{day} or \natlang{are}.
 Mathematically it is formulated: 
 \begin{equation}\label{equ:langmodel}
-	P(W_n{=}w_n \mid W_{n-1}{=}w_{n-1}, \ldots, W_1=w_1)
+	P(W_n{=}w_n \mid W_{n-1}{=}w_{n-1}, \ldots, W_1{=}w_1)
 \end{equation}
 or to use the compact notation 
 \begin{equation}\label{equ:langmodelcompact}
@@ -43,11 +43,11 @@ The task is to find the probabilities for the various words that $w_n$ could rep
 \aside[Google n-gram corpora]{Google has created several very large scale corpora of 1,2,3,4, and 5-grams from over $10^{11}$ words.
 Including the 2006 Web corpus from the public internet (Available for fees at \url{https://catalog.ldc.upenn.edu/LDC2006T13},
 and the 2010-2012 Books corpus made words from the Google Books project (available freely from \url{https://books.google.com/ngrams/datasets}), as described in \textcite{lin2012syntactic}.
-These very large corpora also used outside of statistical language modelling by corpus linguists investigating the use of language.
+These very large corpora also used outside of statistical language modeling by corpus linguists investigating the use of language.
 }
 
   
-The classical approach is trigram statistical language modelling.
+The classical approach is trigram statistical language modeling.
 In this, the number of word triples in a corpus is counted,
 then given the previous two words, the next is predicted based on those counts.
 This is making the Markov assumption that the next state depends only on the current state,
@@ -80,14 +80,53 @@ By looking at the fragment: \natlang{For lunch I want a hot}, any reader knows t
 We know this for the same reason we know the next word in \natlang{For elevenses  I had a cold ...} is also going to be a food.
 Even though \natlang{elevenses} is a vary rare word, we know from the context that it is a meal (more on this later), and we know it shares other traits with meals, and similarly \natlang{have} / \natlang{had}, and \natlang{hot} / \natlang{cold}.
 These traits influence the words that can occur after them.
-Thus the motivation is for a language modelling method that use these common properties of the words in the language modelling.
+Thus the motivation is for a language modeling method that use these common properties of the words in the language modeling.
 We need representation that holds this information.
 
 \tcite{NPLM} presents a method that uses neural network representations in a language model, where this representations implicitly learn the crucial traits of words.
-Capturing the trait information in the representation of a word for use in language modelling is not an idea exclusive to neural network approaches.
+Capturing the trait information in the representation of a word for use in language modeling is not an idea exclusive to neural network approaches.
 Almost a decade earlier was the work of  \tcite{brown1992class}.
-The method of \tcite{NPLM} implictly learns this information in doing the language modelling task.
+The method of \tcite{NPLM} implicitly learns this information in doing the language modeling task.
 
+To understand the neural probabilistic language model, first consider a simplified neural trigram language model.
+This model is a simplification of that introduces by \tcite{NPLM}, it forms the basis of several models and introduces the most important idea in neural language representations: that of training a vector representation of a word using a lookup table to map a discrete word to a vector that becomes the first layer of the network.
+
+
+
+\aside[Lookup word embeddings: Hashmap or Array?]{
+The question is purely one of implementation.
+Theoretically we do not care if the implementation using a String to Vector dictionary (eg a Hashmap), or an 2D Array which is indexed into via an integer index representing the word, to retrieve a column.
+In tokenization of the source text it is common to transform all the words into integers, so as to save memory, especially if the tokenization does not make use of string interning.
+At that point it makes sense to work with a Array.
+For our purposes we will treat the word $w_i$ as if it were an integer index, though thinking of it as a string index into a hashmap changes little in the logic.
+}
+
+\aside[One-hot product or Indexed-lookup]{
+In some works you may see the process of retrieving the word vector from an Matrix of word vectors described as a one-hot multiplication.
+That is to say for a word represented by the index $i$,
+for $e_i$ the one-hot vector with a 1 in the $i$th position,
+and for $C$ the table of word embeddings.
+one can write  $Ce_i$.
+We will write $C_i$ and refer to this as looking up the word vector from the $i$th column.
+Of-course $C_i=Ce_i$, however in practical implementation the performance ramification are huge.
+A matrix column indexing is a $O(1)$ operation (for column major languages),
+where as a dense matrix-vector product is $O(n^2)$.
+%
+The one-hot product can be used in a pinch to support using embeddings in neural network toolkits that do not support lookup/embedding layers,
+however we strongly suggest that if your toolkit does not support lookup/embedding layers then it is unsuitable for use in NLP applications.
+}
+
+The trigram neural probabilistic network is defined by:
+
+\begin{multline}
+P(w_n \mid w_{n-1}, w_{n-2}) = \\
+s_{max}\left(U_2 \: \sigma\left(U_1\left[C_{w_{n-1}}; C_{w_{n-2}}\right] + b_1\right)+b_2\right)
+\end{multline}
+
+where $U_1,\: U_2,\: b_1,\: b_2$ are the weight matrices and biases of the network, and $C_{w_{n-1}}$ and $C_{w_{n-2}}$ are the looked-up word embedding for the previous two words, from the embedding table $C$.
+We write $\left[v_1; v_2\right]$ as a notational convenience for the concatenation of vectors $v_1$ and $v_2$.
+
+\input{figs/chapterwordrepr/trigram-neural-language-model.tex} 
 
 
 \tcite{NPLM} 
@@ -122,7 +161,7 @@ It can be useful to subsitute word embeddings are a repressentation in most syst
 
 \subsection{Glove}
 
-General concessus has emerged that Glove performs marginally worse than skip-grams
+General consensus has emerged that Glove performs marginally worse than skip-grams
 
 \subsection{What ever it is that people do instead now that is basically SVD on colloations}
 
