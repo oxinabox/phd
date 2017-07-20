@@ -31,17 +31,17 @@ For example, if a sentence begins \natlang{For lunch I will have a hot}, then th
 and lower probabilities of words such as \natlang{day} or \natlang{are}.
 Mathematically it is formulated: 
 \begin{equation}\label{equ:langmodel}
-	P(W_n{=}w_n \mid W_{n-1}{=}w_{n-1}, \ldots, W_1{=}w_1)
+	P(W_n{=}w_i \mid W_{i-1}{=}w_{i-1}, \ldots, W_1{=}w_1)
 \end{equation}
 or to use the compact notation 
 \begin{equation}\label{equ:langmodelcompact}
-P(w_n \mid w_{n-1}, \ldots, w_1)
+P(w_i \mid w_{i-1}, \ldots, w_1)
 \end{equation}
-$P(w_n \mid \natlang{hot}, \natlang{a}, \natlang{want}, \natlang{I}, \natlang{lunch}, \natlang{For})$.
-The task is to find the probabilities for the various words that $w_n$ could represent.
+$P(w_i \mid \natlang{hot}, \natlang{a}, \natlang{want}, \natlang{I}, \natlang{lunch}, \natlang{For})$.
+The task is to find the probabilities for the various words that $w_i$ could represent.
 
 \aside[Google n-gram corpora]{Google has created several very large scale corpora of 1,2,3,4, and 5-grams from over $10^{11}$ words.
-Including the 2006 Web corpus from the public internet (Available for fees at \url{https://catalog.ldc.upenn.edu/LDC2006T13},
+Including the 2006 Web corpus from the public internet (Available for fees at \url{https://catalog.ldc.upenn.edu/LDC2006T13}),
 and the 2010-2012 Books corpus made words from the Google Books project (available freely from \url{https://books.google.com/ngrams/datasets}), as described in \textcite{lin2012syntactic}.
 These very large corpora also used outside of statistical language modeling by corpus linguists investigating the use of language.
 }
@@ -54,13 +54,13 @@ This is making the Markov assumption that the next state depends only on the cur
 and that that state can be described by previous two words.
 Under this assumption \Cref{equ:langmodelcompact} becomes:
 \begin{equation}\label{equ:trigramlangmodel}
-P(w_n \mid w_{n-1}, \ldots, w_1) = P(w_n \mid w_{n-1}, w_{n-2})
+P(w_i \mid w_{i-1}, \ldots, w_1) = P(w_i \mid w_{i-1}, w_{i-2})
 \end{equation}
 More generally, one can use $n$-gram language model where for any value if $n$,
 this is simply a matter of defining the Markov state to contain fewer or greater numbers of previous words than in the trigram case.
 
 This Markov assumption is, of-course, an approximation.
-In the previous example, a trigram language model is finding $P(w_n \mid \natlang{hot}, \natlang{a})$.
+In the previous example, a trigram language model is finding $P(w_i \mid \natlang{hot}, \natlang{a})$.
 It can be seen that the approximation has lost key information.
 Based only on the previous 2 words the next word $w_i$ could now reasonably be \natlang{day}, but the sentence: \natlang{For lunch I will have a hot day} makes no sense.
 However, the Markov assumption in using $n$-grams is required in order to make the problem tractable -- otherwise an unbound amount of information would need to be stored. 
@@ -117,19 +117,57 @@ however we strongly suggest that if your toolkit does not support lookup/embeddi
 }
 
 The trigram neural probabilistic network is defined by:
-
+%
 \begin{multline}
-P(w_n \mid w_{n-1}, w_{n-2}) = \\
-s_{max}\left(U_2 \: \sigma\left(U_1\left[C_{w_{n-1}}; C_{w_{n-2}}\right] + b_1\right)+b_2\right)
+P(w_i \mid w_{i-1}, w_{i-2}) = \\
+s_{max}\left(U_2 \: \sigma\left(U_1\left[C_{w_{i-1}}; C_{w_{i-2}}\right] + b_1\right)+b_2\right)
 \end{multline}
-
-where $U_1,\: U_2,\: b_1,\: b_2$ are the weight matrices and biases of the network, and $C_{w_{n-1}}$ and $C_{w_{n-2}}$ are the looked-up word embedding for the previous two words, from the embedding table $C$.
+%
+where $U_1,\: U_2,\: b_1,\: b_2$ are the weight matrices and biases of the network, and $C_{w_{i-1}}$ and $C_{w_{i-2}}$ are the looked-up word embedding for the previous two words, from the embedding table $C$.
 We write $\left[v_1; v_2\right]$ as a notational convenience for the concatenation of vectors $v_1$ and $v_2$.
+The network is shown diagrammatically in \Cref{fig:trigram-neural-language-model}
 
-\input{figs/chapterwordrepr/trigram-neural-language-model.tex} 
+\begin{figure}
+	\centering
+	\input{figs/chapterwordrepr/trigram-neural-language-model.tex} 
+	\caption{\label{fig:trigram-neural-language-model} Neural Trigram Language Model}
+\end{figure}
+
+In the neural trigram language model, each of the previous two words is used to look-up a vector from the Embedding Table matrix.
+These are then concatenated to give a dense, continuous-space input to the above hidden layer.
+The output layer is a softmax layer, it gives the probabilities for each word in the vocabulary, one of which corresponds to $w_i$ the word being evaluated.
+
+The word embeddings are trained, via the normal neural network method, along with the network weights and biases.
+This allows the embeddings of words which predict the same future word to move to be near each other in vector space.
+It also allows the hidden layer to learn to associate information with regions of the embedding space.
+This thus allows for information sharing between words.
+If two words vectors are close together because they mostly predict the same future words, then that area of space is a associated with predicting those words.
+Thus for cases where there are some words which never co-occur in the training set, but for which the nearby word does co-occur with, then because the knowledge is associated with that region of space, the model predicts that there is a higher-than-zero chance of the first word co-occurring with the unseen word.
+This is a fuzzy and nonlinear relationship, with varying degrees of closeness resulting in (and from) varying levels of exception of the words sharing co-occurring predicted words.
 
 
-\tcite{NPLM} 
+\tcite{NPLM} is a more advanced version of the neural language model discussed.
+Rather than being a trigram language model, it is an $n$-gram language model, where $n$ is a hyper-parameter of the model.
+The knowledge sharing allows the data-sparsity issues to be ameliorated, thus allowing for $n>3$.
+Bengio et. al. investigates values for $n$ of 3, 5 and 6.
+The network used in their work also was marginally more complex, as shown in \Cref{fig:neural-language-model} and in the following equation:
+\begin{align}
+P(w_i & \mid w_{i-1}, w_{i-2}) = s_{max}(
+\\  &  U_3 \left[ C_{w_{i-1}};...; C_{w_{i-n}}\right] 
+\\  & + U_2 \: \sigma\left( U_1\left[C_{w_{i-1}};...; C_{w_{i-n}} \right] + b_1\right)
+\\  & +b_2)
+\end{align}
+It includes a layer-skip, which is primarily present only as connivance to aid in the learning.
+It allowing the input to directly effect the output without being mediated by the shared hidden layer.
+This is the network which begins the notions of using neural networks with vector representations of words.
+
+\begin{figure}
+	\centering
+	\input{figs/chapterwordrepr/neural-language-model.tex} 
+	\caption{\label{fig:neural-language-model} Neural Probabilistic Language Model}
+\end{figure}
+
+
 
 
 \tcite{collobert2008unified}
