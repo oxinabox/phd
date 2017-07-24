@@ -1,6 +1,5 @@
 \documentclass[12pt,parskip]{komatufte}
 \include{preamble}
-\usepackage{showframe}
 
 \begin{document}
 	
@@ -23,7 +22,7 @@ This chapter does not serve as a general introduction to machine learning,
 but it does cover the basics and then some as is required to understand the remainder of this book.
 
 
-We begin with the consideration of a multivariates linear function.
+We begin with the consideration of a multivariate linear function.
 We can see that this can project any point in $X$ to any point in $Y$ but that all points must move together along a straight line.
 
 Consider instead the Logistic or sigmoid linear function:
@@ -33,11 +32,83 @@ But it all must move in a straight-ish line together.
 
 
 
+
 \section{Activation functions}
 
+\aside[Notation: Generic Activation Function $\varphi$:]{Though-out this book, when the activation function is not significant to the problem at hand, we will represent it with the symbol $\varphi$.}
 The universal approximation theorem requires that the hidden layer non-linearity be non-constant, monotonic and bounded.
 In practice one does not even require that, using the unbounded RELU activation functions.
+There are a wide variety of activations functions in use.
+In general, for the hidden layers, these perform similarly.
+We suggest consulting a more in-depth work on neural networks with a focus on the machine learning aspects to gain a understanding of the pros and cons.
+
+More significantly, the final activation function or the output function does matter.
+The output function should be chosen for the task at hand.
+In the following sections $y$ is the predicted final output of the network it is normally a vector,
+$z$ is the output from the final hidden layer,
+$W$ and $b$ are a trained matrix and vector respectively.
+
+\subsubsection{Linear/Affine}
+A linear or affine output-layer is the most general output layer.
+It is the normal output layer for use on regression or function approximation tasks.
+\begin{equation}
+y=Az + b
+\end{equation}
+This allows the output to be any value, within some set of bounds learned during training.
+However, when this is not needed it increases the difficulty of training for no benefit.
+One can consider the Linear output layer as being a learned scaling and shift of the output of any of the other activation functions.
+Conversely, one can look at all other activation functions as being a non-linear transformation of an linear layer, as in a traditional neural network a affine transformation is done before all other activation functions.
 
 
+\subsubsection{Sigmoid}
+This is the classic neural network activation function.
+\begin{equation}
+y=\sigma{z}=\frac{1}{1+e^{-z}}
+\end{equation}
+Sigmoid output values are between zero and one.
+If the network has a single output then this is a fuzzy boolean.
+It can be used to classify into 2 categories.
+It is sometimes call a logistic output.
+
+\subsubsection{Softmax}
+Softmax is the standard output layer for categorical classification.
+\begin{equation}
+y=s_m{z}=\left( \frac{e^{z_i}}{\sum_{j=1}^{j=N} e^{z_j}} \right)_{i=1}^{i=N}
+\end{equation}
+For $N$ the number of outputs equal to the number of categories attempting to be classified into.
+These outputs have  values are between zero and one, and sum to one.
+They are taken as a probabilistic description of the likelihood of each class.
+i.e. a discrete, probability mass function (pmf).
+
+
+Softmax is a \emph{soft}, i.e. differentiable,  version of what could be called \emph{hard-max}.
+In this conceptual hard-max function, the largest output is set to one, and the others set to zero.
+It is non-differentiable and thus not suitable for use in a neural network.
+In softmax the largest values is proportionally increased to be closest to one,
+and the smallest to be closest to zero.
+
+A neural network classifier with a softmax output layer is sometimes called a multinomial logistic regression network.
+This can lead to some confusion with a sigmoid outputting network.
+However, the similarity can be understood by considering a softmax output layer with 2 classes.
+This reduces to $s-m(z)= \left( \sigma(z), 1-\sigma(z) \right)$.
+
+
+\subsubsection{Tanh}
+The hyperbolic tangent function is very similar to a scaled sigmoid function in shape.
+
+\begin{equation}
+y=\tanh(z)=\frac{e^z-e^{-z}}{e^z+e^{-z}}
+\end{equation}
+
+The notable difference is that outputs are restricted to be between $-1$ and $+1$
+
+\subsubsection{Other activation functions}
+
+There are numerous other activation functions.
+Most are of interest for use in hidden layers such as Softplus, ReLU, ReLU6, ELU and others.
+For specialized tasks, other functions might be used, such as atan2 \pcite{WhiteRepresentingAnglesSE}.
+
+
+\clearnotecolumn[notes]
 
 \end{document}

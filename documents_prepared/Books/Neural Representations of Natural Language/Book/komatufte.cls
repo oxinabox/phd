@@ -91,8 +91,7 @@
 		{\textbf{#1}\\}
 	#2
 	\bigskip
-	}
-	
+	}	
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -108,17 +107,17 @@
 
 \newcommand{\sidecite}[1]{
 	%\ifentryseen{#1}
-	{\aside{\textcite{#1}, \citetitle{#1}}}
+	{\aside{\textcite{#1}, \citetitle{#1}}}%
 	%{}%do nothing if already shown this chapter	
 }
 
 \newcommand{\pcite}[1]{
-	\parencite{#1}
-	\sidecite{#1}
+	\parencite{#1}%
+	\sidecite{#1}%
 }
 \newcommand{\tcite}[1]{
-	\textcite{#1}
-	\sidecite{#1}
+	\textcite{#1}%
+	\sidecite{#1}%
 }
 
 

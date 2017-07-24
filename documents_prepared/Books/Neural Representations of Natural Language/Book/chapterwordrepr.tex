@@ -73,6 +73,9 @@ This is unlikely to be true though -- it is simply a matter of rare words never 
 Several approaches have been taken to handle this.
 Simplest is add-one smoothing which adds an extra pseudo-observation of every combination of terms.
 In common use is are various back-off methods \pcite{katz1987estimation,kneser1995improved} which use the bigram probabilities to estimate the probabilities of unseen trigrams.
+%
+\aside{An extended look at classical techniques in statistical language modelling can be found in \textcite{DBLP:journals/corr/cs-CL-0108005}}
+%
 However, these methods are merely clever statistical tricks -- ways to reassign probability mass after the fact to leave some left-over for unseen cases.
 Back-off is smarter than add-one smoothing, as it portions the probability fairly based of the $n{-}1$-gram probability.
 Better still would be a method which can learn to see the common-role of words.
@@ -83,10 +86,11 @@ These traits influence the words that can occur after them.
 Thus the motivation is for a language modeling method that use these common properties of the words in the language modeling.
 We need representation that holds this information.
 
+
 \tcite{NPLM} presents a method that uses neural network representations in a language model, where this representations implicitly learn the crucial traits of words.
 Capturing the trait information in the representation of a word for use in language modeling is not an idea exclusive to neural network approaches.
-Almost a decade earlier was the work of  \tcite{brown1992class}.
-The method of \tcite{NPLM} implicitly learns this information in doing the language modeling task.
+Almost a decade earlier was the clustering work of  \tcite{brown1992class}.
+The method of \tcite{NPLM} however, implicitly learns this information into a neural network bases representation in during the training for the language modeling task.
 
 To understand the neural probabilistic language model, first consider a simplified neural trigram language model.
 This model is a simplification of that introduces by \tcite{NPLM}, it forms the basis of several models and introduces the most important idea in neural language representations: that of training a vector representation of a word using a lookup table to map a discrete word to a vector that becomes the first layer of the network.
@@ -120,7 +124,7 @@ The trigram neural probabilistic network is defined by:
 %
 \begin{multline}
 P(w_i \mid w_{i-1}, w_{i-2}) = \\
-s_{max}\left(U_2 \: \sigma\left(U_1\left[C_{w_{i-1}}; C_{w_{i-2}}\right] + b_1\right)+b_2\right)
+s_{max}\left(U_2 \: \varphi\left(U_1\left[C_{w_{i-1}}; C_{w_{i-2}}\right] + b_1\right)+b_2\right)
 \end{multline}
 %
 where $U_1,\: U_2,\: b_1,\: b_2$ are the weight matrices and biases of the network, and $C_{w_{i-1}}$ and $C_{w_{i-2}}$ are the looked-up word embedding for the previous two words, from the embedding table $C$.
@@ -149,17 +153,32 @@ This is a fuzzy and nonlinear relationship, with varying degrees of closeness re
 \tcite{NPLM} is a more advanced version of the neural language model discussed.
 Rather than being a trigram language model, it is an $n$-gram language model, where $n$ is a hyper-parameter of the model.
 The knowledge sharing allows the data-sparsity issues to be ameliorated, thus allowing for $n>3$.
+%
+\aside{\textcite{schwenk2004efficient} suggests using only a subset of the vocabulary as options for the output, while allowing the full vocabulary in the input space -- with a fallback to classical language models for the missed words.
+	This decreases the size of the softmax output layer, substantially decreasing the network evaluation and training time.
+	This technique is now largely eclipsed by hierarchical softmax etc. discussed later in this chapter.
+}
+%
 Bengio et. al. investigates values for $n$ of 3, 5 and 6.
 The network used in their work also was marginally more complex, as shown in \Cref{fig:neural-language-model} and in the following equation:
 \begin{align}
-P(w_i & \mid w_{i-1}, w_{i-2}) = s_{max}(
-\\  &  U_3 \left[ C_{w_{i-1}};...; C_{w_{i-n}}\right] 
-\\  & + U_2 \: \sigma\left( U_1\left[C_{w_{i-1}};...; C_{w_{i-n}} \right] + b_1\right)
+P(w_i & \mid w_{i-1}, w_{i-2}) = s_{max}( \nonumber
+\\  & \quad U_3 \left[ C_{w_{i-1}};...; C_{w_{i-n}}\right] \nonumber
+\\  & + U_2 \: \varphi\left( U_1\left[C_{w_{i-1}};...; C_{w_{i-n}} \right] + b_1\right) \nonumber
 \\  & +b_2)
 \end{align}
-It includes a layer-skip, which is primarily present only as connivance to aid in the learning.
+
+It includes a layer-bypass, which is primarily present only as connivance to aid in the learning.
 It allowing the input to directly effect the output without being mediated by the shared hidden layer.
+This layer-bypass is a unusual feature, not present in future works deriving from this, such as \tcite{schwenk2004efficient} which presents a bag of tricks to minimize training time. 
+
+
+
+
+
 This is the network which begins the notions of using neural networks with vector representations of words.
+Bengio et. al. focused on the use of the of sliding window of previous words -- much like the traditional n-grams.
+They do very briefly mention that an RNN could be used in its place.
 
 \begin{figure}
 	\centering
@@ -168,17 +187,10 @@ This is the network which begins the notions of using neural networks with vecto
 \end{figure}
 
 
-
-
-\tcite{collobert2008unified}
-
-\tcite{turian2010word}
-
-
 \subsection{RNN Language Models}
-\tcite{mikolov2011RnnLM}
 \tcite{mikolov2010recurrent}
-\tcite{6163930}
+\tcite{mikolov2011RnnLM}
+\tcite{mikolov2011trainingstrategies}
 
 \section{Contextual Language Modeling}
 
@@ -195,7 +207,7 @@ This is the network which begins the notions of using neural networks with vecto
 \aside[Pretrained Word-Embeddings]{
 Pretrained Word Embeddings are available for most models discussed here.
 There trained on a lot more data than most people have access too.
-It can be useful to subsitute word embeddings are a repressentation in most systems.}
+It can be useful to subsitute word embeddings are a representation in most systems.}
 
 \subsection{Glove}
 
@@ -204,7 +216,18 @@ General consensus has emerged that Glove performs marginally worse than skip-gra
 \subsection{What ever it is that people do instead now that is basically SVD on colloations}
 
 
+\section{Natural Language Applications -- beyond language modeling}
+While statistical language models are useful, they are of-course in no way the be-all and end-all of natural language processing.
+Simultaneously with the developments around representations for the language modelling tasks, work was being done on solving other NLP problems using similar techniques.
 
-%\end{addmagin}
+\tcite{collobert2008unified}
+
+\tcite{turian2010word}
+
+
+
+
+
+\clearnotecolumn[notes]
 
 \end{document}
