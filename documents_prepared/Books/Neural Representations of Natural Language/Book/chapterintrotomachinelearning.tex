@@ -1,6 +1,5 @@
 \documentclass[12pt,parskip]{komatufte}
 \include{preamble}
-\usepackage{showframe}
 
 \begin{document}
 	
@@ -23,7 +22,7 @@ This chapter does not serve as a general introduction to machine learning,
 but it does cover the basics and then some as is required to understand the remainder of this book.
 
 
-We begin with the consideration of a multivariates linear function.
+We begin with the consideration of a multivariate linear function.
 We can see that this can project any point in $X$ to any point in $Y$ but that all points must move together along a straight line.
 
 Consider instead the Logistic or sigmoid linear function:
@@ -31,13 +30,177 @@ This can project any point in $X$ to a point in $[0,1]^n$,
 to a fuzzy yes-no.
 But it all must move in a straight-ish line together.
 
+\section{Function Approximation}
+\aside[Multilayer perception or Artificial Neural Network?]{A artifical neural network is sometimes called a multilayer perception.
+This is in reference to the related perception learning algorithm.
+This term has fallen out of favor in newer works,
+with Hinton, who originally coined the term, expressing his own regret at the naming.
+}
+
+The universal approximation theorem (UAT) tells us that a neural network can be used to approximate any continuous bounded function.
+Here a function should be understood in the general sense -- classification is a function from observations to classes, regression is a function from observed values to target values.
+More precisely it states that for a network with sufficient width
+\pdfcomment{Finish this paragraph with math and citations}
+
+A network without any hidden layers is only able to approximate linear functions.
+It is equivalent to a perception, or a linear SVM. 
 
 
-\section{Activation functions}
+However, the UAT does not tell us the values for those weight parameters,
+nor does it promise that any method of training will ever reach them in finite time.
+More significantly it does not inform as to how wide \emph{sufficiently wide} is,
+nor if deeper is more efficient than wider.
 
+
+\section{Network Parameters}
+
+\subsection{Width and Depth}
+
+\aside[What happened to Deep Belief Network Pretraining?]{
+	\textcite{hinton2006fastDBN,bengio2007greedylayerwise} lead to a new resurgence of interest in neural networks.
+	Pretraining with Deep Belief Networks allowed for deep networks to be trained.
+	It was held for many years that it was necessary to use layer-wise unsupervised pretraining,
+	even when one has only supervised data. 
+	\textcite{glorot2011deepRELUsparse} showed that with ReLU units, a deep network could be trained directly and archive the same performance.
+	As such unsupervised pretraining is now a more niche technique used primarily when there is an excess of unsupervised data.
+}
+
+Early neural networks often had many layers.
+With the UAT showing that only one hidden layer was required then tend to become more shallow, and
+with difficulties in training deeper networks.
+
+In the last decade, deep nets have come back into fashion.
+The reasons for this are out of scope for this work.
+In brief it is a combination of a better techniques (e.g. RELU, unsupervised pretraining),
+better hardware (e.g. GPUs and Xeon Phis), and more labeled data (e.g. from crowd-sourcing platforms such as Amazon Mechanical Turk.)
+
+It has been generally found that deeper networks can have significantly few total neurons than for the same performance as wider shallower networks.
+
+The choice of the number of hidden layers (depth),
+and the sizes (width) is a key parameter in designing a neural network.
+It is arguably \emph{the} key parameter.
+It can be assessed using a hyper-parameter sweep on a validation or development dataset.
+It is a particularly relevant parameter for our purposes, as hidden layer width forms the basis of our representations.
+
+
+
+\subsection{Activation functions}
+
+\aside[Notation: Generic Activation Function $\varphi$:]{Though-out this book, when the activation function is not significant to the problem at hand, we will represent it with the \mbox{symbol $\varphi$.}}
 The universal approximation theorem requires that the hidden layer non-linearity be non-constant, monotonic and bounded.
 In practice one does not even require that, using the unbounded RELU activation functions.
+There are a wide variety of activations functions in use.
+In general, for the hidden layers, these perform Relatively similarly.
+Sigmoid, tanh, and ReLU are the most common activation functions used for hidden layers.
+We suggest consulting a more in-depth work on neural networks with a focus on the machine learning aspects to gain a understanding of their pros and cons.
+
+More significantly, the final activation function or the output function does matter.
+The output function should be chosen for the task at hand.
+In the following sections $y$ is the predicted final output of the network it is normally a vector,
+$z$ is the output from the final hidden layer,
+$W$ and $b$ are a trained matrix and vector respectively.
+
+\subsubsection{Linear/Affine}
+A linear or affine output-layer is the most general output layer.
+It is the normal output layer for use on regression or function approximation tasks.
+\begin{equation}
+y=Az + b
+\end{equation}
+This allows the output to be any value, within some set of bounds learned during training.
+However, when this is not needed it increases the difficulty of training for no benefit.
+One can consider the Linear output layer as being a learned scaling and shift of the output of any of the other activation functions.
+Conversely, one can look at all other activation functions as being a non-linear transformation of an linear layer, as in a traditional neural network a affine transformation is done before all other activation functions.
+
+Linear layers, cannot on their own, be used as hidden layer activation functions.
+A stack of linear layers simplifies to be equivalent to a single linear layer, which means that the network can only approximate linear functions.
+A non-linearity is required.
+This is what the other activation functions provide
 
 
+\subsubsection{Sigmoid}
+This is the classic neural network activation function.
+\begin{equation}
+y=\sigma{z}=\frac{1}{1+e^{-z}}
+\end{equation}
+Sigmoid output values are between zero and one.
+If the network has a single output then this is a fuzzy boolean.
+It can be used to classify into 2 categories.
+It is sometimes call a logistic output.
+
+\subsubsection{Softmax}
+Softmax is the standard output layer for categorical classification.
+\begin{equation}
+y=s_m(z)=\left( \frac{e^{z_i}}{\sum_{j=1}^{j=N} e^{z_j}} \right)_{i=1}^{i=N}
+\end{equation}
+For $N$ the number of outputs equal to the number of categories attempting to be classified into.
+These outputs have  values are between zero and one, and sum to one.
+They are taken as a probabilistic description of the likelihood of each class.
+i.e. a discrete, probability mass function (pmf).
+
+
+Softmax is a \emph{soft}, i.e. differentiable,  version of what could be called \emph{hard-max}.
+In this conceptual hard-max function, the largest output is set to one, and the others set to zero.
+It is non-differentiable and thus not suitable for use in a neural network.
+In softmax the largest values is proportionally increased to be closest to one,
+and the smallest to be closest to zero.
+
+A neural network classifier with a softmax output layer is sometimes called a multinomial logistic regression network.
+This can lead to some confusion with a sigmoid outputting network.
+However, the similarity can be understood by considering a softmax output layer with 2 classes.
+This reduces to $s_m(z)= \left( \sigma(z), 1-\sigma(z) \right)$.
+
+
+\subsubsection{Tanh}
+The hyperbolic tangent function is a  scaled and shifted sigmoid function.
+
+\begin{equation}
+y=\tanh(z)=\frac{e^{2z}-1}{e^{2z}+1}=2\sigma(2z)+1
+\end{equation}
+
+The notable difference is that outputs are restricted to be between $-1$ and $+1$
+
+\subsubsection{RELU}
+ReLU is a more recently created activation function \pcite{dahl2013reludropout}.
+\begin{equation}
+y=ReLU(z)=\max \left( z, 0 \right)
+\end{equation}
+Values are restricted to be at non-negative.
+As this function has derivative zero for $z<0$, once a unit is turned off, it is not turned back-on.
+Further to this, using random initialization this ensures that half of all neurons in the layer will be never turned on.
+Thus resulting in sparse connections between the layers.
+This has been found to be a good thing \pcite{glorot2011deepRELUsparse}.
+ReLU is very commonly used as a hidden layer activation function
+
+
+\subsubsection{Other activation functions}
+
+There are numerous other activation functions.
+Most are of interest for use in hidden layers such as Softplus, ReLU6, ELU and others.
+For specialized tasks, other functions might be used, such as atan2 \pcite{WhiteRepresentingAnglesSE}.
+
+
+\section{Training}
+The process of training the network is the process of solving a very high dimensional, nonlinear global optimization problem.
+
+\aside[What is Backpropergation?]{%
+It is worth emphasizing that back-propagation is not a method for training neural networks.
+It is a method of applying calculus to determine the error (loss) gradient, with respect to the network parameters (weights and biases), so that gradient descent based methods can be use for optimising those parameters.
+Some works incorrectly say ``Trained with back-propagation'', when they mean to say ``trained with gradient descent".
+}
+
+
+\section{Type of Neural Network}
+We will discuss more linguistically relevant neural networks in the following chapters.
+However, to introduce the topic, we will give some basic examples.
+
+\subsection{Classifier}
+As one of the most basic networks, consider a classifier on the classic MNIST challenge.
+
+\subsection{Bottle Necking Auto-encoder}
+
+\subsection{RNN}
+A key limitation of a neural network is that the number of inputs and outputs must be known at training time and must always be the same.
+
+ 
 
 \end{document}
