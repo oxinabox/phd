@@ -30,17 +30,58 @@ This can project any point in $X$ to a point in $[0,1]^n$,
 to a fuzzy yes-no.
 But it all must move in a straight-ish line together.
 
+\section{Function Approximation}
+The universal approximation theorem (UAT) tells us that a neural network can be used to approximate any continuous bounded function.
+Here a function should be understood in the general sense -- classification is a function from observations to classes, regression is a function from observed values to target values.
+More precisely it states that for a network with sufficient width
+\pdfcomment{Finish this paragraph with math and citations}
+
+However, the UAT does not tell us the values for those weight parameters,
+nor does it promise that any method of training will ever reach them in finite time.
+More significantly it does not inform as to how wide \emph{sufficiently wide} is,
+nor if deeper is more efficient than wider.
+
+\section{Network Parameters}
+
+\subsection{Width and Depth}
+
+\aside[What happened to Deep Belief Network Pretraining?]{
+	\textcite{hinton2006fastDBN,bengio2007greedylayerwise} lead to a new resurgence of interest in neural networks.
+	Pretraining with Deep Belief Networks allowed for deep networks to be trained.
+	It was held for many years that it was necessary to use layer-wise unsupervised pretraining,
+	even when one has only supervised data. 
+	\textcite{glorot2011deepRELUsparse} showed that with ReLU units, a deep network could be trained directly and archive the same performance.
+	As such unsupervised pretraining is now a more niche technique used primarily when there is an excess of unsupervised data.
+}
+
+Early neural networks often had many layers.
+With the UAT showing that only one hidden layer was required then tend to become more shallow, and
+with difficulties in training deeper networks.
+
+In the last decade, deep nets have come back into fashion.
+The reasons for this are out of scope for this work.
+In brief it is a combination of a better techniques (e.g. RELU, unsupervised pretraining),
+better hardware (e.g. GPUs and Xeon Phis), and more labeled data (e.g. from crowd-sourcing platforms such as Amazon Mechanical Turk.)
+
+It has been generally found that deeper networks can have significantly few total neurons than for the same performance as wider shallower networks.
+
+The choice of the number of hidden layers (depth),
+and the sizes (width) is a key parameter in designing a neural network.
+It is arguably \emph{the} key parameter.
+It can be assessed using a hyper-parameter sweep on a validation or development dataset.
+It is a particularly relevant parameter for our purposes, as hidden layer width forms the basis of our representations.
 
 
 
-\section{Activation functions}
+\subsection{Activation functions}
 
-\aside[Notation: Generic Activation Function $\varphi$:]{Though-out this book, when the activation function is not significant to the problem at hand, we will represent it with the symbol $\varphi$.}
+\aside[Notation: Generic Activation Function $\varphi$:]{Though-out this book, when the activation function is not significant to the problem at hand, we will represent it with the \mbox{symbol $\varphi$.}}
 The universal approximation theorem requires that the hidden layer non-linearity be non-constant, monotonic and bounded.
 In practice one does not even require that, using the unbounded RELU activation functions.
 There are a wide variety of activations functions in use.
-In general, for the hidden layers, these perform similarly.
-We suggest consulting a more in-depth work on neural networks with a focus on the machine learning aspects to gain a understanding of the pros and cons.
+In general, for the hidden layers, these perform Relatively similarly.
+Sigmoid, tanh, and ReLU are the most common activation functions used for hidden layers.
+We suggest consulting a more in-depth work on neural networks with a focus on the machine learning aspects to gain a understanding of their pros and cons.
 
 More significantly, the final activation function or the output function does matter.
 The output function should be chosen for the task at hand.
@@ -73,7 +114,7 @@ It is sometimes call a logistic output.
 \subsubsection{Softmax}
 Softmax is the standard output layer for categorical classification.
 \begin{equation}
-y=s_m{z}=\left( \frac{e^{z_i}}{\sum_{j=1}^{j=N} e^{z_j}} \right)_{i=1}^{i=N}
+y=s_m(z)=\left( \frac{e^{z_i}}{\sum_{j=1}^{j=N} e^{z_j}} \right)_{i=1}^{i=N}
 \end{equation}
 For $N$ the number of outputs equal to the number of categories attempting to be classified into.
 These outputs have  values are between zero and one, and sum to one.
@@ -90,25 +131,49 @@ and the smallest to be closest to zero.
 A neural network classifier with a softmax output layer is sometimes called a multinomial logistic regression network.
 This can lead to some confusion with a sigmoid outputting network.
 However, the similarity can be understood by considering a softmax output layer with 2 classes.
-This reduces to $s-m(z)= \left( \sigma(z), 1-\sigma(z) \right)$.
+This reduces to $s_m(z)= \left( \sigma(z), 1-\sigma(z) \right)$.
 
 
 \subsubsection{Tanh}
-The hyperbolic tangent function is very similar to a scaled sigmoid function in shape.
+The hyperbolic tangent function is a  scaled and shifted sigmoid function.
 
 \begin{equation}
-y=\tanh(z)=\frac{e^z-e^{-z}}{e^z+e^{-z}}
+y=\tanh(z)=\frac{e^{2z}-1}{e^{2z}+1}=2\sigma(2z)+1
 \end{equation}
 
 The notable difference is that outputs are restricted to be between $-1$ and $+1$
 
+\subsubsection{RELU}
+ReLU is a more recently created activation function \pcite{dahl2013reludropout}.
+\begin{equation}
+y=ReLU(z)=\max \left( z, 0 \right)
+\end{equation}
+Values are restricted to be at non-negative.
+As this function has derivative zero for $z<0$, once a unit is turned off, it is not turned back-on.
+Further to this, using random initialization this ensures that half of all neurons in the layer will be never turned on.
+Thus resulting in sparse connections between the layers.
+This has been found to be a good thing \pcite{glorot2011deepRELUsparse}.
+
+
+
 \subsubsection{Other activation functions}
 
 There are numerous other activation functions.
-Most are of interest for use in hidden layers such as Softplus, ReLU, ReLU6, ELU and others.
+Most are of interest for use in hidden layers such as Softplus, ReLU6, ELU and others.
 For specialized tasks, other functions might be used, such as atan2 \pcite{WhiteRepresentingAnglesSE}.
 
 
-\clearnotecolumn[notes]
+\section{Training}
+The process of training the network is the process of solving a very high dimentional, nonlinear global optimization problem.
+
+
+
+\section{Type of Neural Network}
+We will discuss more linguistically relevant neural networks in the following chapters.
+However, to introduce the topic, we will give some basic examples.
+
+\subsection{}
+
+ 
 
 \end{document}
