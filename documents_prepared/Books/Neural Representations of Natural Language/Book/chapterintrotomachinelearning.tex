@@ -160,22 +160,47 @@ y=\tanh(z)=\frac{e^{2z}-1}{e^{2z}+1}=2\sigma(2z)+1
 The notable difference is that outputs are restricted to be between $-1$ and $+1$
 
 \subsubsection{RELU}
-ReLU is a more recently created activation function \pcite{dahl2013reludropout}.
+The Rectified Linear Unit (ReLU) is a more recently popularized activation function \pcite{dahl2013reludropout}.
+It comes from much earlier work on by neuroscience \pcite{hahnloser1998piecewise}.
 \begin{equation}
-y=ReLU(z)=\max \left( z, 0 \right)
+y=ReLU(z)=\max \left( 0, z \right)=\begin{cases}
+z & 0\le z\\
+0 & z<0
+\end{cases}
 \end{equation}
 Values are restricted to be at non-negative.
 As this function has derivative zero for $z<0$, once a unit is turned off, it is not turned back-on.
-Further to this, using random initialization this ensures that half of all neurons in the layer will be never turned on.
+Further to this, using random initialization this ensures that half of all neurons in the layer will be never turned on -- commonly called the neuron dying.
 Thus resulting in sparse connections between the layers.
 This has been found to be a good thing \pcite{glorot2011deepRELUsparse}.
 ReLU is very commonly used as a hidden layer activation function
 
 
+\subsubsection{RELU6}
+\aside[Why are we bringing up ReLU6?]{ReLU6 is one of the more obsure activation functions. As such it may seem a bizare inclusion in this shorter introduction. However, we have found it surprisingly sucessful as an activation function, e.g. in the Auto-encoder example.}
+
+Closely related to ReLU is ReLU6.
+This is another linear unit the saturates at 0, but also at 6.
+\begin{equation}
+y=ReLU6(z)=\max \left(0, \min\left(6, z\right) \right) =  \begin{cases}
+6 & 6<z\\
+z & 0\le z\le6\\
+0 & z<0
+\end{cases}
+\end{equation}
+This has similar advantages to ReLU.
+however, as well as units being able to die to zero, it can also die to positive.
+Unlike ReLU, it fully meets the requirements for the UAT.
+The bounding at 6, rather than any other number is rather arbitrary -- particularly given scaling with the intervening affine layers.
+The important point is that it is bound both above and below.
+
+
+
+
 \subsubsection{Other activation functions}
 
 There are numerous other activation functions.
-Most are of interest for use in hidden layers such as Softplus, ReLU6, ELU and others.
+Most are of interest for use in hidden layers such as Leaky RELU, Softplus, ELU and many others.
 For specialized tasks, other functions might be used, such as atan2 \pcite{WhiteRepresentingAnglesSE}.
 
 
@@ -184,9 +209,12 @@ The process of training the network is the process of solving a very high dimens
 
 \aside[What is Backpropergation?]{%
 It is worth emphasizing that back-propagation is not a method for training neural networks.
-It is a method of applying calculus to determine the error (loss) gradient, with respect to the network parameters (weights and biases), so that gradient descent based methods can be use for optimising those parameters.
+It is a method of applying calculus to determine the error (loss) gradient, with respect to the network parameters (weights and biases), so that gradient descent based methods can be use for optimizing those parameters.
 Some works incorrectly say ``Trained with back-propagation'', when they mean to say ``trained with gradient descent".
 }
+
+Typically, such a problem would be considered very difficult to solve.
+As a nonlinear problem
 
 
 \section{Type of Neural Network}
