@@ -204,18 +204,68 @@ Most are of interest for use in hidden layers such as Leaky RELU, Softplus, ELU 
 For specialized tasks, other functions might be used, such as atan2 \pcite{WhiteRepresentingAnglesSE}.
 
 
+
+
 \section{Training}
 The process of training the network is the process of solving a very high dimensional, nonlinear, nonconvex global optimization problem.
 
-\aside[What is Backpropergation?]{%
-It is worth emphasizing that back-propagation is not a method for training neural networks.
-It is a method of applying calculus to determine the error (loss) gradient, with respect to the network parameters (weights and biases), so that gradient descent based methods can be use for optimizing those parameters.
-Some works incorrectly say ``Trained with back-propagation'', when they mean to say ``trained with gradient descent''.
+\aside[Evaluation function vs Loss function]{
+	In this discussion we have distinguished between two types of \emph{error function}.
+	The \emph{evaluation function} is the metric we are truly trying to improve, this could be accuracy for classification, BLEU score for translation, F1 score for retrieval etc. It is applied to the whole system (which may be greater than just the neural network), and the system may be evaluated in different ways using different evaluations.
+	As the evaluation is often not differentiable, a proxy for it which we call the \textbf{loss function} is used in training.
+	For example, squared error for regression, or cross-entropy for classification.
+	The loss function is such that minimising the loss function also results in the true evaluation function being optimised.
+	The loss function is applied the output of the network during training to calculate the error of a between the network output for a given input, and the target output from the example.
 }
 
 Typically, such a problem would be considered very difficult to solve.
-Nonlinear and nonconvext problems can have local minima that are not global minima.
-This means they can not be solved by gradient descent.
+Nonlinear and nonconvex problems can have local minima that are not global minima.
+This means they can not be guaranteed to be solved  a global optima by gradient descent.
+However, this does not pose an issue for more neural networks as finding the global optima is not required, merely finding a \emph{good enough} set of weights and values.
+
+To define the training problems as an optimisation problem one first considers the loss function for a single training case.
+For a target output $y$ and an actual output $\hat{y}$, a loss function is defined $loss(y, \hat{y})$.
+For example the sum of squared errors loss used in regression is defined by 
+$SSE(y, \hat{y})=\sum_{\forall i} (y_i-\hat{y_i})^2$.
+The cross-entropy loss used in classification is defined by
+$CE(y, \hat{y})=-\sum_{\forall i} (1-y_i)(\log (1-\hat{y_i}))) + y_i(\log (\hat{y_i})))$.
+The choice of loss function depends on the purpose of the network.
+
+The network function is composed into the loss function.
+to the per training case loss, for a training case loss: $loss(y, N(x,\tilde{P}))$.
+For $N(x,\tilde{P})$ being the function that executes some neural network, with weight and bias parameters given by $\tilde{P}$, upon an input $x$ where the target output is $y$ and the actual output is $\hat{y}$.
+
+The total loss is defined by taking the mean over the whole train batch:
+$loss_{total} = \frac{1}{K}\sum_{j=1}^{j=K} loss(y^{(j)}, N(x^{(j)},\tilde{P}))$.
+This is now nothing but a nonlinear function to be minimised by adjusted the values of the weights and biases in $\tilde{P}$.
+This can be given to off-the-shelf  unconstrained nonlinear optimisation algorithms \pcite{Ngiam2011} such as L-BFGS  \parencite{nocedal1980updating}.
+Alternatively, and more commonly, the loss and updated can be processed iteratively on sub-sets (minibatches) of the training data at a time -- often using optimisation algorithms specifically targeted at machine learning applications.
+In either case, almost all optimisers used for neural networks rely on gradient descent.
+
+\aside[AdaGrad, AdaDelta, and Adam]{
+AdaGrad \parencite(AdaGrad), AdaDelta \parencite{DBLP:journals/corr/abs-1212-5701} and Adam \parencite{kingma2014adam}
+ are effectively successive iterations of an optimisation algorithm.
+In all cases these algorithms dynamically adapt the learning rate during training.
+There are several other algorithms in the family, both older and newer.
+Adam is currently the most commonly used optimiser in recent works.
+We suggest there is an interesting theoretical space about the relationship between adapting the learning rate, and implicitly finding the second derivative (the Hessian), as in the more traditional quasi-netwon methods.}
+
+
+To train a network 
+
+
+
+
+
+
+
+\aside[What is Backpropergation?]{%
+	It is worth emphasizing that back-propagation is not a method for training neural networks.
+	It is a method of applying calculus to determine the error (loss) gradient, with respect to the network parameters (weights and biases), so that gradient descent based methods can be use for optimizing those parameters.
+	Some works incorrectly say ``Trained with back-propagation'', when they mean to say ``trained with gradient descent''.
+}
+
+
 
 
 
