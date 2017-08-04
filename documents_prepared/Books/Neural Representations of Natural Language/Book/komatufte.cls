@@ -129,3 +129,13 @@
 \renewcommand*\dictumwidth{0.8\linewidth}
 \renewcommand*\dictumauthorformat[1]{--- #1}
 \renewcommand*\dictumrule{}
+
+
+%%%%%%%%%%%%%%%%%%%%%%
+% A Chapter abstract
+\RequirePackage{environ}
+
+\NewEnviron{abstract}{%
+	\addtocontents{toc}{\small\BODY\par}%
+	\rightskip1in\textsc{\BODY}%
+}
