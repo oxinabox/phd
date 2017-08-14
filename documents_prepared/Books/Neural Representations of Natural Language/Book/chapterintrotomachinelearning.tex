@@ -9,18 +9,21 @@
 	\textit{A~Computational Model of Color Perception and Color Naming},  State University of New York, 1994]{%
 Whether one sees the artificial neural network technique described below as learning or as optimization depends largely on one's background and one's theoretical likes and dislikes. I will freely use ``learning'' in the remainder of this section because that term is traditionally used in the neural networks literature, but the reader should feel free to substitute ``optimization'' if (s)he finds the other term offensive. Please contact the author for an Emacs lisp function to enforce the usage of choice.%
 }}
-\chapter{Machine Learning for Representations}\label{sec:machine-learning-for-representations}
+\chapter{Introduction to neural networks for machine learning}\label{sec:machine-learning-for-representations}
 \begin{abstract}
+This chapter is a introduction to machine learning via neural networks.
+It is 
 Chapter 2: Introduction to machine learning for representations (10 pages)
 This chapter can be skipped by readers already familiar with machine learning
-This will not be a full introduction to machine learning, which of-course could be an entire book on its own.
+This will not cover all aspects of machine learning, which of-course could be an entire book on its own.
 It will cover the crucial basic techniques used in the works discussed in part B. The main focus will be on introducing neural networks, going into reasonable detail on hyper-parameters such as activation functions and layer sizes, as well as covering training techniques. 
 It will not cover techniques that are special to natural language processing – those will be discussed in chapters 4,5, and 6.
 \end{abstract}
 
 Machine learning, particularly neural networks has become a hot topic of late.
-This chapter does not serve as a general introduction to machine learning,
+This chapter does not serve as a complete foundational text on neural networks,
 but it does cover the basics and then some as is required to understand the remainder of this book.
+Readers already familiar with neural networks can skip over this chapter.
 
 
 We begin with the consideration of a multivariate linear function.
@@ -53,18 +56,20 @@ More significantly it does not inform as to how wide \emph{sufficiently wide} is
 nor if deeper is more efficient than wider.
 
 
-\section{Network Parameters}
+\section{Network Hyper-parameters}
+\aside[Hyper-parameters vs Parameters]{
+	The weights and biases of the network are called its parameters.
+	They are optimised during training.
+	The other features of the network, including its topology, activation functions, and the training method (which often has its own set of options), are called the hyper-parameters. 
+}
+
+The key determination in applying neural networks to any problem,
+is the choice of the hyper-parameters.
+Neural networks can largely be thought-off as black-boxes,
+that can accomplish a, potentially poorly specified, task if given as set of examples in the form of correct outputs for given inputs.
+Where the expertise in deploying a neural network solution comes in, is in the choice of the hyper-parameters of the network.
 
 \subsection{Width and Depth}
-
-\aside[What happened to Deep Belief Network Pretraining?]{
-	\textcite{hinton2006fastDBN,bengio2007greedylayerwise} lead to a new resurgence of interest in neural networks.
-	Pretraining with Deep Belief Networks allowed for deep networks to be trained.
-	It was held for many years that it was necessary to use layer-wise unsupervised pretraining,
-	even when one has only supervised data. 
-	\textcite{glorot2011deepRELUsparse} showed that with ReLU units, a deep network could be trained directly and archive the same performance.
-	As such unsupervised pretraining is now a more niche technique used primarily when there is an excess of unsupervised data.
-}
 
 Early neural networks often had many layers.
 With the UAT showing that only one hidden layer was required then tend to become more shallow, and
@@ -75,6 +80,14 @@ The reasons for this are out of scope for this work.
 In brief it is a combination of a better techniques (e.g. RELU, unsupervised pretraining),
 better hardware (e.g. GPUs and Xeon Phis), and more labeled data (e.g. from crowd-sourcing platforms such as Amazon Mechanical Turk.)
 
+\aside[What happened to Deep Belief Network Pretraining?]{
+	\textcite{hinton2006fastDBN,bengio2007greedylayerwise} lead to a new resurgence of interest in neural networks.
+	Pretraining with Deep Belief Networks allowed for deep networks to be trained.
+	It was held for many years that it was necessary to use layer-wise unsupervised pretraining,
+	even when one has only supervised data. 
+	\textcite{glorot2011deepRELUsparse} showed that with ReLU units, a deep network could be trained directly and archive the same performance.
+	As such unsupervised pretraining is now a more niche technique used primarily when there is an excess of unsupervised data.
+}
 It has been generally found that deeper networks can have significantly few total neurons than for the same performance as wider shallower networks.
 
 The choice of the number of hidden layers (depth),
@@ -241,7 +254,7 @@ $loss_{total} = \frac{1}{K}\sum_{j=1}^{j=K} loss(y^{(j)}, N(x^{(j)},\tilde{P}))$
 This is now nothing but a nonlinear function to be minimised by adjusted the values of the weights and biases in $\tilde{P}$.
 This can be given to off-the-shelf  unconstrained nonlinear optimisation algorithms \pcite{Ngiam2011} such as L-BFGS  \parencite{nocedal1980updating}.
 Alternatively, and more commonly, the loss and updated can be processed iteratively on sub-sets (minibatches) of the training data at a time -- often using optimisation algorithms specifically targeted at machine learning applications.
-In either case, almost all optimisers used for neural networks rely on gradient descent.
+In either case, almost all optimizers used for neural networks rely on gradient descent.
 
 \aside[AdaGrad, AdaDelta, and Adam]{
 AdaGrad \parencite(AdaGrad), AdaDelta \parencite{DBLP:journals/corr/abs-1212-5701} and Adam \parencite{kingma2014adam}
@@ -252,9 +265,21 @@ Adam is currently the most commonly used optimiser in recent works.
 We suggest there is an interesting theoretical space about the relationship between adapting the learning rate, and implicitly finding the second derivative (the Hessian), as in the more traditional quasi-netwon methods.}
 
 
-To train a network 
-
-
+To train the network one must find the values for the networks weight and bias parameters, such that that total loss function is minimized over the training set.
+$\argmin{\tilde{P}} loss_{total}(\tilde{P}, X_{train}, Y_{train})$.
+As the overall loss function, including the network function, is differentiable
+gradient descent can be used.
+If one considers a plot with the loss given on the vertical axis,
+and the values of the parameters as describing a position on the horizontal axes,
+then gradient descent is moving that the parameter-point downward on that surface based on local estimate of the slope.
+\pdfcomment{Insert Plot Here}
+In gradient descent based methods the derivatives are calculated and then used to update the parameters.
+Many advanced methods exist but the core is, for each $W \in \tilde{P}$ updating its value according to the local gradient
+$W \leftarrow W - \alpha \frac{\partial loss_{total}}{\partial{W}}$, where $\alpha$ is a update step size, commonly called the learning rate.
+The method of calculating the gradients: $\frac{\partial loss_{total}}{\partial{W}}$
+is known as back-propagation.
+Back-propagation is simply a method of applying the well-known chain-rule of calculus to the neural network loss functions \pcite{backprop}.
+However, this innovation was core to allowing neural networks as we know them to be trained.
 
 
 
