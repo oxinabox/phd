@@ -111,9 +111,9 @@ In some works you may see the process of retrieving the word vector from an Matr
 That is to say for a word represented by the index $i$,
 for $e_i$ the one-hot vector with a 1 in the $i$th position,
 and for $C$ the table of word embeddings.
-one can write  $Ce_i$.
+one can write  $C\,e_i$.
 We will write $C_i$ and refer to this as looking up the word vector from the $i$th column.
-Of-course $C_i=Ce_i$, however in practical implementation the performance ramification are huge.
+Of-course $C_i=C\,e_i$, however in practical implementation the performance ramification are huge.
 A matrix column indexing is a $O(1)$ operation (for column major languages),
 where as a dense matrix-vector product is $O(n^2)$.
 %
@@ -190,24 +190,44 @@ They do very briefly mention that an RNN could be used in its place.
 
 
 \subsection{RNN Language Models}
-In \tcite{mikolov2010recurrent} an RNN is for a language model.
+
 \aside[Differences in formulation]{
 The network and equations shown here may seem different to those presented in \textcite{mikolov2010recurrent}.
 However they are mathematically identical.
 The apparent difference is simply the choice between considering embeddings as a look-up, or as a one-hot multiplication.
 }
-To be precise, an Elman network is used.
+
+In \tcite{mikolov2010recurrent} an RNN is for a language model.
+To be precise, an Elman network is used \tcite(elman1990finding).
 In this form of RNN, the output of hidden layer in the previous time-step is appended as an additional input.
 Using an RNN eliminates the sliding window of earlier language models.
 Instead, the context information is stored in the state that is passed forward.
 
-
-
+This state $Z_{j}$ being the hidden state output from the first (only) hidden layer when input the $j$th word, 
+is given by 
 
 \begin{equation}
-%
-%
+	Z_{j} = \varphi\left( U_1\,Z_{j-1} + C_{w_{i-1}} \right)
 \end{equation}
+
+
+This hidden layer was the an input to the hidden-layer at the next time-step, as well as to the output softmax.
+
+\begin{equation}
+	P(w_i \mid w_{i-1}, ... w_{1}) = s_{max}\left(U_2 \, Z_{i-1} \right)
+\end{equation}
+
+
+
+Rather than using an Elman network, a more advanced RNN such as Long-Short-Term-Memory (LSTM), or a Gated Recurrent Unit (GRU) \pcite{cho2014properties}, based network could be used.
+The structure would remain very similar,
+and additional advantages may be found from the improved stability and performance.
+
+\tcite{sundermeyer2012lstm} investigated using LSTM.
+This did indeed offer an improvement over the Elman network used in \textcite{mikolov2010recurrent}.
+\tcite{jozefowicz2015empirical} conducted an extensive search of hyper-parameters for LSTM and GRU networks for language modeling.
+For the best performing networks of both types the results found were significantly better than \textcite{sundermeyer2012lstm} and \textcite{mikolov2010recurrent}.
+They found the best was the LSTM network, particularly if the forget gate was biased to a 1.0 or more.
 
 \begin{figure}
 	\centering
@@ -215,9 +235,8 @@ Instead, the context information is stored in the state that is passed forward.
 	\caption{\label{fig:neural-language-model} RNN Language Model}
 \end{figure}
 
+This ends our discussion of standard language models.
 
-\tcite{mikolov2011RnnLM}
-\tcite{mikolov2011trainingstrategies}
 
 \section{Contextual Language Modeling}
 
