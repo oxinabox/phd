@@ -254,21 +254,55 @@ However, what it is very useful for is as a task to learn a good representation 
 
 \tcite{mikolov2012contextRNNLM} a
 
+\aside[CBOW vs Skip-Gram]{For CBOW the context is used to predict the target word. For skip-gram the target word is to predict the context.}
+
 \subsection{CBOW}
-\tcite{mikolov2013linguisticsubstructures}
+The continuous bag of words (CBOW) method was introduced by \tcite{mikolov2013efficient}.
+In truth this is not particularly similar to bag of words at all, no more so than any other word representation that does not have regard for order of the context words (e.g. skipgrams, GloVE below).
+
+
+For a context window of width $n$ words -- i.e. $\frac{n}{2}$ words to either side, of the target word,
+the CBOW model is defined by:
+\begin{align}
+P(w_i & \mid w_{i-\frac{n}{2}},..., w_{i-1}, w_{i+1},...,w_{i+\frac{n}{2}})  \nonumber
+\\  & = s_{max}(U \sum_{j=i+1}^{j=\frac{n}{2}} \left( C_{w_{i-j}}+C_{w_{i+j}} \right))
+\end{align}
+
+\pdfcomment{Need to consider that this is always done with a Hierarchical softmax, and check this formulation is correct}
+
+
 \tcite{mikolovSkip}
+
+
 
 
 \subsection{SkipGram}
-\tcite{mikolov2013linguisticsubstructures}
 \tcite{mikolovSkip}
+
+\aside[Skip-gram naming]{In different publications this model may be called skipgram skip-gram, skip-ngram, skipgrams etc. Further, it may be called \texttt{word2vec} after the publicly released implementation of the algorithm. Though that software also can be used for CBOW.}
+
+
+The converse of CBOW is the skip-grams model \tcite{mikolov2013efficient}.
+In this model, the central word is used to predict the words in the context.
+While in CBOW each training case of context and target word presents one correct answer,
+in the Skip-gram each training case has a number of correct answers, the probability of all of which in the softmax must be increased.
+
+\begin{equation}
+P(w_j \mid w_{i} = s_{max}(U\,C_{w_{i}})
+\end{equation}
+
+
+The goal, is to maximise the probabilities of all the observed outputs from the window: $i-\frac{n}{2},...,i-1, i+i,...,i+\frac{n}{2}$.
+
+This can be done using softmax, or hierarchical softmax (as in CBOW and other models).
+Or an alternative option is suggested, negative sampling.
+
+Note that Skip-Grams only hidden layer is the embedding layer
+
+
 
 While Skip Grams and CBOW were introduces in the same set of papers, subsequent work has found the SkipGrams are almost always the preferred system for any task. \pdfcomment{Citation for this?}
 
-\aside[Pretrained Word-Embeddings]{
-Pretrained Word Embeddings are available for most models discussed here.
-There trained on a lot more data than most people have access too.
-It can be useful to substitute word embeddings are a representation in most systems.}
 
 \subsection{GloVE}
 
@@ -300,6 +334,10 @@ Simultaneously with the developments around representations for the language mod
 \tcite{turian2010word}
 
 
+\aside[Pretrained Word-Embeddings]{
+	Pretrained Word Embeddings are available for most models discussed here.
+	There trained on a lot more data than most people have access too.
+	It can be useful to substitute word embeddings are a representation in most systems.}
 
 
 
