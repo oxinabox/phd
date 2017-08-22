@@ -125,10 +125,10 @@ The trigram neural probabilistic network is defined by:
 %
 \begin{multline}
 P(w_i \mid w_{i-1}, w_{i-2}) = \\
-s_{max}\left(U_2 \: \varphi\left(U_1\left[C_{w_{i-1}}; C_{w_{i-2}}\right] + b_1\right)+b_2\right)
+s_{max}\left(V \: \varphi\left(U\left[C_{w_{i-1}}; C_{w_{i-2}}\right] + b_1\right)+b_2\right)
 \end{multline}
 %
-where $U_1,\: U_2,\: b_1,\: b_2$ are the weight matrices and biases of the network, and $C_{w_{i-1}}$ and $C_{w_{i-2}}$ are the looked-up word embedding for the previous two words, from the embedding table $C$.
+where $U,\: V,\: b_1,\: b_2$ are the weight matrices and biases of the network, and $C_{w_{i-1}}$ and $C_{w_{i-2}}$ are the looked-up word embedding for the previous two words, from the embedding table $C$.
 We write $\left[v_1; v_2\right]$ as a notational convenience for the concatenation of vectors $v_1$ and $v_2$.
 The network is shown diagrammatically in \Cref{fig:trigram-neural-language-model}
 
@@ -165,7 +165,7 @@ The network used in their work also was marginally more complex, as shown in \Cr
 \begin{align}
 P(w_i & \mid w_{i-1}, w_{i-2}) = s_{max}( \nonumber
 \\  & \quad U_3 \left[ C_{w_{i-1}};...; C_{w_{i-n}}\right] \nonumber
-\\  & + U_2 \: \varphi\left( U_1\left[C_{w_{i-1}};...; C_{w_{i-n}} \right] + b_1\right) \nonumber
+\\  & + V \: \varphi\left( U\left[C_{w_{i-1}};...; C_{w_{i-n}} \right] + b_1\right) \nonumber
 \\  & +b_2)
 \end{align}
 
@@ -207,14 +207,14 @@ This state $Z_{j}$ being the hidden state output from the first (only) hidden la
 is given by 
 
 \begin{equation}
-	Z_{j} = \varphi\left( U_1\,Z_{j-1} + C_{w_{i-1}} \right)
+	Z_{j} = \varphi\left( U\,Z_{j-1} + C_{w_{i-1}} \right)
 \end{equation}
 
 
 This hidden layer was the an input to the hidden-layer at the next time-step, as well as to the output softmax.
 
 \begin{equation}
-	P(w_i \mid w_{i-1}, ... w_{1}) = s_{max}\left(U_2 \, Z_{i-1} \right)
+	P(w_i \mid w_{i-1}, ... w_{1}) = s_{max}\left(V \, Z_{i-1} \right)
 \end{equation}
 
 
@@ -288,8 +288,9 @@ While in CBOW each training case of context and target word presents one correct
 in the Skip-gram each training case has a number of correct answers, the probability of all of which in the softmax must be increased.
 
 \begin{equation}
-P(w_j \mid w_{i} = s_{max}(U\,C_{w_{i}})
+P(w_j \mid w_{i}) & = \left[ s_{max}(V\,C_{w_{i}}) \right]_{w_j} \\
 \end{equation}
+
 
 
 The goal, is to maximise the probabilities of all the observed outputs from the window: $i-\frac{n}{2},...,i-1, i+i,...,i+\frac{n}{2}$.
@@ -297,14 +298,32 @@ The goal, is to maximise the probabilities of all the observed outputs from the 
 This can be done using softmax, or hierarchical softmax (as in CBOW and other models).
 Or an alternative option is suggested, negative sampling.
 
-Note that Skip-Grams only hidden layer is the embedding layer
+Note that Skip-Grams only hidden layer is the embedding layer.
+If we take the earlier discussed notion of considering the output matrix $V$ as being an embedding layer/
+This becomes:
 
+\begin{align}
+P(w_j \mid w_{i}) & = \left[ s_{max}(V\,C_{w_{i}}) \right]_{w_j} \\
+P(w_j \mid w_{i}) & = \frac{\exp(V_{w_j}^\prime\,C_{w_{i}})}{\sum_{k=1}^{k=N} \exp(V_k^\prime\,C_{k})}
+\end{align}
+
+The key term here is the $V_{w_j}^\prime\,C_{w_{i}}$,
+the remainder of the expression is normalising this into a probability.
+Maximising the probability $P(w_j \mid w_{i})$ is equivalent to maximising the dot produce between $V_{w_j}^\prime$, the output embedding for $w_j$ and  $C_{w_i}$ the input embedding for $w_i$.
+Which is to say that the skip-gram probability is maximises when the angular difference between the input embedding for a word, and the output embeddings for words that it co-occurs with is minimised, and the embeddings themselves are maximised.
+\pdfcomment{Does maximising the embedding cancel out?}.
 
 
 While Skip Grams and CBOW were introduces in the same set of papers, subsequent work has found the SkipGrams are almost always the preferred system for any task. \pdfcomment{Citation for this?}
 
 
+It is on these systems that evaluation the analogy tasks became well known, though they were considered earlier on RNN neural language models \pcite{}.
+
 \subsection{GloVE}
+
+\tcite{pennington2014glove} 
+
+
 
 While in initial tests it was found that Glove out-performed  SkipGrams,
 subsequent more extensive testing in \tcite(levy2015) has found that SkipGrams out-performed GloVE on all tasks.
@@ -312,12 +331,12 @@ subsequent more extensive testing in \tcite(levy2015) has found that SkipGrams o
 However, GloVE is a very valuable step,
 as it highlights the relationship between the co-located word prediction neural network models,
 and the more traditional matrix factorization of collocation counts used in topic modeling.
-These properties were also explored for skip-grams with negative sampling in \tcite{levy2014neural},
+These properties were also explored for skip-grams with negative sampling in \tcite{levy2014neural}.
 which resulted in the extensive empirical follow-up in the aforementioned work of \tcite(levy2015).
 
 
 
-\subsection{What ever it is that people do instead now that is basically SVD on colloations}
+\subsection{What ever it is that people do instead now that is basically SVD on collations}
 
 As we have now concluded that neural predictive co-location models are functional equivelent to matrix factorisation of co-location counts,
 we now have access to a world of tools on matrix factorizations.
@@ -331,13 +350,29 @@ Simultaneously with the developments around representations for the language mod
 
 \tcite{collobert2008unified}
 
-\tcite{turian2010word}
 
+\subsection{Using Word Embeddings as Features}
 
 \aside[Pretrained Word-Embeddings]{
 	Pretrained Word Embeddings are available for most models discussed here.
 	There trained on a lot more data than most people have access too.
-	It can be useful to substitute word embeddings are a representation in most systems.}
+	It can be useful to substitute word embeddings are a representation in most systems,
+	or to use them as intitial value for neural network systems that will learn them as they train the system as a whole.
+\pdfcomment{Insert links}
+}
+
+\tcite{turian2010word} discusses what is now perhaps the most important use of word embeddings.
+The use of the embeddings as features, in unrelated feature driven models.
+One can find word embeddings using any of the methods discussed above, for example language modelling.
+These embeddings can be then used as features instead of, for example bag of words or hand-crafted feature sets.
+\tcite{turian2010word} found improvements on the state of the art for chunking and Named Entity Recognition (NER), using the word embedding methods of that time.
+Since then, these results have been superseded again using newer methods.
+
+
+
+
+
+
 
 
 
