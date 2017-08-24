@@ -87,6 +87,7 @@ These traits influence the words that can occur after them.
 Thus the motivation is for a language modeling method that use these common properties of the words in the language modeling.
 We need representation that holds this information.
 
+\subsection{The Neural Probabilistic Language Model}
 
 \tcite{NPLM} presents a method that uses neural network representations in a language model, where this representations implicitly learn the crucial traits of words.
 Capturing the trait information in the representation of a word for use in language modeling is not an idea exclusive to neural network approaches.
@@ -249,12 +250,10 @@ As it is acausal it can not be done in a real-time system, and is not useful for
 However, what it is very useful for is as a task to learn a good representation for words.
 
 
-
-
-
-\tcite{mikolov2012contextRNNLM} a
-
 \aside[CBOW vs Skip-Gram]{For CBOW the context is used to predict the target word. For skip-gram the target word is to predict the context.}
+
+
+\pdfcomment{I think CBOW and Skip-Gram don't feature Biases because they are written in Design Matrix form with a column of ones. If so I need to fix that up to something consistent with the remainder of this chapter or if not then }
 
 \subsection{CBOW}
 The continuous bag of words (CBOW) method was introduced by \tcite{mikolov2013efficient}.
@@ -292,8 +291,8 @@ P(w_j \mid w_{i}) = \left[ s_{max}(V\,C_{w_{i}}) \right]_{w_j}
 \end{equation}
 
 
+The goal, is to maximise the probabilities of all the observed outputs from the window's in the training set ($i-\frac{n}{2},...,i-1, i+i,...,i+\frac{n}{2}$).
 
-The goal, is to maximise the probabilities of all the observed outputs from the window: $i-\frac{n}{2},...,i-1, i+i,...,i+\frac{n}{2}$.
 
 This can be done using softmax, or hierarchical softmax (as in CBOW and other models).
 Or an alternative option is suggested, negative sampling.
@@ -344,15 +343,54 @@ the following is computed for the table of embeddings $C$:
 \pdfcomment{Insert Vector diagram here it will clarify reason for the math}
 
 Initial results were relatively poor, but the surprising finding was that this worked at all. \pdfcomment{Citations here}.
+Subsequent results found in \tcite{pennington2014glove} were much better.
 
 
+\subsection{GloVe}
 
-\subsection{GloVE}
+SkipGrams are intrinsically prediction based methods, effectively predicting what words will co-occur in the context of a local window and optimising as such.
+In \tcite{pennington2014glove}the authors show that if one were to change that optimisation to be global over all co-occurrences,
+then the optimisation critia becomes minimising the cross-entropy between the true co-occurrence probabilities given by $P(w_j\mid w_j)$, and the value of the embedding product: the cross entropy measure.,
+weighted by the frequency of the occurrence of the word $X_i$.
+That is to say if skip-gram were optimised globally it would be equivalent to minimising:
+\begin{equation}
+J = - \sum_{\forall w_i} \sum_{\forall w_j} X_{ij} P(w_j\mid w_j) \log (V_{w_j}^\prime\,C_{w_{i}})
+\end{equation}
 
-\tcite{pennington2014glove} 
+Minimising this cross-entropy efficiently means factorising the true co-occurrence matrix,
+into the input and output embedding matrices $C$ and $V$, under a particular set of weightings given by the cross entropy measure.
+
+\tcite{pennington2014glove} consider instead factorizing the logarithm of co-occurrence matrix directly,
+the logarithm giving an different, but similar, weighting to the cross entropy measure.
+Thas is for each word co-occurrence of $w_i$ and $w_j$: Attempting to find optimal values for 
+the embeddings $C_{w_{i}}$, and $V_{w_j}^\prime$, while also allowing constant offsets $b_i$ and $k_j$
+such that:
+$V_{w_j}^\prime\,C_{w_{i}} + b_i + k_j \approx \log(X_{ij})$
+as near as is possible.
+
+\aside[Implementing GloVe]{To implement GloVe in any technical programming language with good support for matrix factorisation via least-squares optimisation is trivial. As is implementing any other matrix factorisation/dimensionality reduction based method.}
+
+The precise measure used to do this, is a weighted the least squares minimisation of 
+\begin{equation}
+J = - \sum_{\forall w_i}  \sum_{\forall w_j} f(X_{ij})\,V_{w_j}^\prime\,C_{w_{i}}+b_i+k_j-\log (X_ij)
+\end{equation}
+
+
+using the weighting between 0 and 1 given by $f(x)$
+\begin{equation}
+f(x)=\begin{cases}
+\left(\frac{x}{100}\right)^{0.75} & x<100\\
+1 & otherwise
+\end{cases}
+\end{equation}
+though they suggest other weightings may be suitable.
+This can be contrasted as a saturating variant of the effective weighing of skipgrams being $X_{ij}$.
+Though the variation in measure away from cross-entropy also significant and has related effects on the weightings of rare vs common words in the minimisation.
 
 While in initial tests it was found that Glove out-performed  SkipGrams,
-subsequent more extensive testing in \tcite(levy2015) has found that SkipGrams out-performed GloVE on all tasks.
+subsequent more extensive testing in \tcite(levy2015) with more tuned parameters,
+found that SkipGrams out-performed GloVE on all tasks, though the performance is relatively comparable.
+
 
 However, GloVE is a very valuable step,
 as it highlights the relationship between the co-located word prediction neural network models,
