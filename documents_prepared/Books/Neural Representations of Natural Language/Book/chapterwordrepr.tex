@@ -7,15 +7,14 @@
 \begin{document}
 \chapter{Word Representations}\label{sec:word-representations}
 \begin{abstract}
-Chapter 4: Word Representations (10 pages)
 The core work that began to draw a lot of attention to this area.
-This will cover crucial works such as Skip-Grams, CBOW, GLoVe, and of course the original neural probabilistic language model.
-As well as more recent techniques based on matrix factorisations.
+This will cover crucial works such as skip-grams, CBOW, and of course the original neural probabilistic language model.
+As well as the links to traditional matrix factorisations.
 \end{abstract}
 
-\aside[Word Vector or Word Embedding?]{Note that older literature in the area will use the term \emph{word~vector} to refer to representations from LDA and LSA etc. Whereas in a lot of newer work the term is used synonymously with \emph{word~embedding}.}
+\aside[Word Vector or Word Embedding?]{In some older literature in the area will use the term \emph{word~vector} to refer to representations from LDA and LSA etc. Whereas in a lot of newer work the term is used synonymously with \emph{word~embedding}.}
 We begin the consideration of the representation of words using neural networks with work on language modeling
-This is not the only place one could begin the consideration: the information retrieval (IR) models such as LDA and LSA based on word co-location would be the other obvious starting point.
+This is not the only place one could begin the consideration: the information retrieval (IR) models such as LSA \pcite{dumais1988using} and LDA \pcite{blei2003latent} based on word co-location with documents would be the other obvious starting point.
 However, as will be discussed there models are closer to the end point of of the chapter than the begin.
 For the language modeling works, comes the contextual language model works such as skip-gram, which in turn lead to the post-neural network co-occurrence based works.
 These model fundamentally are in fact more similar to the information retrieval co-location works than the language modeling from which we began.
@@ -250,14 +249,20 @@ As it is acausal it can not be done in a real-time system, and is not useful for
 However, what it is very useful for is as a task to learn a good representation for words.
 
 
-\aside[CBOW vs Skip-Gram]{For CBOW the context is used to predict the target word. For skip-gram the target word is to predict the context.}
+\subsection{Context RNN}
+
+
+\aside[Are CBOW \& Skip-Gram Neural Networks]{As these models do not have any non-linearities  (some would say they have no hidden layer, though is is incorrect: the projection layer of the embedding is functionally a hidden layer) it may be asserted that they are not in-fact neural networks at all.
+This distinction is purely academic though.
+Any toolkit that can well handle the prior discussed neural network models, can be very well used to implement CBOW and Skip-Gram.
+}
 
 
 \pdfcomment{I think CBOW and Skip-Gram don't feature Biases because they are written in Design Matrix form with a column of ones. If so I need to fix that up to something consistent with the remainder of this chapter or if not then }
 
 \subsection{CBOW}
 The continuous bag of words (CBOW) method was introduced by \tcite{mikolov2013efficient}.
-In truth this is not particularly similar to bag of words at all, no more so than any other word representation that does not have regard for order of the context words (e.g. skipgrams, GloVE below).
+In truth this is not particularly similar to bag of words at all, no more so than any other word representation that does not have regard for order of the context words (e.g. skip-gram, GloVE below).
 
 
 For a context window of width $n$ words -- i.e. $\frac{n}{2}$ words to either side, of the target word,
@@ -272,13 +277,10 @@ P(w_i & \mid w_{i-\frac{n}{2}},..., w_{i-1}, w_{i+1},...,w_{i+\frac{n}{2}})  \no
 
 \tcite{mikolovSkip}
 
-
-
-
-\subsection{SkipGram}
+\subsection{Skip-gram}
 \tcite{mikolovSkip}
 
-\aside[Skip-gram naming]{In different publications this model may be called skipgram skip-gram, skip-ngram, skipgrams etc. Further, it may be called \texttt{word2vec} after the publicly released implementation of the algorithm. Though that software also can be used for CBOW.}
+\aside[Skip-gram naming]{In different publications this model may be called skipgram skip-gram, skip-ngram, skip-gram etc. Further, it may be called \texttt{word2vec} after the publicly released implementation of the algorithm. Though that software also can be used for CBOW.}
 
 
 The converse of CBOW is the skip-grams model \tcite{mikolov2013efficient}.
@@ -313,7 +315,7 @@ Which is to say that the skip-gram probability is maximises when the angular dif
 \pdfcomment{Does maximising the embedding cancel out?}.
 
 
-While Skip Grams and CBOW were introduces in the same set of papers, subsequent work has found the SkipGrams are almost always the preferred system for any task. \pdfcomment{Citation for this?}
+While skip-gram and CBOW were introduces in the same set of papers, subsequent work has found the skip-gram is almost always the preferred system for any task. \pdfcomment{Citation for this?}
 
 \subsection{Analogy Tasks}
 \aside[Using Analogy Tasks to discover subtle prejudice in corpora]{
@@ -349,7 +351,7 @@ Subsequent results found in \tcite{pennington2014glove} were much better.
 
 \subsection{GloVe}
 
-SkipGrams are intrinsically prediction based methods, effectively predicting what words will co-occur in the context of a local window and optimising as such.
+Skip-grams are intrinsically prediction based methods, effectively predicting what words will co-occur in the context of a local window and optimising as such.
 In \tcite{pennington2014glove}the authors show that if one were to change that optimisation to be global over all co-occurrences,
 then the optimisation critia becomes minimising the cross-entropy between the true co-occurrence probabilities given by $P(w_j\mid w_j)$, and the value of the embedding product: the cross entropy measure.,
 weighted by the frequency of the occurrence of the word $X_i$.
@@ -385,19 +387,14 @@ f(x)=\begin{cases}
 \end{cases}
 \end{equation}
 though they suggest other weightings may be suitable.
-This can be contrasted as a saturating variant of the effective weighing of skipgrams being $X_{ij}$.
+This can be contrasted as a saturating variant of the effective weighing of skip-gram being $X_{ij}$.
 Though the variation in measure away from cross-entropy also significant and has related effects on the weightings of rare vs common words in the minimisation.
 
-While in initial tests it was found that Glove out-performed  SkipGrams,
+While in initial tests it was found that Glove out-performed  skip-gram,
 subsequent more extensive testing in \tcite(levy2015) with more tuned parameters,
-found that SkipGrams out-performed GloVE on all tasks, though the performance is relatively comparable.
+found that skip-gram out-performed GloVE on all tasks, though the performance is relatively comparable.
 
 
-However, GloVe is a very valuable step,
-as it highlights the relationship between the co-located word prediction neural network models,
-and the more traditional matrix factorization of collocation counts used in topic modeling.
-Very similar properties were also explored for skip-grams with negative sampling in \tcite{levy2014neural}.
-which resulted in the extensive empirical follow-up in the aforementioned work of \tcite(levy2015).
 
 \aside[Key Factors Mentioned as Minor Tweaks]{
 There is an interesting pattern of important factors being considered as not part of the core algorithm.
@@ -405,18 +402,33 @@ GloVe explicitly weights all co-occurrences inversely by the distance from each 
 Skip-Gram accomplishes something similar with dynamic window sizing tweak -- the true size of the window is uniformly distributed between 1 and the value given.
 
 GloVe explicitly scales the weight of terms to be optimised -- using the weighting function, which saturates for frequent terms.
-Skip-Gram accomplishing something similar again using the subsampling tweak -- common words are randomly skipped from the contexts during training, based on how common they are.
+Skip-Gram accomplishing something similar again using the sub-sampling tweak -- common words are randomly skipped from the contexts during training, based on how common they are.
 
-
+While the authors papers consider these as unimportant to the main thrust of the algorithms \textcite{levy2015} found them to be crucial hyper-parameters.
 }
 
+However, GloVe loosely highlights the relationship between the co-located word prediction neural network models,
+and the more traditional matrix factorization of collocation counts used in topic modeling.
+Very similar properties were also explored for skip-grams with negative sampling in \tcite{levy2014neural} and then in \tcite{li2015wordemedingasEMF} with more direct mathematical equivalence to weighed co-occurrence matrix factorisation;
+Later in \tcite{cotterell2017SkipgramisEPCA} showed the equivalence to exponential principal component analysis also.
 
-\subsection{What ever it is that people do instead now that is basically SVD on collations}
 
-As we have now concluded that neural predictive co-location models are functionally equivalent to matrix factorisation of co-location counts,
-we now have access to a world of tools on matrix factorizations.
-Notably CCA, which can factorize matrixes to be the the same.
-Which can be used for translation.
+
+\subsection{Conclusion}
+As we have now concluded that neural predictive co-location models are functionally very similar to matrix factorisation of co-location counts with suitable weightings, and suitable similarity metrics.
+One might suggest a variety of word embeddings to be created from a variety of different matrix factorisations with different weightings and constraints; and indeed this has been done.
+Traditionally large matrix factorisations have significant problems in terms of computational time and memory complexity.
+A common solution to this is to handle it an iterative optimisation procedure.
+Training a neural network such as skip-gram is an iterative optimisation procedure.
+
+
+
+
+
+
+
+
+
 
 
 \section{Natural Language Applications -- beyond language modeling}
@@ -445,7 +457,55 @@ Since then, these results have been superseded again using newer methods.
 
 
 
+\section{Aligning Vector Spaces Across Languages}
+Given two vocabulary vector spaces, for example one for German and one for English,
+a natural and common question is if they can aligned such that one has a single vector space for both.
+Using canonical correlation analysis (CCA) one can do exactly that.
+Here, we will discuss normal CCA for aligning two vectors spaces,
+though there also exists generalised CCA for any number of vector spaces \pcite{gcca}.
 
+The inputs to CCA, are two sets of vectors, normally expressed as matrices,
+Which we will call for consistency $C \subseteq \mathbb{R}^{n_1}$ and $V \subseteq \mathbb{R}^{n_2}$.
+These are both some set of vector representations for words, not necessarily of same dimensionality.
+These could be the output of any of the embeddings dicusses earlier,
+or even a sparse (non-embedding) representations such as the point-wise mutual information of the co-occurrence counts.
+The other input is an a subset of pairs from those sets that are to be aligned, which we will call, $C^\star \times V^\star$.
+This subset contains only pairs with known translations -- this does not have to be the whole vocabulary of either language.
+
+
+%
+By performing CCA (the details of which are well out of scope for this text),
+one solves to find a series of vectors, $S=\left[ \tilde{s}_1, ..., \tilde{s}_d \right]$ and $T= \left[ \tilde{t}_1, ..., \tilde{t}_d\ \right]$,
+such that the correlation between $\tilde{s}_i^\prime C^\star$ and $\tilde{t}_i^\prime V^\star$ is maximised,
+while constraining with the requirement for all $j<i$ that $\tilde{s}_i^\prime C^\star$ is uncorrelated with $\tilde{s}_j^\prime C^\star$  and that  $\tilde{t}_i^\prime V^\star$ is uncorrelated with $\tilde{t}_j^\prime V^\star$.
+This is very similar to principal component analysis(PCA), and like PCA number components to use $d$ is a variable that can be deceased to achieve dimensionality reduction.
+When complete, taking $S^\prime$ and $T^\prime$ as matrices gives projection matrixes that project $C$ and $V$ to a space where aligned elements are as correlated as possible.
+That is to say the final new common vector space embeddings are given by:
+$S^\prime C$ and $T^\prime V$.
+\pdfcomment{Check this, both for correctness in decription, and for correctness in notation.}
+
+\textcite{faruqui2014improving} investigated this primarily as a means to use additional data to improve performance on monoligual tasks.
+In this they found small and inconsistent improvement.
+However
+However, we suggest it is much more interesting as a multi-lingual tool.
+It allows similarity measures to be made between words of different languages.
+\tcite{translating-unknown-words-2016} use this on as part of a hybrid system translate out of vocabulary words.
+
+
+
+
+
+
+It may be apparent that since this method does produce a representation maximising similarity between two vectors -- just like the methods discussed for learning word embeddings,
+that given representations for two words from the same context, initialised randomly,
+CCA could be used repeatedly to optimise a towards good word embedding capturing shared meaning from contexts.
+Such a method was investigated in \tcite{dhillon2011multi}; their final process is quiet complex.
+
+
+
+
+There are also means to directly train embeddings on multiple languages concurrently including the works of \tcite{zou2013bilingual} and \tcite{shi2015learningbiligualcofactorisation}, amongst others.
+A survey paper was recently published by \textcite{Ruder17crosslingreview}.
 
 
 
