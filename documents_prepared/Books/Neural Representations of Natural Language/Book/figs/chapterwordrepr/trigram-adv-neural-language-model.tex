@@ -1,7 +1,7 @@
 \documentclass{standalone}
 
 \input{../../preamble-tikz.tex}
-
+\usetikzlibrary{calc}
 \begin{document}
 
 \begin{tikzpicture}[]
@@ -20,7 +20,7 @@
 	\node(C\ii)[lookupbox, above = \pos mm of Cn]{$\bullet\bullet\bullet\bullet\bullet\bullet$};
 	\node(Clbl\ii)[left = 0mm of C\ii]{\footnotesize $C_\jj$:};
 };
-\node(C)[above = 0mm of C\tblmax] {\small \textsc{Embedding Table}};
+\node(C)[above = 0mm of C\tblmax.north, text width=40] {\small \textsc{Input \\Embedding Table}};
 
 
 \node(concat1)[layer, above = 5 of w1]{$C_{w_{i-1}}$};
@@ -34,11 +34,36 @@
 \node(L1)[layer, above = of concat1.north east]{$\varphi\left(U\,Z_1 + b\right)$};
 \draw[->]  (concat1.north east) -- node[labe]{$Z_1$} (L1);
 
-\node(L2)[layer, above = of L1]{$s_{max}\left(V Z_2 + k\right)$};
+\node(L2)[layer, above = of L1, label={[label distance=0] 0:\small for each $i$}]{
+$\frac{\exp\left(V^\prime_{w_i} Z_2 +k_i \right)}%
+{\sum_{\forall j}exp\left(V^\prime_{j} Z_2 +k_j \right)}$
+};
 \draw[->]  (L1) edge node[labe]{$Z_2$} (L2);
+
 
 \node(out)[above = of L2]{$P(w_i \mid w_{i-1}, w_{i-2})$};
 \draw[->] (L2) edge (out);
+
+\node(Vn)[lookupbox, above left=2 of concat1.north] {$\vdots$};
+\def\tblmax{6}
+\foreach \ii in {1,...,\tblmax} {
+	\pgfmathsetmacro\pos{(\ii - 1) * 3 };
+	\pgfmathtruncatemacro\jj{(\tblmax -\ii)};
+	
+	\node(V\ii)[lookupbox, above = \pos mm of Vn]{$\bullet\bullet\bullet\bullet\bullet\bullet$};
+	\node(Vlbl\ii)[left = 0mm of V\ii]{\footnotesize $V_\jj^\prime$:};
+	
+	\draw[->] (V\ii.east) -- (L2.south west);
+};
+\draw[->] (Vn.east) -- (L2.south west);
+\node(C)[above = 0mm of V\tblmax.north, text width=40] {\small \textsc{Output \\Embedding Table}};
+
+
+
+
+\draw[->] (out.south west) -- (V6.east);
+\draw[->] (V6.east)-- (L2.north west);
+
 \end{tikzpicture}
 
 \end{document}
