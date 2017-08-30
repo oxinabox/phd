@@ -1,0 +1,130 @@
+\documentclass[landscape]{article}
+\usepackage[a3paper]{geometry}
+
+\input{../../preamble-tikz.tex}
+
+\begin{document}
+
+\numdef{\n}{8}
+%%%%%%%%%%%%%%%%%%%%%%%%%
+% Encoder
+
+\begin{tikzpicture}[]
+\node(lblEncoder)[text width= 3.5cm] {\textbf{RNN Encoder:}\\%
+Variable $n$ inputs: $x_t$\\%
+1 output: $\hat{y}$ \\%
+};
+
+\coordinate (L0) at (lblEncoder.east);
+
+\foreach \i[count=\j from 0] in {1,...,\n}{
+	\ifnumequal{\i}{\n - 1}{%
+		\node(L\i)[dashed, layer, right = of L\j] {...};
+		\node(w\i)[below = of L\i]{...};
+	}%
+	{	
+		\node(L\i)[layer, right = of L\j] {RU};
+		\node(w\i)[below = of L\i]{\ifnumequal{\i}{\n}{$x_n$}{$x_\i$}};
+		\draw[->](w\i) -- (L\i);
+	}
+}
+\foreach \i[count=\j from 1] in {2,...,\n} {
+	\draw[->] (L\j) edge node[labe]{state} (L\i);
+}
+
+\node(out) [above = of L\n]{$y$};
+\draw[->] (L\n) -- (out);
+\end{tikzpicture}
+
+\hrule
+%%%%%%%%%%%%%%%%%%
+% Decoder
+ 
+\begin{tikzpicture}[]
+\node(lbl)[text width= 4cm] {\textbf{RNN Decoder:}\\%
+1 input: $x$\\%
+Variable $m$ outputs: $\hat{y_t}$ \\%
+Prompts: $r_t$ (often $y_{t-1}$)
+};
+
+\coordinate (L0) at (lbl.east);
+\foreach \i[count=\j from 0] in {1,...,\n}{
+	\ifnumequal{\i}{\n - 1}{%
+		\node(L\i)[dashed, layer, right = of L\j] {...};
+		\node(w\i)[above = of L\i]{...};
+		\node(w\i)[below = of L\i]{...};
+	}%
+	{	
+		\node(L\i)[layer, right = of L\j] {RU};
+		\node(v\i)[above = of L\i]{\ifnumequal{\i}{\n}{$y_m$}{$\hat{y}_\i$}};
+		\node(w\i)[below = of L\i]{$[r_\i;x]$};
+		\draw[->](w\i) -- (L\i);
+		\draw[->](L\i) -- (v\i);
+	}
+}
+\foreach \i[count=\j from 1] in {2,...,\n} {
+	\draw[->] (L\j) edge node[labe]{state} (L\i);
+}
+
+\end{tikzpicture}
+
+\hrule
+%%%%%%%%%%%%%%%%%%
+% Encoder Decoder
+
+\begin{tikzpicture}[]
+\node(lbl)[text width= 4cm] {\textbf{RNN Encoder-Decoder:}\\%
+Variable $n$ inputs: $x_t$\\%
+Variable $m$ outputs $\hat{y_t}$%
+Prompts $r_t$
+};
+
+\coordinate (L0) at (lbl.east);
+\numdef{\nn}{4}
+\foreach \i[count=\j from 0] in {1,...,\nn}{
+	\ifnumequal{\i}{\nn - 1}{%
+		\node(L\i)[dashed, layer, right = of L\j] {...};
+		\node(w\i)[below = of L\i]{...};
+	}%
+	{
+		\node(L\i)[layer, right = of L\j] {RU};
+		\node(w\i)[below = of L\i]{\ifnumequal{\i}{\nn}{$x_n$}{$x_\i$}};
+		\draw[->] (w\i) -- (L\i);
+	}
+}
+
+\numdef{\np}{\n - 1}
+\foreach \j in {\nn,...,\np}{
+	\numdef{\i}{\j+1}
+	\numdef{\y}{\i - \nn}
+	\ifnumequal{\i}{\n-1}{%
+		\node(L\i)[dashed, layer, right = of L\j] {...};
+		\node(w\i)[below = of L\i]{...};
+		\node(y\i)[above = of L\i]{...};
+	}%
+	{
+		\node(L\i)[layer, right = of L\j] {RU};
+		\ifnumequal{\i}{\n}{
+			\node(w\i)[below = of L\i]{$r_m$};
+			\node(y\i)[above = of L\i]{$\hat{y}_m$};
+		}
+		{
+			\node(w\i)[below = of L\i]{$r_\y$};
+			\node(y\i)[above = of L\i]{$\hat{y}_\y$};
+		}
+
+		\draw[->] (w\i) -- (L\i);
+		\draw[->] (L\i) -- (y\i);		
+	}
+}
+
+\foreach \i[count=\j from 1] in {2,...,\n} {
+	\draw[->] (L\j) edge node[labe]{state} (L\i);
+}
+% 
+\end{tikzpicture}
+
+
+
+
+\end{document}
