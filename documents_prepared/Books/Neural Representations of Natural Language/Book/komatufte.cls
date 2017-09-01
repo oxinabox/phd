@@ -102,8 +102,8 @@
 \usepackage{caption}%
 \captionsetup{compatibility=false}%
 
-\DeclareCaptionFormat{sidenote}{\aside{#1#2#3}}%
-\DeclareCaptionStyle{sidecap}{parskip=0pt,skip=0pt,position=above,singlelinecheck=off, labelfont=bf}%
+\DeclareCaptionFormat{sidenote}{\aside{\vskip 0.5\baselineskip #1#2#3}}%
+\DeclareCaptionStyle{sidecap}{parskip=0pt,skip=0pt,singlelinecheck=off, labelfont=bf}%
 \captionsetup[figure]{style=sidecap,format=sidenote}\captionsetup[table]{style=sidecap,format=sidenote}%
 
 

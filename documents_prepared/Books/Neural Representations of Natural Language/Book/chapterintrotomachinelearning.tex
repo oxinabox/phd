@@ -35,9 +35,9 @@ to a fuzzy yes-no.
 But it all must move in a straight-ish line together.
 
 \section{Function Approximation}
-\aside[Multilayer perception or Artificial Neural Network?]{A artifical neural network is sometimes called a multilayer perception.
+\aside[Multilayer perception or Artificial Neural Network?]{A artificial neural network is sometimes called a multilayer perception.
 This is in reference to the related perception learning algorithm.
-This term has fallen out of favor in newer works,
+This term has fallen out of favour in newer works,
 with Hinton, who originally coined the term, expressing his own regret at the naming.
 }
 
@@ -299,6 +299,10 @@ However, this innovation was core to allowing neural networks as we know them to
 We will discuss more linguistically relevant neural networks in the following chapters.
 However, to introduce the topic, we will give some basic examples.
 
+\aside[These examples are available online]{For a practical introduction to the networks discussed here, worked examples of these network are available in the accompanying blog post at \url{http://white.ucc.asn.au/NNforNLPBook/NNexamples}.
+Examples are in the julia programming language making use of the TensorFlow.jl package.
+}
+
 \subsection{Classifier}
 As one of the most basic networks, consider a classifier on the classic MNIST challenge.
 
@@ -307,8 +311,84 @@ As one of the most basic networks, consider a classifier on the classic MNIST ch
 \input{figs/chapterintromachinelearning/mnist-advanced.tex}
 
 \subsection{Bottle Necking Auto-encoder}
+An autoencoder is a tool primarily for use in finding a representation for their input.
+There are many varieties of autoencoder based on neural network related techniques, including the works of \textcite{hinton2002RBM,hinton2006reducing,hinton2006fastDBN,vincent2010stacked,ICML2012Chen_416,2014VAE}.
+This is itself a whole subfield.
+For consideration here we look at a bottle necking autoencoder
+\parencite{bourlard1988auto,japkowicz2000nonlinear}.
+It has been used in a variety of tasks to attempt to find an optimal representation for an input e.g. as in \tcite{Usui:92}.
 
-\input{figs/chapterintromachinelearning/autoencoder.tikz}
+An autoencoder is a neural network tasked with outputting its input.
+This in and of itself is a pointless task -- one already has the perfect reproduction of the input, in the input itself.
+However, the true use of an autoencoder is to extract the output of one of the intermediary layers.
+We call the intermediary layer the code layer.
+To force this coded representation to have useful interesting properties,
+and to prevent the network from simply learning the identity function,
+all autoencoders include one or more features that increases the difficulty.
+In the case of the bottlenecking autoencoder this feature is the bottleneck.
+The code layer is much narrower than the input layer.
+This forces the network to effectively learn to compress the data -- performing dimensionality reduction.
+
+In this particular example we are looking at an auto-encoder for the MNIST images discussed earlier.
+The original images are $28 \times 28$ pixels, i.e. 784 dimensional.
+We compress it down to just 2 dimensions using the network shown in \Cref{fig-autoencoder}.
+
+\begin{figure}
+	\caption{A structure for a Bottle Necking Autoencoder for uses on MNIST.}
+	\label{fig-autoencoder}
+	\input{figs/chapterintromachinelearning/autoencoder.tikz}
+\end{figure}
+
+
+In this particular network $\varphi$ is a leaking RELU6 unit.
+\begin{equation}
+\varphi(z)=\begin{cases}
+    0.01z+6 & 6<z \\
+	1.01z & 0 \le z \le 6 \\
+	0.01z & z < 0
+\end{cases}
+\end{equation}
+
+The reason for this is that a sigmoidal unit does not perform well in a deep network because of the gradient-vanishing/exploding effects.
+We found the effect of this to be that only the bias information of the final layer mattered -- effectively making all outputs just the average of all inputs.
+The normal solution to this in deep networks is ReLU or ReLU6 units.
+
+However, a ReLU, or ReLU6 unit is not ideal either,
+as these units turn-off, and can not turn back on again.
+If one of the just 2 neurons in the code layer turn-off then they can not turn back on again -- thus forcing it to be a dimentionality reduction to just one neuron, or none if that neural also dies.
+In trialling this network structure, this was found to occur quiet very often.
+
+The solution was to add a ``leak'' to the unit.
+A small constant gradient even in the saturated position.
+Making such a neuron possible, if difficult, to turn back on once turned off.
+With this change the network always produces quality results.
+An example of the recreation of an input from the test set can be seen in 
+\Cref{fig-ae-recreation}.
+
+
+\begin{figure}
+	\pdfcomment{It would be nice to just stick this figure only in the margin}
+	\caption{Recreation of an input from the MNIST test set. Input is on the left, output is on the right.}
+	\label{fig-ae-recreation}
+	\includegraphics[scale= 0.30]{figs/chapterintromachinelearning/recreation}
+\end{figure}
+
+More significantly, a sampling of the code layer is visually shown in \Cref{mnist-encoding}.
+In this image, the positions on the X and Y axis of the input images, are given by the values on the coded layer said images correspond to.
+It can be seen the the coding is capturing key information about the appearance.
+The 0s appear near to the similarly rounded 6s,
+the 8s near the 3s, etc.
+In particular the 1s are arrayed according to the their slope.
+The autoencoder has captured very useful information about the inputs, that would be hard to define with any hand written feature extractor.
+
+It is this property of networks, to implictly discover and define the most important latent variables and relationships to the task at hand that also makes the valuable for natural language processing.
+
+
+
+\begin{figure}
+	\caption{A sampling of MNIST images from the test-set, arranged according to the values of 2 neurons on the encoding layer.}
+	\includegraphics[width=\textwidth]{/figs/chapterintromachinelearning/mnist-encoding.png}
+\end{figure}
 
 \section{Recurrent Neural Networks}
 A key limitation of a neural network is that the number of inputs and outputs must be known at training time and must always be the same for all cases.
@@ -338,13 +418,18 @@ but each one acting at a different time-step.
 Three general examples of the structure of RNNs are shown in \Cref{fig-rnns}.
 These exampled will be considered in more later in this section below.
 At each time-step the same network is used, with different inputs.
-For purposes of looking at this in the big picture we will first consider this a black-box recurrent unit (RU).
+For purposes of looking at this in the big picture we will first consider each network a black-box recurrent unit (RU).
+
+The recurrent unit
 
 
-
+\begin{figure}
+	\caption{A recurrent unit with its 2 inputs and 2 outputs. Not shown are the internal Weight and Bias parameters which are trained to control the interactions.}
+	
+	\label{fig-ru}
 
 \input{figs/chapterintromachinelearning/rnn-unit.tikz}
-
+\end{figure}
 
 
 
