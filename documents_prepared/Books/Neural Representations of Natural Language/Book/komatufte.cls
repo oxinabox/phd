@@ -94,6 +94,19 @@
 	}	
 }
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Captions
+% https://tex.stackexchange.com/questions/352052/how-to-insert-vspaces-into-scrlayer-notecolumn-marginnote
+
+\usepackage{caption}%
+\captionsetup{compatibility=false}%
+
+\DeclareCaptionFormat{sidenote}{\aside{#1#2#3}}%
+\DeclareCaptionStyle{sidecap}{parskip=0pt,skip=0pt,position=above,singlelinecheck=off, labelfont=bf}%
+\captionsetup[figure]{style=sidecap,format=sidenote}\captionsetup[table]{style=sidecap,format=sidenote}%
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Bibliography Commands
 %
