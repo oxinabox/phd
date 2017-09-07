@@ -1,0 +1,401 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 1.5cm
+\topmargin 2.5cm
+\rightmargin 1.5cm
+\bottommargin 2cm
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Section
+Counting CDF differentiation 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "1998NNpdfDiffCdf"
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Basic method: 
+\end_layout
+
+\begin_layout Standard
+use a neural network to estimate the CDF, based on matching the counts of
+ samples.
+\end_layout
+
+\begin_layout Standard
+Differentiate the CDF to find the PDF.
+\end_layout
+
+\begin_layout Subsubsection
+Issues
+\end_layout
+
+\begin_layout Standard
+No strong guarantee that that the neural CDF approximation is a proper CDF.
+\end_layout
+
+\begin_layout Standard
+i.e.
+ 
+\begin_inset Formula 
+\[
+\lim_{t\to-\infty}F(t)=0
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\lim_{t\to\infty}F(t)=1
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\forall\epsilon\in\mathbb{R}_{+}F(t+\epsilon)\ge F(t)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+I saw these issues in my rough implementation.
+\end_layout
+
+\begin_layout Standard
+Though that implementation did not feature the monotonically hinting component
+ of the loss.
+ Which was implement as for each training point adding checking a point
+ some random distance further on, and then adding an extra loss term.
+\end_layout
+
+\begin_layout Standard
+This seems in-elegant.
+\end_layout
+
+\begin_layout Section
+Normalizing Area
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset citation
+LatexCommand cite
+key "likas2001probability"
+
+\end_inset
+
+ which is based on 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "1994estimatedensity"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+It acknowledges that 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "1998NNpdfDiffCdf"
+
+\end_inset
+
+ exists.
+\end_layout
+
+\begin_layout Standard
+But it does not give any reason for why this is better or worse than that,
+\end_layout
+
+\begin_layout Standard
+nor does it compare to it.
+\end_layout
+
+\begin_layout Subsection
+Basic Method
+\end_layout
+
+\begin_layout Standard
+They use the nothing that a PDF can given by 
+\begin_inset Formula $p_{h}(x,p)=\dfrac{h(x,p)}{\int_{S}h(z,p)dz}$
+\end_inset
+
+ , 
+\end_layout
+
+\begin_layout Standard
+and in their case 
+\begin_inset Formula $h=N(x,p)$
+\end_inset
+
+ a neural network with weight and bias parameters 
+\begin_inset Formula $p$
+\end_inset
+
+.
+ Where 
+\begin_inset Formula $S$
+\end_inset
+
+ is a compact support (That means bounded).
+\end_layout
+
+\begin_layout Standard
+Beyond the fact that it only works on bounded supports.
+\end_layout
+
+\begin_layout Standard
+It requires numerically integrating the denominator,
+\end_layout
+
+\begin_layout Standard
+and neural networks (apparently) do not have a closed form integral.
+\end_layout
+
+\begin_layout Standard
+However, in my implementation I transformed the equation by 
+\end_layout
+
+\begin_layout Standard
+saying 
+\begin_inset Formula $h=\frac{\partial N(x,p)}{\partial x}$
+\end_inset
+
+, as neural networks do have a closed form derivative.
+\end_layout
+
+\begin_layout Standard
+then So that 
+\begin_inset Formula $p_{h}(x,p)=\dfrac{h(x,p)}{\int_{S}h(z,p)}=\dfrac{\frac{\partial N(x,p)}{\partial x}}{N(max(S),p)-N(min(S),p)}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The denominator is of-course more complex for non-1D values of S.
+ 
+\end_layout
+
+\begin_layout Standard
+.
+\end_layout
+
+\begin_layout Standard
+The optimization loss function is 
+\begin_inset Formula 
+\[
+L(p)=-\sum_{\forall x\in X}ln(h(x,p))+|X|ln(\int_{S}h(z,p)dx)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+i.e.
+ with my transformed version: 
+\begin_inset Formula 
+\[
+L(p)=-\sum_{\forall x\in X}log(\frac{\partial N(x,p)}{\partial x})+|X|(ln(N(max(S),p)-N(min(S),p))
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Which is to say maximizing the logprob of all the observations.
+\end_layout
+
+\begin_layout Subsubsection
+Issues with converting it to a differentiation 
+\end_layout
+
+\begin_layout Standard
+This solves the issue of not having a PDF that integrates to 1 (which the
+ non-monotonically of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "1998NNpdfDiffCdf"
+
+\end_inset
+
+ causes)
+\end_layout
+
+\begin_layout Standard
+But it has its own monotonically problem.
+\end_layout
+
+\begin_layout Standard
+In 1D (and in n-D parameterised over squares)
+\begin_inset Formula 
+\[
+ln(\int_{S}h(z,p)dx)=ln(H(max(S),p)-H(min(S),p)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+But if 
+\begin_inset Formula $H$
+\end_inset
+
+ is not monotonic, then it may be that 
+\begin_inset Formula $H(max(S),p)\le H(min(S),p)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Which would be taking the the log of a negative number.
+\end_layout
+
+\begin_layout Standard
+And so the loss is not defined.
+\end_layout
+
+\begin_layout Standard
+This can't occur in the original version as there 
+\begin_inset Formula $h$
+\end_inset
+
+ is the output of a neural network with the final layer being 
+\begin_inset Formula $e^{Wx}$
+\end_inset
+
+ -- so always non-negative, so 
+\begin_inset Formula $H$
+\end_inset
+
+ will always be monotonic.
+\end_layout
+
+\begin_layout Standard
+But if in my case 
+\begin_inset Formula $h=\frac{\partial N(x,p)}{\partial x}$
+\end_inset
+
+ and so 
+\begin_inset Formula $H=N$
+\end_inset
+
+, and that means extracting a mononticy of 
+\begin_inset Formula $H$
+\end_inset
+
+ would mean ensuring the network was monotonic, which I don't know if that
+ can be done (It is the problem of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "1998NNpdfDiffCdf"
+
+\end_inset
+
+ again).
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+bibfiles "master"
+options "IEEEtran"
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
