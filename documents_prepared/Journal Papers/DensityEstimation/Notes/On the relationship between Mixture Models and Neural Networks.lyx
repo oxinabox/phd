@@ -74,6 +74,35 @@
 On the Relationshop between Mixture Models and Neural Networks
 \end_layout
 
+\begin_layout Author
+Lyndon White
+\end_layout
+
+\begin_layout Standard
+This write-up is just to express the idea in concrete form.
+\end_layout
+
+\begin_layout Standard
+It has a sketch of the primary result proof, that is a little incomplete
+ (Needs proof that I am working with approximate identity)
+\end_layout
+
+\begin_layout Standard
+Also the final line of the UAT proof is missing.
+\end_layout
+
+\begin_layout Standard
+And it is just very informally written.
+\end_layout
+
+\begin_layout Standard
+This probably is not a suitable draft for a journal paper.
+\end_layout
+
+\begin_layout Standard
+but it is the ideas written down.
+\end_layout
+
 \begin_layout Section
 Introduction
 \end_layout
@@ -124,8 +153,7 @@ A novel nonparametric estimator for probability distributions
 \end_layout
 
 \begin_layout Standard
-Also the side-result of a trivial method for the creation of non-negatively
- weighted neural networks.
+Also the side-result of a trivial method for the creation of NNWNNs
 \end_layout
 
 \begin_layout Subsection
@@ -268,21 +296,68 @@ There are many many works on sparse neural networks
 
 \end_deeper
 \begin_layout Section
+Notation:
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\nabla K=\left(\dfrac{\partial K}{\partial x_{1}},...,\dfrac{\partial K}{\partial x_{dim(x)}}\right)$
+\end_inset
+
+, 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+This is the elementwise derivatives with respect to 
+\begin_inset Formula $x$
+\end_inset
+
+.
+ All other partial derivitives are ignored
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\nabla K$
+\end_inset
+
+ may be a matrix described column-wise, or a vector; depending on 
+\begin_inset Formula $K$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+The hansard (element-wise) product notated with 
+\begin_inset Formula $\odot$
+\end_inset
+
+ (odot)
+\end_layout
+
+\begin_layout Section
 Primary Result: NNWNNs are able to approximate all functions that can be
  approximated by an unnormalised CDFs.
 \end_layout
 
 \begin_layout Itemize
 We begin our consideration with a UAT style neural network.
- : 
-\begin_inset Formula $N(x;W,V,b)=V\varphi(Wx+b)$
-\end_inset
-
-.
  
 \end_layout
 
 \begin_deeper
+\begin_layout Itemize
+\begin_inset Formula $N(x;W,V,b)=V\varphi(Wx+b)=\left[\begin{array}{c}
+{\displaystyle \sum_{j=1}^{j=dim(V,2)}}V_{1,j}\varphi(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{j,i}\right))\\
+\vdots\\
+{\displaystyle \sum_{j=1}^{j=dim(V,2)}}V_{dim(V,1),j}\varphi(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{j,i}\right))
+\end{array}\right]$
+\end_inset
+
+ 
+\end_layout
+
 \begin_layout Itemize
 for 
 \begin_inset Formula $x$
@@ -308,8 +383,8 @@ For
 \begin_inset Formula $\varphi$
 \end_inset
 
- a squashing function (Bounded, monotonic, continuous), and with the additional
- constraint that it is a nonnegative function (eg 
+ a squashing function (bounded, monotonic, continuous), and with the additional
+ constraint that it's output range is nonnegative function (eg 
 \begin_inset Formula $\sigma$
 \end_inset
 
@@ -321,6 +396,585 @@ For
 \end_layout
 
 \end_deeper
+\begin_layout Itemize
+Consider its dervitive WRT its input 
+\begin_inset Formula $x$
+\end_inset
+
+,
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+for 
+\begin_inset Formula $g=\nabla\varphi$
+\end_inset
+
+, which is applied elementwise
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\nabla N=\left(V\odot W^{T}\right)g(Wx+b)=\left[\begin{array}{c}
+{\displaystyle \sum_{j=1}^{j=dim(V,2)}}\left(V_{1,j}W_{j,1}\right)g(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{j,i}\right))\\
+\vdots\\
+{\displaystyle \sum_{j=1}^{j=dim(V,2)}}\left(V_{dim(V,1),j}W_{j,dim(V,1)}\right)g(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{j,i}\right))
+\end{array}\right]$
+\end_inset
+
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Now appreciate the value of 
+\begin_inset Formula $g(x)$
+\end_inset
+
+: 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+for 
+\begin_inset Formula $\varphi=\sigma$
+\end_inset
+
+, then 
+\begin_inset Formula $g(x)=\sigma(-x)\sigma(x)=\frac{1}{(1+\exp(-z)(1+\exp(-z))}$
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+\begin_inset Graphics
+	filename sigmoid-der-plot.png
+	width 5cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+This is a bell-curve
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+For 
+\begin_inset Formula $\varphi=RELU6=\begin{cases}
+0 & x\le0\\
+x & 0<x<6\\
+6 & 6\le x
+\end{cases}$
+\end_inset
+
+ then 
+\begin_inset Formula $g(x)=\begin{cases}
+0 & x\le0\\
+1 & 0<x<6\\
+0 & 6\le x
+\end{cases}$
+\end_inset
+
+ ie a square function 
+\end_layout
+
+\begin_layout Itemize
+As 
+\begin_inset Formula $\varphi$
+\end_inset
+
+ is bounded, continuous, and monotonic, we have 
+\begin_inset Formula ${\displaystyle \lim_{x\to-\infty}g(x)}=0$
+\end_inset
+
+, and 
+\begin_inset Formula ${\displaystyle \lim_{x\to\infty}g(x)}=0$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Intuitively notice that we now have an unnormalised mixture model of sorts
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+The mixture componants are these 
+\begin_inset Formula $g(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{j,i}\right))$
+\end_inset
+
+ curves
+\end_layout
+
+\begin_layout Itemize
+They are weighted with 
+\begin_inset Formula $V_{i,j}W_{j,i}$
+\end_inset
+
+ weights, 
+\end_layout
+
+\begin_layout Itemize
+and while the value of 
+\begin_inset Formula $W$
+\end_inset
+
+ is tied to the shape of those curves 
+\begin_inset Formula $V$
+\end_inset
+
+ is not.
+\end_layout
+
+\begin_layout Itemize
+As we have free choice on the value of 
+\begin_inset Formula $V_{i,j}$
+\end_inset
+
+ so long as it is non-negative we can chose it such that 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $V_{i,j}=\dfrac{A_{i,j}}{W_{j,i}}$
+\end_inset
+
+
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+ for some nonnegitive 
+\begin_inset Formula $A_{i,j}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Which gives us 
+\begin_inset Formula $V_{i,j}W_{j,i}g(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{j,i}\right))=A_{i,j}g(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{j,i}\right))$
+\end_inset
+
+, which is a sensible (nonenegative) weighted mixture component.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Intuitively we have the idea that this kind of Mixture Models can approximate
+ any PDF with compact support (and non-normalised ones, can approximate
+ any non-normalised PDF with compact support)
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+In particular by 
+\begin_inset Quotes eld
+\end_inset
+
+kind of
+\begin_inset Quotes erd
+\end_inset
+
+ we mean ones where the mixture components are finite area and limitted
+ above and below at zero.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset CommandInset citation
+LatexCommand cite
+key "10.2307/2237880"
+
+\end_inset
+
+ (Equations 1.11-1.13) showed that for components with a lesser set of constraints
+, were if one had one per training point, an unbiases estimator for PDFs.
+\end_layout
+
+\begin_layout Itemize
+For GMMs 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "1100034"
+
+\end_inset
+
+draw together a collection of prior works (refs 11-16), to conclude that
+ GMMs can approximate any PDF
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+And further that as adding more mixture components are added, the estimation
+ from the GMM improves (Uniform convergance)
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout Itemize
+the generalised result of theorem 1.1 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "bacharoglou2010approximation"
+
+\end_inset
+
+ applies if 
+\begin_inset Formula $g(x)$
+\end_inset
+
+ is an approximate idenity, if normalized to unit area.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+I am pretty sure it is, but I need to lock down exactly what that means
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+This result would give us convergance 
+\begin_inset Formula $L^{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $L^{\infty}$
+\end_inset
+
+ to any PDF with compact support.
+ (and thus to any unnormalised PDF if we didn't normalize the components)
+\end_layout
+
+\begin_layout Itemize
+Finally, since we have been working with the derivive of the network, we
+ apply the fundermental theorem of integration.
+ This changes
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+The dervitives of a NNWNN can estimate any unnormalised PDF with compact
+ support.
+ To
+\end_layout
+
+\begin_layout Itemize
+a NNWNN can estimate any unnormalised CDF with compact support.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+This is probably a pretty wide range of functions, and might have a name.
+\end_layout
+
+\begin_layout Section
+Secondary Result 1: A new proof of the well known universal approximation
+ theorem
+\end_layout
+
+\begin_layout Standard
+The universal approximation theorem was proven in the early 90s.
+ (citations here).
+\end_layout
+
+\begin_layout Standard
+We can derive a new proof of it which is kind of cute, at least for approximatin
+g all L2 functions 
+\end_layout
+
+\begin_layout Itemize
+We start with a 2 NNWNN networks.
+ which we will call 
+\begin_inset Formula $N_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $N_{2}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Both 
+\begin_inset Formula $\nabla N_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $\nabla N_{2}$
+\end_inset
+
+ are able to approximate an unnormallised GMM
+\end_layout
+
+\begin_layout Itemize
+We define a new neural network 
+\begin_inset Formula $M$
+\end_inset
+
+, implictly by 
+\begin_inset Formula $\nabla M=\nabla N_{1}-\nabla N_{2}$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\nabla M$
+\end_inset
+
+ can be any linear combination of gaussians
+\end_layout
+
+\begin_layout Itemize
+According to 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "calcaterra2008linear"
+
+\end_inset
+
+, a linear combination of gaussians exists to approximate every 
+\begin_inset Formula $L^{2}$
+\end_inset
+
+ function
+\end_layout
+
+\begin_layout Itemize
+We take the integral of 
+\begin_inset Formula $\nabla M$
+\end_inset
+
+ and we end up with some other space of functions, which is probably very
+ general (I'm thinking it is the space of all continuous functions)
+\end_layout
+
+\begin_layout Section
+Secondary Result 2: A novel nonparametric estimator for probability distribution
+s
+\end_layout
+
+\begin_layout Standard
+We can use the results that 
+\begin_inset Quotes eld
+\end_inset
+
+The dervitives of a NNWNN can estimate any unnormalised PDF with compact
+ support.
+\begin_inset Quotes erd
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Standard
+to construct an estimator for any PDF with compact support.
+\end_layout
+
+\begin_layout Standard
+WE just need to normalise them.
+\end_layout
+
+\begin_layout Standard
+This is the derivative of the work of 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "likas2001probability"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+We remove the need to preform numerical intergraion at training time (slow,
+ and acding to likas' does not scale to higher dimensions).
+\end_layout
+
+\begin_layout Standard
+In the current stage of this work, it also does not need the pretraining
+ method Likas used to fit it to a Parzen window model before proper training
+ starts,
+\end_layout
+
+\begin_layout Standard
+though it does benefit from having the network pretrained (I used the term
+ 
+\begin_inset Quotes eld
+\end_inset
+
+conditioned
+\begin_inset Quotes erd
+\end_inset
+
+ in my code) to make the boundries of the support set to be marginally distant
+ from each other.
+\end_layout
+
+\begin_layout Standard
+It also seems to benefit from an expodential final layer on the network
+ before taking the derivative, rather than an affine/linear final layer.
+\end_layout
+
+\begin_layout Standard
+We know that use the PDF is given by 
+\begin_inset Formula 
+\[
+f_{h}(x,p)=\dfrac{h(x,p)}{\int_{S}h(z,p)dz}
+\]
+
+\end_inset
+
+In the case of Likas case 
+\begin_inset Formula $h=N(x,p)$
+\end_inset
+
+ a neural network with weight and bias parameters elements of 
+\begin_inset Formula $p$
+\end_inset
+
+ and 
+\begin_inset Formula $S$
+\end_inset
+
+ is a compact support, or an approximation to that.
+\end_layout
+
+\begin_layout Standard
+We say 
+\begin_inset Formula $h=\frac{\partial N(x,p)}{\partial x}$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Standard
+Giving us 
+\begin_inset Formula 
+\[
+f_{dn}(x,p)=\dfrac{h(x,p)}{\int_{S}h(z,p)}=\dfrac{\frac{\partial N(x,p)}{\partial x}}{N(max(S),p)-N(min(S),p)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The denominator is of-course more complex for non-1D values of S.
+\end_layout
+
+\begin_layout Standard
+The loss function given is the negative log-likelihood of the set of training
+ samples X 
+\begin_inset Formula 
+\[
+L(p)=-\sum_{\forall x\in X}ln(h(x,p))+|X|ln(\int_{S}h(z,p)dx)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Which for our variant becomes:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+L(p)=-\sum_{\forall x\in X}log(\frac{\partial N(x,p)}{\partial x})+|X|(ln(N(max(S),p)-N(min(S),p))dx
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Even with resorting to the sketch of the proof of the capacity of the NNWNN,
+ given above,
+\end_layout
+
+\begin_layout Standard
+we know that for 
+\begin_inset Formula $N$
+\end_inset
+
+ being a NNWNN, that at very least 
+\begin_inset Formula $f_{dn}(x,p)$
+\end_inset
+
+ is a valid pdf, as
+\end_layout
+
+\begin_layout Itemize
+It is nonnegative, as the only negitive components in the derivative of
+ the neural network are the product of the weights, which in a NNWNN are
+ of-course non-negative
+\end_layout
+
+\begin_layout Itemize
+and it has unit area, due to the normalisation in the denominator
+\end_layout
+
+\begin_layout Standard
+An example of the use of this can be found at:
+\begin_inset CommandInset href
+LatexCommand href
+name "https://github.com/oxinabox/DensityEstimationML.jl/blob/7ff88e5510038e2aa1563616108694a171808487/proto/Max_of_logprob_of_derivative.ipynb"
+target "https://github.com/oxinabox/DensityEstimationML.jl/blob/7ff88e5510038e2aa1563616108694a171808487/proto/Max_of_logprob_of_derivative.ipynb"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+I personally don't feel like it is fitting very well, it is very GMM-like
+ in its curve fitting.
+\end_layout
+
+\begin_layout Standard
+I also think it might be biased in some sense (not nesc the statistical
+ sense) to be a-symtrical, the Arcsine curve is constantly higher in the
+ left peak than the right peak
+\end_layout
+
+\begin_layout Standard
+It is however getting as-good or better Likelihood results than Likas was
+ reporting.
+\end_layout
+
+\begin_layout Standard
+Though this may be a poor measure, vs instead using say likelihood of a
+ hold-out set, or using a measure of curve fit to the true PDF.
+\end_layout
+
 \begin_layout Section
 Side-result: A Trivial Method for the Creation of NNWNN
 \end_layout
@@ -466,7 +1120,67 @@ key "2014understandblenetworksnonnegweights"
 \end_layout
 
 \begin_layout Section
-Conclusion
+Conclusion & Possible Publication Venue
+\end_layout
+
+\begin_layout Standard
+Presented here is a connection of the link between a restricted form of
+ neural net: the NNWNN and Mixture Models.
+\end_layout
+
+\begin_layout Standard
+I think it is pretty interesting.
+\end_layout
+
+\begin_layout Standard
+There are probably other interesting conclusions that can be drawn from
+ it.
+\end_layout
+
+\begin_layout Standard
+This perhaps may be already a known thing?
+\end_layout
+
+\begin_layout Standard
+The CDF of a Gaussian afterall is well known to be sigmoidal function.
+\end_layout
+
+\begin_layout Standard
+But NNWNNs seem like a fairly new thing.
+\end_layout
+
+\begin_layout Standard
+I still have a fair bit more reading to do around them,
+\end_layout
+
+\begin_layout Standard
+but I think this is a good contribution to this area.
+\end_layout
+
+\begin_layout Standard
+ICLR 2018, I think is the next conference this would be good at, 
+\end_layout
+
+\begin_layout Standard
+and it has a very special rebuttal and review format.
+\end_layout
+
+\begin_layout Standard
+But deadline is relatively soon– 27th of October.
+\end_layout
+
+\begin_layout Standard
+It might be worth putting out part of this work there, just to get some
+ feedback if the area is good.
+\end_layout
+
+\begin_layout Standard
+I can't seem to find an impact factor for ICLR, but it is Bengio & LeCun's
+ conference so top notch ML conference.
+\end_layout
+
+\begin_layout Standard
+But it has a weird weird process.
 \end_layout
 
 \begin_layout Standard
