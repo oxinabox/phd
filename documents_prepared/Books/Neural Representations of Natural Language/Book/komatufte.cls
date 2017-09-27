@@ -84,6 +84,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 
+
 \DeclareDocumentCommand{\aside}{o +m}{
 	\makenote[notes]{
 		\IfNoValueTF{#1}
