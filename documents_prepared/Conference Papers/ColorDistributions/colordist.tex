@@ -1,16 +1,14 @@
-\documentclass[11pt,letterpaper]{article}
-\usepackage{ijcnlp2017}
-\def\ijcnlppaperid{154} %  Enter the IJCNLP Paper ID here:
-
-%\ijcnlpfinalcopy % Uncomment this line for the final submission:
+\documentclass[11pt,letterpaper, twocolumn]{article}
 
 \usepackage{newtxtext}
 %\usepackage[author={Lyndon}]{pdfcomment}
 
 \usepackage{booktabs}
 \usepackage{pgfplotstable}
+\pgfplotsset{compat=1.14}
 
-\usepackage[subtle]{savetrees}
+\usepackage{url}
+%\usepackage[subtle]{savetrees}
 
 
 \usepackage{tikz}
@@ -23,7 +21,6 @@
 \setlength{\@fptop}{0pt}
 \setlength{\@fpbot}{0pt plus 1fil}
 \makeatother
-
 
 
 \usepackage[subpreambles=false]{standalone}
@@ -41,15 +38,20 @@
 \usepackage{cleveref}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{natbib}
+\bibliographystyle{apalike}
 
-\newcommand{\parencite}{\cite}
-\newcommand{\textcite}{\newcite}
+\newcommand{\parencite}{\citep}
+\newcommand{\textcite}{\cite}
 
 
 %opening
 \title{Learning Distributions of Meant Color}
-\author{}
-\date{}
+\author{Lyndon White \\ lyndon.white@research.uwa.edu.au %
+	\and Roberto Togneri \\ roberto.togneri@uwa.edu.au%
+	\and Wei Liu \\ wei.liu@uwa.edu.au %
+	\and Mohammed Bennamoun \\ mohammed.bennamoun@uwa.edu.au %
+}
 
 
 \begin{document}
@@ -204,7 +206,7 @@ Superficial checks were carried out on the accuracy of this assumption.
 Spearman's correlation on the training data suggests that for over three quarters of all color names, there is only weak to zero maximum pairwise absolute correlation between the channels (\mbox{Q3 = 0.187}).
 However, this measure underestimates correlation for values that have circular relative value, such as hue.
 When this correlation measure was compared amongst 16 color spaces HSV was found to be the lowest by a large margin.
-The table is available in the supplementary materials.
+Full details, including the full table of correlations, are available in the \Cref{sec:corrind}.
 These results are suggestive, rather than solidly indicative of the degree of correctness of the conditional independence assumption.
 For the investigation here, we consider the conditional independence assumption sufficient.
 
@@ -410,6 +412,14 @@ It is equivalent to comparing the relative performance of the model to that of a
 Perplexity is a measure of how well the distribution estimated by the model matches reality according to the observations in the test set.
 
 
+\subsection{Implementation}
+The implementation of the CDEST and Baseline models was in the julia programming language \parencite{Julia}.
+The full implementation and the experiment details can be downloaded from the source repository\footnote{Implementation source is at \url{https://github.com/oxinabox/ColoringNames.jl}}.
+This implementation makes heavy use of use of the MLDataUtils.jl\footnote{MLDataUtils.jl is available from \url{https://github.com/JuliaML/MLDataUtils.jl}} and TensorFlow.jl\footnote{TensorFlow.jl is available from \url{https://github.com/malmaud/TensorFlow.jl}} packages, the latter of which we enhanced significantly to allow for this work to be carried out.
+
+
+
+
 \section{Results and Discussion}\label{sec:results-and-discussion}
 
 \subsection{Qualitative Comparison of the Distribution}\label{resultsdistributions}
@@ -450,7 +460,7 @@ This is district from, but related to, its key capacity as a compositional model
 
 \subsection{Distribution Estimation}
 \pgfkeys{/pgf/number format/.cd, fixed relative,precision=4}
-\pgfplotstableset{
+\pgfplotstableset{resultsstyle/.append style={%
 	col sep=tab,
 	header=has colnames,
 	ignore chars={"},
@@ -464,13 +474,14 @@ This is district from, but related to, its key capacity as a compositional model
 	%columns/perpval/.style={column name=$PP_{V}$},
 	columns/perpstd/.style={column name=$\frac{PP}{n^3}$, column type={l}},
 	%columns/msetopeak/.style={column name=$MSE$}
+	}%
 }
 
 \begin{table}
 	\centering
 	\resizebox{\columnwidth}{!}{
 		\tiny
-		\pgfplotstabletypeset[
+		\pgfplotstabletypeset[resultsstyle,
 			every row 2 column perpstd/.style={
 				postproc cell content/.style={@cell content/.add={$\bf}{$}}
 			}
@@ -497,7 +508,7 @@ The key advantage of the CDEST model is its ability to predict a distribution fo
 \begin{table}
 	\centering
 	\resizebox{\columnwidth}{!}{
-	\pgfplotstabletypeset[
+	\pgfplotstabletypeset[resultsstyle,
 		every row 0 column 0/.style={
 			postproc cell content/.style={@cell content/.add={\it}{}}},
 		every row 3 column 0/.style={
@@ -550,12 +561,19 @@ Tagging each token with a linguistic role as a preproessing step
 may enhance the modelling of words with multiple uses. E.g. \texttt{``greenish''} which are used both as a modifier, and as a color category.
 
 The discretization process for representing the a continuous probability distribution is pragmatically effective, but unsatisfying.
-We suggest there are avenues for advancement here by the extension of \textcite{magdon1998neural} to handle conditional distributions.
+We suggest there are avenues for advancement here by the extensions of work such as \textcite{1998NNpdfDiffCdf}, \textcite{likas2001probability} and others to handle conditional distributions.
 
+\subsection{Acknowledgements}
+The computational resources required for this work were generously provided by the Australian National eResearch Collaboration Tools and Resources project (Nectar),
+as well as a GPU grant from NVIDIA.
+The first author would also like to thank Ari Herman (Portland State Univesity) with whom long-ago discussion of a related problem lead to our initial interest in this area.
 
-\clearpage
 
 \bibliography{master}
-\bibliographystyle{ijcnlp2017nourl}
+
+\clearpage
+\appendix
+
+\input{supp.tex}
 
 \end{document}
