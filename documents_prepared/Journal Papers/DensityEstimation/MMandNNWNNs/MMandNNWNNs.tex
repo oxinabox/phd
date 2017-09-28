@@ -1,0 +1,125 @@
+\documentclass{article} % For LaTeX2e
+\usepackage{iclr2018_conference,times}
+
+\usepackage[author={Lyndon White}]{pdfcomment}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Math
+\usepackage{amsmath, amsthm, amssymb, mathtools}
+
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem{cor}{Corollary}
+\newtheorem{defn}{Definition}[section]
+\newtheorem{conj}{Conjecture}[section]
+\newtheorem{exmp}{Example}[section]
+\newtheorem{rem}{Remark}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\dlim}{\displaystyle\lim}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%&
+% Referencing
+
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{cleveref}
+
+
+
+
+
+
+\title{On Nonnegatively Weighted Neural Networks and Mixture Models}
+
+
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+
+\end{abstract}
+
+
+\section{Introduction}
+
+\section{Our Results}
+
+\section{Related Work}
+
+\section{Preliminaries}
+
+\begin{defn}{Squashing Function}
+A squashing function is a function $\varphi\:\R \to \R$, that is monotonic, and is bounded above and below.
+Many traditional normal neural network activation functions, including the logistic function (sigmoid), $\tanh$, RELU6, are squashing functions.
+Other more recent activation functions are not, e.g. RELU, ELU, SELU, and varieties of "leaky" activation functions.
+\end{defn}
+
+\begin{defn}{Summability Kernel}
+A summability kernel, or approximate identity, is a sequence of continuous real valued functions $\phi_n$ for $n>0$, with the following properties:
+\begin{enumerate}
+	\item $\forall n>0$, $\int_{-\infty}^{\infty}\phi_{n}(t)\,dt=1$
+	\item $\forall n>0\, \exists M \in \R$ such that $\int_{-\infty}^{\infty}|\phi_{n}(t)|\,dt\le M$
+	\item $\forall \delta > 0$, ${\displaystyle \lim_{n\to\infty}}\int_{|t|>\delta}|\phi_{n}(t)|\,dt = 0$
+\end{enumerate}
+\end{defn}
+
+\begin{lem}{The derivative of any squashing function gives rise to a summability kernel.}
+	For any squashing function $\varphi(z)$,
+	by taking its derivative $g \coloneqq \frac{\partial\varphi(z)]}{\partial z}$ allows us to define a sequence of functions 
+	\begin{equation}
+	g_n(z) \coloneqq \frac{g(nz)}{n\left( c_{max} - c_{min} \right)} 
+	\end{equation}
+	 where $c_{min}=\lim_{z \to -\infty} \varphi{z}$ and $c_{max}=\lim_{z \to \infty} \varphi{z}$.
+	This sequence is always a summability kernel, for any smooth squashing function.
+	
+	\pdfcomment{Issue: not all squashing functions I care about are smooth, eg RELU6.}
+\end{lem}
+\begin{proof}
+For the first property:
+\begin{align}
+	\int_{-\infty}^{\infty} g_n(z) \, dz &=  \int_{-\infty}^{\infty} \frac{g(nz)}{n\left( c_{max} - c_{min} \right)} \, dz \\
+	&= \frac{1}{c_{max} - c_{min}} \int_{-\infty}^{\infty} \frac{g(nz)}{n} \, dz \\
+	&= \frac{\dlim_{t \to \infty} \varphi(nz) - \dlim_{t \to -\infty} \varphi(nz)}{c_{max} - c_{min}} && \text{(Fundermental Thm of Calculus)}\\
+	&= \frac{c_{max} - c_{min}}{c_{max} - c_{min}}  && \text{(as $n>0$)}\\
+	&= 1	
+\end{align}
+	
+For the second property: as  $\varphi$ is monotonic, its derivative $g(z)$ is non-negative for all $z$. Thus for $|g_n(z)|=g_n(z)$ and the first property proof applies.
+
+For the third property:
+\begin{align}
+	\lim_{n\to\infty} \int_{z>\delta} |g_n(z)|\, dz &= \lim_{n\to\infty} \int_{z>\delta} \frac{g(nz)}{n\left( c_{max} - c_{min} \right)} \\
+	 &= \lim_{n\to\infty} \frac{1}{c_{max} - c_{min}} 
+		 \left( \int_{-\infty}^{-\delta} \frac{g(nz)}{n} \, dz 
+		 + \int_\delta^\infty \frac{g(nz)}{n} \, dz \right) \\
+	 &= \lim_{n\to\infty} \frac{
+	 	\left(\varphi(-n\delta)-\dlim_{t \to -\infty} \varphi(nz)\right)
+	 	 + \left( \varphi(n\delta) - \dlim_{t \to \infty} \varphi(nz)\right)}%
+	 	 {c_{max} - c_{min}} \\
+	 &= \lim_{n\to\infty} \frac{
+	 	\left(\varphi(-n\delta)-c_{min} \right)
+	 	+ \left( \varphi(n\delta) - c_{max} \right)}%
+	    {c_{max} - c_{min}} \\
+	 &= \frac{
+	 	\left(c_{min}-c_{min} \right)
+	 	+ \left(c_{\max} - c_{max} \right)}%
+		{c_{max} - c_{min}} \\
+	 &= 0
+\end{align}
+
+
+\end{proof}
+
+
+\section{Proof of Theorem 1}
+
+\section{Conclusion and Future Work}
+
+\bibliography{master}
+\bibliographystyle{iclr2018_conference}
+
+\end{document}
