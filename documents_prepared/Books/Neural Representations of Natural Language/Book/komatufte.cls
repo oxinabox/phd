@@ -84,6 +84,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 
+
 \DeclareDocumentCommand{\aside}{o +m}{
 	\makenote[notes]{
 		\IfNoValueTF{#1}
@@ -99,7 +100,7 @@
 % Captions
 % https://tex.stackexchange.com/questions/352052/how-to-insert-vspaces-into-scrlayer-notecolumn-marginnote
 
-\usepackage{caption}%
+\RequirePackage[]{caption}%
 \captionsetup{compatibility=false}%
 
 \DeclareCaptionFormat{sidenote}{\aside{\vskip 0.5\baselineskip #1#2#3}}%

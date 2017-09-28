@@ -14,7 +14,8 @@ Whether one sees the artificial neural network technique described below as lear
 This chapter is a introduction to machine learning via neural networks.
 It is 
 Chapter 2: Introduction to machine learning for representations (10 pages)
-This chapter can be skipped by readers already familiar with machine learning
+This chapter can be skipped by readers already familiar with machine learning.
+It takes a much more tutorial tone than the remainder of the book.
 This will not cover all aspects of machine learning, which of-course could be an entire book on its own.
 It will cover the crucial basic techniques used in the works discussed in part B. The main focus will be on introducing neural networks, going into reasonable detail on hyper-parameters such as activation functions and layer sizes, as well as covering training techniques. 
 It will not cover techniques that are special to natural language processing – those will be discussed in chapters 4,5, and 6.
@@ -310,7 +311,7 @@ As one of the most basic networks, consider a classifier on the classic MNIST ch
 
 \input{figs/chapterintromachinelearning/mnist-advanced.tex}
 
-\subsection{Bottle Necking Auto-encoder}
+\subsection{Bottle Necking Autoencoder}
 An autoencoder is a tool primarily for use in finding a representation for their input.
 There are many varieties of autoencoder based on neural network related techniques, including the works of \textcite{hinton2002RBM,hinton2006reducing,hinton2006fastDBN,vincent2010stacked,ICML2012Chen_416,2014VAE}.
 This is itself a whole subfield.
@@ -373,6 +374,7 @@ An example of the recreation of an input from the test set can be seen in
 	\includegraphics[scale= 0.30]{figs/chapterintromachinelearning/recreation}
 \end{figure}
 
+
 More significantly, a sampling of the code layer is visually shown in \Cref{mnist-encoding}.
 In this image, the positions on the X and Y axis of the input images, are given by the values on the coded layer said images correspond to.
 It can be seen the the coding is capturing key information about the appearance.
@@ -387,7 +389,7 @@ It is this property of networks, to implictly discover and define the most impor
 
 \begin{figure}
 	\caption{A sampling of MNIST images from the test-set, arranged according to the values of 2 neurons on the encoding layer.}
-	\includegraphics[width=\textwidth]{/figs/chapterintromachinelearning/mnist-encoding.png}
+	\includegraphics[width=\textwidth]{figs/chapterintromachinelearning/mnist-encoding.png}
 \end{figure}
 
 \section{Recurrent Neural Networks}
@@ -407,12 +409,8 @@ but each one acting at a different time-step.
 	\caption{The unrolled structure of an RNN for us in Encoding, Decoding and Encoding-Decoding (sequence-to-sequence) problems. RU is the recurrent unit -- the neural network which reoccurs at each time step.}
 	
 	\label{fig-rnns}
-
-	\resizebox{\textwidth}{!}{
-		\input{figs/chapterintromachinelearning/rnns.tikz}
-	}
-
-
+	
+	\resizebox{\textwidth}{!}{\input{figs/chapterintromachinelearning/rnns.tikz}}
 \end{figure}
 
 Three general examples of the structure of RNNs are shown in \Cref{fig-rnns}.
@@ -420,15 +418,45 @@ These exampled will be considered in more later in this section below.
 At each time-step the same network is used, with different inputs.
 For purposes of looking at this in the big picture we will first consider each network a black-box recurrent unit (RU).
 
-The recurrent unit
+The recurrent unit takes at each time step, an input for that time-step, some representation its of state for the RU at the previous timestep; and it produces an output for that time-step, and its state representation for the next time-step.
+A diagram of this is shown in \Cref{fig-ru}.
+Every-time step has this 2 inputs and 2 outputs.
+However, sometimes we will ignore them.
+The initial state for the first time step is normally set to some zero vector,
+and the final state at end of the sequence of normally discarded.
+The outputs of many states are often discarded (in encoders), and the inputs are often filled deterministically with some low-meaning, or just generally useful prompt (in decoders).
+
+In general most uses of recurrent networks can be considers as encoders, decoders or as both.
+These common structures are shown in \Cref{fig-rnns}.
+The motivation for using an RNN is if the size of the input and the size of the output is not consistent.
+
+For example, if the system is attempting to learn a mapping from colors, represented as numerical triples to their names then it is not known how many words should be output to describe a color e.g. \texttt{(144,238,144)} might map to having 3 outputs: \natlang{very light green}; but \texttt{(255,165,0)} might map to just one: \natlang{orange} \pcite{2016arXiv160603821M}.
+In this case, one would use a decoder type network.
+One input, at the first time-step, and use the output from every time-step.
+Each output would be a softmax probability for possible words -- which would be a softmax d.
+The inputs at each time-step after the first in such a network, are often something like the most-likely previous output (or at train time the targeted output at the previous time-step), concatenated with the value being decoded.
+In theory providing this information after the first time-step is not required -- it can call be stored in the state, and the inputs after could just be prompts of the zero vector -- in practice is it low cost and intuitively simplifies the relationships that must be learnt.
+
+The opposed example applies for encoder networks:
+if one has a series of inputs of different lengths,
+but only a fixed sized output.
+For example the reverse problem, going from words to the most likely point in color space \pdfcomment{Cite myself here, it is a good matched example}.
+At each time-step the inputs are are provided -- being one of the words in the compound color name.
+All the outputs at all time-steps except the last can be ignored.
+The output of the final timestep can be the true output.
+
+
+
+
+
 
 
 \begin{figure}
-	\caption{A recurrent unit with its 2 inputs and 2 outputs. Not shown are the internal Weight and Bias parameters which are trained to control the interactions.}
+	\caption{A recurrent unit with its 2 inputs and 2 outputs. Not shown are the internal Weight and Bias parameters which are trained to control the interactions.}	
 	
 	\label{fig-ru}
-
-\input{figs/chapterintromachinelearning/rnn-unit.tikz}
+	
+	\input{./figs/chapterintromachinelearning/rnn-unit.tikz}
 \end{figure}
 
 
