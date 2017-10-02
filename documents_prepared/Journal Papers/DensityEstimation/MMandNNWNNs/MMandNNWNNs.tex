@@ -23,6 +23,10 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%&
 % Referencing
 
+\usepackage{natbib}
+\newcommand{\textcite}{\cite}
+\newcommand{\parencite}{\citep}
+
 \usepackage{hyperref}
 \usepackage{url}
 \usepackage{cleveref}
@@ -48,6 +52,10 @@
 
 \section{Our Results}
 
+\begin{thm}
+	Nonnegativly weighted neural networks (NNWNN) are (at least) equivalent to the integral of unnormalized (Gaussian-like) mixture models, and this means it can approximate a class of functions that can be described as the set of unnormalised continuous cumulative probability density functions (CDFs) with compact supports.
+\end{thm}
+
 \section{Related Work}
 
 \section{Preliminaries}
@@ -67,25 +75,28 @@ A summability kernel, or approximate identity, is a sequence of continuous real 
 \end{enumerate}
 \end{defn}
 
-\begin{lem}{The derivative of any continuous squashing function gives rise to a summability kernel.}
+\begin{lem}\label{lem:squashderivissum}
+	The derivative of any continuous squashing function gives rise to a summability kernel.
 	For any squashing function $\varphi(z)$,
-	by taking its derivative $g \coloneqq \frac{\partial\varphi(z)]}{\partial z}$ allows us to define a sequence of functions 
+	we define a sequence of functions from scaling its derivative 
+    $g \coloneqq \frac{\partial\varphi(z)}{\partial z}$, as follows:
 	\begin{equation}
-	g_n(z) \coloneqq \frac{g(nz)}{n\left( c_{max} - c_{min} \right)} 
+	g_n(z) \coloneqq \frac{g(k_n z)}{k_n\left( c_{max} - c_{min} \right)} 
 	\end{equation}
-	 where $c_{min}=\lim_{z \to -\infty} \varphi{z}$ and $c_{max}=\lim_{z \to \infty} \varphi{z}$.
+	 where $c_{min}=\lim_{z \to -\infty} \varphi{z}$ and $c_{max}=\lim_{z \to \infty} \varphi{z}$,
+	 and $k_n$ is the $n$th element of some increasing sequence of real numbers.
 	This sequence is always a summability kernel, for any continuous squashing function.
 	
-	\pdfcomment{Issue: not all squashing functions I care about are continuous, eg RELU6. and they don't have the property I think I need
+	\pdfcomment{Issue: not all squashing functions I care about are continuous, eg RELU6, but I know this works anyway, see notes.
 		See https://math.stackexchange.com/questions/2448729}
 
 \end{lem}
 \begin{proof}
 For the first property:
 \begin{align}
-	\int_{-\infty}^{\infty} g_n(z) \, dz &=  \int_{-\infty}^{\infty} \frac{g(nz)}{n\left( c_{max} - c_{min} \right)} \, dz \\
-	&= \frac{1}{c_{max} - c_{min}} \int_{-\infty}^{\infty} \frac{g(nz)}{n} \, dz \\
-	&= \frac{\dlim_{t \to \infty} \varphi(nz) - \dlim_{t \to -\infty} \varphi(nz)}{c_{max} - c_{min}} && \text{(Fundermental Thm of Calculus)}\\
+	\int_{-\infty}^{\infty} g_n(z) \, dz &=  \int_{-\infty}^{\infty} \frac{g(nz)}{k_n\left( c_{max} - c_{min} \right)} \, dz \\
+	&= \frac{1}{c_{max} - c_{min}} \int_{-\infty}^{\infty} \frac{g(k_n z)}{n} \, dz \\
+	&= \frac{\dlim_{t \to \infty} \varphi(k_n z) - \dlim_{t \to -\infty} \varphi(k_n z)}{c_{max} - c_{min}} && \text{(Fundermental Thm of Calculus)}\\
 	&= \frac{c_{max} - c_{min}}{c_{max} - c_{min}}  && \text{(as $n>0$)}\\
 	&= 1	
 \end{align}
@@ -94,17 +105,18 @@ For the second property: as  $\varphi$ is monotonic, its derivative $g(z)$ is no
 
 For the third property:
 \begin{align}
-	\lim_{n\to\infty} \int_{z>\delta} |g_n(z)|\, dz &= \lim_{n\to\infty} \int_{z>\delta} \frac{g(nz)}{n\left( c_{max} - c_{min} \right)} \\
+	\lim_{n\to\infty} \int_{z>\delta} |g_n(z)|\, dz 
+	 &= \lim_{n\to\infty} \int_{z>\delta} \frac{g(k_n z)}{n\left( c_{max} - c_{min} \right)} \\
 	 &= \lim_{n\to\infty} \frac{1}{c_{max} - c_{min}} 
-		 \left( \int_{-\infty}^{-\delta} \frac{g(nz)}{n} \, dz 
-		 + \int_\delta^\infty \frac{g(nz)}{n} \, dz \right) \\
+		 \left( \int_{-\infty}^{-\delta} \frac{g(k_n z)}{n} \, dz 
+		 + \int_\delta^\infty \frac{g(k_n z)}{n} \, dz \right) \\
 	 &= \lim_{n\to\infty} \frac{
-	 	\left(\varphi(-n\delta)-\dlim_{t \to -\infty} \varphi(nz)\right)
-	 	 + \left( \varphi(n\delta) - \dlim_{t \to \infty} \varphi(nz)\right)}%
+	 	\left(\varphi(-k_n\delta)-\dlim_{t \to -\infty} \varphi(k_n z)\right)
+	 	 + \left( \varphi(k_n\delta) - \dlim_{t \to \infty} \varphi(k_n z)\right)}%
 	 	 {c_{max} - c_{min}} \\
 	 &= \lim_{n\to\infty} \frac{
-	 	\left(\varphi(-n\delta)-c_{min} \right)
-	 	+ \left( \varphi(n\delta) - c_{max} \right)}%
+	 	\left(\varphi(-k_n\delta)-c_{min} \right)
+	 	+ \left( \varphi(k_n\delta) - c_{max} \right)}%
 	    {c_{max} - c_{min}} \\
 	 &= \frac{
 	 	\left(c_{min}-c_{min} \right)
@@ -113,11 +125,110 @@ For the third property:
 	 &= 0
 \end{align}
 
+\end{proof}
+
+\begin{lem}\label{lem:approxwithsummability}
+For every PDF of a distribution with compact support $f$,
+for all points in its domain $x$
+then for any $\epsilon >0$ there exists a finite sequence of terms from a summability kernel $\phi_1, \ldots, \phi_M$, with translation terms $c_1,\ldots,c_M$ and positive weights $b_1,\ldots,b_M$ with $\sum_{i=1}^{i=M} b_i = 1$ such that:
+
+\begin{align}
+\left\Vert f(x)-\sum_{i=1}^{i=M}b_{i}\phi_{i}(x-c_i)\right\Vert _{1}<\epsilon &&
+ \text{and} &&
+\left\Vert f(x)-\sum_{i=1}^{i=M}b_{i}\phi_{i}(x-c_i)\right\Vert _{\infty}<\epsilon
+\end{align}
+
+\end{lem}
+
+A very close analogy of this lemma, and its proof appears as Lemma 2.2 of \parencite{bacharoglou2010approximation}, where the focus was on more restricted sequences of Gaussian density functions. The detail and proof remain unchanged when applied to all summability kernels.
+It relies on the uniform convergence of the convolution of a summability kernel and a continuous function to the continuous function, and the uniform convergence of the Riemann sum to an integral.
+\textcite{bacharoglou2010approximation} goes on to prove several other stronger statements, which they note, all all generally applicable to summability kernels.
+We paraphrase the core proof here, as applied to summability kernels.
+\begin{proof}
+	$\forall p \in \lbrace 1,\infty \rbrace \forall x  \forall \epsilon_1 \exists N_1>0 \forall n_1>N_1$ we have
+	\begin{align}
+	\left\| f \ast \phi_{n_1}(x) - f(x) \right\|_p &< \epsilon_1 && \text{approximate identity property} \\
+	\left\| \int_{-\infty}^\infty f(t)\phi_{n_1}(x-t) \, dt - f(x)\right\|_p &< \epsilon_1 && \text{definition of convolution} \\
+	\left\| \int_{t \in supp(f)]} f(t)\phi_{n_1}(x-t) \, dt - f(x)\right\|_p &< \epsilon_1 && \text{compact support of $f$}
+	\end{align}
+	
+	By the use of a Riemann sum, over slices $V_1,\ldots, V_M$ covering the support of $f$, each containing one of the points $t_1,...,t_m$ respectively,
+	we have for $|V_i|$ being the area of slice $V_i$ then
+	$\forall \epsilon_2 \exists N_2>0 \forall n_2>N_2$ it is such that 
+	\begin{align}
+		\left\| f \ast \phi_(x) - \sum^{n_2}_{i=1} f(t_i)|V_i|\phi_{n_1}(x-t_i) \right\|_p &< \epsilon_2 && \text{Riemann sum} 
+	\end{align}
+	
+	Combining these and using $N > N_1 + N_2$ $n>N$ then by the triangle inequality we have:
+	\begin{align}
+	\left\| f(x) - \sum^{n}_{i=1} f(t_i)|V_i|\phi_n(x-t_i) \right\|_p &<  &&  \\
+	\left\| f \ast \phi_n(x) - \sum^{n}_{i=1} f(t_i)|V_i|\phi_n(x-t_i) \right\|_p 
+	+  \left\| f \ast \phi_n(x) - f(x) \right\|_p &< \epsilon_1 + \epsilon_2 
+	\end{align}
+	
+	By the mean value theorem there exist suitable values for $V_i$ and $t_i$, such that $\sum_{i=1}^{i=N}f(t_i)|V_i|=1$, and as $|V_i|$ as a volumes is greater than zero, and $f(t_i)>0$ as $f$ is a pdf, we thus choose $b_i=f(t_i)|V_i|$, and can always select sufficiently small $\epsilon_1$ and $\epsilon_2$ choose $c_i=t_i$,
+	to have $\epsilon=\epsilon_1+\epsilon_2$.
+	
+	Thus 
+	\begin{align}
+	\left\| f(x) - \sum^{n}_{i=1} b_i \phi_n(x-c_i) \right\|_p &<  \epsilon
+	\end{align}
 
 \end{proof}
 
 
+
 \section{Proof of Theorem 1}
+
+We begin by considering some neural network in the UAT form (single hidden layer, linear output layer),
+$\varphi$ being a squashing function, with weight matrixes $W$ and $V$ and bias vector $b$.
+As it is a NNWNN $W_{i,j} \ge 0$ and $V_{i,j} \ge 0$.
+
+For the case of a single output, single input network, with $n_h$ neurons in the hidden layer.
+\begin{equation}
+N(x;W,V,b) = \sum_{j=1}^{j=n_h} V_{1,j} \varphi (b_j+W_{j,1}x_1)
+\end{equation}
+
+The for the case with $n_i$ inputs and $n_o$ outputs this becomes:
+
+\begin{equation}
+N(x;W,V,b)=V\varphi(Wx+b)=\left[\begin{array}{c}
+{\displaystyle \sum_{j=1}^{j=n_{h}}}V_{1,j}\varphi\left(b_{j}+\sum_{i=1}^{i=n_{i}}\varphi\left(W_{j,i}x_{i}\right)\right)\\
+\vdots\\
+{\displaystyle \sum_{j=1}^{j=n_{h}}}V_{n_{o},j}\varphi\left(b_{j}+\sum_{i=1}^{i=n_{i}}\varphi\left(W_{j,i}x_{i}\right)\right)
+\end{array}\right]
+\end{equation}
+
+For the remained of this proof we will work with the single input single output case.
+The generalisation to multi-input multi-output is straight forward, if verbose (to simply for the reader considering this generalisation, we will leave the subscripts for singleton dimensions in).
+
+We consider the network's derivative with respect to its input $x$.
+
+\begin{equation}
+\frac{\partial N(x;W,V,b)}{\partial x_1} = \sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \frac{\partial(\varphi) (b_j+W_{j,1}x_1)}{\partial x_1}
+\end{equation}
+
+We can re-express the value of $V_{1,j}$ as $V_{1,j}=\frac{\alpha_{1,j}}{W_{j,1}^2(c_{max}-c_{min})}$,
+for $c_{min}$ and $c_{max}$ the lower and upper bounds of the squashing function ($\varphi$) respectively.
+We also re-express $b_j$ as $b_j=\frac{\beta_{j,1}}{W_{j,1}}$  using $g = \frac{\partial\varphi(z)}{\partial z}$.
+
+
+\begin{align}
+\frac{\partial N(x;W,V,b)}{\partial x_1} 
+&= \sum_{j=1}^{j=n_h} \frac{\alpha_{1,j}}{W_{j,1}^2(c_{max}-c_{min})} \, W_{j,1} g(\frac{W_{j,1}\beta_{j,1}}{W_{j,1}} + W_{j,1}x_1)\\
+\frac{\partial N(x;W,V,b)}{\partial x_1} 
+&= \sum_{j=1}^{j=n_h} \alpha_{1,j} \frac{ g(W_{j,1}\left( x_1 + \beta_{j,1} \right))}{W_{j,1}(c_{max}-c_{min})} \\
+\end{align}
+
+We note that this is now in the form required for \Cref{lem:squashderivissum},
+to apply.
+So we use the summability kernel thus described $g_n(x) = \frac{k_n g(k_n x)}{k_n(c_{max}-c_{min})}$
+For $k_n = W_{j,1}$ from some suitable sequence $k$.
+
+\begin{align}
+\frac{\partial N(x;W,V,b)}{\partial x_1} 
+&= \sum_{j=1}^{j=n_h} \alpha_{1,j} g_n\left( x_1 + \beta_{j,1} \right))
+\end{align}
 
 \section{Conclusion and Future Work}
 
