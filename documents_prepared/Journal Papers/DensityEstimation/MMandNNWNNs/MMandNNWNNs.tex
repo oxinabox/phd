@@ -3,10 +3,21 @@
 
 \usepackage[author={Lyndon White}]{pdfcomment}
 
+\usepackage{amsmath, amsthm, amssymb, mathtools}
+
+% Referencing
+
+\usepackage{natbib}
+\newcommand{\textcite}{\cite}
+\newcommand{\parencite}{\citep}
+
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{cleveref}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Math
-\usepackage{amsmath, amsthm, amssymb, mathtools}
+
 
 \newtheorem{thm}{Theorem}[section]
 \newtheorem{lem}[thm]{Lemma}
@@ -21,17 +32,6 @@
 \newcommand{\dlim}{\displaystyle\lim}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%&
-% Referencing
-
-\usepackage{natbib}
-\newcommand{\textcite}{\cite}
-\newcommand{\parencite}{\citep}
-
-\usepackage{hyperref}
-\usepackage{url}
-\usepackage{cleveref}
-
-
 
 
 
@@ -128,22 +128,24 @@ For the third property:
 \end{proof}
 
 \begin{lem}\label{lem:approxwithsummability}
-For every PDF of a distribution with compact support $f$,
+For every continuous non-negative function with compact support $f$,
 for all points in its domain $x$
-then for any $\epsilon >0$ there exists a finite sequence of terms from a summability kernel $\phi_1, \ldots, \phi_M$, with translation terms $c_1,\ldots,c_M$ and positive weights $b_1,\ldots,b_M$ with $\sum_{i=1}^{i=M} b_i = 1$ such that:
+then for any $\epsilon >0$ there exists an element $\phi_n$ from from a summability kernel $\lbrace \phi_i  \rbrace_{i>0}$, and a sequence of translation terms $c_1,\ldots,c_M$ and positive weights $b_1,\ldots,b_M$ with $\sum_{i=1}^{i=M} b_i = 1$ such that:
+
 
 \begin{align}
-\left\Vert f(x)-\sum_{i=1}^{i=M}b_{i}\phi_{i}(x-c_i)\right\Vert _{1}<\epsilon &&
+\left\Vert f(x)-\sum_{i=1}^{i=M}b_{i}\phi_{n}(x-c_i)\right\Vert _{1}<\epsilon &&
  \text{and} &&
-\left\Vert f(x)-\sum_{i=1}^{i=M}b_{i}\phi_{i}(x-c_i)\right\Vert _{\infty}<\epsilon
+\left\Vert f(x)-\sum_{i=1}^{i=M}b_{i}\phi_{n}(x-c_i)\right\Vert _{\infty}<\epsilon
 \end{align}
 
 \end{lem}
 
-A very close analogy of this lemma, and its proof appears as Lemma 2.2 of \parencite{bacharoglou2010approximation}, where the focus was on more restricted sequences of Gaussian density functions. The detail and proof remain unchanged when applied to all summability kernels.
+This proof is based on a similar proof for Gaussian density functions which appears as Lemma 2.2 of \textcite{bacharoglou2010approximation}.
 It relies on the uniform convergence of the convolution of a summability kernel and a continuous function to the continuous function, and the uniform convergence of the Riemann sum to an integral.
-\textcite{bacharoglou2010approximation} goes on to prove several other stronger statements, which they note, all all generally applicable to summability kernels.
-We paraphrase the core proof here, as applied to summability kernels.
+Another notionally similar (if significantly more dense) proof also appears as that for Theorem 3.1 of \textcite{NESTORIDIS20111783}.
+
+
 \begin{proof}
 	$\forall p \in \lbrace 1,\infty \rbrace \forall x  \forall \epsilon_1 \exists N_1>0 \forall n_1>N_1$ we have
 	\begin{align}
@@ -156,7 +158,7 @@ We paraphrase the core proof here, as applied to summability kernels.
 	we have for $|V_i|$ being the area of slice $V_i$ then
 	$\forall \epsilon_2 \exists N_2>0 \forall n_2>N_2$ it is such that 
 	\begin{align}
-		\left\| f \ast \phi_(x) - \sum^{n_2}_{i=1} f(t_i)|V_i|\phi_{n_1}(x-t_i) \right\|_p &< \epsilon_2 && \text{Riemann sum} 
+		\left\| f \ast \phi_{n_1}(x) - \sum^{n_2}_{i=1} f(t_i)|V_i|\phi_{n_1}(x-t_i) \right\|_p &< \epsilon_2 && \text{Riemann sum} 
 	\end{align}
 	
 	Combining these and using $N > N_1 + N_2$ $n>N$ then by the triangle inequality we have:
@@ -166,8 +168,8 @@ We paraphrase the core proof here, as applied to summability kernels.
 	+  \left\| f \ast \phi_n(x) - f(x) \right\|_p &< \epsilon_1 + \epsilon_2 
 	\end{align}
 	
-	By the mean value theorem there exist suitable values for $V_i$ and $t_i$, such that $\sum_{i=1}^{i=N}f(t_i)|V_i|=1$, and as $|V_i|$ as a volumes is greater than zero, and $f(t_i)>0$ as $f$ is a pdf, we thus choose $b_i=f(t_i)|V_i|$, and can always select sufficiently small $\epsilon_1$ and $\epsilon_2$ choose $c_i=t_i$,
-	to have $\epsilon=\epsilon_1+\epsilon_2$.
+	As $|V_i|$ as a volumes is greater than zero, and $f(t_i) \ge 0$ as $f$ is a non-negative function, we thus re-express the above using $b_i=f(t_i)|V_i|$.
+	Also setting $c_i=t_i$, $\epsilon=\epsilon_1+\epsilon_2$.
 	
 	Thus 
 	\begin{align}
@@ -177,25 +179,24 @@ We paraphrase the core proof here, as applied to summability kernels.
 \end{proof}
 
 
-
 \section{Proof of Theorem 1}
 
-We begin by considering some neural network in the UAT form (single hidden layer, linear output layer),
-$\varphi$ being a squashing function, with weight matrixes $W$ and $V$ and bias vector $b$.
+We begin by considering some NNWNN with a single hidden layer, and an affine output layer.
+For $\varphi$ being a squashing function, with weight matrixes $W$ and $V$ and bias vectors $b$ and $c$.
 As it is a NNWNN $W_{i,j} \ge 0$ and $V_{i,j} \ge 0$.
 
-For the case of a single output, single input network, with $n_h$ neurons in the hidden layer.
+For the case of a single output, single input network, with $n_h$ neurons in the hidden layer the network is described by
 \begin{equation}
-N(x;W,V,b) = \sum_{j=1}^{j=n_h} V_{1,j} \varphi (b_j+W_{j,1}x_1)
+N(x;W,V,b,c) = \sum_{j=1}^{j=n_h} V_{1,j} \varphi (b_j+W_{j,1}x_1) + c_1
 \end{equation}
 
 The for the case with $n_i$ inputs and $n_o$ outputs this becomes:
 
 \begin{equation}
-N(x;W,V,b)=V\varphi(Wx+b)=\left[\begin{array}{c}
-{\displaystyle \sum_{j=1}^{j=n_{h}}}V_{1,j}\varphi\left(b_{j}+\sum_{i=1}^{i=n_{i}}\varphi\left(W_{j,i}x_{i}\right)\right)\\
+N(x;W,V,b,c)=V\varphi(Wx+b)=\left[\begin{array}{c}
+{\displaystyle \sum_{j=1}^{j=n_{h}}}V_{1,j}\varphi\left(b_{j}+\sum_{i=1}^{i=n_{i}}\varphi\left(W_{j,i}x_{i}\right)\right) + c_1\\
 \vdots\\
-{\displaystyle \sum_{j=1}^{j=n_{h}}}V_{n_{o},j}\varphi\left(b_{j}+\sum_{i=1}^{i=n_{i}}\varphi\left(W_{j,i}x_{i}\right)\right)
+{\displaystyle \sum_{j=1}^{j=n_{h}}}V_{n_{o},j}\varphi\left(b_{j}+\sum_{i=1}^{i=n_{i}}\varphi\left(W_{j,i}x_{i}\right)\right) +c_{n_o}
 \end{array}\right]
 \end{equation}
 
@@ -205,30 +206,83 @@ The generalisation to multi-input multi-output is straight forward, if verbose (
 We consider the network's derivative with respect to its input $x$.
 
 \begin{equation}
-\frac{\partial N(x;W,V,b)}{\partial x_1} = \sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \frac{\partial(\varphi) (b_j+W_{j,1}x_1)}{\partial x_1}
+\frac{\partial N(x;W,V,b,c)}{\partial x_1} = \sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \frac{\partial(\varphi) (b_j+W_{j,1}x_1)}{\partial x_1}
 \end{equation}
 
 We can re-express the value of $V_{1,j}$ as $V_{1,j}=\frac{\alpha_{1,j}}{W_{j,1}^2(c_{max}-c_{min})}$,
 for $c_{min}$ and $c_{max}$ the lower and upper bounds of the squashing function ($\varphi$) respectively.
+Note that $\alpha_{1,j}$ is non-negative, as a consequence of $V_{1,j}$ and $W_{j,1}$ being non-negative.
+
 We also re-express $b_j$ as $b_j=\frac{\beta_{j,1}}{W_{j,1}}$  using $g = \frac{\partial\varphi(z)}{\partial z}$.
 
 
 \begin{align}
-\frac{\partial N(x;W,V,b)}{\partial x_1} 
+\frac{\partial N(x;W,V,b,c)}{\partial x_1} 
 &= \sum_{j=1}^{j=n_h} \frac{\alpha_{1,j}}{W_{j,1}^2(c_{max}-c_{min})} \, W_{j,1} g(\frac{W_{j,1}\beta_{j,1}}{W_{j,1}} + W_{j,1}x_1)\\
-\frac{\partial N(x;W,V,b)}{\partial x_1} 
+\frac{\partial N(x;W,V,b,c)}{\partial x_1} 
 &= \sum_{j=1}^{j=n_h} \alpha_{1,j} \frac{ g(W_{j,1}\left( x_1 + \beta_{j,1} \right))}{W_{j,1}(c_{max}-c_{min})} \\
 \end{align}
 
 We note that this is now in the form required for \Cref{lem:squashderivissum},
 to apply.
-So we use the summability kernel thus described $g_n(x) = \frac{k_n g(k_n x)}{k_n(c_{max}-c_{min})}$
-For $k_n = W_{j,1}$ from some suitable sequence $k$.
+So we use the summability kernel thus described $g_n(x) = \frac{k_n g(k_n x)}{k_n(c_{max}-c_{min})}$.
+for arbitrary choice of $1 \le J \le n_h$ such that $W_{J,1} \ne 0$
+define any arbitrary increasing sequence $k$ such that $k_n=W_{J,1}$,
+not that we have not placed any restriction on $k_n=W_{J,1}$ beyond that it is positive -- it can be arbitrarily large.
+We assign  $a_j=0$ for all $j \ne J$.
+
 
 \begin{align}
 \frac{\partial N(x;W,V,b)}{\partial x_1} 
 &= \sum_{j=1}^{j=n_h} \alpha_{1,j} g_n\left( x_1 + \beta_{j,1} \right))
 \end{align}
+
+We can apply \Cref{lem:approxwithsummability}, and thus conclude:
+for all non-negative continuous functions with compact support $f$,
+for all points in its domain $x$
+then for all $\epsilon > 0$, for all $p\in \lbrace 1, \infty \rbrace$
+there exist a set of non-negative weight matrices $W$, $V$ (whose dimensions are determined by the hidden layer size $n_h$) and a bias vector $b$ and $c$
+such that 
+\begin{align}
+\left\|\frac{\partial N(x;W,V,b, c)}{\partial x_1} - f(x) \right\|_p < \epsilon
+\end{align}
+
+We can thus say that $\frac{\partial N(x;W,V,b,c)}{\partial x_1}$ is dense in the space of non-negative continuous functions with compact support.
+
+From this by application of the fundermental theorem of calculus,
+we have
+\begin{align}
+\left\| \frac{\partial N(x;W,V,b, c)}{\partial x_1} - f(x) \right\|_p &< \epsilon \\
+\left\| \int_{\inf supp(f)}^y \frac{\partial N(x;W,V,b, c)}{\partial x_1} - f(x) \, dx \right\|_p &< \left( y-\inf supp(f) \right)  \epsilon \\
+\left\| N(y;W,V,b, c) - N(\inf supp(f);W,V,b, c) - \int_{\inf supp(f)}^y f(x) \, dx \right\|_p &< \left( y-\inf supp(f) \right)  \epsilon\\
+\end{align}
+
+\pdfcomment{Is this be right?}
+
+We chose a value for $c$ as $c^\star=-N(\inf supp(f);W,V,b, 0)$, thus $N(\inf supp(f);W,V,b, c^\star)=0$.
+We rewrite using $\varepsilon = \left( y-\inf supp(f) \right)  \epsilon$
+\begin{align}
+\left\| N(y;W,V,b, c^\star) - F(y) \right\|_p &< \varepsilon
+\end{align}
+
+Consider what $F$ represents.
+As it is the integral of a non-negative continuous function, it is a monotonic differentiable function.
+As outside the support of $f$ its gradient is zero, it is thus bounded below, and above.
+
+We thus conclude with
+
+For all monotonic differentiable functions bounded above and below $F$,
+for all points in its domain $x$
+then for all $\varepsilon > 0$, for all $p\in \lbrace 1, \infty \rbrace$
+there exist a set of non-negative weight matrices $W$, $V$ (whose dimensions are determined by the hidden layer size $n_h$) and a bias vector $b$ and $c$
+
+\begin{align}
+\left\| N(x;W,V,b, c) - F(x) \right\|_p &< \varepsilon
+\end{align}
+
+
+
+
 
 \section{Conclusion and Future Work}
 
