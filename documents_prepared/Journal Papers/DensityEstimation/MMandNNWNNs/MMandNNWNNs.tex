@@ -19,12 +19,12 @@
 % Math
 
 
-\newtheorem{thm}{Theorem}[section]
+\newtheorem{thm}{Theorem}
 \newtheorem{lem}[thm]{Lemma}
 \newtheorem{prop}[thm]{Proposition}
-\newtheorem{cor}{Corollary}
-\newtheorem{defn}{Definition}[section]
-\newtheorem{conj}{Conjecture}[section]
+\newtheorem{cor}{Corollary}[thm]
+\newtheorem{defn}{Definition}
+\newtheorem{conj}{Conjecture}
 \newtheorem{exmp}{Example}[section]
 \newtheorem{rem}{Remark}
 
@@ -52,16 +52,50 @@
 
 \section{Our Results}
 
-\begin{thm}
-	Nonnegativly weighted neural networks (NNWNN) are (at least) equivalent to the integral of unnormalized (Gaussian-like) mixture models, and this means it can approximate a class of functions that can be described as the set of unnormalised continuous cumulative probability density functions (CDFs) with compact supports.
+\begin{thm} \label{thm:upper}
+	Nonnegativly weighted neural networks (NNWNN) always:
+	
+	\begin{enumerate}
+		\item continuous \pdfcomment{idk if I need this statement it is true, but idk if it is useful}
+		\item monotonically increasing
+		\item bounded above and below
+	\end{enumerate}
+\end{thm}
+\begin{cor}\label{cor:noapproxapproximate}
+	Nonnegativly weighted neural networks (NNWNN) not able to able to approximate any functions that are not monotonically increasing and bounded above and below.
+\end{cor}
+
+\begin{thm} \label{thm:nnwnnuat}
+	Nonnegativly weighted neural networks (NNWNN) are able to approximate any monotonically increasing functions bounded above and below.
+	
+	
+	For such a function $F$,
+	for all points in its domain $x$
+	then for all $\varepsilon > 0$, for all $p\in \lbrace 1, \infty \rbrace$
+	there exist a set of non-negative weight matrices $W$, $V$ and a bias vector $b$ and $c$,
+	and for any squashing function $\varphi$,
+	which defines a network of the form:
+	\begin{equation}
+		N(x;W,V,b,c)=\sum_{j=1}^{j=n_{h}}V_{1,j}\varphi(b_{j}+W_{j,1}x_{1})+c_{1}
+	\end{equation}
+	
+	then 
+	\begin{align}
+	\left\| N(x;W,V,b, c) - F(x) \right\|_p &< \varepsilon
+	\end{align}
+	The generalises to multidimentional inputs and outputs.
 \end{thm}
 
+\Cref{thm:nnwnnuat}  gives a lower bound on the class of functions able to be approximated by a NNWNN.
+\Cref{cor:noapproxapproximate} gives an identical upper bound on the class of functions able to be approximated by a NNWNN.
+
+Thus we know that this bound is exactly the set of functions able to be approximated.
 \section{Related Work}
 
 \section{Preliminaries}
 
 \begin{defn}{Squashing Function}
-A squashing function is a function $\varphi\:\R \to \R$, that is monotonic, and is bounded above and below.
+A squashing function is a function $\varphi\:\R \to \R$, that is monotonically increasing, and is bounded above and below.
 Many traditional normal neural network activation functions, including the logistic function (sigmoid), $\tanh$, RELU6, are squashing functions.
 Other more recent activation functions are not, e.g. RELU, ELU, SELU, and varieties of "leaky" activation functions.
 \end{defn}
@@ -175,13 +209,80 @@ Another notionally similar (if significantly more dense) proof also appears as t
 	\begin{align}
 	\left\| f(x) - \sum^{n}_{i=1} b_i \phi_n(x-c_i) \right\|_p &<  \epsilon
 	\end{align}
+\end{proof}
 
+\subsection{Proof of \Cref{thm:upper}}
+The proofs of the basic properties of NNWNNs,
+as simple and boil down to well known properties of the spaces of continuous/bounded/monotonically increasing functions being closed under various operations.
+\begin{proof}
+	We begin by considering some NNWNN with a single hidden layer, and an affine output layer.
+	For $\varphi$ being a squashing function, with weight matrixes $W$ and $V$ and bias vectors $b$ and $c$.
+	As it is a NNWNN $W_{i,j} \ge 0$ and $V_{i,j} \ge 0$.
+	
+	For the case of a single output, single input network, with $n_h$ neurons in the hidden layer the network is described by
+	\begin{equation}
+	N(x;W,V,b,c) = \sum_{j=1}^{j=n_h} V_{1,j} \varphi (b_j+W_{j,1}x_1) + c_1
+	\end{equation}
+
+	For the first property: that NNWNN is continuous,
+	consider: that $\varphi$ is continuous,
+	$x \mapsto W_{j,1}x + b_j$ is continuous,
+	and continuous functions are closed under addition, scalar multiplication, and composition.
+	For further details see e.g. \textcite{rudin1976principles} (chapter 4.)
+	
+	For the second property: the NNWNNs are monotonically increasing:
+	consider input points $\alpha$ and $\beta$, such that $\alpha\ge\beta$.
+	\begin{align}
+	\alpha &\ge \beta \\
+	W_{j,1}\alpha+b_j &\ge W_{j,1}\beta+b_j && \text{as $W_{j,i}\ge0$} \\
+	\varphi(W_{j,1}\alpha+b_j) &\ge \varphi(W_{j,1}\beta+b_j) && \text{as $\varphi$ is monotonically increasing} \\
+	V_{1,j}\varphi(W_{j,1}\alpha+b_j) &\ge V_{1,j}\varphi(W_{j,1}\beta+b_j) && \text{as $V_{1,j}\ge 0$} \\
+	\sum_{j=1}^{j=n_h}V_{1,j}\varphi(W_{j,1}\alpha+b_j) &\ge \sum_{j=1}^{j=n_h}V_{1,j}\varphi(W_{j,1}\beta+b_j) && \text{term-wise} \\
+	N(\alpha;W,V,b,c) &\ge N(\beta;W,V,b,c)
+	\end{align}
+
+	for the final property, that NNWNNs are bounded above and below,
+	consider that $\varphi$ is bounded above and below.
+	$\forall z$
+	\begin{align}
+	c_{min} \le \varphi(z) &\le c_{max} \\
+	c_{min} \le \varphi(W_{j,1}+b) &\le c_{max} \\
+	%
+	\sum_{j=1}^{j=n_h}V_{1,j} c_{min} 
+	\le \sum_{j=1}^{j=n_h}V_{1,j}\varphi(W_{j,1}x+b_j)
+    &\le \sum_{j=1}^{j=n_h}V_{1,j}c_{max} \\
+    %
+    \sum_{j=1}^{j=n_h}V_{1,j} c_{min} 
+    \le N(x;W,V,b,c)
+    &\le \sum_{j=1}^{j=n_h}V_{1,j}c_{max}
+	\end{align}	
+\end{proof}
+
+The proof of the collary \Cref{cor:noapproxapproximate} follows directly from this:
+\begin{proof}
+	A monotonic function $f$ can not converge uniformly towards a non-monotonic function $h$.
+	Consider $f$ monotonic increasing (WLOG),
+	As $h$ is not monotonically increasing, for some values $a$,$b$ $a>b$, 
+	$h(a)<h(b)$.
+	It is clear in such a case, that the closes a monotonically increasing function could come to this is to be some constant between those points.
+	Which means there will alway be a nonzero difference over that area.
+
+		
+	
+	A bounded monotonic function $h$ can not converge uniformly towards a non-bounded monotonic function $f$.
+	Consider the limit for $c$ an upper boundary of $h$,
+	as $f$ is not bounded, $\exists k$ such that $x>k \implies f(x)>c$.
+	Thus for $x>k$ $|f(x)-h(x)|\ge h(x)-c$ which grows without bound.
+	
+	That as \Cref{thm:upper} shows that the NNWNN has the properties of being monotonically increasing and bounded, it can not converge uniformly to such functions.
 \end{proof}
 
 
-\section{Proof of Theorem 1}
+\subsection{Proof of \Cref{thm:nnwnnuat}}
+\begin{proof}
 
-We begin by considering some NNWNN with a single hidden layer, and an affine output layer.
+
+We begin again, by considering some NNWNN with a single hidden layer, and an affine output layer.
 For $\varphi$ being a squashing function, with weight matrixes $W$ and $V$ and bias vectors $b$ and $c$.
 As it is a NNWNN $W_{i,j} \ge 0$ and $V_{i,j} \ge 0$.
 
@@ -249,7 +350,7 @@ such that
 
 We can thus say that $\frac{\partial N(x;W,V,b,c)}{\partial x_1}$ is dense in the space of non-negative continuous functions with compact support.
 
-From this by application of the fundermental theorem of calculus,
+From this by application of the fundamental theorem of calculus,
 we have
 \begin{align}
 \left\| \frac{\partial N(x;W,V,b, c)}{\partial x_1} - f(x) \right\|_p &< \epsilon \\
@@ -257,7 +358,7 @@ we have
 \left\| N(y;W,V,b, c) - N(\inf supp(f);W,V,b, c) - \int_{\inf supp(f)}^y f(x) \, dx \right\|_p &< \left( y-\inf supp(f) \right)  \epsilon\\
 \end{align}
 
-\pdfcomment{Is this be right?}
+\pdfcomment{Is this c-star right?}
 
 We chose a value for $c$ as $c^\star=-N(\inf supp(f);W,V,b, 0)$, thus $N(\inf supp(f);W,V,b, c^\star)=0$.
 We rewrite using $\varepsilon = \left( y-\inf supp(f) \right)  \epsilon$
@@ -266,12 +367,15 @@ We rewrite using $\varepsilon = \left( y-\inf supp(f) \right)  \epsilon$
 \end{align}
 
 Consider what $F$ represents.
-As it is the integral of a non-negative continuous function, it is a monotonic differentiable function.
+As it is the integral of a non-negative continuous function, it is a monotonically increasing differentiable function.
 As outside the support of $f$ its gradient is zero, it is thus bounded below, and above.
 
-We thus conclude with
+As the space of bounded, differentiable functions functions is dense in the space of bounded functions, we can relax the constraint on $F$ being differentiable.
+\pdfcomment{TODO: Finish this line with a citation to something, I think this is correct.}
 
-For all monotonic differentiable functions bounded above and below $F$,
+We thus conclude with:
+
+For all monotonically increasing functions bounded above and below $F$,
 for all points in its domain $x$
 then for all $\varepsilon > 0$, for all $p\in \lbrace 1, \infty \rbrace$
 there exist a set of non-negative weight matrices $W$, $V$ (whose dimensions are determined by the hidden layer size $n_h$) and a bias vector $b$ and $c$
@@ -279,9 +383,8 @@ there exist a set of non-negative weight matrices $W$, $V$ (whose dimensions are
 \begin{align}
 \left\| N(x;W,V,b, c) - F(x) \right\|_p &< \varepsilon
 \end{align}
-
-
-
+which is \Cref{thm:nnwnnuat}.
+\end{proof}
 
 
 \section{Conclusion and Future Work}
