@@ -4,6 +4,9 @@
 \usepackage[author={Lyndon White}]{pdfcomment}
 
 \usepackage{amsmath, amsthm, amssymb, mathtools}
+\usepackage{graphicx}
+
+
 
 % Referencing
 
@@ -189,7 +192,7 @@ A summability kernel, or approximate identity, is a sequence of continuous real 
     \pdfcomment{Maybe I should use varphi prime instread of g in this section, it might be clearer}
     
 	\begin{equation}
-	g_n(z) \coloneqq \frac{g(k_n z)}{k_n\left( c_{max} - c_{min} \right)} 
+	g_n(z) \coloneqq \frac{k_n g(k_n z)}{ c_{max} - c_{min}} 
 	\end{equation}
 	 where $c_{min}=\lim_{z \to -\infty} \varphi{z}$ and $c_{max}=\lim_{z \to \infty} \varphi{z}$,
 	 and $k_n$ is the $n$th element of some increasing sequence of real numbers.
@@ -202,8 +205,8 @@ A summability kernel, or approximate identity, is a sequence of continuous real 
 \begin{proof}
 For the first property:
 \begin{align}
-	\int_{-\infty}^{\infty} g_n(z) \, dz &=  \int_{-\infty}^{\infty} \frac{g(k_nz)}{k_n\left( c_{max} - c_{min} \right)} \, dz \\
-	&= \frac{1}{c_{max} - c_{min}} \int_{-\infty}^{\infty} \frac{g(k_n z)}{k_n} \, dz \\
+	\int_{-\infty}^{\infty} g_n(z) \, dz &=  \int_{-\infty}^{\infty} \frac{k_n g(k_nz)}{c_{max} - c_{min}} \, dz \\
+	&= \frac{1}{c_{max} - c_{min}} \int_{-\infty}^{\infty} k_n g(k_n z) \, dz \\
 	&= \frac{\dlim_{t \to \infty} \varphi(k_n z) - \dlim_{t \to -\infty} \varphi(k_n z)}{c_{max} - c_{min}} && \text{(Fundermental Thm of Calculus)}\\
 	&= \frac{c_{max} - c_{min}}{c_{max} - c_{min}}  && \text{(as $n>0$)}\\
 	&= 1	
@@ -214,10 +217,10 @@ For the second property: as  $\varphi$ is monotonic, its derivative $g(z)$ is no
 For the third property:
 \begin{align}
 	\lim_{n\to\infty} \int_{z>\delta} |g_n(z)|\, dz 
-	 &= \lim_{n\to\infty} \int_{z>\delta} \frac{g(k_n z)}{k_n\left( c_{max} - c_{min} \right)} \\
+	 &= \lim_{n\to\infty} \int_{z>\delta} \frac{k_n g(k_n z)}{c_{max} - c_{min}} \\
 	 &= \lim_{n\to\infty} \frac{1}{c_{max} - c_{min}} 
-		 \left( \int_{-\infty}^{-\delta} \frac{g(k_n z)}{k_n} \, dz 
-		 + \int_\delta^\infty \frac{g(k_n z)}{k_n} \, dz \right) \\
+		 \left( \int_{-\infty}^{-\delta} k_n g(k_n z) \, dz 
+		 + \int_\delta^\infty k_n g(k_n z) \, dz \right) \\
 	 &= \lim_{n\to\infty} \frac{
 	 	\left(\varphi(-k_n\delta)-\dlim_{t \to -\infty} \varphi(k_n z)\right)
 	 	 + \left( \varphi(k_n\delta) - \dlim_{t \to \infty} \varphi(k_n z)\right)}%
@@ -386,7 +389,7 @@ We consider the network's derivative with respect to its input $x$.
 \frac{\partial N(x;W,V,b,c)}{\partial x_1} = \sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \varphi^\prime (b_j+W_{j,1}x_1)
 \end{equation}
 
-We can re-express the value of $V_{1,j}$ as $V_{1,j}=\frac{\alpha_{1,j}}{W_{j,1}^2(c_{max}-c_{min})}$,
+We can re-express the value of $V_{1,j}$ as $V_{1,j}=\frac{\alpha_{1,j}}{c_{max}-c_{min}}$,
 for $c_{min}$ and $c_{max}$ the lower and upper bounds of the squashing function ($\varphi$) respectively.
 Note that $\alpha_{1,j}$ is non-negative, as a consequence of $V_{1,j}$ and $W_{j,1}$ being non-negative.
 
@@ -395,7 +398,7 @@ We also re-express $b_j$ as $b_j=\frac{\beta_{j,1}}{W_{j,1}}$  using $g = \frac{
 
 \begin{align}
 \frac{\partial N(x;W,V,b,c)}{\partial x_1} 
-&= \sum_{j=1}^{j=n_h} \frac{\alpha_{1,j}}{W_{j,1}^2(c_{max}-c_{min})} \, W_{j,1} g(\frac{W_{j,1}\beta_{j,1}}{W_{j,1}} + W_{j,1}x_1)\\
+&= \sum_{j=1}^{j=n_h} \frac{\alpha_{1,j}}{(c_{max}-c_{min})} \, W_{j,1} g(\frac{W_{j,1}\beta_{j,1}}{W_{j,1}} + W_{j,1}x_1)\\
 \frac{\partial N(x;W,V,b,c)}{\partial x_1} 
 &= \sum_{j=1}^{j=n_h} \alpha_{1,j} \frac{ g(W_{j,1}\left( x_1 + \beta_{j,1} \right))}{W_{j,1}(c_{max}-c_{min})} \\
 \end{align}
@@ -540,6 +543,26 @@ f(x) &= \frac{\partial F(x)}{\partial x} =\frac{\frac{\partial N(x)}{\partial x}
 For sufficiently wide choices of the boundaries,
 and for squashing function bounded above at $c_{max}$ and below at $c_{min}$,
 we have $N(s_{max})-N(x_{min}) \approx (c_{max}-c_{min})\sum_{j=1}^{j=n_h} V_{1,j}$
+
+\begin{align} \label{equ:pdf2}
+f(x) &\approx \frac{1}{(c_{max}-c_{min})\sum_{j=1}^{j=n_h} V_{1,j}}  \sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \varphi^\prime (b_j+W_{j,1}x_1)\\
+%
+&\approx \frac{1}{\sum_{j=1}^{j=n_h} V_{1,j}}  \sum_{j=1}^{j=n_h} V_{1,j} \frac{W_{j,1} \varphi^\prime (b_j+W_{j,1}x_1)}{c_{max}-c_{min}}
+\end{align}
+
+A very interesting fact to note here is that $\frac{W_{j,1} \varphi^\prime (b_j+W_{j,1}x_1)}{c_{max}-c_{min}}$ is always perfectly valid PDF in its own right.
+For the sigmoid activation function it is a bell-curve, as shown in \Cref{fig:sigmoidbell}, for RELU6 it is a uniform distribution.
+These are valid PDFs are they are non-negative, and have unit area (as was shown in \Cref{lem:squashderivissum}).
+From this, and the $V$ is non-negative, we can note that \Cref{equ:pdf2} defines a mixture model in the standard form, with $n_h$ components.
+
+
+\begin{figure}
+\includegraphics[scale=0.45]{figs/sigmoid-der-plot}
+\caption{a plot of $\frac{W_{j,1} \varphi^\prime (b_j+W_{j,1}x_1)}{c_{max}-c_{min}}$ for $\varphi$ being the sigmoid function.}
+\label{fig:sigmoidbell}
+\pdfcomment{TODO Replace this with a nicer plot}
+\end{figure}
+
 
 
 
