@@ -36,7 +36,7 @@
 
 
 
-\title{On Nonnegatively Weighted Neural Networks and Mixture Models}
+\title{On Nonnegatively Weighted Neural Networks as Universal Approximators for Monotonic Functions}
 
 \begin{document}
 \maketitle
@@ -61,7 +61,7 @@ and no other functions beyond this.
 		\item bounded above and below
 	\end{enumerate}
 \end{thm}
-\begin{cor}\label{cor:noapproxapproximate}
+\begin{cor}\label{}
 	Nonnegativly weighted neural networks (NNWNN) not able to able to approximate any functions that are not monotonically increasing and bounded above and below.
 \end{cor}
 
@@ -90,6 +90,12 @@ and no other functions beyond this.
 \Cref{cor:noapproxapproximate} gives an identical upper bound on the class of functions able to be approximated by a NNWNN.
 
 Thus we know that this bound is exactly the set of functions able to be approximated.
+
+\begin{thm}\label{thm:deep}
+	\Cref{thm:upper}, \Cref{cor:noapproxapproximate} and \Cref{thm:nnwnnuat},
+	apply also to deep NNWNNs.
+\end{thm}
+
 \section{Related Work}
 
 \section{Preliminaries}
@@ -386,7 +392,60 @@ there exist a set of non-negative weight matrices $W$, $V$ (whose dimensions are
 which is \Cref{thm:nnwnnuat}.
 \end{proof}
 
+\subsection{proof of \Cref{thm:deep}}
+\begin{proof}
+A deep NNWNN, is equivalent to the composition of several single layer NNWNNs.
+This is bounded, as the composition of bounded functions is bounded,
+and monotonically increasing as the composition of monotonically increasing functions is monotonically increasing.
 
+It is able to uniformly converge to any monotonically increasing, bounded function,
+as consider the case where all layers other than the first approximate the identity function over the bounds -- the case is thus reduced to first layer, which is covered by \Cref{thm:nnwnnuat}.
+\end{proof}
+
+\section{Some theoretical applications}
+
+\subsection{Incorporating prior knowledge}
+When training a machine learning system,
+one often wants to incorporate prior knowledge from domain experts.
+One large class of such knowledge is that there exists a monotonic relationship between the dependent (output) variable, and one of the independent (observation/input) variables.
+For example: the price of a used car decreases with its age, all other features being the same.
+
+Consider a single output network, with multiple inputs.,
+If the output is monotonically increasing with input feature $x_\alpha$,
+then one only needs to constrain the weights for neurons which occur on possible paths between input an the output.
+For a network with a single hidden layer  and an output layer as discussed above,
+this means constraining only $\forall j$, $V_{1,j} \ge 0$ and $W_{j, \alpha} \ge 0$.
+For deeper NNs this is more complicated. \pdfcomment{Do I need to explain how this is done, I find it hard to think about?}
+
+If output  is monotonically decreasing $x_\alpha$, then one can preprocess the data to invert or negate the value of that feature, and proceed as above.
+
+The proof that this mixed network is an universal monotonic approximator in  $x_\alpha$ is not presented here formally.
+However, it boils down to, if one considers all other values $x_\gamma$ $\gamma \ne 0$ as fixed, then the network is just a single-input NNWNN, with the other values driving a bias term that can be cancelled.
+
+Conversely, it is an universal approximator in the other inputs,
+a treating the value of $x_\alpha$ as fixed similarly reduces the network to a conventional neural network and the universal approximation theorem applies.
+
+
+
+
+
+
+\subsection{Non-parametric Estimation}
+One particularly important class of bounded monotonically increasing functions is
+cumulative density functions (CDFs).
+CDFs have the additional restriction that the lower bound must be zero and the upper bound must be one.
+A NNWNN can be fitted to meet that constraint;
+or we can encode it into the network.
+
+For any distribution that can be approximated as having a compact support:
+$s_min \le x \le s_max$.
+\pdfcomment{I believe this is any distribution, for suitably large support}.
+
+
+
+
+
+	
 \section{Conclusion and Future Work}
 
 \bibliography{master}
