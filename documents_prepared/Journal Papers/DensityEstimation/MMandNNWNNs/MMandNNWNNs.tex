@@ -61,7 +61,7 @@ and no other functions beyond this.
 		\item bounded above and below
 	\end{enumerate}
 \end{thm}
-\begin{cor}\label{}
+\begin{cor}\label{cor:noapproxapproximate}
 	Nonnegativly weighted neural networks (NNWNN) not able to able to approximate any functions that are not monotonically increasing and bounded above and below.
 \end{cor}
 
@@ -98,6 +98,67 @@ Thus we know that this bound is exactly the set of functions able to be approxim
 
 \section{Related Work}
 
+\section{NNWN Facts}
+\pdfcomment{I need to retitle this seciton and move it around, but I just need to exstablish things things first}
+
+\begin{defn}{Single Input Single Output NNWNN}
+	
+	We begin again, by considering some NNWNN with a single hidden layer, and an affine output layer.
+	For $\varphi$ being a squashing function, with weight matrixes $W$ and $V$ and bias vectors $b$ and $c$.
+	As it is a NNWNN $W_{i,j} \ge 0$ and $V_{i,j} \ge 0$.
+	
+	For the case of a single output, single input network, with $n_h$ neurons in the hidden layer the network is described by
+	\begin{equation}
+	N(x;W,V,b,c) = \sum_{j=1}^{j=n_h} V_{1,j} \varphi (b_j+W_{j,1}x_1) + c_1
+	\end{equation}
+	
+	The network's derivative with respect to its input $x$.
+	
+	\begin{equation}
+	\frac{\partial N(x;W,V,b,c)}{\partial x_1} = \sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \varphi^\prime (b_j+W_{j,1}x_1)
+	\end{equation}
+\end{defn}
+
+\begin{defn}{Multi-input Multi-output NNWNN}
+	With $n_i$ inputs and $n_o$ outputs this becomes:
+	\begin{equation}
+	N(x;W,V,b,c)=V\varphi(Wx+b)=\left[\begin{array}{c}
+	{\displaystyle \sum_{j=1}^{j=n_{h}}}V_{1,j}\varphi\left(b_{j}+\sum_{i=1}^{i=n_{i}}\varphi\left(W_{j,i}x_{i}\right)\right) + c_1\\
+	\vdots\\
+	{\displaystyle \sum_{j=1}^{j=n_{h}}}V_{n_{o},j}\varphi\left(b_{j}+\sum_{i=1}^{i=n_{i}}\varphi\left(W_{j,i}x_{i}\right)\right) +c_{n_o}
+	\end{array}\right]
+	\end{equation}
+	
+	Its derivatives (Jacobian) are:
+	{\scriptsize
+	\begin{align}
+	\nabla N&=\left(V\odot W^{T}\right)g(Wx+b)\\
+	&=\left[\begin{array}{ccc}
+	{\displaystyle \sum_{j=1}^{j=n_{h}}}\left(V_{1,j}W_{j,1}\right)g(b_{j}+\sum_{i=1}^{i=n_{i}}\left(W_{j,i}x_{i}\right)) & \ldots & {\displaystyle \sum_{j=1}^{j=n_{h}}}\left(V_{1,j}W_{j,n_{i}}\right)g(b_{j}+\sum_{i=1}^{i=n_{i}}\left(W_{j,i}x_{i}\right))\\
+	\vdots & \cdots & \vdots\\
+	{\displaystyle \sum_{j=1}^{j=n_{h}}}\left(V_{n_{o},j}W_{j,1}\right)g(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{i}\right)) & \ldots & {\displaystyle \sum_{j=1}^{j=n_{h}}}\left(V_{n_{o},j}W_{j,n_{i}}\right)g(b_{j}+\sum_{i=1}^{i=n_{i}}\left(W_{j,i}x_{i}\right))
+	\end{array}\right]
+	\end{align}
+	}
+\end{defn}
+
+\begin{defn}{Deep NNWNN}
+	The multilayer variation of a NNWNN,
+	for weight matrixes $W_{(i)}$ and $V$, bias vectors $b_{(i)}$ and $c$
+	input $x$ and output $y$, with $L$ hidden layers
+	it has layers:
+	\begin{align}
+	z_0 &= x \\
+	z_1 &= \varphi(W_{(1)}z_0+b_{(1)})\\
+	\vdots\\
+	z_i &= \varphi(W_{(i)}z_{i-1}+b_{(i)})\\
+	\vdots\\
+	z_L &= \varphi(W_{(L)}z_{L-1}+b_{(L)})\\
+	y  &= V\varphi(z_L)+c	
+	\end{align}
+	
+\end{defn}
+
 \section{Preliminaries}
 
 \begin{defn}{Squashing Function}
@@ -105,6 +166,10 @@ A squashing function is a function $\varphi\:\R \to \R$, that is monotonically i
 Many traditional normal neural network activation functions, including the logistic function (sigmoid), $\tanh$, RELU6, are squashing functions.
 Other more recent activation functions are not, e.g. RELU, ELU, SELU, and varieties of "leaky" activation functions.
 \end{defn}
+
+
+
+
 
 \begin{defn}{Summability Kernel}
 A summability kernel, or approximate identity, is a sequence of continuous real valued functions $\phi_n$ for $n>0$, with the following properties:
@@ -120,6 +185,9 @@ A summability kernel, or approximate identity, is a sequence of continuous real 
 	For any squashing function $\varphi(z)$,
 	we define a sequence of functions from scaling its derivative 
     $g \coloneqq \frac{\partial\varphi(z)}{\partial z}$, as follows:
+    
+    \pdfcomment{Maybe I should use varphi prime instread of g in this section, it might be clearer}
+    
 	\begin{equation}
 	g_n(z) \coloneqq \frac{g(k_n z)}{k_n\left( c_{max} - c_{min} \right)} 
 	\end{equation}
@@ -134,8 +202,8 @@ A summability kernel, or approximate identity, is a sequence of continuous real 
 \begin{proof}
 For the first property:
 \begin{align}
-	\int_{-\infty}^{\infty} g_n(z) \, dz &=  \int_{-\infty}^{\infty} \frac{g(nz)}{k_n\left( c_{max} - c_{min} \right)} \, dz \\
-	&= \frac{1}{c_{max} - c_{min}} \int_{-\infty}^{\infty} \frac{g(k_n z)}{n} \, dz \\
+	\int_{-\infty}^{\infty} g_n(z) \, dz &=  \int_{-\infty}^{\infty} \frac{g(k_nz)}{k_n\left( c_{max} - c_{min} \right)} \, dz \\
+	&= \frac{1}{c_{max} - c_{min}} \int_{-\infty}^{\infty} \frac{g(k_n z)}{k_n} \, dz \\
 	&= \frac{\dlim_{t \to \infty} \varphi(k_n z) - \dlim_{t \to -\infty} \varphi(k_n z)}{c_{max} - c_{min}} && \text{(Fundermental Thm of Calculus)}\\
 	&= \frac{c_{max} - c_{min}}{c_{max} - c_{min}}  && \text{(as $n>0$)}\\
 	&= 1	
@@ -146,10 +214,10 @@ For the second property: as  $\varphi$ is monotonic, its derivative $g(z)$ is no
 For the third property:
 \begin{align}
 	\lim_{n\to\infty} \int_{z>\delta} |g_n(z)|\, dz 
-	 &= \lim_{n\to\infty} \int_{z>\delta} \frac{g(k_n z)}{n\left( c_{max} - c_{min} \right)} \\
+	 &= \lim_{n\to\infty} \int_{z>\delta} \frac{g(k_n z)}{k_n\left( c_{max} - c_{min} \right)} \\
 	 &= \lim_{n\to\infty} \frac{1}{c_{max} - c_{min}} 
-		 \left( \int_{-\infty}^{-\delta} \frac{g(k_n z)}{n} \, dz 
-		 + \int_\delta^\infty \frac{g(k_n z)}{n} \, dz \right) \\
+		 \left( \int_{-\infty}^{-\delta} \frac{g(k_n z)}{k_n} \, dz 
+		 + \int_\delta^\infty \frac{g(k_n z)}{k_n} \, dz \right) \\
 	 &= \lim_{n\to\infty} \frac{
 	 	\left(\varphi(-k_n\delta)-\dlim_{t \to -\infty} \varphi(k_n z)\right)
 	 	 + \left( \varphi(k_n\delta) - \dlim_{t \to \infty} \varphi(k_n z)\right)}%
@@ -216,6 +284,8 @@ Another notionally similar (if significantly more dense) proof also appears as t
 	\left\| f(x) - \sum^{n}_{i=1} b_i \phi_n(x-c_i) \right\|_p &<  \epsilon
 	\end{align}
 \end{proof}
+
+\section{Proof of our results}
 
 \subsection{Proof of \Cref{thm:upper}}
 The proofs of the basic properties of NNWNNs,
@@ -313,7 +383,7 @@ The generalisation to multi-input multi-output is straight forward, if verbose (
 We consider the network's derivative with respect to its input $x$.
 
 \begin{equation}
-\frac{\partial N(x;W,V,b,c)}{\partial x_1} = \sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \frac{\partial(\varphi) (b_j+W_{j,1}x_1)}{\partial x_1}
+\frac{\partial N(x;W,V,b,c)}{\partial x_1} = \sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \varphi^\prime (b_j+W_{j,1}x_1)
 \end{equation}
 
 We can re-express the value of $V_{1,j}$ as $V_{1,j}=\frac{\alpha_{1,j}}{W_{j,1}^2(c_{max}-c_{min})}$,
@@ -361,7 +431,7 @@ we have
 \begin{align}
 \left\| \frac{\partial N(x;W,V,b, c)}{\partial x_1} - f(x) \right\|_p &< \epsilon \\
 \left\| \int_{\inf supp(f)}^y \frac{\partial N(x;W,V,b, c)}{\partial x_1} - f(x) \, dx \right\|_p &< \left( y-\inf supp(f) \right)  \epsilon \\
-\left\| N(y;W,V,b, c) - N(\inf supp(f);W,V,b, c) - \int_{\inf supp(f)}^y f(x) \, dx \right\|_p &< \left( y-\inf supp(f) \right)  \epsilon\\
+\left\| N(y;W,V,b, c) - N(\inf supp(f);W,V,b, c) - \int_{\inf supp(f)}^y f(x) \, dx \right\|_p &< \left( y-\inf supp(f) \right)  \epsilon
 \end{align}
 
 \pdfcomment{Is this c-star right?}
@@ -440,10 +510,38 @@ it is valid CDF.
 
 
 
-For any continuous distribution over $\R$, $\forall \epsilon$ we can define an lower and upper boundary $s_{min}$ and $s_{max}$ such that $Pr(x<s_{min})+Pr(x>s_{max}) \le \epsilon$.
-such that outside
-$s_min \le x \le s_max$.
-\pdfcomment{I believe this is any distribution, for suitably large support}.
+For any continuous distribution over $\R$, $\forall \epsilon$ we can define an lower and upper boundary $s_{min}$ and $s_{max}$ such that $Pr(X<s_{min})+Pr(X>s_{max}) \le \epsilon$.
+For any good approximation, we can choose the boundaries such that have that $Pr(X<s_{min}) \approx 0$ and $Pr(X<s_{max}) \approx 1$.
+
+So as such we can represent any CDF as,
+for $N(x)$ a NNWNN (with parameters not shown, for brevity),
+\begin{equation}
+	F(x) = \frac{N(x) - N(s_{min})}{N(s_{max})-N(s_{min})}
+\end{equation}
+
+It is clear that this is a monotonic function bounded above and below at 1 and 0,
+within the boundaries given.
+And given the approximation properties given above,
+a sufficiently wide NNWNN can approximate any CDF this way.
+
+As a further practicality,
+consider training such a network for non-parametric estimation.
+In this case one has a collection of observations for possible values of $X$.
+The non-parametric estimator, should be fitted to maximise the the probability or equivalently the negative log-likelihood of the probability density function (PDF) at those observed points.
+
+The PDF is given by:
+\begin{align}
+f(x) &= \frac{\partial F(x)}{\partial x} =\frac{\frac{\partial N(x)}{\partial x}}{N(s_{max})-N(s_{min})} \\
+%
+&=\frac{1}{N(s_{max})-N(s_{min})} 
+\sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \varphi^\prime (b_j+W_{j,1}x_1) \\
+\end{align}
+
+For sufficiently wide choices of the boundaries,
+and for squashing function bounded above at $c_{max}$ and below at $c_{min}$,
+we have $N(s_{max})-N(x_{min}) \approx (c_{max}-c_{min})\sum_{j=1}^{j=n_h} V_{1,j}$
+
+
 
 
 
