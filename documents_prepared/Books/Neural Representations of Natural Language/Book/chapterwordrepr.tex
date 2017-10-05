@@ -93,6 +93,7 @@ Capturing the trait information in the representation of a word for use in langu
 Almost a decade earlier was the clustering work of  \tcite{brown1992class}.
 The method of \tcite{NPLM} however, implicitly learns this information into a neural network bases representation in during the training for the language modeling task.
 
+\subsubsection{Simplified Model considered with Input Embeddings}
 To understand the neural probabilistic language model, first consider a simplified neural trigram language model.
 This model is a simplification of that introduces by \tcite{NPLM}, it forms the basis of several models and introduces the most important idea in neural language representations: that of training a vector representation of a word using a lookup table to map a discrete word to a vector that becomes the first layer of the network.
 
@@ -150,7 +151,48 @@ If two words vectors are close together because they mostly predict the same fut
 Thus for cases where there are some words which never co-occur in the training set, but for which the nearby word does co-occur with, then because the knowledge is associated with that region of space, the model predicts that there is a higher-than-zero chance of the first word co-occurring with the unseen word.
 This is a fuzzy and nonlinear relationship, with varying degrees of closeness resulting in (and from) varying levels of exception of the words sharing co-occurring predicted words.
 
+\subsubsection{Simplified Model considered with input and output embeddings}
+When introducing embeddings we considered that one-hot inputs multiplied by matrices
+are effectively doing column-lookups which we call embeddings.
+Similar same can be said for output layers,
+by considering each the output of softmax element-wise it can be reformulated as
+\begin{figure}
+	\centering
+	\input{figs/chapterwordrepr/trigram-adv-neural-language-model.tex} 
+	\caption{\label{fig:trigram-adv-neural-language-model} Neural Trigram Language Model as considered with output embeddings. This is mathematically identical to \Cref{fig:trigram-neural-language-model}}
+\end{figure}
 
+
+With the final layer being defined as:
+\begin{equation}
+s_{max}(Vz_{2}+k) = \dfrac{\exp\left(V_{w_{i}}^{T}z_{2}+k_{i}\right)_{i=0}^{i=N}}{\sum_{\forall j}exp\left(V_{j}^{T}z_{2}+k_{j}\right)}
+\end{equation} 
+
+In this formulation, we have $V_{w_{i}}^{T}$ as the output embedding
+for $w_{i}$ -- an output word.
+As we considered  $C_{w_{i}}$ as its input embedding.
+
+Further, $V_{w_{i}}^{T}z_{2}$ can be seen as computing the dot product
+between the output embedding for $w_{i}$ and the hidden layer representation
+of $w_{i-1}$ and $w_{i-2}$ in the form of $z_{2}$. 
+
+It is also clear when we look at the Bayes-like reformulation: (See \Cref{sec:softmax-and-bayes-theorem})
+\begin{equation}
+P(Y=y\mid Z=z)=\frac{R(Z=z\mid Y=y)\,Q(Y=y)}{\sum_{\forall i}R(X=x\mid Y=i)\,Q(Y=i)}
+\end{equation}
+
+Which in this case is:
+\begin{equation}
+P(w_{i}\mid w_{i-1},w_{i-2})=\frac{R(Z=z_{2}\mid W_{i}=w_{i})\,Q(W_{i}=w_{i})}{\sum_{\forall j}R(Z=z_{2}\mid W_{i}=w_{j})\,Q(W_{i}=w_{j})}
+\end{equation}
+
+where $Q(Y=y)=e^{k}$ -- this is linked to the Unigram word probabilities. $P(Y=y)$
+Such that one might suggest a good value for $k$ to be given by the log unigram probabilities: $k=\left(\log P(W_{i}=w_{j})\right)_{j=1}^{j=N}$.
+If $\mathbb{E}(R(Z\mid W_{i})=1$ then this would be optimal.
+That condition is equivalent to if $\mathbb{E}(VZ_{2})=0$
+Given the $V$ is normally initialized as a zero mean Gaussian, this condition is at least initially true.
+
+\subsubsection{The Neural Probabilistic Language Model}
 \tcite{NPLM} is a more advanced version of the neural language model discussed.
 Rather than being a trigram language model, it is an $n$-gram language model, where $n$ is a hyper-parameter of the model.
 The knowledge sharing allows the data-sparsity issues to be ameliorated, thus allowing for $n>3$.
@@ -174,9 +216,6 @@ It allowing the input to directly effect the output without being mediated by th
 This layer-bypass is a unusual feature, not present in future works deriving from this, such as \tcite{schwenk2004efficient} which presents a bag of tricks to minimize training time. 
 
 
-
-
-
 This is the network which begins the notions of using neural networks with vector representations of words.
 Bengio et. al. focused on the use of the of sliding window of previous words -- much like the traditional n-grams.
 At each time-step the window is advanced forward and the next word predicted based on that shifted context of prior words.
@@ -190,6 +229,8 @@ They do very briefly mention that an RNN could be used in its place.
 
 
 \subsection{RNN Language Models}
+
+\pdfcomment{I'm not sure if Mikolov was using the design matrix formulatiuon where bias terms are skipped, if so this section is the only section so far that skips it}
 
 \aside[Differences in formulation]{
 The network and equations shown here may seem different to those presented in \textcite{mikolov2010recurrent}.
@@ -259,6 +300,9 @@ Any toolkit that can well handle the prior discussed neural network models, can 
 
 
 \pdfcomment{I think CBOW and Skip-Gram don't feature Biases because they are written in Design Matrix form with a column of ones. If so I need to fix that up to something consistent with the remainder of this chapter or if not then }
+
+\tcite{mikolov2013efficient}, which introduced the CBOW and Skip-Gram is also responsible for the popularisation of Hierarchical Softmax and Negative Sampling methods.
+As these are complicated and often misunderstood, topics in their own right, they are discussed in a more tutorial fashion in \Cref{} 
 
 \subsection{CBOW}
 The continuous bag of words (CBOW) method was introduced by \tcite{mikolov2013efficient}.
@@ -425,6 +469,168 @@ Training a neural network such as skip-gram is an iterative optimisation procedu
 
 
 
+\section{Hierarchical Softmax and Negative Sampling}\label{sec:hierachical-softmax-and-negative-sampling}
+
+\subsection{Hierarchical Softmax}
+Hierarchical softmax is correctly attributed to \tcite{morin2005hierarchical}.
+It was popularised by \tcite{mikolov2013efficient}, together with Negative Sampling.
+
+\pdfcomment{Explain it in detail here before the tuitorial section}
+
+\aside[TODO]{Say something about \textcite{SemHuff}}
+
+\subsubsection{An incredibly gentle introduction to hierarchical softmax}
+
+\subsubsection{First consider a binary tree with just 1 layer and 2 leaves}
+
+We are at the initial root which we call $n_{0}$, and we can go to
+either node $n_{00}$ or node $n_{01}$, based on the input from the
+layer below which we will call $z$.
+
+Here we write $n_{01}$ to represent the event of the first nonroot
+node being the branch given by following the 0th branch, vs the $n_{01}$
+being to follow the first branch. 
+
+We are naming the root node as a notation convenience so we can talk
+about the decision made at $n_{0}$ \textendash{} $P(n_{0})=1$.
+
+We want to know the probability of the next node being the 0th (i.e.
+$P(n_{0}\mid z)$ ) or the first (i.e. $P(n_{01}\mid z)$).
+
+We could represent the decision with a softmax, with two outputs.
+
+However, since it is a binary decision, we don't need a softmax, we
+can just use a sigmoid.
+
+$P(n_{01}\mid z)=P(n_{0}\mid z)-1$
+
+So the weight matrix for a sigmoid layer has a number of columns given
+by the number of outputs.
+
+As there is only one output, it is just a vector.
+
+We will call this vector $V_{0}^{\prime}$ \textendash{} the decision
+associated with node $n_{0}$
+
+$P(n_{00}\mid z)=\sigma(V_{0}^{\prime}z)$
+
+$P(n_{01}\mid z)=1-\sigma(V_{0}^{\prime}z)$
+
+Note that the sigmoid function: $1-\sigma(x)=\sigma(-x)$
+
+$1-\sigma(x)=\frac{e^{x}+1}{e^{x}+1}-\frac{e^{x}}{e^{x}+1}=\dfrac{1}{e^{x}+1}\frac{e^{-x}}{e^{-x}}=\dfrac{e^{-x}}{1+e^{-1}}=\sigma(-x)$
+
+So we have:
+
+$P(n_{01}\mid z)=\sigma(-V_{0}^{\prime}z)$
+
+\subsubsection{Now consider 2 layers with 3 leaves}
+
+Consider the tree with nodes: $n_{0}$, $n_{00}$,$n_{000}$, $n_{001}$,$n_{01}$
+
+From earlier we still have:
+
+$P(n_{00}\mid z)=\sigma(V_{0}^{\prime}z)$
+
+$P(n_{01}\mid z)=\sigma(-V_{0}^{\prime}z)$
+
+Now to find $P(n_{000}\mid z)$
+
+We need another decision at node $n_{00}$
+
+The decision at $n_{00}$ as to if $n_{000}$ or $n_{001}$ is made,
+assuming we have reached $n_{00}$already.
+
+So the decision is defined by $P(n_{000}\mid z,\:n_{oo})$,
+
+which we can then use the conditional probability chain rule to recombine:
+$P(n_{000}\mid z)=P(n_{000}\mid z,\:n_{oo})\,P(n_{00}\mid z)\,$
+
+Again we can use a sigmoid.
+
+$P(n_{000}\mid z,n_{00})=\sigma(V_{00}^{\prime}z)$
+
+$P(n_{001}\mid z,n_{00})=\sigma(-V_{00}^{\prime}z)$
+
+Very similar to before.
+
+Our 3 leaf nodes final probabilities are given by:
+
+$P(n_{01}\mid z)=\sigma(-V_{0}^{\prime}z)$
+
+$P(n_{000}\mid z)=\sigma(V_{00}^{\prime}z)\sigma(V_{0}^{\prime}z)$
+
+$P(n_{001}\mid z)=\sigma(-V_{00}^{\prime}z)\sigma(V_{0}^{\prime}z)$
+
+\subsubsection{Continue this logic}
+
+Using this system,
+
+we know for a node encoded at position $[t_{1},t_{2},t_{3},...,t_{L}]$
+e.g. $[0,1,0,...,1]$.
+
+It's probability can be found as: $P(n_{0t_{1}...,t_{L}}\mid z)=P(n_{0t_{1}...,t_{L}}\mid z,\,n_{0t_{1}...,t_{L-1}})\,P(n_{0t_{1}...,t_{L-1}}\mid z)$
+
+$P(n_{0,t_{1}}\mid z)=\sigma\left((-1)^{t_{1}}V_{0}^{\prime}z\right)$
+
+$P(n_{0,t_{1},t_{2}}\mid z,\,n_{0,t_{1}})=\sigma\left((-1)^{t_{2}}V_{0t_{1}}^{\prime}z\right)$
+
+$P(n_{0,t_{1},...,t_{i}}\mid z,\,n_{0,t_{1}...,t_{i-1}})=\sigma\left((-1)^{t_{i}}V_{0,t_{1}...,t_{i-1}}^{\prime}z\right)$
+
+Applying the conditional probability chain rule to get:
+
+$P(n_{0,t_{1},...,t_{i}}\mid z,)=\prod_{i=1}^{i=L}\sigma\left((-1)^{t_{i}}V_{0,t_{1}...,t_{i-1}}^{\prime}z\right)$
+
+\subsubsection{Formulation}
+
+He we have decides that the 0th branch represents the positive choice.
+
+It is equivalent to have the 1th branch repressent the positive choice
+
+$P(n_{0,t_{1},...,t_{i}}\mid z,)=\prod_{i=1}^{i=L}\sigma\left((-1)^{t_{i}+1}V_{0,t_{1}...,t_{i-1}}^{\prime}z\right)$
+
+Or to allow it to vary per node.
+
+As in the formulation of \cite{mikolovSkip}
+
+Using $ch(n)$ to represent an arbitrary child node of the node $n$
+
+and using an indicator function $\left\llbracket a=b\right\rrbracket =\begin{cases}
+1 & a=b\\
+-1 & a\ne b
+\end{cases}$
+
+$P(n_{0,t_{1},...,t_{i}}\mid z,)=\prod_{i=1}^{i=L}\sigma\left(\left\llbracket n_{t_{i}}=ch(n_{t_{i-1}})\right\rrbracket V_{0,t_{1}...,t_{i-1}}^{\prime}z\right)$
+
+\subsubsection{Combining multiplications}
+
+If one wants to find both $V_{00}^{\prime}z$ and $V_{0}^{\prime}z$,
+
+then this can be done using matrices simultaneously (Taking advantage
+of optimized matrix multiplication routines)
+
+Using $V_{0}^{\prime}$ and $V_{00}^{\prime}$ as row vectors, and
+$z$ as a column vector
+
+$\left[\begin{array}{c}
+V_{0}^{\prime}\\
+V_{00}^{\prime}
+\end{array}\right]z=\left[\begin{array}{c}
+V_{0}^{\prime}\cdot z\\
+V_{00}^{\prime}\cdot z
+\end{array}\right]$
+
+Thus the whole product for all of the decisions can be written as
+$V^{\prime}z$.
+
+The problem then becomes indexing the relevant node rows.
+
+Which is a not at all trivial problem in packing tree nodes elements
+into a matrix.
+
+And might be better handled via actually using a tree structure.
+
+\subsection{Negative Sampling}
 
 
 

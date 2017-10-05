@@ -169,11 +169,12 @@ It is non-differentiable and thus not suitable for use in a neural network.
 In softmax the largest values is proportionally increased to be closest to one,
 and the smallest to be closest to zero.
 
-A neural network classifier with a softmax output layer is sometimes called a multinomial logistic regression network.
+A neural network classifier with a softmax output layer is sometimes called a multinomial logistic regression network (especially if there is no hidden layer).
 This can lead to some confusion with a sigmoid outputting network.
 However, the similarity can be understood by considering a softmax output layer with 2 classes.
 This reduces to $s_m(z)= \left( \sigma(z), 1-\sigma(z) \right)$.
 
+Further consideration of the softmax is given in \Cref{sec:softmax-and-bayes-theorem}.
 
 \subsubsection{Tanh}
 The hyperbolic tangent function is a  scaled and shifted sigmoid function.
@@ -198,11 +199,12 @@ As this function has derivative zero for $z<0$, once a unit is turned off, it is
 Further to this, using random initialization this ensures that half of all neurons in the layer will be never turned on -- commonly called the neuron dying.
 Thus resulting in sparse connections between the layers.
 This has been found to be a good thing \pcite{glorot2011deepRELUsparse}.
-ReLU is very commonly used as a hidden layer activation function
+ReLU is very commonly used as a hidden layer activation function for deep networks.
+
 
 
 \subsubsection{RELU6}
-\aside[Why are we bringing up ReLU6?]{ReLU6 is one of the more obsure activation functions. As such it may seem a bizare inclusion in this shorter introduction. However, we have found it surprisingly sucessful as an activation function, e.g. in the Auto-encoder example. Further to that, as a function bounded about and below it is much more theoretically nice than the ReLU unit.}
+\aside[Why are we bringing up ReLU6?]{ReLU6 is one of the more obsure activation functions. As such it may seem a bizare inclusion in this shorter introduction. However, we have found it surprisingly successful as an activation function, e.g. in the Auto-encoder example. Further to that, as a function bounded about and below it is much more theoretically nice than the ReLU unit.}
 
 Closely related to ReLU is ReLU6.
 This is another linear unit the saturates at 0, but also at 6.
@@ -306,7 +308,7 @@ However, this innovation was core to allowing neural networks as we know them to
 
 
 
-\section{Type of Neural Network}
+\section{Some Examples of Common Neural Network Architectures}
 We will discuss more linguistically relevant neural networks in the following chapters.
 However, to introduce the topic, we will give some basic examples.
 
@@ -314,12 +316,64 @@ However, to introduce the topic, we will give some basic examples.
 Examples are in the julia programming language making use of the TensorFlow.jl package.
 }
 
-\subsection{Classifier}
+\subsection{Classifier}\label{sec:classifier}
 As one of the most basic networks, consider a classifier on the classic MNIST challenge.
 
 \input{figs/chapterintromachinelearning/mnist-basic.tex}
 
 \input{figs/chapterintromachinelearning/mnist-advanced.tex}
+
+
+\subsubsection{Softmax and Bayes' Theorem}\label{sec:softmax-and-bayes-theorem}
+As a digression, it is worth considering the similarity between a network with an softmax output layer, and the application of Bayes' Theorem.
+This will become important for understanding output embeddings, and hierarchical softmax in the future chapters.
+
+For $y$ a class identifier
+for $z$ some features vector, this could be the output of a hidden layer below, or it could be a direct input.
+Our estimated probability is given by
+\begin{equation}
+P(Y=y\mid Z=z)=\frac{e^{[Wz+b]_{y}}}{\sum_{\forall i}e^{[Wz+b]_{i}}}
+\end{equation}
+
+Breaking these terms down we have:
+\begin{equation}
+P(Y=y\mid Z=z)=\frac{e^{[Wz]_{i}}\,e^{b_{y}}}{\sum_{\forall i}e^{[Wz]_{i}}\,e^{b_{i}}}
+\end{equation}
+
+One can see that $e^{[b]_{i}}$ does not depend on the value of $z$.
+The bias term is analogous to the prior probability, literally it is the bias we have towards each element (i.e. each value $Y$ could take) without observing the condition.
+Marginalising the probability over all $X$ values gives $P(Y=i)=e^{[b]_{i}}=e^{b_{i}}$
+
+\pdfcomment{Is this actually a probability, or is it a score?}
+
+The other component is $e^{[Wz]_{i}}$.
+The key term here is $[Wz]_{i}$, by considering this, for each column of $y$,
+we have 
+\begin{equation}
+[Wz]_{i}=\sum_{\forall j}W_{j,i}\,z_{j}=W_{i}^{T}z.
+\end{equation}
+
+Given one is considering the case for $Y=i$, then 
+it can be seen that the row vector $W_{i}^{T}$ as a weighting map for features possessed by $z$.
+
+i.e for some scoring function $R$:
+\pdfcomment{Is this actually a postior probability, or is it just a score?}
+\begin{equation}
+R(Z=z\mid Y=i)=e^{[Wz]_{i}}
+\end{equation}
+
+
+Then reformulating the original statement we have:
+\begin{equation}
+P(Y=y\mid Z=z)=\frac{R(Z=z\mid Y=y)\,P(Y=y)}{\sum_{\forall i}R(Z=z\mid Y=i)\,P(Y=i)}
+\end{equation}
+
+Contrast this to Bayes' Theorem
+\begin{equation}
+P(Y=y\mid Z=z)=\frac{P(Z=z\mid Y=y)\,P(Y=y)}{\sum_{\forall i}P(Z=z\mid Y=i)\,P(Y=i)}
+\end{equation}
+
+
 
 \subsection{Bottle Necking Autoencoder}
 An autoencoder is a tool primarily for use in finding a representation for their input.
