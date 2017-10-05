@@ -3,17 +3,31 @@
 
 \usepackage[author={Lyndon White}]{pdfcomment}
 
+\usepackage{amsmath, amsthm, amssymb, mathtools}
+\usepackage{graphicx}
+
+
+
+% Referencing
+
+\usepackage{natbib}
+\newcommand{\textcite}{\cite}
+\newcommand{\parencite}{\citep}
+
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{cleveref}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Math
-\usepackage{amsmath, amsthm, amssymb, mathtools}
 
-\newtheorem{thm}{Theorem}[section]
+
+\newtheorem{thm}{Theorem}
 \newtheorem{lem}[thm]{Lemma}
 \newtheorem{prop}[thm]{Proposition}
-\newtheorem{cor}{Corollary}
-\newtheorem{defn}{Definition}[section]
-\newtheorem{conj}{Conjecture}[section]
+\newtheorem{cor}{Corollary}[thm]
+\newtheorem{defn}{Definition}
+\newtheorem{conj}{Conjecture}
 \newtheorem{exmp}{Example}[section]
 \newtheorem{rem}{Remark}
 
@@ -21,26 +35,19 @@
 \newcommand{\dlim}{\displaystyle\lim}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%&
-% Referencing
-
-\usepackage{hyperref}
-\usepackage{url}
-\usepackage{cleveref}
 
 
 
 
-
-
-\title{On Nonnegatively Weighted Neural Networks and Mixture Models}
-
-
+\title{Nonnegatively Weighted Neural Networks are Universal Approximators for Monotonic Functions}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-
+In this work the exact capacities of a Nonnegatively Weighted Neural Network (NNWNN) is proved.
+We show that a NNWNN can approximate any bounded, monotonically increasing function;
+and no other functions beyond this.
 \end{abstract}
 
 
@@ -48,15 +55,124 @@
 
 \section{Our Results}
 
+\begin{thm} \label{thm:upper}
+	Nonnegativly weighted neural networks (NNWNN) always:
+	
+	\begin{enumerate}
+		\item continuous \pdfcomment{idk if I need this statement it is true, but idk if it is useful}
+		\item monotonically increasing
+		\item bounded above and below
+	\end{enumerate}
+\end{thm}
+\begin{cor}\label{cor:noapproxapproximate}
+	Nonnegativly weighted neural networks (NNWNN) not able to able to approximate any functions that are not monotonically increasing and bounded above and below.
+\end{cor}
+
+\begin{thm} \label{thm:nnwnnuat}
+	Nonnegativly weighted neural networks (NNWNN) are able to approximate any monotonically increasing functions bounded above and below.
+	
+	
+	For such a function $F$,
+	for all points in its domain $x$
+	then for all $\varepsilon > 0$, for all $p\in \lbrace 1, \infty \rbrace$
+	there exist a set of non-negative weight matrices $W$, $V$ and a bias vector $b$ and $c$,
+	and for any squashing function $\varphi$,
+	which defines a network of the form:
+	\begin{equation}
+		N(x;W,V,b,c)=\sum_{j=1}^{j=n_{h}}V_{1,j}\varphi(b_{j}+W_{j,1}x_{1})+c_{1}
+	\end{equation}
+	
+	then 
+	\begin{align}
+	\left\| N(x;W,V,b, c) - F(x) \right\|_p &< \varepsilon
+	\end{align}
+	The generalises to multidimentional inputs and outputs.
+\end{thm}
+
+\Cref{thm:nnwnnuat}  gives a lower bound on the class of functions able to be approximated by a NNWNN.
+\Cref{cor:noapproxapproximate} gives an identical upper bound on the class of functions able to be approximated by a NNWNN.
+
+Thus we know that this bound is exactly the set of functions able to be approximated.
+
+\begin{thm}\label{thm:deep}
+	\Cref{thm:upper}, \Cref{cor:noapproxapproximate} and \Cref{thm:nnwnnuat},
+	apply also to deep NNWNNs.
+\end{thm}
+
 \section{Related Work}
+
+\section{NNWN Facts}
+\pdfcomment{I need to retitle this seciton and move it around, but I just need to exstablish things things first}
+
+\begin{defn}{Single Input Single Output NNWNN}
+	
+	We begin again, by considering some NNWNN with a single hidden layer, and an affine output layer.
+	For $\varphi$ being a squashing function, with weight matrixes $W$ and $V$ and bias vectors $b$ and $c$.
+	As it is a NNWNN $W_{i,j} \ge 0$ and $V_{i,j} \ge 0$.
+	
+	For the case of a single output, single input network, with $n_h$ neurons in the hidden layer the network is described by
+	\begin{equation}
+	N(x;W,V,b,c) = \sum_{j=1}^{j=n_h} V_{1,j} \varphi (b_j+W_{j,1}x_1) + c_1
+	\end{equation}
+	
+	The network's derivative with respect to its input $x$.
+	
+	\begin{equation}
+	\frac{\partial N(x;W,V,b,c)}{\partial x_1} = \sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \varphi^\prime (b_j+W_{j,1}x_1)
+	\end{equation}
+\end{defn}
+
+\begin{defn}{Multi-input Multi-output NNWNN}
+	With $n_i$ inputs and $n_o$ outputs this becomes:
+	\begin{equation}
+	N(x;W,V,b,c)=V\varphi(Wx+b)=\left[\begin{array}{c}
+	{\displaystyle \sum_{j=1}^{j=n_{h}}}V_{1,j}\varphi\left(b_{j}+\sum_{i=1}^{i=n_{i}}\varphi\left(W_{j,i}x_{i}\right)\right) + c_1\\
+	\vdots\\
+	{\displaystyle \sum_{j=1}^{j=n_{h}}}V_{n_{o},j}\varphi\left(b_{j}+\sum_{i=1}^{i=n_{i}}\varphi\left(W_{j,i}x_{i}\right)\right) +c_{n_o}
+	\end{array}\right]
+	\end{equation}
+	
+	Its derivatives (Jacobian) are:
+	{\scriptsize
+	\begin{align}
+	\nabla N&=\left(V\odot W^{T}\right)g(Wx+b)\\
+	&=\left[\begin{array}{ccc}
+	{\displaystyle \sum_{j=1}^{j=n_{h}}}\left(V_{1,j}W_{j,1}\right)g(b_{j}+\sum_{i=1}^{i=n_{i}}\left(W_{j,i}x_{i}\right)) & \ldots & {\displaystyle \sum_{j=1}^{j=n_{h}}}\left(V_{1,j}W_{j,n_{i}}\right)g(b_{j}+\sum_{i=1}^{i=n_{i}}\left(W_{j,i}x_{i}\right))\\
+	\vdots & \cdots & \vdots\\
+	{\displaystyle \sum_{j=1}^{j=n_{h}}}\left(V_{n_{o},j}W_{j,1}\right)g(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{i}\right)) & \ldots & {\displaystyle \sum_{j=1}^{j=n_{h}}}\left(V_{n_{o},j}W_{j,n_{i}}\right)g(b_{j}+\sum_{i=1}^{i=n_{i}}\left(W_{j,i}x_{i}\right))
+	\end{array}\right]
+	\end{align}
+	}
+\end{defn}
+
+\begin{defn}{Deep NNWNN}
+	The multilayer variation of a NNWNN,
+	for weight matrixes $W_{(i)}$ and $V$, bias vectors $b_{(i)}$ and $c$
+	input $x$ and output $y$, with $L$ hidden layers
+	it has layers:
+	\begin{align}
+	z_0 &= x \\
+	z_1 &= \varphi(W_{(1)}z_0+b_{(1)})\\
+	\vdots\\
+	z_i &= \varphi(W_{(i)}z_{i-1}+b_{(i)})\\
+	\vdots\\
+	z_L &= \varphi(W_{(L)}z_{L-1}+b_{(L)})\\
+	y  &= V\varphi(z_L)+c	
+	\end{align}
+	
+\end{defn}
 
 \section{Preliminaries}
 
 \begin{defn}{Squashing Function}
-A squashing function is a function $\varphi\:\R \to \R$, that is monotonic, and is bounded above and below.
+A squashing function is a function $\varphi\:\R \to \R$, that is monotonically increasing, and is bounded above and below.
 Many traditional normal neural network activation functions, including the logistic function (sigmoid), $\tanh$, RELU6, are squashing functions.
 Other more recent activation functions are not, e.g. RELU, ELU, SELU, and varieties of "leaky" activation functions.
 \end{defn}
+
+
+
+
 
 \begin{defn}{Summability Kernel}
 A summability kernel, or approximate identity, is a sequence of continuous real valued functions $\phi_n$ for $n>0$, with the following properties:
@@ -67,24 +183,44 @@ A summability kernel, or approximate identity, is a sequence of continuous real 
 \end{enumerate}
 \end{defn}
 
-\begin{lem}{The derivative of any squashing function gives rise to a summability kernel.}
-	For any squashing function $\varphi(z)$,
-	by taking its derivative $g \coloneqq \frac{\partial\varphi(z)]}{\partial z}$ allows us to define a sequence of functions 
+\begin{lem}
+	For any continuous function $f$,
+	for any summability kernel $\phi_n$
 	\begin{equation}
-	g_n(z) \coloneqq \frac{g(nz)}{n\left( c_{max} - c_{min} \right)} 
+	\lim_{n\to \infty} f \ast \phi_n = f \quad \text{uniformly}
 	\end{equation}
-	 where $c_{min}=\lim_{z \to -\infty} \varphi{z}$ and $c_{max}=\lim_{z \to \infty} \varphi{z}$.
-	This sequence is always a summability kernel, for any smooth squashing function.
+	where $\ast$ denotes convolution.
+	\pdfcomment{I have I think a proof that this works for noncontinous summability kernals too, at least for bounded functions}
 	
-	\pdfcomment{Issue: not all squashing functions I care about are smooth, eg RELU6.
-	But for }
+	\pdfcomment{Insert a citation, or a proof here}
+\end{lem}
+
+
+\begin{lem}\label{lem:squashderivissum}
+	The derivative of any continuous squashing function gives rise to a summability kernel.
+	For any squashing function $\varphi(z)$,
+	we define a sequence of functions from scaling its derivative 
+    $g \coloneqq \frac{\partial\varphi(z)}{\partial z}$, as follows:
+    
+    \pdfcomment{Maybe I should use varphi prime instread of g in this section, it might be clearer}
+    
+	\begin{equation}
+	g_n(z) \coloneqq \frac{k_n g(k_n z)}{ c_{max} - c_{min}} 
+	\end{equation}
+	 where $c_{min}=\lim_{z \to -\infty} \varphi{z}$ and $c_{max}=\lim_{z \to \infty} \varphi{z}$,
+	 and $k_n$ is the $n$th element of some increasing sequence of real numbers.
+	This sequence is always a summability kernel, for any continuous squashing function.
+	
+	\pdfcomment{Issue: not all squashing functions I care about are continuous, eg RELU6, but I know this works anyway, see notes.
+		See https://math.stackexchange.com/questions/2448729}
+
 \end{lem}
 \begin{proof}
 For the first property:
 \begin{align}
-	\int_{-\infty}^{\infty} g_n(z) \, dz &=  \int_{-\infty}^{\infty} \frac{g(nz)}{n\left( c_{max} - c_{min} \right)} \, dz \\
-	&= \frac{1}{c_{max} - c_{min}} \int_{-\infty}^{\infty} \frac{g(nz)}{n} \, dz \\
-	&= \frac{\dlim_{t \to \infty} \varphi(nz) - \dlim_{t \to -\infty} \varphi(nz)}{c_{max} - c_{min}} && \text{(Fundermental Thm of Calculus)}\\
+	\int_{-\infty}^{\infty} g_n(z) \, dz &=  \int_{-\infty}^{\infty} \frac{k_n g(k_nz)}{c_{max} - c_{min}} \, dz \\
+	&= \frac{1}{c_{max} - c_{min}} \int_{-\infty}^{\infty} k_n g(k_n z) \, dz \\
+	&= \frac{\dlim_{t \to \infty} \varphi(k_n z) - \dlim_{t \to -\infty} \varphi(k_n z)}{c_{max} - c_{min}} && \text{(Fundermental Thm of Calculus)}\\
 	&= \frac{c_{max} - c_{min}}{c_{max} - c_{min}}  && \text{(as $n>0$)}\\
 	&= 1	
 \end{align}
@@ -93,31 +229,362 @@ For the second property: as  $\varphi$ is monotonic, its derivative $g(z)$ is no
 
 For the third property:
 \begin{align}
-	\lim_{n\to\infty} \int_{|z|>\delta} |g_n(z)|\, dz &= \lim_{n\to\infty} \int_{z>\delta} \frac{g(nz)}{n\left( c_{max} - c_{min} \right)} \\
+	\lim_{n\to\infty} \int_{z>\delta} |g_n(z)|\, dz 
+	 &= \lim_{n\to\infty} \int_{z>\delta} \frac{k_n g(k_n z)}{c_{max} - c_{min}} \\
 	 &= \lim_{n\to\infty} \frac{1}{c_{max} - c_{min}} 
-		 \left( \int_{-\infty}^{-\delta} \frac{g(nz)}{n} \, dz 
-		 + \int_\delta^\infty \frac{g(nz)}{n} \, dz \right) \\
+		 \left( \int_{-\infty}^{-\delta} k_n g(k_n z) \, dz 
+		 + \int_\delta^\infty k_n g(k_n z) \, dz \right) \\
 	 &= \lim_{n\to\infty} \frac{
-	 	\left(\varphi(-n\delta)-\dlim_{t \to -\infty} \varphi(nz)\right)
-	 	 + \left( \varphi(n\delta) - \dlim_{t \to \infty} \varphi(nz)\right)}%
+	 	\left(\varphi(-k_n\delta)-\dlim_{t \to -\infty} \varphi(k_n z)\right)
+	 	 + \left( \varphi(k_n\delta) - \dlim_{t \to \infty} \varphi(k_n z)\right)}%
 	 	 {c_{max} - c_{min}} \\
 	 &= \lim_{n\to\infty} \frac{
-	 	\left(\varphi(-n\delta)-c_{min} \right)
-	 	+ \left( \varphi(n\delta) - c_{max} \right)}%
+	 	\left(\varphi(-k_n\delta)-c_{min} \right)
+	 	+ \left( \varphi(k_n\delta) - c_{max} \right)}%
 	    {c_{max} - c_{min}} \\
 	 &= \frac{
 	 	\left(c_{min}-c_{min} \right)
-	 	+ \left(c_{\max} - c_{max} \right)}%
+	 	+ \left(c_{max} - c_{max} \right)}%
 		{c_{max} - c_{min}} \\
 	 &= 0
 \end{align}
 
+\end{proof}
 
+\begin{lem}\label{lem:approxwithsummability}
+For every continuous non-negative function with compact support $f$,
+for all points in its domain $x$
+then for any $\epsilon >0$ there exists an element $\phi_n$ from from a summability kernel $\lbrace \phi_i  \rbrace_{i>0}$, and a sequence of translation terms $c_1,\ldots,c_M$ and positive weights $b_1,\ldots,b_M$ with $\sum_{i=1}^{i=M} b_i = 1$ such that:
+
+
+\begin{align}
+\left\Vert f(x)-\sum_{i=1}^{i=M}b_{i}\phi_{n}(x-c_i)\right\Vert _{1}<\epsilon &&
+ \text{and} &&
+\left\Vert f(x)-\sum_{i=1}^{i=M}b_{i}\phi_{n}(x-c_i)\right\Vert _{\infty}<\epsilon
+\end{align}
+
+\end{lem}
+
+This proof is based on a similar proof for Gaussian density functions which appears as Lemma 2.2 of \textcite{bacharoglou2010approximation}.
+It relies on the uniform convergence of the convolution of a summability kernel and a continuous function to the continuous function, and the uniform convergence of the Riemann sum to an integral.
+Another notionally similar (if significantly more dense) proof also appears as that for Theorem 3.1 of \textcite{NESTORIDIS20111783}.
+
+
+\begin{proof}
+	$\forall p \in \lbrace 1,\infty \rbrace \forall x  \forall \epsilon_1 \exists N_1>0 \forall n_1>N_1$ we have
+	\begin{align}
+	\left\| f \ast \phi_{n_1}(x) - f(x) \right\|_p &< \epsilon_1 && \text{approximate identity property} \\
+	\left\| \int_{-\infty}^\infty f(t)\phi_{n_1}(x-t) \, dt - f(x)\right\|_p &< \epsilon_1 && \text{definition of convolution} \\
+	\left\| \int_{t \in supp(f)]} f(t)\phi_{n_1}(x-t) \, dt - f(x)\right\|_p &< \epsilon_1 && \text{compact support of $f$}
+	\end{align}
+	
+	By the use of a Riemann sum, over slices $V_1,\ldots, V_M$ covering the support of $f$, each containing one of the points $t_1,...,t_m$ respectively,
+	we have for $|V_i|$ being the area of slice $V_i$ then
+	$\forall \epsilon_2 \exists N_2>0 \forall n_2>N_2$ it is such that 
+	\begin{align}
+		\left\| f \ast \phi_{n_1}(x) - \sum^{n_2}_{i=1} f(t_i)|V_i|\phi_{n_1}(x-t_i) \right\|_p &< \epsilon_2 && \text{Riemann sum} 
+	\end{align}
+	
+	Combining these and using $N > N_1 + N_2$ $n>N$ then by the triangle inequality we have:
+	\begin{align}
+	\left\| f(x) - \sum^{n}_{i=1} f(t_i)|V_i|\phi_n(x-t_i) \right\|_p &<  &&  \\
+	\left\| f \ast \phi_n(x) - \sum^{n}_{i=1} f(t_i)|V_i|\phi_n(x-t_i) \right\|_p 
+	+  \left\| f \ast \phi_n(x) - f(x) \right\|_p &< \epsilon_1 + \epsilon_2 
+	\end{align}
+	
+	As $|V_i|$ as a volumes is greater than zero, and $f(t_i) \ge 0$ as $f$ is a non-negative function, we thus re-express the above using $b_i=f(t_i)|V_i|$.
+	Also setting $c_i=t_i$, $\epsilon=\epsilon_1+\epsilon_2$.
+	
+	Thus 
+	\begin{align}
+	\left\| f(x) - \sum^{n}_{i=1} b_i \phi_n(x-c_i) \right\|_p &<  \epsilon
+	\end{align}
+\end{proof}
+
+\section{Proof of our results}
+
+\subsection{Proof of \Cref{thm:upper}}
+The proofs of the basic properties of NNWNNs,
+as simple and boil down to well known properties of the spaces of continuous/bounded/monotonically increasing functions being closed under various operations.
+\begin{proof}
+	We begin by considering some NNWNN with a single hidden layer, and an affine output layer.
+	For $\varphi$ being a squashing function, with weight matrixes $W$ and $V$ and bias vectors $b$ and $c$.
+	As it is a NNWNN $W_{i,j} \ge 0$ and $V_{i,j} \ge 0$.
+	
+	For the case of a single output, single input network, with $n_h$ neurons in the hidden layer the network is described by
+	\begin{equation}
+	N(x;W,V,b,c) = \sum_{j=1}^{j=n_h} V_{1,j} \varphi (b_j+W_{j,1}x_1) + c_1
+	\end{equation}
+
+	For the first property: that NNWNN is continuous,
+	consider: that $\varphi$ is continuous,
+	$x \mapsto W_{j,1}x + b_j$ is continuous,
+	and continuous functions are closed under addition, scalar multiplication, and composition.
+	For further details see e.g. \textcite{rudin1976principles} (chapter 4.)
+	
+	For the second property: the NNWNNs are monotonically increasing:
+	consider input points $\alpha$ and $\beta$, such that $\alpha\ge\beta$.
+	\begin{align}
+	\alpha &\ge \beta \\
+	W_{j,1}\alpha+b_j &\ge W_{j,1}\beta+b_j && \text{as $W_{j,i}\ge0$} \\
+	\varphi(W_{j,1}\alpha+b_j) &\ge \varphi(W_{j,1}\beta+b_j) && \text{as $\varphi$ is monotonically increasing} \\
+	V_{1,j}\varphi(W_{j,1}\alpha+b_j) &\ge V_{1,j}\varphi(W_{j,1}\beta+b_j) && \text{as $V_{1,j}\ge 0$} \\
+	\sum_{j=1}^{j=n_h}V_{1,j}\varphi(W_{j,1}\alpha+b_j) &\ge \sum_{j=1}^{j=n_h}V_{1,j}\varphi(W_{j,1}\beta+b_j) && \text{term-wise} \\
+	N(\alpha;W,V,b,c) &\ge N(\beta;W,V,b,c)
+	\end{align}
+
+	for the final property, that NNWNNs are bounded above and below,
+	consider that $\varphi$ is bounded above and below.
+	$\forall z$
+	\begin{align}
+	c_{min} \le \varphi(z) &\le c_{max} \\
+	c_{min} \le \varphi(W_{j,1}+b) &\le c_{max} \\
+	%
+	\sum_{j=1}^{j=n_h}V_{1,j} c_{min} 
+	\le \sum_{j=1}^{j=n_h}V_{1,j}\varphi(W_{j,1}x+b_j)
+    &\le \sum_{j=1}^{j=n_h}V_{1,j}c_{max} \\
+    %
+    \sum_{j=1}^{j=n_h}V_{1,j} c_{min} 
+    \le N(x;W,V,b,c)
+    &\le \sum_{j=1}^{j=n_h}V_{1,j}c_{max}
+	\end{align}	
+\end{proof}
+
+The proof of the collary \Cref{cor:noapproxapproximate} follows directly from this:
+\begin{proof}
+	A monotonic function $f$ can not converge uniformly towards a non-monotonic function $h$.
+	Consider $f$ monotonic increasing (WLOG),
+	As $h$ is not monotonically increasing, for some values $a$,$b$ $a>b$, 
+	$h(a)<h(b)$.
+	It is clear in such a case, that the closes a monotonically increasing function could come to this is to be some constant between those points.
+	Which means there will alway be a nonzero difference over that area.
+
+		
+	
+	A bounded monotonic function $h$ can not converge uniformly towards a non-bounded monotonic function $f$.
+	Consider the limit for $c$ an upper boundary of $h$,
+	as $f$ is not bounded, $\exists k$ such that $x>k \implies f(x)>c$.
+	Thus for $x>k$ $|f(x)-h(x)|\ge h(x)-c$ which grows without bound.
+	
+	That as \Cref{thm:upper} shows that the NNWNN has the properties of being monotonically increasing and bounded, it can not converge uniformly to such functions.
 \end{proof}
 
 
-\section{Proof of Theorem 1}
+\subsection{Proof of \Cref{thm:nnwnnuat}}
+\begin{proof}
 
+
+We begin again, by considering some NNWNN with a single hidden layer, and an affine output layer.
+For $\varphi$ being a squashing function, with weight matrixes $W$ and $V$ and bias vectors $b$ and $c$.
+As it is a NNWNN $W_{i,j} \ge 0$ and $V_{i,j} \ge 0$.
+
+For the case of a single output, single input network, with $n_h$ neurons in the hidden layer the network is described by
+\begin{equation}
+N(x;W,V,b,c) = \sum_{j=1}^{j=n_h} V_{1,j} \varphi (b_j+W_{j,1}x_1) + c_1
+\end{equation}
+
+The for the case with $n_i$ inputs and $n_o$ outputs this becomes:
+
+\begin{equation}
+N(x;W,V,b,c)=V\varphi(Wx+b)=\left[\begin{array}{c}
+{\displaystyle \sum_{j=1}^{j=n_{h}}}V_{1,j}\varphi\left(b_{j}+\sum_{i=1}^{i=n_{i}}\varphi\left(W_{j,i}x_{i}\right)\right) + c_1\\
+\vdots\\
+{\displaystyle \sum_{j=1}^{j=n_{h}}}V_{n_{o},j}\varphi\left(b_{j}+\sum_{i=1}^{i=n_{i}}\varphi\left(W_{j,i}x_{i}\right)\right) +c_{n_o}
+\end{array}\right]
+\end{equation}
+
+For the remained of this proof we will work with the single input single output case.
+The generalisation to multi-input multi-output is straight forward, if verbose (to simply for the reader considering this generalisation, we will leave the subscripts for singleton dimensions in).
+
+We consider the network's derivative with respect to its input $x$.
+
+\begin{equation}
+\frac{\partial N(x;W,V,b,c)}{\partial x_1} = \sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \varphi^\prime (b_j+W_{j,1}x_1)
+\end{equation}
+
+We can re-express the value of $V_{1,j}$ as $V_{1,j}=\frac{\alpha_{1,j}}{c_{max}-c_{min}}$,
+for $c_{min}$ and $c_{max}$ the lower and upper bounds of the squashing function ($\varphi$) respectively.
+Note that $\alpha_{1,j}$ is non-negative, as a consequence of $V_{1,j}$ and $W_{j,1}$ being non-negative.
+
+We also re-express $b_j$ as $b_j=\frac{\beta_{j,1}}{W_{j,1}}$  using $g = \frac{\partial\varphi(z)}{\partial z}$.
+
+
+\begin{align}
+\frac{\partial N(x;W,V,b,c)}{\partial x_1} 
+&= \sum_{j=1}^{j=n_h} \frac{\alpha_{1,j}}{(c_{max}-c_{min})} \, W_{j,1} g(\frac{W_{j,1}\beta_{j,1}}{W_{j,1}} + W_{j,1}x_1)\\
+\frac{\partial N(x;W,V,b,c)}{\partial x_1} 
+&= \sum_{j=1}^{j=n_h} \alpha_{1,j} \frac{ g(W_{j,1}\left( x_1 + \beta_{j,1} \right))}{W_{j,1}(c_{max}-c_{min})} \\
+\end{align}
+
+We note that this is now in the form required for \Cref{lem:squashderivissum},
+to apply.
+So we use the summability kernel thus described $g_n(x) = \frac{k_n g(k_n x)}{k_n(c_{max}-c_{min})}$.
+for arbitrary choice of $1 \le J \le n_h$ such that $W_{J,1} \ne 0$
+define any arbitrary increasing sequence $k$ such that $k_n=W_{J,1}$,
+not that we have not placed any restriction on $k_n=W_{J,1}$ beyond that it is positive -- it can be arbitrarily large.
+We assign  $a_j=0$ for all $j \ne J$.
+
+
+\begin{align}
+\frac{\partial N(x;W,V,b)}{\partial x_1} 
+&= \sum_{j=1}^{j=n_h} \alpha_{1,j} g_n\left( x_1 + \beta_{j,1} \right))
+\end{align}
+
+We can apply \Cref{lem:approxwithsummability}, and thus conclude:
+for all non-negative continuous functions with compact support $f$,
+for all points in its domain $x$
+then for all $\epsilon > 0$, for all $p\in \lbrace 1, \infty \rbrace$
+there exist a set of non-negative weight matrices $W$, $V$ (whose dimensions are determined by the hidden layer size $n_h$) and a bias vector $b$ and $c$
+such that 
+\begin{align}
+\left\|\frac{\partial N(x;W,V,b, c)}{\partial x_1} - f(x) \right\|_p < \epsilon
+\end{align}
+
+We can thus say that $\frac{\partial N(x;W,V,b,c)}{\partial x_1}$ is dense in the space of non-negative continuous functions with compact support.
+
+From this by application of the fundamental theorem of calculus,
+we have
+\begin{align}
+\left\| \frac{\partial N(x;W,V,b, c)}{\partial x_1} - f(x) \right\|_p &< \epsilon \\
+\left\| \int_{\inf supp(f)}^y \frac{\partial N(x;W,V,b, c)}{\partial x_1} - f(x) \, dx \right\|_p &< \left( y-\inf supp(f) \right)  \epsilon \\
+\left\| N(y;W,V,b, c) - N(\inf supp(f);W,V,b, c) - \int_{\inf supp(f)}^y f(x) \, dx \right\|_p &< \left( y-\inf supp(f) \right)  \epsilon
+\end{align}
+
+\pdfcomment{Is this c-star right?}
+
+We chose a value for $c$ as $c^\star=-N(\inf supp(f);W,V,b, 0)$, thus $N(\inf supp(f);W,V,b, c^\star)=0$.
+We rewrite using $\varepsilon = \left( y-\inf supp(f) \right)  \epsilon$
+\begin{align}
+\left\| N(y;W,V,b, c^\star) - F(y) \right\|_p &< \varepsilon
+\end{align}
+
+Consider what $F$ represents.
+As it is the integral of a non-negative continuous function, it is a monotonically increasing differentiable function.
+As outside the support of $f$ its gradient is zero, it is thus bounded below, and above.
+
+As the space of bounded, differentiable functions functions is dense in the space of bounded functions, we can relax the constraint on $F$ being differentiable.
+\pdfcomment{TODO: Finish this line with a citation to something, I think this is correct.}
+
+We thus conclude with:
+
+For all monotonically increasing functions bounded above and below $F$,
+for all points in its domain $x$
+then for all $\varepsilon > 0$, for all $p\in \lbrace 1, \infty \rbrace$
+there exist a set of non-negative weight matrices $W$, $V$ (whose dimensions are determined by the hidden layer size $n_h$) and a bias vector $b$ and $c$
+
+\begin{align}
+\left\| N(x;W,V,b, c) - F(x) \right\|_p &< \varepsilon
+\end{align}
+which is \Cref{thm:nnwnnuat}.
+\end{proof}
+
+\subsection{proof of \Cref{thm:deep}}
+\begin{proof}
+A deep NNWNN, is equivalent to the composition of several single layer NNWNNs.
+This is bounded, as the composition of bounded functions is bounded,
+and monotonically increasing as the composition of monotonically increasing functions is monotonically increasing.
+
+It is able to uniformly converge to any monotonically increasing, bounded function,
+as consider the case where all layers other than the first approximate the identity function over the bounds -- the case is thus reduced to first layer, which is covered by \Cref{thm:nnwnnuat}.
+\end{proof}
+
+\section{Some theoretical applications}
+
+\subsection{Incorporating prior knowledge}
+When training a machine learning system,
+one often wants to incorporate prior knowledge from domain experts.
+One large class of such knowledge is that there exists a monotonic relationship between the dependent (output) variable, and one of the independent (observation/input) variables.
+For example: the price of a used car decreases with its age, all other features being the same.
+
+Consider a single output network, with multiple inputs.,
+If the output is monotonically increasing with input feature $x_\alpha$,
+then one only needs to constrain the weights for neurons which occur on possible paths between input an the output.
+For a network with a single hidden layer  and an output layer as discussed above,
+this means constraining only $\forall j$, $V_{1,j} \ge 0$ and $W_{j, \alpha} \ge 0$.
+For deeper NNs this is more complicated. \pdfcomment{Do I need to explain how this is done, I find it hard to think about?}
+
+If output  is monotonically decreasing $x_\alpha$, then one can preprocess the data to invert or negate the value of that feature, and proceed as above.
+
+The proof that this mixed network is an universal monotonic approximator in  $x_\alpha$ is not presented here formally.
+However, it boils down to, if one considers all other values $x_\gamma$ $\gamma \ne 0$ as fixed, then the network is just a single-input NNWNN, with the other values driving a bias term that can be cancelled.
+
+Conversely, it is an universal approximator in the other inputs,
+a treating the value of $x_\alpha$ as fixed similarly reduces the network to a conventional neural network and the universal approximation theorem applies.
+
+
+
+
+\subsection{Non-parametric Estimation}
+One particularly important class of bounded monotonically increasing functions is
+cumulative density functions (CDFs).
+CDFs have the additional restriction that the lower bound must be zero and the upper bound must be one.
+A NNWNN can be fitted to meet that constraint; or we can encode it into the network.
+While theoretically encoding it into the network is not required,
+in practice is significantly simplifies training,
+and gives a guarantee that even if the network does not fit as an optimal non-parametric estimator, (e.g. when partially trained)
+it is valid CDF.
+
+
+
+For any continuous distribution over $\R$, $\forall \epsilon$ we can define an lower and upper boundary $s_{min}$ and $s_{max}$ such that $Pr(X<s_{min})+Pr(X>s_{max}) \le \epsilon$.
+For any good approximation, we can choose the boundaries such that have that $Pr(X<s_{min}) \approx 0$ and $Pr(X<s_{max}) \approx 1$.
+
+So as such we can represent any CDF as,
+for $N(x)$ a NNWNN (with parameters not shown, for brevity),
+\begin{equation}
+	F(x) = \frac{N(x) - N(s_{min})}{N(s_{max})-N(s_{min})}
+\end{equation}
+
+It is clear that this is a monotonic function bounded above and below at 1 and 0,
+within the boundaries given.
+And given the approximation properties given above,
+a sufficiently wide NNWNN can approximate any CDF this way.
+
+As a further practicality,
+consider training such a network for non-parametric estimation.
+In this case one has a collection of observations for possible values of $X$.
+The non-parametric estimator, should be fitted to maximise the the probability or equivalently the negative log-likelihood of the probability density function (PDF) at those observed points.
+
+The PDF is given by:
+\begin{align}
+f(x) &= \frac{\partial F(x)}{\partial x} =\frac{\frac{\partial N(x)}{\partial x}}{N(s_{max})-N(s_{min})} \\
+%
+&=\frac{1}{N(s_{max})-N(s_{min})} 
+\sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \varphi^\prime (b_j+W_{j,1}x_1) \\
+\end{align}
+
+For sufficiently wide choices of the boundaries,
+and for squashing function bounded above at $c_{max}$ and below at $c_{min}$,
+we have $N(s_{max})-N(x_{min}) \approx (c_{max}-c_{min})\sum_{j=1}^{j=n_h} V_{1,j}$
+
+\begin{align} \label{equ:pdf2}
+f(x) &\approx \frac{1}{(c_{max}-c_{min})\sum_{j=1}^{j=n_h} V_{1,j}}  \sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \varphi^\prime (b_j+W_{j,1}x_1)\\
+%
+&\approx \frac{1}{\sum_{j=1}^{j=n_h} V_{1,j}}  \sum_{j=1}^{j=n_h} V_{1,j}
+\left( \frac{W_{j,1} \varphi^\prime (b_j+W_{j,1}x_1)}{c_{max}-c_{min}} \right)
+\end{align}
+
+A very interesting fact to note here is that $\frac{W_{j,1} \varphi^\prime (b_j+W_{j,1}x_1)}{c_{max}-c_{min}}$ is always perfectly valid PDF in its own right.
+For the sigmoid activation function it is a bell-curve, as shown in \Cref{fig:sigmoidbell}, for RELU6 it is a uniform distribution.
+These are valid PDFs are they are non-negative, and have unit area (as was shown in \Cref{lem:squashderivissum}).
+From this, and the $V$ is non-negative, we can note that \Cref{equ:pdf2} defines a mixture model in the standard form, with $n_h$ components.
+
+
+\begin{figure}
+\includegraphics[scale=0.45]{figs/sigmoid-der-plot}
+\caption{a plot of $\frac{W_{j,1} \varphi^\prime (b_j+W_{j,1}x_1)}{c_{max}-c_{min}}$ for $\varphi$ being the sigmoid function.}
+\label{fig:sigmoidbell}
+\pdfcomment{TODO Replace this with a nicer plot}
+\end{figure}
+
+
+
+
+
+
+
+
+	
 \section{Conclusion and Future Work}
 
 \bibliography{master}

@@ -71,7 +71,7 @@
 \begin_body
 
 \begin_layout Title
-On the Relationshop between Mixture Models and Neural Networks (v2)
+On the Relationshop between Mixture Models and Neural Networks (v3)
 \end_layout
 
 \begin_layout Author
@@ -358,9 +358,9 @@ We begin our consideration with a UAT style neural network.
 \begin_deeper
 \begin_layout Itemize
 \begin_inset Formula $N(x;W,V,b)=V\varphi(Wx+b)=\left[\begin{array}{c}
-{\displaystyle \sum_{j=1}^{j=dim(V,2)}}V_{1,j}\varphi(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{j,i}\right))\\
+{\displaystyle \sum_{j=1}^{j=dim(V,2)}}V_{1,j}\varphi(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{i}\right))\\
 \vdots\\
-{\displaystyle \sum_{j=1}^{j=dim(V,2)}}V_{dim(V,1),j}\varphi(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{j,i}\right))
+{\displaystyle \sum_{j=1}^{j=dim(V,2)}}V_{dim(V,1),j}\varphi(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{i}\right))
 \end{array}\right]$
 \end_inset
 
@@ -424,17 +424,33 @@ Consider its derivative WRT its input
 \begin_deeper
 \begin_layout Itemize
 for 
-\begin_inset Formula $g=\nabla\varphi$
+\begin_inset Formula $g=\frac{\partial(\varphi(z))}{\partial z}$
 \end_inset
 
 , which is applied element-wise
 \end_layout
 
 \begin_layout Itemize
-\begin_inset Formula $\nabla N=\left(V\odot W^{T}\right)g(Wx+b)=\left[\begin{array}{c}
-{\displaystyle \sum_{j=1}^{j=dim(V,2)}}\left(V_{1,j}W_{j,1}\right)g(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{j,i}\right))\\
-\vdots\\
-{\displaystyle \sum_{j=1}^{j=dim(V,2)}}\left(V_{dim(V,1),j}W_{j,dim(V,1)}\right)g(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{j,i}\right))
+for number of outputs 
+\begin_inset Formula $n_{o}=dim(V,1)$
+\end_inset
+
+, number of hidden neurons 
+\begin_inset Formula $n_{h}=dim(V,2)$
+\end_inset
+
+, and number of inputt 
+\begin_inset Formula $n_{i}=dim(W,2)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\nabla N=\left(V\odot W^{T}\right)g(Wx+b)=\left[\begin{array}{ccc}
+{\displaystyle \sum_{j=1}^{j=n_{h}}}\left(V_{1,j}W_{j,1}\right)g(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{i}\right)) & \ldots & {\displaystyle \sum_{j=1}^{j=n_{h}}}\left(V_{1,j}W_{j,n_{i}}\right)g(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{i}\right))\\
+\vdots & \cdots & \vdots\\
+{\displaystyle \sum_{j=1}^{j=n_{h}}}\left(V_{n_{o},j}W_{j,1}\right)g(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{i}\right)) & \ldots & {\displaystyle \sum_{j=1}^{j=n_{h}}}\left(V_{n_{o},j}W_{j,n_{i}}\right)g(b_{j}+\sum_{\forall i}\left(W_{j,i}x_{i}\right))
 \end{array}\right]$
 \end_inset
 
@@ -690,8 +706,8 @@ key "bacharoglou2010approximation"
 
 \begin_deeper
 \begin_layout Itemize
-In this context I believe the relevant defintion of approximate identity
- is that for a convolution.
+In this context the relevant defintion of approximate identity is that for
+ a convolution.
  i.e.
  a summability kernel
 \end_layout
@@ -705,7 +721,7 @@ Defn: we call
 \begin_inset Formula $\phi_{n}(t)$
 \end_inset
 
- a sequence of smooth real-valued functions with the properties
+ a sequence of continuous real-valued functions with the properties
 \end_layout
 
 \begin_deeper
@@ -753,6 +769,44 @@ forall
 
  and forall 
 \begin_inset Formula $\delta>0$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+The important property of all summability kernals is that 
+\begin_inset Formula $\lim_{n\to\infty}\phi_{n}\ast f\to f$
+\end_inset
+
+ converging uniformly
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Here 
+\begin_inset Formula $\ast$
+\end_inset
+
+ is the convolution operator
+\end_layout
+
+\begin_layout Itemize
+More formally 
+\begin_inset Formula $\forall f\in\mathcal{C}(\mathbb{R})$
+\end_inset
+
+ that 
+\begin_inset Formula $\forall\epsilon\in\mathbb{R}\exists N\in\mathbb{R}\forall x\in\mathbb{R}$
+\end_inset
+
+ such that 
+\begin_inset Formula $n>\mathbb{N}$
+\end_inset
+
+ we have 
+\begin_inset Formula $\left|h_{n}\ast f(x)-f(x)\right|<\epsilon$
 \end_inset
 
 
@@ -917,7 +971,8 @@ Which Was What Was Wanted
 
 \end_deeper
 \begin_layout Itemize
-Thus for all activation functions(bounded & monotonic) 
+Thus for all continuous squashing activation functions(bounded & monotonic)
+ 
 \begin_inset Formula $g_{n}$
 \end_inset
 
@@ -925,6 +980,30 @@ Thus for all activation functions(bounded & monotonic)
  a approximate identity.
 \end_layout
 
+\begin_layout Itemize
+For noncontinous squashing functions we don't have a rule that says they
+ make summability kernels with convolution giving the uniform convergence
+ property
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+But I have found that at least in the case of RELU1 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:RELU1"
+
+\end_inset
+
+ with convolution we have uniform convergence to bounded functions, and
+ (at least) point-wise convergence to unbounded functions.
+\end_layout
+
+\begin_layout Itemize
+This is enough for the proof I believe, since all continuous PDFs are bounded.
+\end_layout
+
+\end_deeper
 \end_deeper
 \begin_layout Itemize
 This result would give us convergence 
@@ -937,6 +1016,18 @@ This result would give us convergence
 
  to any PDF with compact support.
  (and thus to any unnormalised PDF if we didn't normalize the components)
+\end_layout
+
+\begin_layout Itemize
+I am going to rewrite the proof of theorem 1.1 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "bacharoglou2010approximation"
+
+\end_inset
+
+ to use the generalised result, as it is written for gaussians only.
+ (the generalisation is just a side comment in that paper)
 \end_layout
 
 \begin_layout Itemize
@@ -959,7 +1050,132 @@ a NNWNN can estimate any unnormalised CDF with compact support.
 
 \end_deeper
 \begin_layout Itemize
-This is probably a pretty wide range of functions, and might have a name.
+This is probably a pretty wide range of functions, and might have a name
+ – monotonically increasing, differentiable functions bounded above and
+ below
+\end_layout
+
+\begin_layout Itemize
+the generalised result of theorem 1.1 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "bacharoglou2010approximation"
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Section
+Primary Result 2: Upper bound on classes of functions that can be estimates
+\end_layout
+
+\begin_layout Subsection
+Part 1 Always Monotonic
+\end_layout
+
+\begin_layout Standard
+Where as the previous result give a lower bound on the classes of functions
+ that are able to be estimated,
+\end_layout
+
+\begin_layout Standard
+we also would give an upper bound.
+\end_layout
+
+\begin_layout Standard
+RTP: NNWNN's are always monotonically increasing
+\end_layout
+
+\begin_layout Standard
+Consider some NNWNN as before 
+\begin_inset Formula $N(x;W,V,b,c)=\sum_{j=1}^{j=n_{h}}V_{1,j}\varphi(b_{j}+W_{j,1}x_{1})+c_{1}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Consider for all 
+\begin_inset Formula $\alpha$
+\end_inset
+
+, 
+\begin_inset Formula $\beta$
+\end_inset
+
+ values that the input could take with 
+\begin_inset Formula $\alpha>\beta$
+\end_inset
+
+, then as 
+\begin_inset Formula $W_{j,1}>0$
+\end_inset
+
+ for all 
+\begin_inset Formula $j$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Standard
+then 
+\begin_inset Formula $W_{j,1}\alpha>W_{j,1}\beta$
+\end_inset
+
+, thus as 
+\begin_inset Formula $\varphi$
+\end_inset
+
+ is monotonically increasing: then 
+\begin_inset Formula $\forall j$
+\end_inset
+
+ we have
+\begin_inset Formula $\varphi(b_{j}+W_{j,1}\alpha)>\varphi(b_{j}+W_{j,1}\beta)$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Standard
+Thus term-wise 
+\begin_inset Formula $N(\alpha;W,V,b,c)=\sum_{j=1}^{j=n_{h}}V_{1,j}\varphi(b_{j}+W_{j,1}x_{1})+c_{1}>N(\beta;W,V,b,c)=\sum_{j=1}^{j=n_{h}}V_{1,j}\varphi(b_{j}+W_{j,1}x_{1})+c_{1}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Thus the network is always monotonically increasing.
+\end_layout
+
+\begin_layout Standard
+As the neural network is never non-monotonic it can not converge uniformly
+ to a non-monotonic function
+\end_layout
+
+\begin_layout Subsection
+Part 2 Always Bounded
+\end_layout
+
+\begin_layout Standard
+RTP: NNWNN's are always bounded.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $N(x;W,V,b,c)=\sum_{j=1}^{j=n_{h}}V_{1,j}\varphi(b_{j}+W_{j,1}x_{1})\le\sum_{j=1}^{j=n_{h}}V_{1,j}c_{max}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\sum_{j=1}^{j=n_{h}}V_{1,j}c_{min}\le\sum_{j=1}^{j=n_{h}}V_{1,j}\varphi(b_{j}+W_{j,1}x_{1})\le\sum_{j=1}^{j=n_{h}}V_{1,j}c_{max}$
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
@@ -1480,36 +1696,43 @@ Bonus Math
 \end_layout
 
 \begin_layout Standard
-Extra math working i need
-\end_layout
-
-\begin_layout Subsection
-Convolution with a summability kernal
-\end_layout
-
-\begin_layout Standard
-for 
-\begin_inset Formula $\phi_{n}(t)$
-\end_inset
-
- a summability kernal
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula $\phi_{n}\ast f=\int_{-\infty}^{\infty}f(\tau)\phi_{n}(t-\tau)d\tau$
+\begin_inset Formula $ $
 \end_inset
 
 
 \end_layout
 
 \begin_layout Subsection
-Convolution with an pseudo-summability kernal
+Convolution with an pseudo-summability kernal Based on RELU1
+\begin_inset CommandInset label
+LatexCommand label
+name "subsec:RELU1"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+consider 
+\begin_inset Formula $\varphi_{n}(x)=RELU1(nx)=\begin{cases}
+0 & nx\le0\\
+nx & 0<nx\le1\\
+1 & 1<nx
+\end{cases}=\begin{cases}
+0 & x\le0\\
+nx & 0<x\le\frac{1}{n}\\
+1 & \frac{1}{n}<x
+\end{cases}$
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
 Consider 
-\begin_inset Formula $g_{n}(x)=\begin{cases}
-\dfrac{1}{2n} & -n<x\le n\\
+\begin_inset Formula $g_{n}(x)=\dfrac{d(\varphi(x))}{dx}=\begin{cases}
+n & 0<x\le\frac{1}{n}\\
 0 & otherwise
 \end{cases}$
 \end_inset
@@ -1518,8 +1741,12 @@ Consider
 \end_layout
 
 \begin_layout Standard
+Not a true summability kernal as has a jump discontinuality each end.
+\end_layout
+
+\begin_layout Standard
 Integrates to 1: 
-\begin_inset Formula $\int_{-\infty}^{\infty}g_{n}(x)\,dx=\int_{-\infty}^{-n^{-}}0dx+\int_{-n^{+}}^{n^{-}}\frac{1}{2n}dx+\int_{n^{+}}^{\infty}0dx=0+\left[\frac{t}{2n}\right]_{-n}^{n}=\frac{2n}{2n}=1$
+\begin_inset Formula $\int_{-\infty}^{\infty}g_{n}(x)\,dx=\int_{0}^{\frac{1}{n}}ndx=\left[nx\right]_{0}^{\frac{1}{n}}=1-0=1$
 \end_inset
 
 
@@ -1538,29 +1765,374 @@ the final requirement
 \end_layout
 
 \begin_layout Standard
-\begin_inset Formula $\lim_{n\to\infty}\int_{|x|\ge\delta}|g_{n}(x)|\,dx=\lim_{n\to\infty}\int_{|x|\le\delta}g_{n}(x)\,dx=\lim_{n\to\infty}\int_{\delta}^{\infty}g_{n}(x)dx+\int-_{\infty}^{-\delta}g_{n}(x)dx$
+\begin_inset Formula $\lim_{n\to\infty}\int_{|x|\ge\delta}|g_{n}(x)|\,dx=\lim_{n\to\infty}\int_{|x|\le\delta}g_{n}(x)\,dx$
 \end_inset
 
 
 \end_layout
 
 \begin_layout Standard
-By the symetry of the function about 
-\begin_inset Formula $x=0$
+\begin_inset Formula $=\lim_{n\to\infty}\int_{\delta}^{\infty}g_{n}(x)dx+\int{}_{-\infty}^{-\delta}g_{n}(x)dx$
 \end_inset
 
 
 \end_layout
 
 \begin_layout Standard
-this is equal to 
-\begin_inset Formula $\lim_{n\to\infty}2\int_{\delta}^{\infty}g_{n}(x)dx=\lim_{n\to\infty}\begin{cases}
-\dfrac{n-\delta}{n} & \delta<n\\
-0 & n<\delta
-\end{cases}=0$
+\begin_inset Formula $=\lim_{n\to\infty}\int_{\delta}^{\infty}g_{n}(x)dx+0$
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $=\lim_{n\to\infty}\int_{\delta}^{\infty}\begin{cases}
+n & 0<x\le\frac{1}{n}\\
+0 & otherwise
+\end{cases}dx$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $=\lim_{n\to\infty}\left[\begin{cases}
+nx & 0<x\le\frac{1}{n}\\
+0 & otherwise
+\end{cases}\right]_{\delta}^{\infty}dx$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $=\lim_{n\to\infty}0-\begin{cases}
+n\delta & 0<\delta\le\frac{1}{n}\\
+0 & otherwise
+\end{cases}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $=\lim_{n\to\infty}0$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Check trivial example
+\end_layout
+
+\begin_layout Standard
+Consider 
+\begin_inset Formula $f(x)=x$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\left|g_{n}\ast f(t)-f(t)\right|=\left|\int_{0}^{\frac{1}{n}}(t-\tau)g(\tau)d\tau-t\right|$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $=\left|t\int_{0}^{\frac{1}{n}}g(\tau)d\tau-\int_{0}^{\frac{1}{n}}(\tau)g(\tau)d\tau-t\right|$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $=\left|t-t-\int_{0}^{\frac{1}{n}}(\tau)g(\tau)d\tau\right|$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $=\left|\left[\tau\int g_{n}(\tau)d\tau-\int\int g_{n}(\tau)d\tau d\tau\right]_{0}^{\frac{1}{n}}\right|$
+\end_inset
+
+ Integraiuon by parts
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $=\left|\left[\tau\int nd\tau-\int\int nd\tau d\tau\right]_{0}^{\frac{1}{n}}\right|$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $=\left|\left[\tau\tau n-\int\tau nd\tau\right]_{0}^{\frac{1}{n}}\right|$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $=\left|\left[\tau^{2}n-\frac{\tau^{2}n}{2}\right]_{0}^{\frac{1}{n}}\right|$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $=\left|\frac{1}{n}-\frac{1}{2n}\right|$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $=\frac{1}{2n}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+So it works for this case
+\end_layout
+
+\begin_layout Subsubsection
+Prove uniform convergance
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\left|g_{n}\ast f(t)-f(t)\right|=\left|\int_{0}^{\frac{1}{n}}f(t-\tau)g(\tau)d\tau-f(t)\right|$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $=\left|\left[f(t-\tau)\int g(\tau)d\tau-\int\dfrac{d(f(t-\tau)}{d\tau}\int g(\tau)d\tau d\tau\right]_{0}^{\frac{1}{n}}-f(t)\right|$
+\end_inset
+
+ apply integration by parts
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $=\left|\left[f(t-\tau)n\tau-\int\dfrac{d(f(t-\tau)}{d\tau}n\tau d\tau\right]_{0}^{\frac{1}{n}}-f(t)\right|$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\le\left|f(t-\frac{1}{n})-f(t)-\left[\int\dfrac{d(f(t-\tau)}{d\tau}n\tau d\tau\right]_{0}^{\frac{1}{n}}\right|$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\le\left|f(t-\frac{1}{n})-f(t)\right|+\left|\left[\int\dfrac{d(f(t-\tau)}{d\tau}n\tau d\tau\right]_{0}^{\frac{1}{n}}\right|$
+\end_inset
+
+ Triangle inequality
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\le\left|f(t-\frac{1}{n})-f(t)\right|+\left|\left[\int\dfrac{d(f(t-\tau)}{d\tau}d\tau\right]_{0}^{\frac{1}{n}}\right|\left|\left[\int n\tau d\tau\right]_{0}^{\frac{1}{n}}\right|$
+\end_inset
+
+Holder's inequality
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\le\left|f(t-\frac{1}{n})-f(t)\right|+\left|\left[\int\dfrac{d(f(t-\tau)}{d\tau}d\tau\right]_{0}^{\frac{1}{n}}\right|\left|\left[\dfrac{n\tau^{2}}{2}\right]_{0}^{\frac{1}{n}}\right|$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\le\left|f(t-\frac{1}{n})-f(t)\right|+\left|\left[f(t-\tau)\right]_{0}^{\frac{1}{n}}\right|\left|\dfrac{1}{2n}\right|$
+\end_inset
+
+Fundermental theorem of calculus (Abuse?)
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\le\left|f(t-\frac{1}{n})-f(t)\right|+\left|\dfrac{f(t-\frac{1}{n})}{2n}\right|$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+As 
+\begin_inset Formula $f$
+\end_inset
+
+ is continuous the first term is unformly converent
+\end_layout
+
+\begin_layout Standard
+It has some maximum gradient 
+\end_layout
+
+\begin_layout Standard
+With the second: If the range of 
+\begin_inset Formula $f(t)$
+\end_inset
+
+ is bounded then 
+\begin_inset Formula $f(t-\frac{1}{n})<\sup f$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\left|g_{n}\ast f(t)-f(t)\right|\le\left|f(t-\frac{1}{n})-f(t)\right|+\left|\dfrac{\sup f}{2n}\right|$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Which lets us say that it is uniformly convergent
+\end_layout
+
+\begin_layout Standard
+If not then we still have pointwise convergence.
+\end_layout
+
+\begin_layout Subsection
+Convolution with a general pseudo-summability kernal 
+\end_layout
+
+\begin_layout Standard
+for some pseudosummability kernal 
+\begin_inset Formula $g_{n}$
+\end_inset
+
+, which is meets the 3 requirements of summability kernals, but is noncontinous,
+ with a jump discontinuality to zero at 
+\begin_inset Formula $\alpha_{1}(n)$
+\end_inset
+
+ and 
+\begin_inset Formula $\alpha_{2}(n)$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+This is based heavily on proof of theorem 3 from 
+\begin_inset CommandInset href
+LatexCommand href
+name "https://bondmatt.files.wordpress.com/2009/09/weierstrass2-01.pdf"
+target "https://bondmatt.files.wordpress.com/2009/09/weierstrass2-01.pdf"
+
+\end_inset
+
+, though that uses a different set of definitions.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\left|f\ast g_{n}(x)-f(x)\right|=\left|\int_{-\infty}^{\infty}f(x-t)g_{n}(t)dt-f(x)\right|$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $=\left|\int_{-\infty}^{\infty}f(x-t)g_{n}(t)dt-f(x)\int_{-\infty}^{\infty}g_{n}(t)dt\right|$
+\end_inset
+
+ as 
+\begin_inset Formula $\int_{-\infty}^{\infty}g_{n}(t)dt=1$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $=\left|\int_{-\infty}^{\infty}f(x-t)g_{n}(t)-f(x)g_{n}(t)dt\right|$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $=\left|\int_{-\infty}^{\infty}\left(f(x-t)-f(x)\right)g_{n}(t)dt\right|$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\le\int_{-\infty}^{\infty}\left|f(x-t)-f(x)\right|\left|g_{n}(t)\right|dt$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\le\int_{-\delta}^{\delta}\left|f(x-t)-f(x)\right|\left|g_{n}(t)\right|dt+\int_{\left|t\right|>\delta}\left|f(x-t)-f(x)\right|\left|g_{n}(t)\right|dt$
+\end_inset
+
+ this holds for 
+\begin_inset Formula $\forall\delta\in\mathbb{R}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\le\int_{-\delta}^{\delta}\left|f(x-t)-f(x)\right|dt\int_{-\delta}^{\delta}\left|g_{n}(t)\right|dt+\int_{\left|t\right|>\delta}\left|f(x-t)-f(x)\right|dt\int_{|t|>\delta}\left|g_{n}(t)\right|dt$
+\end_inset
+
+ by Holder's inequality
+\end_layout
+
+\begin_layout Standard
+Choose 
+\begin_inset Formula $\delta>max(\left|\alpha_{1}(n)\right|,\left|\alpha_{2}(n)\right|)$
+\end_inset
+
+ thus 
+\begin_inset Formula $\int_{|t|>\delta}\left|g_{n}(t)\right|dt=0$
+\end_inset
+
+ and 
+\begin_inset Formula $\int_{-\delta}^{\delta}\left|g_{n}(t)\right|dt=M$
+\end_inset
+
+ (second property)
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\le M\int_{-\delta}^{\delta}\left|f(x-t)-f(x)\right|dt$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\le M\int_{-\delta}^{\delta}\left|f(x-t)\right|dt-M\left|f(x)\right|$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+.Not Finished
+\end_layout
+
+\begin_layout Standard
+.
 \end_layout
 
 \begin_layout Standard
