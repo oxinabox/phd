@@ -362,8 +362,8 @@ Which is to say that the skip-gram probability is maximises when the angular dif
 While skip-gram and CBOW were introduces in the same set of papers, subsequent work has found the skip-gram is almost always the preferred system for any task. \pdfcomment{Citation for this?}
 
 \subsection{Analogy Tasks}
-\aside[Using Analogy Tasks to discover subtle prejudice in corpora]{
-	TODO WRITE THIS 
+\aside[Analogy Tasks uncover prejudice in corpora]{\textcite{bolukbasi2016man} and \textcite{Caliskan183} use analogy tasks, and related variant formulations to find troubling associations between words, such as Bolukbasi et. al's titular \natlang{Man} is to \natlang{Computer Programmer}, as \natlang{Woman} is to \natlang{Homemaker}. Finding these relationships in the embedding space, indicated that they are present in the training corpus, which in turn shows their prevalence  in society at large.
+As has been observed: Machine learning can be a very good mirror.
 }
 
 It is on these systems that evaluation the analogy tasks became well known, though they were considered earlier on RNN neural language models \pcite{mikolov2013linguisticsubstructures}.
@@ -374,14 +374,14 @@ The latest and largest analogy test set is presented by \tcite{gladkova2016analo
 which evaluates embedding on 40 subcategories of knowledge.
 
 The analogies work by relating similarities of offsets.
-Word Similarity can be evaluated using word embeddings using a number of metrics.
+Word similarity can be evaluated using word embeddings using a number of metrics.
 By far the cosine similarity is the most common.
 This is given by $sim(C_u, C_v)=\frac{C_{u}\cdot C_{v}}{\left\Vert u\right\Vert \left\Vert v\right\Vert }$.
 A smaller distance in vector space, means the words are more similar -- in some sense.
 Depending on the system this similarity could be syntactic, semantic or otherwise, the analogy tasks can help identify what kinds of similarities the embeddings are capturing.
 
 Using the similarity scores a ranking of words to complete the analogy is found.
-To find the correct word for \emph{d} in \emph{d} is to \emph{c} and \emph{b} is to \emph{a}
+To find the correct word for \emph{d} in: \emph{d} is to \emph{c} as \emph{b} is to \emph{a}
 the following is computed for the table of embeddings $C$:
 \begin{equation}
 \argmax_{\forall d} sim(C_d, C_a-C_b+C_c)
@@ -389,8 +389,8 @@ the following is computed for the table of embeddings $C$:
 
 \pdfcomment{Insert Vector diagram here it will clarify reason for the math}
 
-Initial results were relatively poor, but the surprising finding was that this worked at all. \pdfcomment{Citations here}.
-Subsequent results found in \tcite{pennington2014glove} were much better.
+Initial results were relatively poor, but the surprising finding was that this worked at all \cite{mikolov2013linguisticsubstructures}.
+Subsequent results found in \tcite{pennington2014glove} and other works were significantly better than the initial results.
 
 \section{Co-location Factorisation}
 
@@ -473,15 +473,17 @@ Training a neural network such as skip-gram is an iterative optimisation procedu
 
 \subsection{Hierarchical Softmax}
 Hierarchical softmax is correctly attributed to \tcite{morin2005hierarchical}.
-It was popularised by \tcite{mikolov2013efficient}, together with Negative Sampling.
+It was popularised by \tcite{mikolov2013efficient}, together with Negative Sampling (which is discussed in the next section).
 
-\pdfcomment{Explain it in detail here before the tuitorial section}
+One of the most expensive parts of training and using a neural language model is calculating the softmax final layer.
+As the softmax denominator includes terms for each word in the vocabulary, the computation of all of them is expensive.
+\pdfcomment{write more intro here. Refer to the Output vector formulation}
 
 \aside[TODO]{Say something about \textcite{SemHuff}}
 
 \subsubsection{An incredibly gentle introduction to hierarchical softmax}
 
-\subsubsection{First consider a binary tree with just 1 layer and 2 leaves}
+\paragraph{First consider a binary tree with just 1 layer and 2 leaves}
 
 We are at the initial root which we call $n_{0}$, and we can go to
 either node $n_{00}$ or node $n_{01}$, based on the input from the
@@ -492,10 +494,10 @@ node being the branch given by following the 0th branch, vs the $n_{01}$
 being to follow the first branch. 
 
 We are naming the root node as a notation convenience so we can talk
-about the decision made at $n_{0}$ \textendash{} $P(n_{0})=1$.
+about the decision made at $n_{0}$. note that $P(n_{0})=1$.
 
 We want to know the probability of the next node being the 0th (i.e.
-$P(n_{0}\mid z)$ ) or the first (i.e. $P(n_{01}\mid z)$).
+$P(n_{00}\mid z)$ ) or the first (i.e. $P(n_{01}\mid z)$).
 
 We could represent the decision with a softmax, with two outputs.
 
@@ -509,126 +511,127 @@ by the number of outputs.
 
 As there is only one output, it is just a vector.
 
-We will call this vector $V_{0}^{\prime}$ \textendash{} the decision
+We will call this vector $V_{0}^{T}$ the decision
 associated with node $n_{0}$
 
-$P(n_{00}\mid z)=\sigma(V_{0}^{\prime}z)$
-
-$P(n_{01}\mid z)=1-\sigma(V_{0}^{\prime}z)$
-
+\begin{align}
+P(n_{00}\mid z) &=\sigma(V_{0}^{T}z) \\
+P(n_{01}\mid z) &=1-\sigma(V_{0}^{T}z)
+\end{align}
 Note that the sigmoid function: $1-\sigma(x)=\sigma(-x)$
 
 $1-\sigma(x)=\frac{e^{x}+1}{e^{x}+1}-\frac{e^{x}}{e^{x}+1}=\dfrac{1}{e^{x}+1}\frac{e^{-x}}{e^{-x}}=\dfrac{e^{-x}}{1+e^{-1}}=\sigma(-x)$
 
-So we have:
+This changes gives the formulation:
+\begin{align}
+P(n_{01}\mid z)=\sigma(-V_{0}^{T}z)
+\end{align}
 
-$P(n_{01}\mid z)=\sigma(-V_{0}^{\prime}z)$
 
-\subsubsection{Now consider 2 layers with 3 leaves}
+\paragraph{Now consider 2 layers with 3 leaves}
 
 Consider the tree with nodes: $n_{0}$, $n_{00}$,$n_{000}$, $n_{001}$,$n_{01}$
 
 From earlier we still have:
 
-$P(n_{00}\mid z)=\sigma(V_{0}^{\prime}z)$
-
-$P(n_{01}\mid z)=\sigma(-V_{0}^{\prime}z)$
-
+\begin{align}
+P(n_{00}\mid z)&=\sigma(V_{0}^{T}z)
+P(n_{01}\mid z)&=\sigma(-V_{0}^{T}z)
+\end{align}
 Now to find $P(n_{000}\mid z)$
 
 We need another decision at node $n_{00}$
 
 The decision at $n_{00}$ as to if $n_{000}$ or $n_{001}$ is made,
-assuming we have reached $n_{00}$already.
+with the assumption that we have reached $n_{00}$ already.
 
 So the decision is defined by $P(n_{000}\mid z,\:n_{oo})$,
-
 which we can then use the conditional probability chain rule to recombine:
-$P(n_{000}\mid z)=P(n_{000}\mid z,\:n_{oo})\,P(n_{00}\mid z)\,$
-
-Again we can use a sigmoid.
-
-$P(n_{000}\mid z,n_{00})=\sigma(V_{00}^{\prime}z)$
-
-$P(n_{001}\mid z,n_{00})=\sigma(-V_{00}^{\prime}z)$
+\begin{align}
+P(n_{000}\mid z)&=P(n_{000}\mid z,\:n_{oo})\,P(n_{00}\mid z) \\
+P(n_{000}\mid z,n_{00})&=\sigma(V_{00}^{T}z) \\
+P(n_{001}\mid z,n_{00})&=\sigma(-V_{00}^{T}z) \\
+\end{align}
 
 Very similar to before.
-
 Our 3 leaf nodes final probabilities are given by:
 
-$P(n_{01}\mid z)=\sigma(-V_{0}^{\prime}z)$
+\begin{align}
+P(n_{01}\mid z)=\sigma(-V_{0}^{T}z) \\
+P(n_{000}\mid z)=\sigma(V_{00}^{T}z)\sigma(V_{0}^{T}z) \\
+P(n_{001}\mid z)=\sigma(-V_{00}^{T}z)\sigma(V_{0}^{T}z) \\
+\end{align}
 
-$P(n_{000}\mid z)=\sigma(V_{00}^{\prime}z)\sigma(V_{0}^{\prime}z)$
-
-$P(n_{001}\mid z)=\sigma(-V_{00}^{\prime}z)\sigma(V_{0}^{\prime}z)$
-
-\subsubsection{Continue this logic}
+\paragraph{Continuing this logic}
 
 Using this system,
-
 we know for a node encoded at position $[t_{1},t_{2},t_{3},...,t_{L}]$
 e.g. $[0,1,0,...,1]$.
 
-It's probability can be found as: $P(n_{0t_{1}...,t_{L}}\mid z)=P(n_{0t_{1}...,t_{L}}\mid z,\,n_{0t_{1}...,t_{L-1}})\,P(n_{0t_{1}...,t_{L-1}}\mid z)$
+It's probability can be found as: 
 
-$P(n_{0,t_{1}}\mid z)=\sigma\left((-1)^{t_{1}}V_{0}^{\prime}z\right)$
-
-$P(n_{0,t_{1},t_{2}}\mid z,\,n_{0,t_{1}})=\sigma\left((-1)^{t_{2}}V_{0t_{1}}^{\prime}z\right)$
-
-$P(n_{0,t_{1},...,t_{i}}\mid z,\,n_{0,t_{1}...,t_{i-1}})=\sigma\left((-1)^{t_{i}}V_{0,t_{1}...,t_{i-1}}^{\prime}z\right)$
+\begin{align}
+P(n_{0,t_{1}...,t_{L}}\mid z) &= P(n_{0t_{1}...,t_{L}}\mid z,\,n_{0t_{1}...,t_{L-1}})\,P(n_{0t_{1}...,t_{L-1}}\mid z)\\
+%
+P(n_{0,t_{1}}\mid z)&=\sigma\left((-1)^{t_{1}}V_{0}^{T}z\right)\\
+%
+P(n_{0,t_{1},t_{2}}\mid z,\,n_{0,t_{1}})&=\sigma\left((-1)^{t_{2}}V_{0t_{1}}^{T}z\right)\\
+%
+P(n_{0,t_{1},...,t_{i}}\mid z,\,n_{0,t_{1}...,t_{i-1}})&=\sigma\left((-1)^{t_{i}}V_{0,t_{1}...,t_{i-1}}^{T}z\right)
+\end{align}
 
 Applying the conditional probability chain rule to get:
-
-$P(n_{0,t_{1},...,t_{i}}\mid z,)=\prod_{i=1}^{i=L}\sigma\left((-1)^{t_{i}}V_{0,t_{1}...,t_{i-1}}^{\prime}z\right)$
+\begin{align}
+P(n_{0,t_{1},...,t_{i}}\mid z,)=\prod_{i=1}^{i=L}\sigma\left((-1)^{t_{i}}V_{0,t_{1}...,t_{i-1}}^{T}z\right)
+\end{align}
 
 \subsubsection{Formulation}
+Here  we have determined that the 0th branch represents the positive choice.
+It is equivalent to have the 1th branch represents the positive choice.
 
-He we have decides that the 0th branch represents the positive choice.
+\begin{equation}
+P(n_{0,t_{1},...,t_{i}}\mid z,)=\prod_{i=1}^{i=L}\sigma\left((-1)^{t_{i}+1}V_{0,t_{1}...,t_{i-1}}^{T}z\right)
+\end{equation}
 
-It is equivalent to have the 1th branch repressent the positive choice
 
-$P(n_{0,t_{1},...,t_{i}}\mid z,)=\prod_{i=1}^{i=L}\sigma\left((-1)^{t_{i}+1}V_{0,t_{1}...,t_{i-1}}^{\prime}z\right)$
-
-Or to allow it to vary per node.
-
-As in the formulation of \cite{mikolovSkip}
-
-Using $ch(n)$ to represent an arbitrary child node of the node $n$
-
-and using an indicator function $\left\llbracket a=b\right\rrbracket =\begin{cases}
+Or to allow it to vary per node: as in the formulation of \tcite{mikolovSkip}.
+In that work they use $ch(n)$ to represent an arbitrary child node of the node $n$
+and use an indicator function $\left\llbracket a=b\right\rrbracket =\begin{cases}
 1 & a=b\\
 -1 & a\ne b
 \end{cases}$
 
-$P(n_{0,t_{1},...,t_{i}}\mid z,)=\prod_{i=1}^{i=L}\sigma\left(\left\llbracket n_{t_{i}}=ch(n_{t_{i-1}})\right\rrbracket V_{0,t_{1}...,t_{i-1}}^{\prime}z\right)$
+\begin{equation}
+P(n_{0,t_{1},...,t_{i}}\mid z,)=\prod_{i=1}^{i=L}\sigma\left(\left\llbracket n_{t_{i}}=ch(n_{t_{i-1}})\right\rrbracket V_{0,t_{1}...,t_{i-1}}^{T}z\right)
+\end{equation}
 
-\subsubsection{Combining multiplications}
+There is no functional difference between the 3 formulations.
 
-If one wants to find both $V_{00}^{\prime}z$ and $V_{0}^{\prime}z$,
+\paragraph{Combining multiplications}
 
-then this can be done using matrices simultaneously (Taking advantage
-of optimized matrix multiplication routines)
+If one wants to find both $V_{00}^{T}z$ and $V_{0}^{T}z$,
 
-Using $V_{0}^{\prime}$ and $V_{00}^{\prime}$ as row vectors, and
+then this can be done using matrices simultaneously, thus taking advantage
+of optimized matrix multiplication routines.
+
+Using $V_{0}^{T}$ and $V_{00}^{T}$ as row vectors, and
 $z$ as a column vector
 
 $\left[\begin{array}{c}
-V_{0}^{\prime}\\
-V_{00}^{\prime}
+V_{0}^{T}\\
+V_{00}^{T}
 \end{array}\right]z=\left[\begin{array}{c}
-V_{0}^{\prime}\cdot z\\
-V_{00}^{\prime}\cdot z
+V_{0}^{T}\cdot z\\
+V_{00}^{T}\cdot z
 \end{array}\right]$
 
 Thus the whole product for all of the decisions can be written as
-$V^{\prime}z$.
+$V^{T}z$.
 
 The problem then becomes indexing the relevant node rows.
-
 Which is a not at all trivial problem in packing tree nodes elements
 into a matrix.
-
-And might be better handled via actually using a tree structure.
+Depending on the speed, vs memory trade off, it may be better to use an actual using a tree structure.
 
 \subsection{Negative Sampling}
 
@@ -684,12 +687,12 @@ This subset contains only pairs with known translations -- this does not have to
 By performing CCA (the details of which are well out of scope for this text),
 one solves to find a series of vectors, $S=\left[ \tilde{s}_1, ..., \tilde{s}_d \right]$ and $T= \left[ \tilde{t}_1, ..., \tilde{t}_d\ \right]$,
 such that the correlation between $\tilde{s}_i^\prime C^\star$ and $\tilde{t}_i^\prime V^\star$ is maximised,
-while constraining with the requirement for all $j<i$ that $\tilde{s}_i^\prime C^\star$ is uncorrelated with $\tilde{s}_j^\prime C^\star$  and that  $\tilde{t}_i^\prime V^\star$ is uncorrelated with $\tilde{t}_j^\prime V^\star$.
+while con straining with the requirement for all $j<i$ that $\tilde{s}_i^\prime C^\star$ is uncorrelated with $\tilde{s}_j^\prime C^\star$  and that  $\tilde{t}_i^\prime V^\star$ is uncorrelated with $\tilde{t}_j^\prime V^\star$.
 This is very similar to principal component analysis(PCA), and like PCA number components to use $d$ is a variable that can be deceased to achieve dimensionality reduction.
 When complete, taking $S^\prime$ and $T^\prime$ as matrices gives projection matrixes that project $C$ and $V$ to a space where aligned elements are as correlated as possible.
 That is to say the final new common vector space embeddings are given by:
 $S^\prime C$ and $T^\prime V$.
-\pdfcomment{Check this, both for correctness in decription, and for correctness in notation.}
+\pdfcomment{Check this, both for correctness in description, and for correctness in notation.}
 
 \textcite{faruqui2014improving} investigated this primarily as a means to use additional data to improve performance on monoligual tasks.
 In this they found small and inconsistent improvement.
