@@ -75,24 +75,25 @@
 \newlength{\notescolwidth}
 \setlength{\notescolwidth}{\completemargin - \marginparsep}
 
-\DeclareNewNoteColumn[
+\RedeclareNoteColumn[
   normalmarginpar,
   width = \notescolwidth,
   font = \ifthispageodd{\raggedleft}{\raggedright}\small\sffamily\color{blue}
-]{notes}
+]{marginpar} %default
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 
 
-\DeclareDocumentCommand{\aside}{o +m}{
-	\makenote[notes]{
-		\IfNoValueTF{#1}
-		{} %Do nothing if not set
-		{\textbf{#1}\\}
-	#2
-	\bigskip
-	}	
+\NewDocumentCommand{\aside}{o +m}{
+	\IfNoValueTF{#1}
+	{\makenote*{#2\bigskip}}
+	{\makenote*{{\textbf{#1}\\}#2\bigskip}}
+}
+\NewDocumentCommand{\asideunsafe}{o +m}{
+	\IfNoValueTF{#1}
+	{\makenote{#2\bigskip}}
+	{\makenote{{\textbf{#1}\\}#2\bigskip}}
 }
 
 
@@ -103,9 +104,12 @@
 \RequirePackage[]{caption}%
 \captionsetup{compatibility=false}%
 
-\DeclareCaptionFormat{sidenote}{\aside{\vskip 0.5\baselineskip #1#2#3}}%
-\DeclareCaptionStyle{sidecap}{parskip=0pt,skip=0pt,singlelinecheck=off, labelfont=bf}%
-\captionsetup[figure]{style=sidecap,format=sidenote}\captionsetup[table]{style=sidecap,format=sidenote}%
+\DeclareCaptionFormat{sidenote}{\asideunsafe{\vskip 0.5\baselineskip #1#2#3}}%
+\DeclareCaptionStyle{goodstyle}{parskip=0pt,skip=0pt,singlelinecheck=off, labelfont=bf}%
+\captionsetup{style=goodstyle}
+
+\captionsetup[figure]{format=sidenote}%
+\captionsetup[table]{format=sidenote}%
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

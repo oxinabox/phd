@@ -158,8 +158,8 @@ Similar same can be said for output layers,
 by considering each the output of softmax element-wise it can be reformulated as
 \begin{figure}
 	\centering
-	\input{figs/chapterwordrepr/trigram-adv-neural-language-model.tex} 
 	\caption{\label{fig:trigram-adv-neural-language-model} Neural Trigram Language Model as considered with output embeddings. This is mathematically identical to \Cref{fig:trigram-neural-language-model}}
+	\input{figs/chapterwordrepr/trigram-adv-neural-language-model.tex} 
 \end{figure}
 
 
@@ -479,12 +479,31 @@ One of the most expensive parts of training and using a neural language model is
 As the softmax denominator includes terms for each word in the vocabulary, the computation of all of them is expensive.
 \pdfcomment{write more intro here. Refer to the Output vector formulation}
 
+
+
 \aside[TODO]{Say something about \textcite{SemHuff}}
 
 \subsubsection{An incredibly gentle introduction to hierarchical softmax}
 
-\paragraph{First consider a binary tree with just 1 layer and 2 leaves}
+In this section, we will for brevity ignore the bias component of each decision at each node.
+It can either be handled nearly identically to the weight;
+or the matrix can be tank in \emph{design matrix form} with an implictly appended column of ones;
+or it can actually be ignored in implementation.
+The reasoning for ignoring it in implementation is that the bias encoded unigram probabilities.
 
+% settings for trees
+\tikzset{every internal node/.style={draw, circle, tight}}
+
+\paragraph{First consider a binary tree with just 1 layer and 2 leaves}
+The leaves are $n_{00}$ and $n_{01}$, these leaf notes each correspond to a word from the vocabulary.
+
+
+\aside{\begin{tikzpicture}
+	\Tree [.$n_0$ 
+		$n_{00}$
+		$n_{01}$ ]
+\end{tikzpicture} Tree for 2 words}
+	
 We are at the initial root which we call $n_{0}$, and we can go to
 either node $n_{00}$ or node $n_{01}$, based on the input from the
 layer below which we will call $z$.
@@ -500,7 +519,7 @@ We want to know the probability of the next node being the 0th (i.e.
 $P(n_{00}\mid z)$ ) or the first (i.e. $P(n_{01}\mid z)$).
 
 We could represent the decision with a softmax, with two outputs.
-
+ 
 However, since it is a binary decision, we don't need a softmax, we
 can just use a sigmoid.
 
@@ -530,7 +549,15 @@ P(n_{01}\mid z)=\sigma(-V_{0}^{T}z)
 
 \paragraph{Now consider 2 layers with 3 leaves}
 
-Consider the tree with nodes: $n_{0}$, $n_{00}$,$n_{000}$, $n_{001}$,$n_{01}$
+Consider the tree with nodes: $n_{0}$, $n_{00}$,$n_{000}$, $n_{001}$, $n_{01}$
+
+\aside{\begin{tikzpicture}
+	\Tree [ .$n_0$ 
+	[ .$n_{00}$
+	$n_{000}$
+	$n_{001}$ ]
+	$n_{01}$ ]
+	\end{tikzpicture} Tree for 3 words}
 
 From earlier we still have:
 
@@ -632,6 +659,7 @@ The problem then becomes indexing the relevant node rows.
 Which is a not at all trivial problem in packing tree nodes elements
 into a matrix.
 Depending on the speed, vs memory trade off, it may be better to use an actual using a tree structure.
+The optimisation of tree structures data is beyond the scope of this book.
 
 \subsection{Negative Sampling}
 
@@ -718,9 +746,5 @@ There are also means to directly train embeddings on multiple languages concurre
 A survey paper was recently published by \textcite{Ruder17crosslingreview}.
 
 
-
-
-
-\clearnotecolumn[notes]
 
 \end{document}
