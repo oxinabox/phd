@@ -119,7 +119,8 @@
 	backend=bibtex,
 	url=false,  
 	style=alphabetic,
-	citestyle=authoryear 
+	citestyle=authoryear,
+	refsection=chapter 
 ]{biblatex}
 
 
