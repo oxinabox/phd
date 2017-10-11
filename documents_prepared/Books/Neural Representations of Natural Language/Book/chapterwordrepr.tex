@@ -843,7 +843,7 @@ There is a moderately standard formulation of the term $\sum_{\forall w_k \in U_
 P_{U_\mathcal{V}}(w_k) \log P(w_k\mid w_i)$,
 which it is taken over all of the values a random variable $w_k$  distributed according to $U_{\mathcal{V}}$ can take:
 The is the expected value: $\mathbb{E}_{w_k} [\log P(w_k\mid w_i)]$.
-It is another abuse of notation to suggest we 
+It is another abuse of notation to suggest we write
 
 $\sum_{k=1}^{k=K} \mathbb{E}_{w_k \sim U_{\mathcal{V}}} [\log P(w_k\mid w_i)]$,
 to be the sum of the $K$ samples expected values.
@@ -856,10 +856,19 @@ Loss = \sum_{\forall (w_i,w_j)\in \mathcal{X}}
 -\log P(w_j\mid w_i)
 \end{equation}
 
-Switching in the sigmoid for the probabilities, this is:
+Consider that the choice of Unigram distribution for the negative samples is not the only choice.
+For example we might wish to increase the relative occurrence of rare words in the negative samples, to help them fit better from limited training data.
+(Something that is done via subsampling in the positive samples (i.e. the training cases)).
+So replace $U_{\mathcal{V}}$ with $D_{\mathcal{V}}$ being an the distribution of negative samples from the vocabulary,
+to be specified as a hyper-parameter of training.
+
+\tcite{mikolovSkip} uses a distribution such that $P_{D_\mathcal{V}}(w_k) =  \frac{P_{U_\mathcal{V}}(w_k)^{\frac{2}{3}}}{\sum {\forall }w_o\in \mathcal{V}} P_{U_\mathcal{V}}(w_o)^{\frac{2}{3}}}$,
+which they find to give better performance than the unigram or uniform distributions.
+
+Switching in that, and the sigmoid for the probabilities, this is:
 \begin{equation}
 Loss = \sum_{\forall (w_i,w_j)\in \mathcal{X}} 
-\left(\sum_{k=1}^{k=K} \mathbb{E}_{w_k \sim U_{\mathcal{V}}} [\log \sigma(V_{w_k}^T\,C_{w_{i}}) \right)
+\left(\sum_{k=1}^{k=K} \mathbb{E}_{w_k \sim D_{\mathcal{V}}} [\log \sigma(V_{w_k}^T\,C_{w_{i}}) \right)
 -\log \sigma(V_{w_j}^T\,C_{w_{i}}
 \end{equation}
 
@@ -868,7 +877,7 @@ If we add the constant $-K$, we can subtract 1 in each sample term
 
 \begin{equation}
 Loss = \sum_{\forall (w_i,w_j)\in \mathcal{X}} 
-\left(\sum_{k=1}^{k=K} \mathbb{E}_{w_k \sim U_{\mathcal{V}}} [-1 + \log \sigma(V_{w_k}^T\,C_{w_{i}}) \right)
+\left(\sum_{k=1}^{k=K} \mathbb{E}_{w_k \sim D_{\mathcal{V}}} [-1 + \log \sigma(V_{w_k}^T\,C_{w_{i}}) \right)
 -\log \sigma(V_{w_j}^T\,C_{w_{i}}
 \end{equation}
 
@@ -877,7 +886,7 @@ giving
 \begin{equation}
 Loss = -\sum_{\forall (w_i,w_j)\in \mathcal{X}}
 \left(
-\log \sigma(V_{w_j}^T\,C_{w_{i}}) + \sum_{k=1}^{k=K} \mathbb{E}_{w_k \sim U_{\mathcal{V}}} [\log \sigma(-V_{w_k}^T\,C_{w_{i}})] 
+\log \sigma(V_{w_j}^T\,C_{w_{i}}) + \sum_{k=1}^{k=K} \mathbb{E}_{w_k \sim D_{\mathcal{V}}} [\log \sigma(-V_{w_k}^T\,C_{w_{i}})] 
 \right)
 \end{equation}
 
