@@ -96,6 +96,15 @@
 	{\makenote{{\textbf{#1}\\}#2\bigskip}}
 }
 
+\NewDocumentCommand{\asidefig}{o +m}{
+	\makenote*{%
+		#2
+		\clearcaptionsetup{figure}
+		\captionof{figure}{#1}
+		\bigskip
+	}
+}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Captions

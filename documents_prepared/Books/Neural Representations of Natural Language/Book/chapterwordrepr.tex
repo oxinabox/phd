@@ -366,6 +366,31 @@ While skip-gram and CBOW were introduces in the same set of papers, subsequent w
 As has been observed: Machine learning can be a very good mirror.
 }
 
+
+
+\asidefig[\label{fig:analogy}Example of analogy algebra]{\begin{tikzpicture}
+\node(a) {$C_{aunt}$};
+\node(b)[above right = of a] {$C_{uncle}$};
+\node(c)[below right = of a] {$C_{queen}$};
+\node(d)[above right = of c] {$C_{king}$};
+
+\draw[->] (b) -- (a) node[labe,midway]{$C_{aunt}-C_{uncle}$};
+\draw[->] (d) -- (c) node[labe,midway]{$C_{queen}-C_{king}$};
+\end{tikzpicture}
+}
+
+\asidefig[\label{fig:anavecs} Vectors involved in analogy ranking tasks, this may help to understand the math]{
+	\begin{tikzpicture}
+	\node(a) {$C_a$};
+	\node(b)[above right = of a] {$C_b$};
+	\node(c)[below right = of a] {$C_c$};
+	\node(d)[above right = of c] {$C_d$};
+	
+	\draw[->] (b) -- (a) node[labe,midway]{$C_a-C_b$};
+	\draw[->] (d) -- (c) node[labe,midway]{$C_d-C_c$};
+	\end{tikzpicture}
+}
+
 It is on these systems that evaluation the analogy tasks became well known, though they were considered earlier on RNN neural language models \pcite{mikolov2013linguisticsubstructures}.
 These tasks are keyed around answering the question: What is  \emph{c} and \emph{b} is to \emph{a}.
 For example, a semantic analogy would be answering that \natlang{Aunt} is to \natlang{Uncle} as \natlang{King} is to \natlang{Queen}.
@@ -374,20 +399,26 @@ The latest and largest analogy test set is presented by \tcite{gladkova2016analo
 which evaluates embedding on 40 subcategories of knowledge.
 
 The analogies work by relating similarities of offsets.
+As shown in \ref{fig:analogy}
 Word similarity can be evaluated using word embeddings using a number of metrics.
 By far the cosine similarity is the most common.
-This is given by $sim(C_u, C_v)=\frac{C_{u}\cdot C_{v}}{\left\Vert u\right\Vert \left\Vert v\right\Vert }$.
+This is given by 
+
+\begin{equation}
+sim(C_u, C_v)=\frac{C_{u}\cdot C_{v}}{\left\Vert u\right\Vert \left\Vert v\right\Vert }
+\end{equation}
 A smaller distance in vector space, means the words are more similar -- in some sense.
 Depending on the system this similarity could be syntactic, semantic or otherwise, the analogy tasks can help identify what kinds of similarities the embeddings are capturing.
 
 Using the similarity scores a ranking of words to complete the analogy is found.
 To find the correct word for \emph{d} in: \emph{d} is to \emph{c} as \emph{b} is to \emph{a}
 the following is computed for the table of embeddings $C$:
-\begin{equation}
-\argmax_{\forall d} sim(C_d, C_a-C_b+C_c)
-\end{equation}
+\begin{align}
+\qquad & \argmax_{\forall d} sim(C_d - C_c, C_a-C_b)\\
+\text{i.e} & \argmax_{\forall d} sim(C_d, C_a-C_b+C_c)
+\end{align}
+The motivational diagram is shown in \Cref{fig:anavecs}
 
-\pdfcomment{Insert Vector diagram here it will clarify reason for the math}
 
 Initial results were relatively poor, but the surprising finding was that this worked at all \cite{mikolov2013linguisticsubstructures}.
 Subsequent results found in \tcite{pennington2014glove} and other works were significantly better than the initial results.
@@ -862,7 +893,7 @@ For example we might wish to increase the relative occurrence of rare words in t
 So replace $U_{\mathcal{V}}$ with $D_{\mathcal{V}}$ being an the distribution of negative samples from the vocabulary,
 to be specified as a hyper-parameter of training.
 
-\tcite{mikolovSkip} uses a distribution such that $P_{D_\mathcal{V}}(w_k) =  \frac{P_{U_\mathcal{V}}(w_k)^{\frac{2}{3}}}{\sum {\forall }w_o\in \mathcal{V}} P_{U_\mathcal{V}}(w_o)^{\frac{2}{3}}}$,
+\tcite{mikolovSkip} uses a distribution such that $P_{D_\mathcal{V}}(w_k) =  \frac{P_{U_\mathcal{V}}(w_k)^{\frac{2}{3}}}{\sum {\forall }w_o\in \mathcal{V} P_{U_\mathcal{V}}(w_o)^{\frac{2}{3}}}$,
 which they find to give better performance than the unigram or uniform distributions.
 
 Switching in that, and the sigmoid for the probabilities, this is:
