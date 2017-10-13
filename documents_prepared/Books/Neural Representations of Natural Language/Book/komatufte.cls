@@ -129,7 +129,7 @@
 	url=false,  
 	style=alphabetic,
 	citestyle=authoryear,
-	refsection=chapter 
+%	refsection=chapter 
 ]{biblatex}
 
 
