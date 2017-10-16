@@ -484,15 +484,25 @@ It is this property of networks, to implicitly discover and define the most impo
 \end{figure}
 
 \section{Recurrent Neural Networks}
+\aside[Time-Step]{ RNNs are normally described in terms of a time-step.
+	This is the advancement of the network such that the previous output state, in now the input old-state.
+This doesn't have to be literal time -- indeed it can not be, as it is discrete
+In most NLP applications it is time analogous: words in the order they are said.
+In other NLP applications it might actually be words in the reveres order to that is which they are normally said.
+In other machine learning applications it may not correspond to time at all.
+For example, using laser distance imaging to detect patterns of wear on tyres of differing sizes,
+each time-step is a different part of the tyre.
+}
+
+\pdfcomment{better example for non-temporal timestep}
+
 A key limitation of a neural network is that the number of inputs and outputs must be known at training time and must always be the same for all cases.
-This is not true for natural language: If an over-all input is a sentence for example, then each sentence input will be made up a varying number of words.
+This is not true for natural language: If an over-all input is a sentence for example, then each sentence input will be made up a varying number of words. Similarly for output.
 
 Recurrent neural networks (RNN) over-come this by allowing the network to have a memory.
 A RNN is effectively a chain of feed-forward neural networks,
 each one being identical in terms of their weight and bias parameters,
 but each one acting at a different time-step.
-
-
 
 
 
@@ -509,8 +519,9 @@ These exampled will be considered in more later in this section below.
 At each time-step the same network is used, with different inputs.
 For purposes of looking at this in the big picture we will first consider each network a black-box recurrent unit (RU).
 
-The recurrent unit takes at each time step, an input for that time-step, some representation its of state for the RU at the previous timestep; and it produces an output for that time-step, and its state representation for the next time-step.
+The recurrent unit takes at each time step, an input for that time-step, some representation its of state for the RU at the previous timestep; and it produces an output for this time-step, and its state representation for the next time-step.
 A diagram of this is shown in \Cref{fig-ru}.
+It is worth distinguishing the unit output is not the same as the overall network output, it is just the output of this sub-network at this time-step.
 Every-time step has this 2 inputs and 2 outputs.
 However, sometimes we will ignore them.
 The initial state for the first time step is normally set to some zero vector,
@@ -538,10 +549,6 @@ The output of the final time-step can be the true output.
 
 
 
-
-
-
-
 \begin{figure}
 	\caption{A recurrent unit with its 2 inputs and 2 outputs. Not shown are the internal Weight and Bias parameters which are trained to control the interactions.}	
 	
@@ -550,6 +557,146 @@ The output of the final time-step can be the true output.
 	\input{./figs/chapterintromachinelearning/rnn-unit.tikz}
 \end{figure}
 
+
+\subsection{Inside the Recurrent Unit}
+
+
+\subsubsection{Basic RU}
+
+\begin{figure}
+	\caption{A basic Recurrent unit, that an RNN could be made from}
+	\label{fig:basicrnn}
+	\begin{tikzpicture}[]
+	\node(hidden)[layer, above= of in]{$h_t = \varphi\left([x_t; s_{t-1}] W + b \right)$};
+	
+	\node(in)[below = of hidden]{input};
+	\node(stm)[left = of hidden]{old state};
+	\node(stp)[right = of hidden]{new state};
+	\node(out)[above = of hidden]{output};
+	
+	\draw[->] (in) edge node[labe] {$x_t$} (hidden);	
+	\draw[->, bend right] (stm) edge node[labe] {$s_{t-1}$} (hidden.south);
+	\draw[->, bend left] (hidden.north) edge node[labe] {$s_{t}$} (stp);
+	\draw[->] (hidden) edge node[labe] {$\hat{y}_t$} (out);
+	
+	\end{tikzpicture}
+\end{figure}
+
+The most basic recurrent unit, would be a single hidden layer, with the unit output, and the unit state both being the value of this layer.
+The network inside the basic recurrent unit is given by:
+\begin{align}
+h_t &= \varphi\left(W[x_t; s_{t-1}]+ b \right)\\
+s_t & = h_t \\
+\hat{y}_t &= h_t
+\end{align}
+As shown in \Cref{fig:basicrnn}
+Where $W$ and $b$ are the weight matrix and bias vector that are trained, for this single hidden layer.
+One could call this an Elman cell:
+the networks considered by in \tcite{elman1990finding} are such a basic RU, with an output layer on-top.
+
+
+Basic RNN units are not used in many modern works.
+Due to the vanishing gradient problem. \pdfcomment{I need to discuss what the vanish gradient problem is prior to this; maybe in a sidebar}
+Since training a RNN that is long in time, is equivalent to training a deep-network when unrolling for back-propagation through time,
+it it is hard for the network to learn the connection between inputs many time steps ago, and the final correct output, and the error signal gradient may have become very small in the intervening layers/time-steps \pcite{bengio1994learning}.
+
+Other more advanced recurrent units solved this problem.
+
+\subsubsection{GRU}
+\cite{cho-EtAl:2014:EMNLP2014}
+
+The gated recurrent unit (GRU) is defined by:
+\begin{align}
+z_t &= \sigma \left( T[x_t; s_{t-1}] + b \right) \\
+r_t &= \sigma \left( U[x_t; s_{t-1}] + c \right) \\
+h_t &= \varphi \left( \sigma \left( V[x_t; s_{t-1} \circ r_t] + d \right) \right) \\
+s_t &= (1-z_t) \circ h_t + z_t\circ s_{t-1}\\
+\hat{y}_t &= s_t
+\end{align}
+Where $T$,$U$ and $V$ are the trained weight-vectors, and $b$,$c$ and $d$ are the trained bias vectors for the 3 layers.
+
+\aside[Trade-off formula]{It may be stating the obvious, 
+	but a standard way (and the only sensible way) to trade-off the value between two possible choices $a$ and $b$,
+	when given a preference level for the first as $p$ (a number between zero and one) is $(p)a+(1-p)b$.
+	If $p$ is interpreted as the probability of $a$ being the correct value of a random variable, with $b$ as the other possible value, then this is the expected value of that random variable.}
+
+This may look complex, but it can be broken down into parts.
+First we can see that like in the basic RU, the output and the state are the same value.
+
+$h_t$ is our core hidden layer, as in the basic cell (we will return to how it is formulated presently).
+However, unlike in the basic cell, it does not immediately become the state: $s_t$.
+There is a trade-off between the state keeping its old value $s_{t-1}$, and getting the hidden layer value $h_t$.
+This trade-off is element-wise controlled by $z_t$ which is valued between 0 and 1 (due to the sigmoid unit).
+when $z_t$ is $1$ for an element, then the value of $s_{t-1}$ is kept;
+conversely when $z_t$ is $1$ for an element, then the value of $s_{t-1}$ is fully replaces with $h_t$;
+and normally it is a value between.
+$z_t$ is often called the \emph{update-gate} at it gates how much the output/state is updated using the new value in $h_t$.
+
+
+$r_t$ controls how much influence the past state $s_{t-1}$ has on calculating the new value of $h_t$ -- which is the new potential state/output as discussed.
+It is perhaps clearer if $h_t$ is reformulated to split $V$ into the terms that multiply with $x_t$ and the terms that multiply with $s_{t-1}$:
+\begin{align}
+h_t &= \varphi \left( \sigma \left( V[x_t; s_{t-1} \circ r_t] + d \right) \right) \\
+h_t &= \varphi \left( \sigma \left( V_x x_t + V_s r_t s_{t-1} + d \right) \right) \\
+\end{align}
+If $r_t$ is one then the value of $s_{t_1}$ is fully present in the activation calculation $h_t$, if it is zero then it is not.
+It $r_t$ is often called the reset-gate.
+This is because of $r_t$ is reduced to zero, then the updated value for $h_t$ is as if $s_{t-1}$ was just like for the initial zero-vector state.
+i.e. it resets the system (to an extent -- if $z_t$ could mean that this value doesn't actual change the state at all).
+
+Notice that when $z_t=0$ and $r_t=1$ then the system is identical to the Basic RU.
+This could be achieved by setting suitably large biasses.
+However, the system is more flexible than that, 
+since $z_t$ and $r_t$ are themselves very similar to Basic RUs -- though they do not control there own state.
+
+\begin{figure}
+	\caption{A Gated Recurrent unit, that an RNN could be made from}
+	\label{fig:gru}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tikzpicture}[]
+		\node(hidden)[layer]{$h_t = \varphi \left( \sigma \left( V[x_t; s_{t-1} \circ r_t] + d \right) \right)$};
+		\node(reset)[layer, below left=of hidden]{$r_t = \sigma \left( U[x_t; s_{t-1}] + c \right)$};
+		\node(update)[layer, above left=of reset]{$z_t = \sigma \left( T[x_t; s_{t-1}] + b \right) $};
+		\node(state)[layer, above = 5 of reset]{$s_t = (1-z_t) \circ h_t + z_t\circ s_{t-1}$};
+		
+		\node(in)[below = 3 of reset]{input};
+		\node(stm)[left = 3 of reset]{old state};
+		\node(stp)[right = of state]{new state};
+		\node(out)[above = of state]{output};
+		
+		\draw[->] (in) edge node[labe] {$x_t$} (update);	
+		\draw[->, bend right] (stm) edge node[labe] {$s_{t-1}$} (update.south);
+		\draw[->] (in) edge node[labe] {$x_t$} (reset);	
+		\draw[->, bend right] (stm) edge node[labe] {$s_{t-1}$} (reset.south);
+
+		
+
+		\draw[->, thick] (in) edge node[labe] {$x_t$} (hidden);	
+		\draw[->, bend right] (stm) edge node[labe] {$s_{t-1}$} (hidden.south);		
+		\draw[->] (reset.north) edge node[labe] {$z_t$} (hidden.south);
+		\draw[->, bend right] (stm) edge node[labe] {$s_{t-1}$} (hidden.south);
+
+		\draw[->, bend right] (stm) edge node[labe] {$s_{t-1}$} (state.south);
+		\draw[->, thick] (hidden) edge node[labe] {$h_{t}$} (state.south);
+		\draw[->] (update) edge node[labe] {$z_{t}$} (state.south);
+		\draw[->, bend left] (state) edge node[labe] {$s_{t}$} (stp);
+		\draw[->] (state) edge node[labe] {$\hat{y}_t$} (out);
+		\end{tikzpicture}
+	\end{adjustbox}
+\end{figure}
+
+
+
+
+
+GRU is actually a simplification of the much older and better known Long Short Term Memory,
+
+\subsubsection{LTSM}
+
+
+
+
+\subsection{Deep Variants}
 
 
  
