@@ -237,7 +237,7 @@ ReLU is very commonly used as a hidden layer activation function for deep networ
 \subsubsection{RELU6}
 \aside[Why are we bringing up ReLU6?]{ReLU6 is one of the more obsure activation functions. As such it may seem a bizare inclusion in this shorter introduction. However, we have found it surprisingly successful as an activation function, e.g. in the Auto-encoder example. Further to that, as a function bounded about and below it is much more theoretically nice than the ReLU unit.}
 
-Closely related to ReLU is ReLU6.
+Closely related to ReLU is ReLU6 \pcite{krizhevsky2010convolutional}.
 This is another linear unit the saturates at 0, but also at 6.
 \begin{equation}
 y=ReLU6(z)=\max \left(0, \min\left(6, z\right) \right) =  \begin{cases}
@@ -247,8 +247,8 @@ z & 0\le z\le6\\
 \end{cases}
 \end{equation}
 This has similar advantages to ReLU.
-however, as well as units being able to die to zero, it can also die to positive.
-Unlike ReLU, it fully meets the requirements for the UAT.
+However, as well as units being able to die to zero, it can also die to positive.
+Unlike ReLU, it fully meets the requirements for the original UAT.
 The bounding at 6, rather than any other number is rather arbitrary -- particularly given scaling with the intervening affine layers.
 The important point is that it is bound both above and below.
 
@@ -430,7 +430,7 @@ The original images are $28 \times 28$ pixels, i.e. 784 dimensional.
 We compress it down to just 2 dimensions using the network shown in \Cref{fig-autoencoder}.
 
 \begin{figure}
-	\caption{A structure for a Bottle Necking Autoencoder for uses on MNIST.}
+	\caption{A structure for a Bottle Necking Autoencoder for use on MNIST.}
 	\label{fig-autoencoder}
 	\input{figs/chapterintromachinelearning/autoencoder.tikz}
 \end{figure}
@@ -561,10 +561,10 @@ The output of the final time-step can be the true output.
 \subsection{Inside the Recurrent Unit}
 
 
-\subsubsection{Basic RU}
+\subsubsection{Basic Recurrent Unit}
 
 \begin{figure}
-	\caption{A basic Recurrent unit, that an RNN could be made from}
+	\caption{A basic recurrent unit, that an RNN could be made from}
 	\label{fig:basicrnn}
 	\begin{tikzpicture}[]
 	\node(hidden)[layer, above= of in]{$h_t = \varphi\left([x_t; s_{t-1}] W + b \right)$};
@@ -602,14 +602,18 @@ it it is hard for the network to learn the connection between inputs many time s
 
 Other more advanced recurrent units solved this problem.
 
-\subsubsection{GRU}
-\cite{cho-EtAl:2014:EMNLP2014}
+\subsubsection{Gated Recurrent Unit}
+The Gated Recurrent Unit (GRU) was introduced by \tcite{cho2014properties},
+GRU is actually a simplification of the much older and better known Long Short Term Memory (LSTM),
+ which will be discussed in \Cref{sec:ltsm}) however we discuss GRU as it is a simpler system.
+In the evaluations of \tcite{chung2014empirical} \tcite{jozefowicz2015empirical} it was found to perform very well -- similar to LSTM for most tasks.
+
 
 The gated recurrent unit (GRU) is defined by:
 \begin{align}
 z_t &= \sigma \left( T[x_t; s_{t-1}] + b \right) \\
 r_t &= \sigma \left( U[x_t; s_{t-1}] + c \right) \\
-h_t &= \varphi \left( \sigma \left( V[x_t; s_{t-1} \odot r_t] + d \right) \right) \\
+h_t &= \varphi \left(  V[x_t; s_{t-1} \odot r_t] + d \right)  \\
 s_t &= (1-z_t) \odot h_t + z_t\odot s_{t-1}\\
 \hat{y}_t &= s_t
 \end{align}
@@ -654,7 +658,7 @@ since $z_t$ and $r_t$ are themselves very similar to Basic RUs -- though they do
 	\label{fig:gru}
 	\begin{adjustbox}{max width=\textwidth}
 		\begin{tikzpicture}[]
-		\node(hidden)[layer]{$h_t = \varphi \left( \sigma \left( V[x_t; s_{t-1} \circ r_t] + d \right) \right)$};
+		\node(hidden)[layer]{$h_t = \varphi \left( V[x_t; s_{t-1} \circ r_t] + d \right)$};
 		\node(reset)[layer, below left=of hidden]{$r_t = \sigma \left( U[x_t; s_{t-1}] + c \right)$};
 		\node(update)[layer, above left=of reset]{$z_t = \sigma \left( T[x_t; s_{t-1}] + b \right) $};
 		\node(state)[layer, above = 5 of reset]{$s_t = (1-z_t) \odot h_t + z_t \odot s_{t-1}$};
@@ -693,15 +697,111 @@ since $z_t$ and $r_t$ are themselves very similar to Basic RUs -- though they do
 
 
 
-GRU is actually a simplification of the much older and better known Long Short Term Memory,
+\subsubsection{LTSM Recurrent Unit}\label{sec:ltsm}
 
-\subsubsection{LTSM}
+\begin{align}
+s_t &= (c_t, \hat{y}_t)\\
+%
+i_t &= \sigma \left( W[x_t; \hat{y}_{t-1}] + d \right) \\
+f_t &= \sigma \left( T[x_t; \hat{y}_{t-1}] + b \right) \\
+o_t &= \sigma \left( U[x_t; \hat{y}_{t-1}] + k \right) \\
+%
+h_t &= \tanh \left( V[x_t; \hat{y}_{t-1}] + a \right) \\
+c_t &=  i_t\odot h_{t-1} + f_t \odot c_{t-1} \\
+\hat{y}_t &= o_t \odot \varphi(c_t)
+\end{align}
+
+LSTM uses a compound state, comprised of the units previous output, and an addition state vector called the cell.
+we write $s_t = (c_t, h_t)$,
+to fit the normal formulation,
+though for maths it is easier to work with those in there parts.
+
+In LSTM there are 3 gate sub-networks:
+the input gate $i_t$, the forget gate $f_t$, and the output gate $o_t$.
+
+Together the input and forget-gates take the purpose of the GRU's update-gate.
+Consider the case if $o_t=1$ and $\varphi$ is the identify function,
+and with $i_t=1-f_t$, that would make the value for $c_t$ very similar to GRU's $s_t$ (and $\hat{y}_t$ identical)/
+\pdfcomment{Should I rewrite out the equation in this form, or would that be more confusing}
+Individually, the forget gate $f_t$ controls the extent that previous value of the cell is used,
+and the input gate $i_t$ controls the extent to which the new potential value $h_t$ is used for the new value of $c_t$.
+
+On the other-side, the output-gate $o_t$ works similarly to the GRU's reset gate $r_t$.
+Consider the case where $\varphi$ is again the identity function.
+then $h_t = \tanh \left( V[x_t; o_t\odot c_{t-1}] + a \right)$,
+which is very similar to its value in GRU again.
+The key difference is its resetting effect is also applying to all the gate equations as well as to $h_t$.
 
 
 
+\begin{figure}
+	\caption{A LSTM Recurrent unit, that an RNN could be made from}
+	\label{fig:lstm}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tikzpicture}[]
+		\node(hidden)[layer]{$h_t = \tanh \left( V[x_t; \hat{y}_{t-1}] + a \right) $};
+		\node(igate)[layer, below left=of hidden]{$i_t = \sigma \left( W[x_t; \hat{y}_{t-1}] + d \right)$};
+		\node(fgate)[layer, left=of igate]{$f_t = \sigma \left( T[x_t; \hat{y}_{t-1}] + b \right)$};
+		\node(ogate)[layer, above left=of fgate]{$o_t = \sigma \left( U[x_t; \hat{y}_{t-1}] + k \right)$};
+		\node(state)[layer, above = 5 of igate]{$c_t =  i_t\odot h_{t-1} + f_t \odot c_{t-1}$};
+		\node(preout)[layer, above left = of state]{$\hat{y}_t = o_t \odot \varphi(c_t)$};
+		
+		\node(in)[below = 4 of igate]{input};
+		\node(stm)[left = 4 of fgate]{old state};
+		\node(stp)[right = 8 of preout]{new state};
+		\node(out)[above = of preout]{output};
+		
+		
+		\node(flbl)[labe, above= 0 of fgate]{Forget Gate};
+		\node(ilbl)[labe, above= 0 of igate]{Input Gate};
+		\node(olbl)[labe, above= 0 of ogate]{Output Gate};
+		\node(hiddenlbl)[labe, above= 0 of hidden]{Potential New Cell};
+		
+		\foreach \gate in {fgate, igate, ogate, hidden}{
+			\draw[->, bend right] (stm) edge node[labe] {$\hat{y}_{t-1}$} (\gate.south);
+			\draw[->] (in) edge node[labe] {$x_{t}$} (\gate.south);
+		};
+		\draw[->, bend right=10, thick] (stm) edge node[labe] {$c_{t-1}$} (state.south);
+		
+		\draw[->, thick] (in) edge node[labe] {$x_{t}$} (hidden.south);
+		
+			
+		\draw[->] (fgate) edge node[labe] {$f_{t}$} (state.south);
+		\draw[->] (igate) edge node[labe] {$i_{t}$} (state.south);
+		\draw[->, thick] (hidden) edge node[labe] {$h_{t}$} (state.south);
+		
+
+		
+		\draw[->] (ogate) edge node[labe] {$o_{t}$} (preout.south);
+		\draw[->] (ogate) edge node[labe] {$o_{t}$} (preout.south);
+		
+		\draw[->] (preout) edge node[labe] {$\hat{y}_{t}$} (out.south);
+		
+		\draw[->, thick] (state) edge node[labe] {$c_{t}$} (preout.south);
+		
+		\draw[->, bend left] (state) edge node[labe] {$c_{t}$} (stp);
+		\draw[->, bend left] (preout) edge node[labe] {$y_{t}$} (stp);
+		
+		
+		
+		\end{tikzpicture}
+	\end{adjustbox}
+\end{figure}
+
+
+\subsection{Longer Short Term Memory Units}
+\pdfcomment{Mikolov has a cool paper about these, though this might endup a sidebar}
 
 \subsection{Deep Variants}
+One can have a deep RNN.
+This is done by stacking additional layers of recurrent units above the existing ones,
+tanking in the unit output as their unit input, and linking unit states within that layer.
+Which can in turn still be considered the same way: as a sequence of (deep) recurrent units.
 
+\subsection{Other RNNs}
+Memory Cell Networks,
+Nural Turing Machines
+Jordan RNNs
 
  
 
