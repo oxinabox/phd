@@ -2,10 +2,12 @@
 \ProvidesClass{komatufte}[2017/07/05 A Hacked Up Tufte-like Koma book]
 % Based on https://tex.stackexchange.com/questions/333111/how-to-align-the-baseline-of-margin-notes-in-latex-with-the-main-text
 
-% General setup
-\RequirePackage{blindtext}
-\RequirePackage{leading}
 
+
+% General setup
+\RequirePackage{etoolbox}
+
+\RequirePackage{leading}
 \RequirePackage{calc}
 \RequirePackage{xparse}
 
@@ -36,7 +38,7 @@
 \setlength{\completemargin}{6cm}
 
 \RequirePackage{geometry}
-\savegeometry{basegeo}
+\savegeometry{basegeo} % Reset to this geometry for title pages etc
 \geometry{
   marginpar = 5.5cm,
   inner  = 21cm /  \pagedivisions,
@@ -45,21 +47,9 @@
   bottom = 29.7cm / \pagedivisions,
   heightrounded
 }
-\savegeometry{contentgeo}
+\savegeometry{contentgeo} % use this geometry for normal pages
 
 
-%%%%%
-% Make chapter titles not restricted by main width
-\renewcommand*{\chapterlinesformat}[3]{%
-	\makebox[\textwidth][l]{% avoid overfull \hbox
-		\parbox[t]{\dimexpr\textwidth+\marginparsep+\marginparwidth}{% use more width
-			\raggedchapter
-			\@hangfrom{#2}{#3}%
-		}%
-	}%
-}
-
-%%%%%
 
 % Use scrlayer-scrpage, so that package notecolumn works
 \RequirePackage[
@@ -70,16 +60,50 @@
   plainfootsepline,
 ]{scrlayer-scrpage}
 
-% Set up the note column
-\RequirePackage{scrlayer-notecolumn}
 \newlength{\notescolwidth}
 \setlength{\notescolwidth}{\completemargin - \marginparsep}
 
+% Set up the note column
+\AtEndPreamble{\RequirePackage{scrlayer-notecolumn} %must be loaded ``Lastest''
 \RedeclareNoteColumn[
-  normalmarginpar,
-  width = \notescolwidth,
-  font = \ifthispageodd{\raggedleft}{\raggedright}\small\sffamily\color{blue}
+normalmarginpar,
+width = \notescolwidth,
+font = \ifthispageodd{\raggedleft}{\raggedright}\small\sffamily\color{blue}
 ]{marginpar} %default
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Make chapter titles not restricted by main width
+\renewcommand*{\chapterlinesformat}[3]{%
+	\makebox[\textwidth][l]{% avoid overfull \hbox
+		\parbox[t]{\dimexpr\textwidth+\marginparsep+\marginparwidth}{% use more width
+			\raggedchapter
+			\@hangfrom{#2}{#3}%
+		}%
+	}%
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% customize dictum format:
+\setkomafont{dictumtext}{\itshape\small\sffamily}
+\setkomafont{dictumauthor}{\normalfont\small\sffamily}
+\renewcommand*\dictumwidth{0.8\linewidth}
+\renewcommand*\dictumauthorformat[1]{--- #1}
+\renewcommand*\dictumrule{}
+
+
+%%%%%%%%%%%%%%%%%%%%%%
+% A Chapter abstract
+\RequirePackage{environ}
+
+\NewEnviron{abstract}{%
+	\addtocontents{toc}{\small\BODY\par}%
+	\rightskip1in\textsc{\BODY}%
+}
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -148,22 +172,3 @@
 	\sidecite{#1}%
 }
 
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%
-% customize dictum format:
-\setkomafont{dictumtext}{\itshape\small\sffamily}
-\setkomafont{dictumauthor}{\normalfont\small\sffamily}
-\renewcommand*\dictumwidth{0.8\linewidth}
-\renewcommand*\dictumauthorformat[1]{--- #1}
-\renewcommand*\dictumrule{}
-
-
-%%%%%%%%%%%%%%%%%%%%%%
-% A Chapter abstract
-\RequirePackage{environ}
-
-\NewEnviron{abstract}{%
-	\addtocontents{toc}{\small\BODY\par}%
-	\rightskip1in\textsc{\BODY}%
-}

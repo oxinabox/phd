@@ -459,8 +459,8 @@ A small constant gradient even in the saturated position.
 Making such a neuron possible, if difficult, to turn back on once turned off.
 With this change the network always produces quality results.
 An example of the recreation of an input from the test set can be seen in 
-Figure \ref{fig-ae-recreation}. 
-%\pdfcomment{this should be using CRef but that is currently broken.}
+ \Cref{fig-ae-recreation}. 
+
 
 \asidefig[Recreation of an input from the MNIST test set. Input is on the left, output is on the right. 	{\label{fig-ae-recreation}}]{\includegraphics[scale=0.30]{figs/chapterintromachinelearning/recreation}}
 
@@ -609,8 +609,8 @@ The gated recurrent unit (GRU) is defined by:
 \begin{align}
 z_t &= \sigma \left( T[x_t; s_{t-1}] + b \right) \\
 r_t &= \sigma \left( U[x_t; s_{t-1}] + c \right) \\
-h_t &= \varphi \left( \sigma \left( V[x_t; s_{t-1} \circ r_t] + d \right) \right) \\
-s_t &= (1-z_t) \circ h_t + z_t\circ s_{t-1}\\
+h_t &= \varphi \left( \sigma \left( V[x_t; s_{t-1} \odot r_t] + d \right) \right) \\
+s_t &= (1-z_t) \odot h_t + z_t\odot s_{t-1}\\
 \hat{y}_t &= s_t
 \end{align}
 Where $T$,$U$ and $V$ are the trained weight-vectors, and $b$,$c$ and $d$ are the trained bias vectors for the 3 layers.
@@ -636,7 +636,7 @@ $z_t$ is often called the \emph{update-gate} at it gates how much the output/sta
 $r_t$ controls how much influence the past state $s_{t-1}$ has on calculating the new value of $h_t$ -- which is the new potential state/output as discussed.
 It is perhaps clearer if $h_t$ is reformulated to split $V$ into the terms that multiply with $x_t$ and the terms that multiply with $s_{t-1}$:
 \begin{align}
-h_t &= \varphi \left( \sigma \left( V[x_t; s_{t-1} \circ r_t] + d \right) \right) \\
+h_t &= \varphi \left( \sigma \left( V[x_t; s_{t-1} \odot r_t] + d \right) \right) \\
 h_t &= \varphi \left( \sigma \left( V_x x_t + V_s r_t s_{t-1} + d \right) \right) \\
 \end{align}
 If $r_t$ is one then the value of $s_{t_1}$ is fully present in the activation calculation $h_t$, if it is zero then it is not.
@@ -657,11 +657,11 @@ since $z_t$ and $r_t$ are themselves very similar to Basic RUs -- though they do
 		\node(hidden)[layer]{$h_t = \varphi \left( \sigma \left( V[x_t; s_{t-1} \circ r_t] + d \right) \right)$};
 		\node(reset)[layer, below left=of hidden]{$r_t = \sigma \left( U[x_t; s_{t-1}] + c \right)$};
 		\node(update)[layer, above left=of reset]{$z_t = \sigma \left( T[x_t; s_{t-1}] + b \right) $};
-		\node(state)[layer, above = 5 of reset]{$s_t = (1-z_t) \circ h_t + z_t\circ s_{t-1}$};
+		\node(state)[layer, above = 5 of reset]{$s_t = (1-z_t) \odot h_t + z_t \odot s_{t-1}$};
 		
 		\node(in)[below = 3 of reset]{input};
-		\node(stm)[left = 3 of reset]{old state};
-		\node(stp)[right = of state]{new state};
+		\node(stm)[left = 4 of reset]{old state};
+		\node(stp)[right = 3 of state]{new state};
 		\node(out)[above = of state]{output};
 		
 		\draw[->] (in) edge node[labe] {$x_t$} (update);	
@@ -681,6 +681,10 @@ since $z_t$ and $r_t$ are themselves very similar to Basic RUs -- though they do
 		\draw[->] (update) edge node[labe] {$z_{t}$} (state.south);
 		\draw[->, bend left] (state) edge node[labe] {$s_{t}$} (stp);
 		\draw[->] (state) edge node[labe] {$\hat{y}_t$} (out);
+		
+		\node(updatelbl)[labe, above= 0 of update]{Update Gate};
+		\node(resetlbl)[labe, above= 0 of reset]{Reset Gate};
+		\node(hiddenlbl)[labe, above= 0 of hidden]{Potential New State};
 		\end{tikzpicture}
 	\end{adjustbox}
 \end{figure}
