@@ -11,14 +11,11 @@ Whether one sees the artificial neural network technique described below as lear
 }}
 \chapter{Introduction to neural networks for machine learning}\label{sec:machine-learning-for-representations}
 \begin{abstract}
-This chapter is a introduction to machine learning via neural networks.
-It is 
-Chapter 2: Introduction to machine learning for representations (10 pages)
 This chapter can be skipped by readers already familiar with machine learning.
 It takes a much more tutorial tone than the remainder of the book.
 This will not cover all aspects of machine learning, which of-course could be an entire book on its own.
 It will cover the crucial basic techniques used in the works discussed in part B. The main focus will be on introducing neural networks, going into reasonable detail on hyper-parameters such as activation functions and layer sizes, as well as covering training techniques. 
-It will not cover techniques that are special to natural language processing – those will be discussed in chapters 4,5, and 6.
+It will not cover techniques that are special to natural language processing – those will be discussed in the later chapters.
 \end{abstract}
 
 Machine learning, particularly neural networks has become a hot topic of late.
@@ -87,6 +84,10 @@ The universal approximation theorem (UAT) tells us that a neural network can be 
 Here a function should be understood in the general sense -- classification is a function from observations to classes, regression is a function from observed values to target values.
 More precisely it states that for a network with sufficient width
 \pdfcomment{Finish this paragraph with math and citations}
+
+
+The earliest proofs of this was restricted to bounded activation functions like the sigmoid \pcite{mhaskar1992uat} \pcite{}.
+More recent work has extended this for unbounded activation functions like ReLU \pcite{SONODA2017uat}.
 
 A network without any hidden layers is only able to approximate linear functions.
 It is equivalent to a perception, or a linear SVM. 
@@ -349,10 +350,46 @@ Examples are in the julia programming language making use of the TensorFlow.jl p
 
 \subsection{Classifier}\label{sec:classifier}
 As one of the most basic networks, consider a classifier on the classic MNIST challenge.
+The MNIST dataset is a collection of images of hand written digits, which much be classified as to which digit they are.
 
-\input{figs/chapterintromachinelearning/mnist-basic.tex}
+A basic network to complete this task is is shown in \Cref{fig:mnistnetwork}.
 
-\input{figs/chapterintromachinelearning/mnist-advanced.tex}
+\begin{figure}
+	\caption{\label{fig:mnistnetwork}}
+	\input{figs/chapterintromachinelearning/mnist-basic.tex}
+\end{figure}
+
+The equations
+\begin{align}
+z=\varphi(W_1 x+b_1) \\
+\hat{y}=s_m(W_2 z + b_2) \\
+P(Y=y_i\mid X=x) &= \hat{y}_i \\
+P(Y=y_i\mid X=x) &= \left[=s_m(b_2 + W_2 \varphi(b_1 + W_1 x))\right]_i
+\end{align}
+For $X$ the input variable of grey-scale pixels intensities, and $Y$ the output as a class.
+Generally the output is represented with an one-hot encoding.
+Where the index corresponding to the class is 1, and the others zero.
+
+
+\aside{
+	We note that this simple network can without further enhancement exceed the early published results for the MNIST challenge, using standard un-augmented neural networks,
+	simply by using a very wide hidden-layer, that was not feasible as the time of those benchmarks.
+	It is still outperformed by convolution neural networks and other better architectures.
+}
+
+To go into details about each layer:
+The input is a vector that is a flattened $28\times 28$ sized vector so it is length 784.
+The first weight matrix needs to project that up onto a hidden layer  of $1024$.
+Thus $W_1$ is a $1024\times 784$ matrix.
+And the bias $b_1$, is directly for that hidden layer, so it is a vector or length $1024$.
+The hidden layers actual activation values (given by $z$) will be values taken by latent variables describing the input $x$.
+Variables that are chosen (via training) to be useful in discriminating the correct class for the next layer.
+The next layer is the output layer since this is a shallow network.
+A deep network would have more hidden layers, for additional latent variables describing relations.
+For the output layer we must project down to 10 dimensions, as there are 10 classes to choose from: the numbers from 0 to 9.
+thus $W_2$ is a $10 \times 1024$ matrix, to project down,
+and the bias $b_2$ is a 10 element vector.
+Using the softmax layer here ensures the total of all the elements in the output $\hat{y}$ is one, for a correct probability mass function.
 
 
 \subsubsection{Softmax and Bayes' Theorem}\label{sec:softmax-and-bayes-theorem}
@@ -388,7 +425,7 @@ Given one is considering the case for $Y=i$, then
 it can be seen that the row vector $W_{i}^{T}$ as a weighting map for features possessed by $z$.
 
 i.e for some scoring function $R$:
-\pdfcomment{Is this actually a postior probability, or is it just a score?}
+\pdfcomment{Is this actually a posterior probability, or is it just a score?}
 \begin{equation}
 R(Z=z\mid Y=i)=e^{[Wz]_{i}}
 \end{equation}
@@ -420,7 +457,7 @@ However, the true use of an autoencoder is to extract the output of one of the i
 We call the intermediary layer the code layer.
 To force this coded representation to have useful interesting properties,
 and to prevent the network from simply learning the identity function,
-all autoencoders include one or more features that increases the difficulty.
+all autoencoder include one or more features that increases the difficulty.
 In the case of the bottlenecking autoencoder this feature is the bottleneck.
 The code layer is much narrower than the input layer.
 This forces the network to effectively learn to compress the data -- performing dimensionality reduction.
@@ -582,18 +619,30 @@ The output of the final time-step can be the true output.
 	\end{tikzpicture}
 \end{figure}
 
-The most basic recurrent unit, would be a single hidden layer, with the unit output, and the unit state both being the value of this layer.
+\aside[Jordan RU]{The formulation is not commonly used today, but were one considering the Elman network as an Basic RU.
+	Then similar can be done for a Jordan network \parencite{jordan1986rnnTR}.
+	The Jordan RU would be given by:
+	\begin{align*}
+	h_t &= \varphi\left(W[x_t; s_{t-1}]+ b \right) \\
+	o_t &= \varphi\left(Vh_t + c \right) \\
+	s_t & = o_t \\
+	\hat{y}_t &= o_t
+	\end{align*}
+	It would not need an additional output layer. One of these RUs alone is a Jordan network.
+}
+
+The most basic recurrent unit, would be a single layer $h_t$, with the unit output, and the unit state both being the value of this layer.
+The layer is not hidden from the perspective of the recurrent unit
 The network inside the basic recurrent unit is given by:
 \begin{align}
 h_t &= \varphi\left(W[x_t; s_{t-1}]+ b \right)\\
 s_t & = h_t \\
-\hat{y}_t &= h_t
+\hat{y}_t &= o_t
 \end{align}
 As shown in \Cref{fig:basicrnn}
 Where $W$ and $b$ are the weight matrix and bias vector that are trained, for this single hidden layer.
-One could call this an Elman cell:
-the networks considered by in \tcite{elman1990finding} are such a basic RU, with an output layer on-top.
-
+One could call this an Elman RU:
+the networks considered by in \tcite{elman1990finding} are such a basic RU, with an extra over-all output layer on-top.
 
 Basic RNN units are not used in many modern works.
 Due to the vanishing gradient problem. \pdfcomment{I need to discuss what the vanish gradient problem is prior to this; maybe in a sidebar}
@@ -613,7 +662,8 @@ The gated recurrent unit (GRU) is defined by:
 \begin{align}
 z_t &= \sigma \left( T[x_t; s_{t-1}] + b \right) \\
 r_t &= \sigma \left( U[x_t; s_{t-1}] + c \right) \\
-h_t &= \varphi \left(  V[x_t; s_{t-1} \odot r_t] + d \right)  \\
+%
+h_t &= \varphi \left( V[x_t; s_{t-1} \odot r_t] + d \right)  \\
 s_t &= (1-z_t) \odot h_t + z_t\odot s_{t-1}\\
 \hat{y}_t &= s_t
 \end{align}
@@ -627,7 +677,7 @@ Where $T$,$U$ and $V$ are the trained weight-vectors, and $b$,$c$ and $d$ are th
 This may look complex, but it can be broken down into parts.
 First we can see that like in the basic RU, the output and the state are the same value.
 
-$h_t$ is our core hidden layer, as in the basic cell (we will return to how it is formulated presently).
+$h_t$ is our core layer, as in the basic cell.
 However, unlike in the basic cell, it does not immediately become the state: $s_t$.
 There is a trade-off between the state keeping its old value $s_{t-1}$, and getting the hidden layer value $h_t$.
 This trade-off is element-wise controlled by $z_t$ which is valued between 0 and 1 (due to the sigmoid unit).
@@ -635,7 +685,7 @@ when $z_t$ is $1$ for an element, then the value of $s_{t-1}$ is kept;
 conversely when $z_t$ is $1$ for an element, then the value of $s_{t-1}$ is fully replaces with $h_t$;
 and normally it is a value between.
 $z_t$ is often called the \emph{update-gate} at it gates how much the output/state is updated using the new value in $h_t$.
-
+The update gate sub-network $r_t$ has one purpose: to use the previous state and present input to determine the extend that the potential new state $h_t$ should actually be used in the new state -- is it going to store anything useful?
 
 $r_t$ controls how much influence the past state $s_{t-1}$ has on calculating the new value of $h_t$ -- which is the new potential state/output as discussed.
 It is perhaps clearer if $h_t$ is reformulated to split $V$ into the terms that multiply with $x_t$ and the terms that multiply with $s_{t-1}$:
@@ -647,11 +697,13 @@ If $r_t$ is one then the value of $s_{t_1}$ is fully present in the activation c
 It $r_t$ is often called the reset-gate.
 This is because of $r_t$ is reduced to zero, then the updated value for $h_t$ is as if $s_{t-1}$ was just like for the initial zero-vector state.
 i.e. it resets the system (to an extent -- if $z_t$ could mean that this value doesn't actual change the state at all).
+The reset gate sub-network $r_t$ has one purpose: to use the previous state and present input to determine the extent that the previous state should have an impact on the next state.
 
 Notice that when $z_t=0$ and $r_t=1$ then the system is identical to the Basic RU.
 This could be achieved by setting suitably large biasses.
 However, the system is more flexible than that, 
-since $z_t$ and $r_t$ are themselves very similar to Basic RUs -- though they do not control there own state.
+since $z_t$ and $r_t$ are themselves very similar to Basic RUs -- though they do not control there own state input.
+
 
 \begin{figure}
 	\caption{A Gated Recurrent unit, that an RNN could be made from}
@@ -794,15 +846,16 @@ The key difference is its resetting effect is also applying to all the gate equa
 
 \subsection{Deep Variants}
 One can have a deep RNN.
-This is done by stacking additional layers of recurrent units above the existing ones,
-tanking in the unit output as their unit input, and linking unit states within that layer.
-Which can in turn still be considered the same way: as a sequence of (deep) recurrent units.
+This is done by stacking additional recurrent units above the existing ones,
+tanking in the unit output as their unit input, and linking unit states within that level.
+The result can be interpreted as a single, deep recurrent unit.
 
 \subsection{Other RNNs}
+
 Memory Cell Networks,
 Nural Turing Machines
-Jordan RNNs
 
  
+%\printbibliography
 
 \end{document}

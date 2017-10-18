@@ -153,7 +153,6 @@ font = \ifthispageodd{\raggedleft}{\raggedright}\small\sffamily\color{blue}
 	url=false,  
 	style=alphabetic,
 	citestyle=authoryear,
-%	refsection=chapter 
 ]{biblatex}
 
 
