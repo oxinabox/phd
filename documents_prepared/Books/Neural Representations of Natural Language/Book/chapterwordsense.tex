@@ -1,23 +1,93 @@
 \documentclass[12pt,parskip]{komatufte}
 \include{preamble}
-
+\usepackage{tabulary}
+\newcolumntype{K}[1]{>{\centering\arraybackslash}p{#1}}
 \begin{document}
-\begin{table}
-	\scriptsize
 	
-	\begin{tabulary}{\textwidth}{|C|K{1cm}|C|C|C|C|C|}
-		\hline Type & paper & Input & Output & Technology & Corpora & Evaluation \\ 
-		\hline  WSR & \parencite{iacobacci2015sensembed} & Sense-Labelled Corpus  & Standard Sense Embeddings & CBOW H.Softmax & Wikipedia with Babelfly WSD applied & Word Similarity, Analogy  \\ 
-		%
-		\hline WSI &  \parencite{pantel2002WSI} & POS tagged Corpus  & Induced Sense Clusters & Hierarchical Clustering over usage features & Subset of TREC Newswire collection with MiniParse POS tagging applied an & Agreement with WordNet \\ 
-		%
-		\hline WSI &  \parencite{Reisinger2010} & Corpus  & Induced Word Vectors & Mixture Model Clustering over weighted unigram context features & Wikipedia, Gigaword & Word Similarity \\
-		%
-		\hline WSI &  \parencite{Huang2012} & Corpus  & Induced Word Vectors & Neural Network to predict next word; with second stage relabeling of corpus with clusters based on average of words context vectors & Wikipedia & Word Similarity, Word Similarity with context \\
-		%
-		\hline 
-	\end{tabulary} 
-\end{table}
+\section{Word Senses}
+
+Words have multiple meanings.
+A trivial example of this is
+
+
+\aside[lemma/lexeme]{}
+\aside[tense]{}
+\aside[Part of Speech/POS]{}
+\aside[synset]{}
+\aside[stem]{}
+
+
+
+The standard way to assign word senses is via some lexicographical resource.
+i.e. a dictionary, or a thesaurus.
+There is not a canonical list of word se
+
+
+
+\subsection{Word Sense Disambiguation}
+
+
+\aside[Semantic Syllepsis]{
+	Also known as pathological sentences that kill almost all WSD systems.
+	Consider the sentences: \natlang{John used to work for the \emph{newspaper} that you are reading.},
+	and \natlang{I was going to \emph{dust} but there wasn't any}.
+	In these sentences the emphasised words simultaneously have two different meanings.
+	In the latter case: dust actually has is both a verb and a noun.
+	As word sense disambiguation systems (and part of speech taggers), normally attempt to assign a single sense (and part of speech), to an each word, they are unable to handle these sentences.
+	Most works on word sense disambiguation outright ignore these sentences, or consider them to be ungrammatical, or incorrect.
+	However, they are readily understood and used without thought by most native speakers.
+	These constructions are also known as zeugma, although zeugma is itself as highly polysemous word, so its usage varies. 
+}
+
+
+
+Word sense disambiguation is one of the hardest problems in NLP.
+Very few systems significantly out perform the baseline most common sense (MCS).
+
+Progress on the problem is made difficult by several factors.
+
+There are problems with the data available.
+The lack of very large scale training corpora rendering fully supervised methods difficult.
+The limited testing corpora can result in systems that allow 
+Lack of human agreement on the correct sense, resulting in weak ground truth.
+
+There are also issues inherent in the task.
+Determining the sense may require very long range information:
+for example the information on context may not even be in the same sentence.
+It may require knowing the domain of the text, where word sense uses vary between domain.
+It may in-fact be intentionally unclear, with multiple correct interpretations, as in a pun.
+Or be unintentionally unknowable, due to poor writing style, such that it would confuse any human reader also.
+
+
+
+\section{Word Sense Representation}
+\section{Word Sense Induction}
+\section{Word Sense Alignment}
+
+
+
+\subsection{Directly Learning Lexical Sense Embeddings}
+In this area of research, the induction of word sense embeddings is treated as a supervised, or semi-supervised task, that requires sense labelled corpora for training.
+
+\tcite{iacobacci2015sensembed} use a Continuous Bag of Word language model \parencite{mikolov2013efficient}, using word senses as the labels rather than words.
+This is a direct application of word embedding techniques.
+To overcome the lack of a large sense labelled corpus, Iacobacci et al. use a 3rd party WSD tool, BabelFly \cite{Moroetal:14tacl}, to add sense annotations to a previously unlabelled corpus. 
+
+\tcite{Chen2014} use a semi-supervised approach to train sense vectors.
+They partially disambiguate their training corpus, using initial word sense vectors and WordNet; and use these labels to fine tune their embeddings.
+Initially the sense vectors are set as the average of the single sense word embeddings \parencite{mikolov2013efficient} for the words in the WordNet gloss.
+This is then also done for the words in a sentence.
+The distance between the sentence average and the gloss average is used to perform WSD to label the word sense. Words are only sense labelled when the distance is within a threshold.
+The requirement for meeting a threshold in order to add the sense label  decreases the likelihood of training on an incorrect sense label.
+This relabelled data is then used as training data, for fine tuning the sense embeddings.
+
+
+\subsection{Mapping induced senses to lexical senses}\label{mapping}
+By defining a stochastic map between the induced and lexical senses, \tcite{agirre2006}, propose a general method for allowing WSI systems to be used for WSD.
+Their work was used in SemEval-2007 Task 02 \parencite{SemEval2007WSIandWSD} to evaluate all entries. 
+Agirre et al. use a mapping corpus to find the probability of a lexical sense, given the induced sense according to the WSI system.
+
+By exploiting the particular properties of sense embedding based WSI systems we propose a system that can better facilitate the use of this subset of WSI systems for WSD.
 
 \section{Word sense representation (WSR)}
 Word sense representation (WSR) is the process by which a variety of representations, for different work senses is generated.
@@ -43,8 +113,6 @@ Like WordSim-353 \cite{WordSim353}, for contextless, or Stanford's Contextual Wo
 \tcite{Chen2014}
 
 \tcite{AdaGrams}
-
-I have AdaGrams running. Running on default settings did not yield a variety of senses from my inspection. I have rerun it using the settings used in the paper now, much better.
 
 
 

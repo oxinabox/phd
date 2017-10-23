@@ -41,7 +41,7 @@ $P(w_i \mid \natlang{hot}, \natlang{a}, \natlang{want}, \natlang{I}, \natlang{lu
 The task is to find the probabilities for the various words that $w_i$ could represent.
 
 \aside[Google n-gram corpora]{Google has created several very large scale corpora of 1,2,3,4, and 5-grams from over $10^{11}$ words.
-Including the 2006 Web corpus from the public internet (Available for fees at \url{https://catalog.ldc.upenn.edu/LDC2006T13}),
+Including the 2006 Web corpus from the public internet (Available for fee at \url{https://catalog.ldc.upenn.edu/LDC2006T13}),
 and the 2010-2012 Books corpus made words from the Google Books project (available freely from \url{https://books.google.com/ngrams/datasets}), as described in \textcite{lin2012syntactic}.
 These very large corpora also used outside of statistical language modeling by corpus linguists investigating the use of language.
 }
@@ -101,20 +101,20 @@ This model is a simplification of that introduces by \tcite{NPLM}, it forms the 
 
 \aside[Lookup word embeddings: Hashmap or Array?]{
 The question is purely one of implementation.
-Theoretically we do not care if the implementation using a String to Vector dictionary (eg a Hashmap), or an 2D Array which is indexed into via an integer index representing the word, to retrieve a column.
-In tokenization of the source text it is common to transform all the words into integers, so as to save memory, especially if the tokenization does not make use of string interning.
-At that point it makes sense to work with a Array.
+Theoretically we do not care if the implementation using a String to Vector dictionary (eg a Hashmap), or a 2D array from which a column is indexed-out (sliced-from) via an integer index representing the word (for column major languages).
+In tokenization of the source text it is common to transform all the words into integers, so as to save memory, especially if string interning is not in use.
+At that point it makes sense to work with an array.
 For our purposes we will treat the word $w_i$ as if it were an integer index, though thinking of it as a string index into a hashmap changes little in the logic.
 }
 
 \aside[One-hot product or Indexed-lookup]{
-In some works you may see the process of retrieving the word vector from an Matrix of word vectors described as a one-hot multiplication.
-That is to say for a word represented by the index $i$,
+In some works you may see the process of retrieving the word vector from an matrix of word vectors described as a one-hot multiplication.
+For a word represented by the index $i$,
 for $e_i$ the one-hot vector with a 1 in the $i$th position,
 and for $C$ the table of word embeddings.
 one can write  $C\,e_i$.
 We will write $C_i$ and refer to this as looking up the word vector from the $i$th column.
-Of-course $C_i=C\,e_i$, however in practical implementation the performance ramification are huge.
+Of-course $C_i=C\,e_i$, however in practical implementation the performance ramifications are huge.
 A matrix column indexing is a $O(1)$ operation (for column major languages),
 where as a dense matrix-vector product is $O(n^2)$.
 %
@@ -477,9 +477,9 @@ GloVe explicitly weights all co-occurrences inversely by the distance from each 
 Skip-Gram accomplishes something similar with dynamic window sizing tweak -- the true size of the window is uniformly distributed between 1 and the value given.
 
 GloVe explicitly scales the weight of terms to be optimised -- using the weighting function, which saturates for frequent terms.
-Skip-Gram accomplishing something similar again using the sub-sampling tweak -- common words are randomly skipped from the contexts during training, based on how common they are.
+Skip-Gram accomplishes something similar again using the sub-sampling tweak -- common words are randomly skipped from the contexts during training, based on how common they are.
 
-While the authors papers consider these as unimportant to the main thrust of the algorithms \textcite{levy2015lsaisbasicallyskipgramswithexperimentstoprove} found them to be crucial hyper-parameters.
+While the original papers consider these as unimportant to the main thrust of the algorithms \textcite{levy2015lsaisbasicallyskipgramswithexperimentstoprove} found them to be crucial hyper-parameters.
 }
 
 However, GloVe loosely highlights the relationship between the co-located word prediction neural network models,
@@ -510,7 +510,7 @@ It's recent use was popularised by \tcite{mikolov2013efficient}, where is is use
 
 \aside[SemHuff]{It can be noted that the huffman encoding scheme specifies only the depth of a given word in the tree. It does not specify the order.
 	\textcite{SemHuff} makes use of the BlossomV algorithm \parencite{Kolmogorov2009} to sort the nodes on each layer according to their similarity.
-	They found that on language modelling task this improved performance, in the way one would expect.
+	They found that on the language modelling task this improved performance, in the way one would expect.
 	They used a lexical resource to determine similarity, however noted that one could use a prior trained word2vec model as the similarity measure.
 	This is very similar to the original method used by \parencite{morin2005hierarchical},
 	but only using the similarity measure for reordering nodes at the same depth, after the depth is decided by huffman encoding.
@@ -696,7 +696,7 @@ P(n_{0,t_{1},...,t_{i}}\mid z,)=\prod_{i=1}^{i=L}\sigma\left((-1)^{t_{i}}V_{0,t_
 	$V^{T}z$.
 	
 	The problem then becomes indexing the relevant node rows.
-	Which is a not at all trivial problem in packing tree nodes elements into a matrix.
+	Which is a not at all trivial problem in packing tree node elements into a matrix.
 	The details on optimising such multiplications and tree packing are beyond the scope of this book.
 	In general this path is not a path to gaining speed, and is a trap to be avoided in your design.
 }
@@ -716,11 +716,11 @@ and use an indicator function $\left\llbracket a=b\right\rrbracket =\begin{cases
 -1 & a\ne b
 \end{cases}$
 
-\aside[How does this related to word vectors?]{
+\aside[How does this relate to word vectors?]{
 Recall that CBOW and Skip-gram and indeed all other language modelling word embedding methods are all about predicting $P(w_o\,mid w_{i},...,w{i+1})$ for some words.
 For skip gram that is just $P(w_o\,mid w_i)$.
-So in $P(n_{0,t_{1},...,t_{i}}\mid z,)$, the term $n_{0,t_{1},...,t_{i}}=w_o$, just represented as  path through the tree to its leave node.
-And $z$ is the final pre-output layer of the model, encoding in normal language models all the infromation about what comes after $w_{i},...,w{i+1}$.
+The term $n_{0,t_{1},...,t_{i}}$ in  $P(n_{0,t_{1},...,t_{i}}\mid z,)$, just represents as  path through the tree to its leave node which represent the word $w_o$. i.e $P(n_{0,t_{1},...,t_{i}}\mid z,)=P(w_o\mid z,)$.
+And $z$ is the final pre-output layer of the model, encoding in normal language models all the information about what comes after $w_{i},...,w{i+1}$.
 In skip-gram there is no hidden layer, and it is just $z=w_i$.
 }
 
@@ -734,7 +734,7 @@ There is no functional difference between the 3 formulations.
 \paragraph{Loss Function}
 \pdfcomment{This should  be moved to intro to machine learning. Also should be double checked}
 
-\aside[The gradient calculations]{They are not fun. They never are for back-propagation. We recommend using a framework with automated differentiation, and/or performing gradients checks against one or via finite-differencing.}
+\aside[The gradient calculations]{They are not fun. They never are for back-propagation. We recommend using a framework with automated differentiation, and/or performing gradient checks against using an numerical differentiation tool (Simple finite-differencing will do in a pinch).}
 
 Using normal softmax, during training the cross-entropy between the model outputs predictions and the groud truth as given in the training set is minimised.
 Cross entropy is given by
@@ -824,7 +824,7 @@ Loss_{w_j,w_i} =   - \log P(w_j\mid w_i)
 \end{equation}
 
 \aside[Most words don't co-occur]{
-	Some simple reasoning can account this as a as a reasonable consequence of Zipf's law \parencite{zipf1949human} and a prior of the principle of indifference, but there is a further depth to it as explained in \textcite{ha2009extending}}
+	Some simple reasoning can account this as a reasonable consequence of Zipf's law \parencite{zipf1949human} and a prior of the principle of indifference, but there is a further depth to it as explained in \textcite{ha2009extending}}
 
 
 The question is then: how is $w_k$ to be found?
@@ -941,9 +941,9 @@ Simultaneously with the developments around representations for the language mod
 
 \aside[Pretrained Word-Embeddings]{
 	Pretrained Word Embeddings are available for most models discussed here.
-	There trained on a lot more data than most people have access too.
+	They are trained on a lot more data than most people have access too.
 	It can be useful to substitute word embeddings are a representation in most systems,
-	or to use them as intitial value for neural network systems that will learn them as they train the system as a whole.
+	or to use them as initial value for neural network systems that will learn them as they train the system as a whole.
 \pdfcomment{Insert links}
 }
 

@@ -12,7 +12,7 @@
 \RequirePackage{xparse}
 
 
-\RequirePackage{color}
+\RequirePackage{xcolor}
 \definecolor{blue}{rgb}{0.2, 0.2, 1.0}
 
 %%%%%%%%%%%%%%%
@@ -40,12 +40,12 @@
 \RequirePackage{geometry}
 \savegeometry{basegeo} % Reset to this geometry for title pages etc
 \geometry{
-  marginpar = 5.5cm,
-  inner  = 21cm /  \pagedivisions,
-  outer  = 21cm / \pagedivisions + \completemargin,
-  top    = 29.7cm / \pagedivisions,
-  bottom = 29.7cm / \pagedivisions,
-  heightrounded
+	marginpar = 5.5cm,
+	inner  = 21cm /  \pagedivisions,
+	outer  = 21cm / \pagedivisions + \completemargin,
+	top    = 29.7cm / \pagedivisions,
+	bottom = 29.7cm / \pagedivisions,
+	heightrounded
 }
 \savegeometry{contentgeo} % use this geometry for normal pages
 
@@ -53,23 +53,27 @@
 
 % Use scrlayer-scrpage, so that package notecolumn works
 \RequirePackage[
-  headwidth = 21cm - 21cm / \pagedivisions * 3 : 0cm,
-  footwidth = 21cm - 21cm / \pagedivisions * 3 : 0cm,
-  plainheadsepline,
-  headsepline = 1pt,
-  plainfootsepline,
+	headwidth = 21cm - 21cm / \pagedivisions * 3 : 0cm,
+	footwidth = 21cm - 21cm / \pagedivisions * 3 : 0cm,
+	plainheadsepline,
+	headsepline = 1pt,
+	plainfootsepline,
 ]{scrlayer-scrpage}
 
 \newlength{\notescolwidth}
 \setlength{\notescolwidth}{\completemargin - \marginparsep}
 
+
+% Font Style for note column
+\NewDocumentCommand{\asidefont}{}{\ifthispageodd{\raggedleft}{\raggedright}\small\sffamily\color{blue}}
+
 % Set up the note column
 \AtEndPreamble{\RequirePackage{scrlayer-notecolumn} %must be loaded ``Lastest''
-\RedeclareNoteColumn[
-normalmarginpar,
-width = \notescolwidth,
-font = \ifthispageodd{\raggedleft}{\raggedright}\small\sffamily\color{blue}
-]{marginpar} %default
+	\RedeclareNoteColumn[
+		normalmarginpar,
+		width = \notescolwidth,
+		font = \asidefont,
+	]{marginpar} %default
 }
 
 
@@ -124,7 +128,7 @@ font = \ifthispageodd{\raggedleft}{\raggedright}\small\sffamily\color{blue}
 	\makenote*{%
 		#2
 		\clearcaptionsetup{figure}
-		\captionof{figure}{#1}
+		\captionof{figure}{\color{blue} #1}
 		\bigskip
 	}
 }
@@ -137,8 +141,9 @@ font = \ifthispageodd{\raggedleft}{\raggedright}\small\sffamily\color{blue}
 \RequirePackage[]{caption}%
 \captionsetup{compatibility=false}%
 
+\DeclareCaptionFont{asidefont}{\asidefont}
 \DeclareCaptionFormat{sidenote}{\asideunsafe{\vskip 0.5\baselineskip #1#2#3}}%
-\DeclareCaptionStyle{goodstyle}{parskip=0pt,skip=0pt,singlelinecheck=off, labelfont=bf}%
+\DeclareCaptionStyle{goodstyle}{parskip=0pt,skip=0pt,singlelinecheck=off, labelfont+={bf}, font+={asidefont}}%
 \captionsetup{style=goodstyle}
 
 \captionsetup[figure]{format=sidenote}%
