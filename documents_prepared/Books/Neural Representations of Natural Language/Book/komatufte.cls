@@ -158,6 +158,7 @@
 	url=false,  
 	style=alphabetic,
 	citestyle=authoryear,
+	bibstyle=authoryear,
 ]{biblatex}
 
 
