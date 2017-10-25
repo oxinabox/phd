@@ -93,7 +93,7 @@
 % customize dictum format:
 \setkomafont{dictumtext}{\itshape\small\sffamily}
 \setkomafont{dictumauthor}{\normalfont\small\sffamily}
-\renewcommand*\dictumwidth{0.8\linewidth}
+\renewcommand*\dictumwidth{0.8\textwidth}
 \renewcommand*\dictumauthorformat[1]{--- #1}
 \renewcommand*\dictumrule{}
 

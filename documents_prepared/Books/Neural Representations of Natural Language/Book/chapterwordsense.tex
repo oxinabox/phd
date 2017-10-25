@@ -3,11 +3,38 @@
 \usepackage{tabulary}
 \newcolumntype{K}[1]{>{\centering\arraybackslash}p{#1}}
 \begin{document}
+
+\setchapterpreamble{%
+	\dictum[the seven senses of \natlang{literally},
+	 \textit{Oxford English Dictionary}, 3rd ed., 2011]
+	{
+		\begin{description}
+			\setlength\itemsep{0em}
+			\item[1a.] In a literal, exact, or actual sense; not figuratively, allegorically, etc.
+			\item[1b.] Used to indicate that the following word or phrase must be taken in its literal sense, usually to add emphasis.
+			\item[1c.] colloq. Used to indicate that some (frequently conventional) metaphorical or hyperbolical expression is to be taken in the strongest admissible sense: `virtually, as good as'; (also) `completely, utterly, absolutely' \ldots
+			\item[2a ]With reference to a version of something, as a transcription, translation, etc.: in the very words, word for word.
+			\item[2b.] In extended use. With exact fidelity of representation; faithfully.
+			\item[3a.] With or by the letters (of a word). Obs. rare.
+			\item[3b.] In or with regard to letters or literature. Obs. rare.
+		\end{description}		
+}}
+
+\chapter{Word Sense Representations}\label{sec:word-sense-representations}
+\begin{abstract}
+	Chapter 5: Word Sense Representations (5-10 pages)
+	In this chapter, technologies for representing the multiple meanings of a single word can have will be discussed.
+	This is a growing area, and is particularly important in languages (including English, but other languages even more so), where polysemous and homonymous words are common.
+	It leads naturally to the next section on phrase representation. Rather than a single word having many meanings, the next chapter will discuss how a single meaning may take multiple words to express.
+\end{abstract}
 	
 \section{Word Senses}
 
 Words have multiple meanings.
-A trivial example of this is 
+When assigning a single representation to a word, it is impossible for that representation to truly describe the meaning in all contexts.
+It may have some features applicable to some uses but not to others,
+it may be an average of all features for particular contexts,
+or it may only represent the 
 
 
 \aside[lemma/lexeme]{}
@@ -17,7 +44,7 @@ A trivial example of this is
 \aside[stem]{}
 \aside[synset]{A synset is a set of synonymous words: that is words that have the same meaning}
 \aside[gloss]{A gloss is the dictionary entry for a word-sense, it normally includes both the definition and an example of use.
-In wordnet each synset shares a common gloss. }
+In wordnet each synset shares a common gloss.}
 
 
 
@@ -29,7 +56,37 @@ The most commonly used lexicographical resource is WordNet \pcite{miller1995word
 there are several WordNets equivalents in other languages,
 as well as the multi-lingual  BabelNet \pcite{navigli2010babelnet}.
 
+\pdfcomment{Rewrite this stuff about wordnet being a poor moral baseline to fit the books intended audience better}
+\aside[WordNet is not a strong moral baseline]{
 
+	WordNet is the standard "dictionary/thesusaus/source of lexicographical information" for algorithms. (ML and otherwise)
+	(It is also the seed for some online dictionaries)
+	
+	The definitions in wordnet were written in a large part by undergrads at Princeton in 1990. That is why it has things like "S: (v) nag, peck, hen-peck (bother persistently with trivial complaints) "She nags her husband all day long"".
+	
+	Further, the dataset used to determine frequency of Synsets (that is the total count of all words) comes from a dataset now known as SemCore.
+	Which is a sense annotated subset of the Brown Corpus.
+	
+	The Brown Corpus is a sampling of American texts from 1961.
+	The norms of 1961 were not the norms of today.
+	(Remember the US didn't pass the Civil Rights act to end segregation until 1964).
+	
+	Now here is a fact I will return to later. The word Wheelchair is only mentioned once in the Brown corpus.
+	
+	Moving on:
+	ImageNet is a common resource for image recognition.
+	It labels images with their WordNet synset.
+	More generally, using a high performing ImageNet network minus its final classification layer, is commonly used as a feature extractor on any computer vision machine learning problem.
+	
+	ImageNet only uses the most common synsets.
+	(in 2009 it has 8,000. It is now up to  22,000)
+	Where most common is determined using the counts reported by WordNet (at least originally it was).
+	Which were extracted from SemCore, i.e. The Brown Corpus.
+	Which means that it did not include wheelchairs for example (it does now).
+	
+	And this is why automatic captioning systems recognize wheelchairs as skateboards.
+	
+	Because of the fact that they are based on what people were writing about in 1961.}
 
 
 \subsection{Word Sense Disambiguation}
@@ -66,28 +123,117 @@ It may in-fact be intentionally unclear, with multiple correct interpretations, 
 Or be unintentionally unknowable, due to poor writing style, such that it would confuse any human reader also.
 
 
+It can also be said that word senses are highly artificial and do not adequately represent meaning.
+However, WSD is required to access lexicographical resources,
+such as translation dictionaries, ontologies (e.g. OpenCyc), and other datasets (e.g. ImageNet).
+
+\pdfcomment{Talk abow MFS baseline and why it always wins}
+
+\section{Word Sense Representation}
+
+\subsection{Supervised Methods}
+The simple and direct method, is to take a dataset that is annotated with word-senses,
+and then treat each tagged word as if it were a word, then apply any of the methods for word representation discussed in \Cref{sec:word-representations}.
+\tcite{iacobacci2015sensembed} use a Continuous Bag of Word language model \parencite{mikolov2013efficient}, doing exactly this.
+This does however run into the aforementioned problem, that there is relatively little training data that has been manually sense annotated.
+Iacobacci et al. use a 3rd party WSD tool, BabelFly \cite{Moroetal:14tacl}, to annotate the corpus with senses.
+This allows for existing word representation techniques to be applied, but being limited to the use of an existing WSD tool makes it unsuitable for use in WSD tasks.
+
+
+\subsection{Pseudo-semi-supervised Method}
+\tcite{Chen2014} use an almost semi-supervised approach to train sense vectors.
+They partially disambiguate their training corpus, using initial word sense vectors and WordNet.
+They then discard these original sense-vectors, and use the partially disambiguated corpus to train sense-vectors via a skip-gram variant.
+\pdfcomment{Don't call things Pseudo-semi-supervised Method}
+
+%
+\aside[Cosine distance]{
+As a refresher:
+here we talk of cosine distance, as it is more reasonable as smaller implies closer.
+
+(Though it is still not a true metric as $d_{cos}(v,kv)=0$ for all $k\in \mathbb{R}_+$).
+Other times you may see cosine similarity, it ranged between -1 (most different) and 1 (most similar).
+Cosine similarity is given by $sim(a,b)=\frac{a\cdot b}{\left\Vert a\right\Vert _{2}\left\Vert b\right\Vert _{2}}=\cos(\angle a b )$
+i.e. the unit-length normalised dot product of the vectors.
+Cosine distance is usually defined at $d_{cos}(a,b)=\frac{1-sim(a,b)}{2}$.
+It ranged between 0 (most similar) and 1 (most different).
+}
+
+The first phase of there method is in essence a word-embedding based WSD system.
+When assessed as such a WSD result they report that it only marginally exceeds the MFS baseline,
+though that is not at all unusual for WSD algorithms as discussed above.
+
+They initially assign every word-sense in WordNet, a sense vector.
+This sense vector is the average of word-embeddings of a subset if words in the gloss,
+as determined using pretrained skip-grams \parencite{mikolov2013efficient}.
+For the word $w$ with word-sense $w_{s_i}$,
+they select a set of candidate words, $cand(W_{s_i})$, from the gloss to be included in the average
+based on the follow set of requirements.
+First the word must be a content word: that is a verb, noun, adverb or adjective.
+Secondly, its cosine distance to $w$ must be below some threshold $\delta$.
+Finally, it must not be the word itself (One can assume this is in terms of identical lexemes).
+Or written mathematically, where $C_v$ is the skip-gram word vector for $v$
+\begin{equation}
+cand(w_{s_{i}})=\left\{ u\left|\begin{array}{c}
+u\in gloss(w_{s_{i}})\\
+\wedge d_{cos}(C_w,C_u)<\delta\\
+\wedge pos(u)\in\left\{ verb,adv,noun,adj\right\} \\
+\wedge u\ne w
+\end{array}\right.\right\} 
+\end{equation}
+The initial sense vector for $w_{s_i}$ is the mean of the word vectors for all the words in $cand(w_{s_{i}})$.
+The effect of this is that most words in the same synset will have similar but not necessarily identical initial vectors.
+\pdfcomment{Consider what this does to rare senses of a word, i.e. the base wordsense will be distant}.
+
+
+
+They then use these initial sense vectors to disambiguate the words in their unlabelled training corpus.
+For each sentence in the corpus, they define an initial content vector.
+This is done by taking the mean of the skip-gram word embedding for all content words in the sentence.
+For each word in the sentence, they then compare each sense vector to the context vector.
+If the closes sense vector is below a given threshold,
+then it that word is tagged with that word-sense, and the context vector is updated to use the sense-vector instead of the word vector.
+Words that do not come within the threshold are not tagged.
+This is an important features, as it means that words without clear senses do not get a sense given to them.
+Thus avoiding any dubious sense tags for the next training step.
+
+
+Once the corpus is (partially) tagged Chen et. al. employ the skip-gram word-embedding method with a variation to predict the word-senses.
+The original sense vectors are discarded.
+Rather than the model being tasked only to predict the surrounding words,
+it is tasked to predict surrounding words and their sense-tags (where present).
+For purposes of the loss function predicting tags and words is weighted equally.
+Note that the input the the skip-gram is the central word, not the central word-tag.
+In this method the word-sense embeddings are output embeddings.
+
 
 
 
 \section{Word Sense Induction}
-\section{Word Sense Alignment}
+In this section we will discuss methods for finding a word-sense, without reference to a standard set of senses.
+Such systems must discover the word senses at the same time as they find their representations.
+One strong advantage of these methods is that they do not require a labelled dataset.
+As discussed there are relatively few high-quality word-sense labelled datasets.
+The other key advantage is not relying on fixed senses determined by a lexicographer.
+This is particular useful if the words senses are highly domain specific;
+or in a language without strong lexicographical resources.
+This allows the data to inform on what word-senses exist.
 
+
+
+
+\section{Word Sense Alignment}
+As there are a great many word sense induction methods
 
 
 \subsection{Directly Learning Lexical Sense Embeddings}
 In this area of research, the induction of word sense embeddings is treated as a supervised, or semi-supervised task, that requires sense labelled corpora for training.
 
-\tcite{iacobacci2015sensembed} use a Continuous Bag of Word language model \parencite{mikolov2013efficient}, using word senses as the labels rather than words.
+ using word senses as the labels rather than words.
 This is a direct application of word embedding techniques.
-To overcome the lack of a large sense labelled corpus, Iacobacci et al. use a 3rd party WSD tool, BabelFly \cite{Moroetal:14tacl}, to add sense annotations to a previously unlabelled corpus. 
+To overcome the lack of a large sense labelled corpus, , to add sense annotations to a previously unlabelled corpus. 
 
-\tcite{Chen2014} use a semi-supervised approach to train sense vectors.
-They partially disambiguate their training corpus, using initial word sense vectors and WordNet; and use these labels to fine tune their embeddings.
-Initially the sense vectors are set as the average of the single sense word embeddings \parencite{mikolov2013efficient} for the words in the WordNet gloss.
-This is then also done for the words in a sentence.
-The distance between the sentence average and the gloss average is used to perform WSD to label the word sense. Words are only sense labelled when the distance is within a threshold.
-The requirement for meeting a threshold in order to add the sense label  decreases the likelihood of training on an incorrect sense label.
-This relabelled data is then used as training data, for fine tuning the sense embeddings.
+
 
 
 \subsection{Mapping induced senses to lexical senses}\label{mapping}
