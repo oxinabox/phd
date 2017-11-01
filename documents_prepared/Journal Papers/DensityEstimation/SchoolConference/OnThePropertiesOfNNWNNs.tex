@@ -1,8 +1,26 @@
-\documentclass[dvipsnames]{beamer}
+\documentclass[dvipsnames,handout]{beamer}
+
 \usepackage{amsmath, amsthm, amssymb, mathtools}
-\usepackage{tikz}
+\newcommand{\R}{\mathbb{R}}
 
 \input{brownbeamer}
+
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=newest}
+\pgfplotsset{
+	every axis/.append style={
+		width=\textwidth,
+		domain=-10:10,
+		samples=101,
+		smooth,
+		no markers,
+		ytick pos = left,
+		xtick pos = left,
+	}
+}
+	
+
 
 
 \author{\textbf{Lyndon White}, Chris Rackauckas (UCI)\\ Roberto Togneri, Wei Liu, Mohammed Bennamoun}
@@ -13,22 +31,176 @@
 
 \begin{document}
 
-\frame{\maketitle}
+\frame{\maketitle
+	\note{
+		So. Some observations on the properties of NNWNNs.
+		They are Monotonic.
+		Ok that is about it really.
+		But actually though,	
+		I'll begin by saying that I never intended to as come so close to Chris Bartley's stuff as I have.
+		I didn't think these were general monotonic function approximators when I started playing with them.
+		but they are.
+		I do now get to cite Chris's work after the break as having proved some of the bits I need.
+		So that is nice.
+		And steal his motivating application area from a few years ago.
+	}
+}
 
 
-\begin{frame}{This is a SISO neural network}
-	\begin{equation*}
-	N(x;W,V,b,c) = \sum_{j=1}^{j=n_h} V_{1,j} \varphi (b_j+W_{j,1}x_1) + c_1
-	\end{equation*}
+\begin{frame}{A single input single output neural network}
+	\begin{block}{This is a SISO NN}
+		\begin{align*}
+			N(x;W,V,b,c) &= \sum_{j=1}^{j=n_h} V_{1,j} \varphi (b_j+W_{j,1}x_1) + c_1
+		\end{align*}
+	\end{block}
+
 	\pause
-	\structure{This is its derivative}
-	\begin{equation*}
-	N(x;W,V,b,c) = \sum_{j=1}^{j=n_h} V_{1,j} \varphi (b_j+W_{j,1}x_1) + c_1
-	\end{equation*}
+
+	\begin{block}{This is its derivative}
+		\begin{align*}
+			\frac{\partial N(x;W,V,b,c)}{\partial x_1} = \sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \varphi^\prime (b_j+W_{j,1}x_1)
+		\end{align*}
+	\end{block}
+\end{frame}
+
+\begin{frame}{A multi-input multi-output neural network}
+	\begin{block}{This is a MIMO NN}
+		\begin{align*}
+	N(x;W,V,b,c)&=V\varphi(Wx+b)\\
+	&=\left[\begin{array}{c}
+{\displaystyle \sum_{j=1}^{j=n_{h}}}V_{1,j}\varphi\left(b_{j}+\sum_{i=1}^{i=n_{i}}\varphi\left(W_{j,i}x_{i}\right)\right) + c_1\\
+\vdots\\
+{\displaystyle \sum_{j=1}^{j=n_{h}}}V_{n_{o},j}\varphi\left(b_{j}+\sum_{i=1}^{i=n_{i}}\varphi\left(W_{j,i}x_{i}\right)\right) +c_{n_o}
+\end{array}\right] \label{multiNNWNN}
+		\end{align*}
+	\end{block}
+	
+	\pause
+	
+	\begin{block}{This is its derivative (Jacobian)}
+		\begin{align*}
+		J_N&=\left(V\odot W^{T}\right)\varphi^\prime(Wx+b)
+		\end{align*}
+	\end{block}
+	\note{The Jacobian does not fit on the page when written in full. but it is basically a large matrix of elements that look like the SISO deritivite}
+\end{frame}
+
+
+
+\begin{frame}{This is a squashing activation function}
+	\begin{block}<1->{$\varphi:\,\R \to \R$}
+		\begin{itemize}
+			\item monotonic
+			\item bounded above and below
+			%\begin{align*}
+				%\lim_{z\to-\infty} \varphi(z)=c_{min} \qquad \lim_{z\to\infty} \varphi(z)=c_{max}
+			%\end{align*}
+			\item differentiable almost everywhere \note{I might not have 100\% nailed down that regularity requirement yet}
+		\end{itemize}
+	\end{block}
+	
+	\begin{columns}[onlytextwidth]
+		\begin{column}{0.33\textwidth}
+			\centering
+			\structure{Logistic Sigmoid}
+			\begin{tikzpicture}
+			\begin{axis}[]
+			\addplot {1/(1+exp(-x))};
+			\end{axis}
+			\end{tikzpicture}
+		\end{column}
+	
+
+		\begin{column}{0.33\textwidth}
+			\centering
+			\structure{RELU6}
+			\begin{tikzpicture}
+			\begin{axis}[]
+			\addplot {max(0,min(x,6))};
+			\end{axis}
+			\end{tikzpicture}
+		\end{column}
+	
+		
+		\begin{column}{0.33\textwidth}
+			\centering
+			\structure{tanh}
+			\begin{tikzpicture}
+			\begin{axis}[]
+			\addplot {tanh(x)};
+			\end{axis}
+			\end{tikzpicture}
+		\end{column}	
+	\end{columns}
+
+\end{frame}
+
+
+\begin{frame}{This a squashing activation function's derivative, including the weight}
+	\begin{block}<2->{$\dfrac{\partial\varphi(Wx)}{\partial x}=W\varphi^\prime(Wx)$ \hfill It is a Summability Kernel}
+		\begin{itemize}
+			\item Uniformly continuous almost everywhere
+			\item Non-negative, if $W$ is non-negative
+			\item Finitely Integrable (i.e is $L^1$)
+			\item It becomes more concentrated at the origin the larger W is: $\forall \delta>0$, $\displaystyle\lim_{W->\infty} \int_{|x|>\delta} = 0$
+		\end{itemize}
+		\note{These basically fall out of the FTC}
+		
+	\end{block}
+	
+	
+	\begin{columns}[onlytextwidth]
+		\begin{column}{0.33\textwidth}
+			\centering
+			\structure{Logistic Sigmoid}
+			\begin{tikzpicture}
+			\begin{axis}[]
+			\addplot {1/((1+exp(-x))*(1+exp(x)))};
+			\end{axis}
+			\end{tikzpicture}
+		\end{column}
+		
+		
+		\begin{column}{0.33\textwidth}
+			\centering
+			\structure{RELU6}
+			\begin{tikzpicture}
+			\begin{axis}[]
+			\addplot[domain=-10:0, blue,thick] {0};
+			\addplot[domain=0:6, blue,thick] {1};
+			\addplot[domain=6:10, blue,thick] {0};
+			\end{axis}
+			\end{tikzpicture}
+		\end{column}
+		
+		
+		\begin{column}{0.33\textwidth}
+			\centering
+			\structure{tanh}
+			\begin{tikzpicture}
+			\begin{axis}[]
+			\addplot {1-(tanh(x))^2};
+			\end{axis}
+			\end{tikzpicture}
+		\end{column}	
+	\end{columns}	
 \end{frame}
 
 \section{A Proof Outline}
-\begin{frame}{A Proof Outline}
+\begin{frame}{It can only approximate monotonic bounded functions}
+	\note{This one is easy}
+	\begin{align*}
+		N(x;W,V,b,c) &= \sum_{j=1}^{j=n_h} V_{1,j} \varphi (b_j+W_{j,1}x_1) + c_1
+	\end{align*}
+	\begin{itemize}
+		\item It is the composition and sum of such functions.
+		\item If $W$ and $V$ are non-negative.If $W$ and $V$ are non-negative.
+		\item so it is also monotonic bounded \& continuous (a.e) functions
+	\end{itemize}
+	
+	Such a function can not approximate a non-monotonic/bounded function as there would always be a difference.
+	\note{Ignoring the almost everywhere part as it does not matter for approximation. As we used a $L^P$ based measure}.
+	
 	
 \end{frame}
 
