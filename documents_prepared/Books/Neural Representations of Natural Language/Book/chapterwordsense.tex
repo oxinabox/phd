@@ -1,7 +1,5 @@
 \documentclass[12pt,parskip]{komatufte}
 \include{preamble}
-\usepackage{tabulary}
-\newcolumntype{K}[1]{>{\centering\arraybackslash}p{#1}}
 \begin{document}
 
 \setchapterpreamble{%
@@ -36,16 +34,21 @@ It may have some features applicable to some uses but not to others,
 it may be an average of all features for particular contexts,
 or it may only represent the 
 
+\aside[polysemous/homonymous]{A word with multiple meanings. For purposes of all but the most linguistically driven NLP work there is no need to distinguish between a polyseme and a homonym. Polysemous and homonymous are synonymous.}
 
-\aside[lemma/lexeme]{}
-\aside[tense]{}
-\aside[Part of Speech/POS]{}
-\aside[synset]{}
-\aside[stem]{}
+\aside[Part of Speech/POS]{The syntactic category a word belongs to. Different POS tags come from different tag sets.
+Can be simple as the WordNet: noun, adjective, verb, etc. Or complex as in the Brown: VBG-\emph{verb, gerund/present participle}, NN-\emph{	noun, singular or mass}.
+ }
+\aside[word use]{An occurrence of a word in a text, such as a training corpus. Each word will have multiple uses in a text. Each word use will only have one particular meaning and will thus belong to one synset.}
+\aside[lemma]{the base form of the word as defined by the lexicographical resource. It is normally closely related to (often identical to) the stem which is defined as the root form of the word with all morphological inflections (e.g. tenses) removed. The words are sometimes used interchangeably, though this is not truly correct.}
+\aside[Lexeme]{The set of words that share a common lemma: \natlang{go}, \natlang{going}, \natlang{goes}, and \natlang{went} all belong to the lexeme headed by the lemma \natlang{go}}
 \aside[synset]{A synset is a set of synonymous words: that is words that have the same meaning}
 \aside[gloss]{A gloss is the dictionary entry for a word-sense, it normally includes both the definition and an example of use.
-In wordnet each synset shares a common gloss.}
+In WordNet each synset shares a common gloss.}
 
+%\aside[Sensekey]{This is not a commonly used phrase by linquists, but it is an important implementation detail when using WordNet for WSD tasks. It repressents the mapping between lemma+pos and synset, and is needed because that is a many-many relationship. It take the basic form \texttt{lemma\%pos\_id:lex\_filenum}}
+\aside[Lemmatization]{WordNet is indexed by lemmas. This in essence means with tense and plurality information removed. WordNet comes with a lemmatized called morphy to do this.(c.f. stemming)}
+\aside[Unlemmatization]{Given lemma (as one can extract from WordNet) and a full POS tag (Such as a Brown-style tag) for a word, it is possible to undo the Lemmatization with a high degree of reliability using relatively simple rules. The POS tag encodes the key inflectional features that are lost. Patten.en \pcite{de2012pattern} is a python library encoding such rules (pluralisation, verb conjugation, etc.); though combining them with the POS tag to drive them is a task left for the reader. This can can be used to find substitute words using WordNet's features, for finding synonyms, antonyms and other lemmas from lexically related categories.}
 
 
 The standard way to assign word senses is via some lexicographical resource.
@@ -56,37 +59,40 @@ The most commonly used lexicographical resource is WordNet \pcite{miller1995word
 there are several WordNets equivalents in other languages,
 as well as the multi-lingual  BabelNet \pcite{navigli2010babelnet}.
 
-\pdfcomment{Rewrite this stuff about wordnet being a poor moral baseline to fit the books intended audience better}
-\aside[WordNet is not a strong moral baseline]{
 
-	WordNet is the standard "dictionary/thesusaus/source of lexicographical information" for algorithms. (ML and otherwise)
-	(It is also the seed for some online dictionaries)
+
+\begin{figure}
+	\caption{The relationship between terms used to discuss word sense problems.
+		The Lemma stands in for the lexeme, for WordNet's purposes when indexing.
+		The core task of WSD is to go from a word-use to the corresponding synset.
+		For WSD contests the word-use is normally pretagged with its POS tag, and its corresponding lemma,
+		as these can be found with very high reliability by a POS tagger and a stemmer respectively.
+	}
+	\begin{tikzpicture}[circle/.append style={draw, font=\footnotesize, rounded rectangle}]
+		\node[circle](worduse){\normalsize Word-use\\ e.g.\\ \natlang{Fred \underline{goes} shopping}};
+		\node[circle, above right = 2 of worduse](pos){\normalsize POS\\ e.g.\\ \emph{verb}};
+		\node[circle, below right = 2 of worduse](lexeme){\normalsize Lexeme\\  e.g. \\ \{\natlang{go}, \natlang{going},\\ \natlang{goes}, \natlang{went}\}};
+		\node[circle, draw, below right = 2 of pos](synset){\normalsize Synset\\ e.g. \\ \{\natlang{go}, \natlang{move}, \\ \natlang{locomote}\}};
+
+		
+		
+		\draw[->] (worduse) edge node[labe] {has 1} (synset);
+		\draw[->] (worduse) edge node[labe] {has 1} (pos);
+		\draw[->] (worduse) edge node[labe] {has 1} (lexeme);
+		
+		\draw[->] (synset) edge node[labe] {has 1} (pos);
+		\draw[<->] (synset) edge node[labe] {has many} (lexeme);
+		
+		\node[circle, above right = 2 of synset](gloss){\normalsize Gloss\\ e.g. \\ \emph{change location \ldots}};
+		\draw[<->] (synset) edge node[labe] {has 1} (gloss);
+		
+		\node[circle, right = 2 of lexeme](lemma){\normalsize Lemma\\ e.g. \\  \natlang{go}};
+		\draw[<->] (lemma) edge node[labe] {has 1} (lexeme);
+	\end{tikzpicture}
 	
-	The definitions in wordnet were written in a large part by undergrads at Princeton in 1990. That is why it has things like "S: (v) nag, peck, hen-peck (bother persistently with trivial complaints) "She nags her husband all day long"".
 	
-	Further, the dataset used to determine frequency of Synsets (that is the total count of all words) comes from a dataset now known as SemCore.
-	Which is a sense annotated subset of the Brown Corpus.
-	
-	The Brown Corpus is a sampling of American texts from 1961.
-	The norms of 1961 were not the norms of today.
-	(Remember the US didn't pass the Civil Rights act to end segregation until 1964).
-	
-	Now here is a fact I will return to later. The word Wheelchair is only mentioned once in the Brown corpus.
-	
-	Moving on:
-	ImageNet is a common resource for image recognition.
-	It labels images with their WordNet synset.
-	More generally, using a high performing ImageNet network minus its final classification layer, is commonly used as a feature extractor on any computer vision machine learning problem.
-	
-	ImageNet only uses the most common synsets.
-	(in 2009 it has 8,000. It is now up to  22,000)
-	Where most common is determined using the counts reported by WordNet (at least originally it was).
-	Which were extracted from SemCore, i.e. The Brown Corpus.
-	Which means that it did not include wheelchairs for example (it does now).
-	
-	And this is why automatic captioning systems recognize wheelchairs as skateboards.
-	
-	Because of the fact that they are based on what people were writing about in 1961.}
+\end{figure}
+
 
 
 \subsection{Word Sense Disambiguation}
@@ -95,7 +101,8 @@ as well as the multi-lingual  BabelNet \pcite{navigli2010babelnet}.
 \aside[Semantic Syllepsis]{
 	Also known as pathological sentences that kill almost all WSD systems.
 	Consider the sentence: \natlang{John used to work for the \emph{newspaper} that you are carrying.},
-	In this sentence the word newspaper simultaneously have two different meanings: it is both the company, and the object
+	In this sentence the word-use newspaper simultaneously have two different meanings: it is both the company, and the object.
+	This violates out earlier statement that every word-use belongs to exactly one synset.
 	As word sense disambiguation systems normally attempt to assign a single sense  to an each word they are unable to handle these sentences.
 	Most word sense induction systems can not much better: at best a new sense could be allocated for the join use, which does not correspond to the human notion of the word having two senses for different parts of the sentence.
 	Most works on word sense disambiguation outright ignore these sentences, or consider them to be ungrammatical, or incorrect.
@@ -130,7 +137,37 @@ such as translation dictionaries, ontologies (e.g. OpenCyc), and other datasets 
 \pdfcomment{Talk abow MFS baseline and why it always wins}
 
 \section{Word Sense Representation}
-
+\pdfcomment{Rewrite this stuff about wordnet being a poor moral baseline to fit the books intended audience better}
+\aside[WordNet is not a strong moral baseline]{
+	
+	WordNet is the standard "dictionary/thesaurus/source of lexicographical information" for algorithms. (ML and otherwise)
+	(It is also the seed for some online dictionaries)
+	
+	The definitions in WordNet were written in a large part by undergrads at Princeton in 1990. That is why it has things like "S: (v) nag, peck, hen-peck (bother persistently with trivial complaints) "She nags her husband all day long"".
+	
+	Further, the dataset used to determine frequency of Synsets (that is the total count of all words) comes from a dataset now known as SemCore.
+	Which is a sense annotated subset of the Brown Corpus.
+	
+	The Brown Corpus is a sampling of American texts from 1961.
+	The norms of 1961 were not the norms of today.
+	(Remember the US didn't pass the Civil Rights act to end segregation until 1964).
+	
+	Now here is a fact I will return to later. The word Wheelchair is only mentioned once in the Brown corpus.
+	
+	Moving on:
+	ImageNet is a common resource for image recognition.
+	It labels images with their WordNet synset.
+	More generally, using a high performing ImageNet network minus its final classification layer, is commonly used as a feature extractor on any computer vision machine learning problem.
+	
+	ImageNet only uses the most common synsets.
+	(in 2009 it has 8,000. It is now up to  22,000)
+	Where most common is determined using the counts reported by WordNet (at least originally it was).
+	Which were extracted from SemCore, i.e. The Brown Corpus.
+	Which means that it did not include wheelchairs for example (it does now).
+	
+	And this is why automatic captioning systems recognize wheelchairs as skateboards.
+	
+	Because of the fact that they are based on what people were writing about in 1961.}
 \subsection{Supervised Methods}
 The simple and direct method, is to take a dataset that is annotated with word-senses,
 and then treat each tagged word as if it were a word, then apply any of the methods for word representation discussed in \Cref{sec:word-representations}.
@@ -212,9 +249,6 @@ The phase 2 sense vectors were not assessed for their capacity to be used for wo
 An extension to the method of \textcite{bibid}, to use the phase 2 vectors for WSD, would allow this method to be used to disambiguate its own training data. Allowing the method to become self-supervised.
 
 
-
-
-
 \section{Word Sense Induction}
 In this section we will discuss methods for finding a word-sense, without reference to a standard set of senses.
 Such systems must discover the word senses at the same time as they find their representations.
@@ -226,18 +260,24 @@ or in a language without strong lexicographical resources.
 This allows the data to inform on what word-senses exist.
 
 
+We can divide these into collocation clustering based approaches,
+and collocation prediction based approaches.
+This division is very similar to the separation of collocation matrix factorisation,
+and collocation prediction based approaches discussed in the Word Representation chapter.
+It can be assumed thus that at their heart, like for word embeddings,
+they are fundamentally very similar.
+
+
+\subsection{Collocation Clustering Based Approaches}
+The fundamental method for most clustering based approaches is as per \tcite{pantel2002WSI}.
+\textcite{pantel2002WSI} is not a neural word embedding
+
+\subsection{Collocation Prediction Based Approaches}
+
 
 
 \section{Word Sense Alignment}
 As there are a great many word sense induction methods
-
-
-\subsection{Directly Learning Lexical Sense Embeddings}
-In this area of research, the induction of word sense embeddings is treated as a supervised, or semi-supervised task, that requires sense labelled corpora for training.
-
- using word senses as the labels rather than words.
-This is a direct application of word embedding techniques.
-To overcome the lack of a large sense labelled corpus, , to add sense annotations to a previously unlabelled corpus. 
 
 
 
@@ -249,12 +289,6 @@ Agirre et al. use a mapping corpus to find the probability of a lexical sense, g
 
 By exploiting the particular properties of sense embedding based WSI systems we propose a system that can better facilitate the use of this subset of WSI systems for WSD.
 
-\section{Word sense representation (WSR)}
-Word sense representation (WSR) is the process by which a variety of representations, for different work senses is generated.
-Here we use the term to refer to the supervised case -- that the word senses are labelled in what ever training data is used.
-We are concerned with vector representations.
-
-\tcite{iacobacci2015sensembed}
 
 \section{Word sense induction (WSI)}
 Word sense induction (WSI) is (for purposes of this discussion) the process of using unsupervised data to discover, (and implect in that task represent) word senses.
@@ -264,13 +298,11 @@ Most vector WSI and WSR approaches are evaluated on similarity tests.
 Like WordSim-353 \cite{WordSim353}, for contextless, or Stanford's Contextual Word Similarities (SCWS) \cite{Huang2012}. This is also how normal Word2Vec variants are often evaluated.
 
 
-\tcite{pantel2002WSI}
+
 
 \tcite{Reisinger2010}
 
 \tcite{Huang2012}
-
-\tcite{Chen2014}
 
 \tcite{AdaGrams}
 
@@ -290,7 +322,7 @@ A WSD task, requires determining which of the standard word-senses a particular 
 These standard word senses, are from some dictionary (or Sense Inventory) created by 
 lexicographers, such as WordNet, BabelNet.
 
-A related task to this word sense alignment is the composite word embedding creation used in similarity Called LocalSim in \textcite{Huang2012} (see above).
+A related task to this word sense alignment is the composite word embedding creation used in similarity called LocalSim in \textcite{Huang2012} (see above).
 
 
 \tcite{agirre2006}
