@@ -1,11 +1,32 @@
 \documentclass[dvipsnames,handout]{beamer}
-
-\usepackage{amsmath, amsthm, amssymb, mathtools}
-\newcommand{\R}{\mathbb{R}}
-
 \input{brownbeamer}
 
+%%%%%%%%%%%%%%%%%%%%%%%
+% math
+\usepackage{amsmath, amsthm, amssymb, mathtools}
+\newcommand{\R}{\mathbb{R}}
+\renewcommand{\v}{\varphi}
+\newcommand{\vp}{\v^\prime}
+
+
+\expandafter\def\expandafter\normalsize\expandafter{%
+	\normalsize
+	\setlength\abovedisplayskip{3pt}
+	\setlength\belowdisplayskip{3pt}
+	\setlength\abovedisplayshortskip{3pt}
+	\setlength\belowdisplayshortskip{3pt}
+}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Graphics
+\usepackage{graphicx}
+
 \usepackage{tikz}
+\usetikzlibrary{positioning}
+
+
 \usepackage{pgfplots}
 \pgfplotsset{compat=newest}
 \pgfplotsset{
@@ -20,8 +41,11 @@
 	}
 }
 	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliography{master}
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \author{\textbf{Lyndon White}, Chris Rackauckas (UCI)\\ Roberto Togneri, Wei Liu, Mohammed Bennamoun}
 %\institute{School of Electical, Electronic and Computer Engineering\\The University of Western Australia}
@@ -43,14 +67,28 @@
 		I do now get to cite Chris's work after the break as having proved some of the bits I need.
 		So that is nice.
 		And steal his motivating application area from a few years ago.
+		I've not yet gotten to speak to him about this stuff directly.
 	}
 }
+
+
+\begin{frame}{Why NNWNNs?}
+	
+	\begin{itemize}
+		\item Several arguments have been made that neural networks without negative weights are more understandable.
+		\item that they can be looked at as basically feature weightings.
+		\note{I'm not sure that I really agree entirely. They might be more simple but they can still be very hard to interpret.}
+		\item This decrease the back-box natural of NNs
+		\item This is similar to Nonnegative Matrix Factorisation (NMF)
+	\end{itemize}
+	
+\end{frame}
 
 
 \begin{frame}{A single input single output neural network}
 	\begin{block}{This is a SISO NN}
 		\begin{align*}
-			N(x;W,V,b,c) &= \sum_{j=1}^{j=n_h} V_{1,j} \varphi (b_j+W_{j,1}x_1) + c_1
+			N(x;W,V,b,c) &= \sum_{j=1}^{j=n_h} V_{1,j} \v (b_j+W_{j,1}x_1) + c_1
 		\end{align*}
 	\end{block}
 
@@ -58,7 +96,7 @@
 
 	\begin{block}{This is its derivative}
 		\begin{align*}
-			\frac{\partial N(x;W,V,b,c)}{\partial x_1} = \sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \varphi^\prime (b_j+W_{j,1}x_1)
+			\frac{\partial N(x;W,V,b,c)}{\partial x_1} = \sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \vp (b_j+W_{j,1}x_1)
 		\end{align*}
 	\end{block}
 \end{frame}
@@ -66,11 +104,11 @@
 \begin{frame}{A multi-input multi-output neural network}
 	\begin{block}{This is a MIMO NN}
 		\begin{align*}
-	N(x;W,V,b,c)&=V\varphi(Wx+b)\\
+	N(x;W,V,b,c)&=V\v(Wx+b)\\
 	&=\left[\begin{array}{c}
-{\displaystyle \sum_{j=1}^{j=n_{h}}}V_{1,j}\varphi\left(b_{j}+\sum_{i=1}^{i=n_{i}}\varphi\left(W_{j,i}x_{i}\right)\right) + c_1\\
+{\displaystyle \sum_{j=1}^{j=n_{h}}}V_{1,j}\v\left(b_{j}+\sum_{i=1}^{i=n_{i}}\v\left(W_{j,i}x_{i}\right)\right) + c_1\\
 \vdots\\
-{\displaystyle \sum_{j=1}^{j=n_{h}}}V_{n_{o},j}\varphi\left(b_{j}+\sum_{i=1}^{i=n_{i}}\varphi\left(W_{j,i}x_{i}\right)\right) +c_{n_o}
+{\displaystyle \sum_{j=1}^{j=n_{h}}}V_{n_{o},j}\v\left(b_{j}+\sum_{i=1}^{i=n_{i}}\v\left(W_{j,i}x_{i}\right)\right) +c_{n_o}
 \end{array}\right] \label{multiNNWNN}
 		\end{align*}
 	\end{block}
@@ -79,7 +117,7 @@
 	
 	\begin{block}{This is its derivative (Jacobian)}
 		\begin{align*}
-		J_N&=\left(V\odot W^{T}\right)\varphi^\prime(Wx+b)
+		J_N&=\left(V\odot W^{T}\right)\vp(Wx+b)
 		\end{align*}
 	\end{block}
 	\note{The Jacobian does not fit on the page when written in full. but it is basically a large matrix of elements that look like the SISO deritivite}
@@ -88,16 +126,20 @@
 
 
 \begin{frame}{This is a squashing activation function}
-	\begin{block}<1->{$\varphi:\,\R \to \R$}
+	\begin{block}<1->{$\v:\,\R \to \R$}
 		\begin{itemize}
 			\item monotonic
 			\item bounded above and below
+			\begin{itemize}
+				\item WLOG assume by $0$,$1$
+			\end{itemize}
 			%\begin{align*}
-				%\lim_{z\to-\infty} \varphi(z)=c_{min} \qquad \lim_{z\to\infty} \varphi(z)=c_{max}
+				%\lim_{z\to-\infty} \v(z)=c_{min} \qquad \lim_{z\to\infty} \v(z)=c_{max}
 			%\end{align*}
 			\item differentiable almost everywhere \note{I might not have 100\% nailed down that regularity requirement yet}
 		\end{itemize}
 	\end{block}
+	\vfill
 	
 	\begin{columns}[onlytextwidth]
 		\begin{column}{0.33\textwidth}
@@ -137,7 +179,7 @@
 
 
 \begin{frame}{This a squashing activation function's derivative, including the weight}
-	\begin{block}<2->{$\dfrac{\partial\varphi(Wx)}{\partial x}=W\varphi^\prime(Wx)$ \hfill It is a Summability Kernel}
+	\begin{block}<2->{$\dfrac{\partial\v(Wx)}{\partial x}=W\vp(Wx)$ \hfill It is a Summability Kernel}
 		\begin{itemize}
 			\item Uniformly continuous almost everywhere
 			\item Non-negative, if $W$ is non-negative
@@ -190,9 +232,8 @@
 	\begin{block}{What is convolution?}
 		\note{You can relate convolution to convolutional neural networks, but that link is not relevant here}
 		Convolution is an operation that takes two functions and gives a third.\\
-		It is written:
 		\begin{align*}
-			f \ast g = \int_{-\infty}^\infty f(x-\tau) d\tau
+			f \ast g = \int_{-\infty}^\infty f(x-\tau)g(\tau) d\tau
 		\end{align*}
 		\note{It has applications in signal processing. Again, we don't care.}
 	\end{block}
@@ -200,25 +241,85 @@
 	\begin{block}{Convolving with a summability kernal element does not change the function}
 		For a function $f$ that is bounded and uniformly continuous.
 		\begin{align*}
-			\lim_W\to\infty	f\ast\varphi_W^\prime = f		\qquad \text{uniformly}
+			\lim_{W\to\infty} f\ast\vp_W = f		\qquad \text{uniformly}
 		\end{align*}
 		
-		\hfill (for $\varphi^\prime_W(x)=W\varphi^\prime(Wx)$)
+		\hfill (for $\vp_W(x)=W\vp(Wx)$)
 		\note{There are actually a bunch of different similar rules for different kinds of functions}
 	\end{block}
 \end{frame}
 
-\section{A Proof Outline}
+\section{Proof of Approximation Capacity}
 
-\begin{frame}{Proof of Approximation Capacity}
+\begin{frame}{Lets evaluate that convolution using a Reimann Sum}
+	\begin{align*}
+		f\ast\vp_W &= \int_{-\infty}^\infty f(x-\tau)\vp_w(\tau) d\tau\\
+		&=\lim_{\Delta \to 0} \sum_{\forall i\in \mathbb{Z}} \Delta (f(i\Delta)\vp_w(x-i\Delta)) \qquad \text{uniformly}\\
+		&=\lim_{\Delta \to 0} \sum_{\forall i\in \mathbb{Z}} \left(\Delta (f(i\Delta)\right)w\vp(wx-i\Delta)) \quad \text{uniformly}
+	\end{align*}
+	
+	\note{Can probably only do this if it $f\ast\vp$ is compactly supported}
+	
+	\begin{block}{i.e there exists values $\tilde{v}$, $\tilde{\beta}$ such that}
+		\begin{align*}
+			f\ast\vp_W &\approx \sum_{\forall (v_i,\beta_i)} v_i w\vp(wx-\beta_i))
+		\end{align*}
+	\end{block}
+	\note{For an actually rigerous definition of approximately.}
+	\note{and if $f$ is nonnegative, then so is $v$}
+	\vfill
+	{\footnotesize c.f. Lemma 2.2 of \textcite{bacharoglou2010approximation}.}
+\end{frame}
 
+\begin{frame}{Bring that together, with the Approximate Identity Property}
+	\begin{block}{We have:}
+	\begin{align*}
+		f\ast\vp_w &\approx \sum_{\forall (v_i,\beta_i)} V_i w\vp(wx-\beta_i)) \\
+		f\ast\vp_w &\approx f 
+	\end{align*}
+	\end{block}
+	
+	\begin{block}<2->{For any non-negative, compactly-supported continuous $f$ there exists values $w \ge 0$, $\tilde{v} \ge 0$, $\tilde{\beta}$ such that}
+		\begin{align}
+			f &\approx \sum_{\forall (v_i,\beta_i)} V_i w\vp(wx-\beta_i))
+		\end{align}
+	\end{block}
+\end{frame}
+
+\begin{frame}{Back to the NNWNN}
+		\begin{align*}
+			\frac{\partial N(x;W,V,b,c)}{\partial x_1} = \sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \vp (b_j+W_{j,1}x_1)
+		\end{align*}
+		\pause
+		
+		Choose $W_{j,1}=w$ and $V_{1,j}=v_i$ and $b_j=-\beta_i$.
+		\note{We are actually throwing away some capacity here by restricting W to all be the same, but it turns out we never needed it anyway, as we still have full capacity}
+		
+		\pause
+		
+		\begin{align*}
+		\frac{\partial N(x;W,V,b,c)}{\partial x_1} = \sum_{\forall (v_i,\beta_i)} v_i w\vp(wx-\beta_i) \approx f
+		\end{align*}
+		
+		\begin{block}{Integrate it all out and we get: $N(x;W,V,b,c)\approx F$}
+			\note{have to do some fiddling to chose $c$}
+			For $F$ being:
+			\begin{itemize}
+				\item Uniformly continuous a.e (FTC)
+				\item Monotonic (integral of nonnegative)
+				\item Bounded (integral of compactly supported function)
+			\end{itemize}
+			\note{We can throw in a bunch of almost everywheres because of various other densities of function spaces. But most are uninteresting}
+		\end{block}
 \end{frame}
 
 
+
+\section{Proof of Approximation Lack of Capacity to do anything More}
 \begin{frame}{It can only approximate monotonic bounded functions}
 	\note{This one is easy}
 	\begin{align*}
-		N(x;W,V,b,c) &= \sum_{j=1}^{j=n_h} V_{1,j} \varphi (b_j+W_{j,1}x_1) + c_1
+		N(x;W,V,b,c) &= \sum_{j=1}^{j=n_h} V_{1,j} \v (b_j+W_{j,1}x_1) + c_1
 	\end{align*}
 	\begin{itemize}
 		\item It is the composition and sum of such functions.
@@ -226,9 +327,97 @@
 		\item so it is also monotonic bounded \& continuous (a.e) functions
 	\end{itemize}
 
-	\note{Ignoring the almost everywhere part as it does not matter for approximation. As we used a $L^P$ based measure}.
+	\note{Ignoring the almost everywhere part as it does not matter for approximation. As we used a $L^P$ based measure.}
 	
 	Such a function can not approximate a non-monotonic/bounded function as there would always be a difference.
 \end{frame}
+
+
+\section{What is it good for?}
+
+\begin{frame}{Approximating Monotonic functions to make use of monotonic priors}
+
+	\begin{itemize}
+		\item This lets you incorporate expert knowledge
+		\note{I told you I was going to steal Chris's intro}
+		\note{All other factors being the same}
+		\begin{itemize}
+			\item The older the used-car the cheaper it is.
+			\item The newer the computer the faster it runs.
+			\item The newer the paper the better the performance on benchmarks.
+		\end{itemize}
+	\end{itemize}
+
+\end{frame}
+
+\begin{frame}{For Multi-Input Single Output networks, where only some of inputs are Monotonic}
+	\centering
+	\vspace{-1.5em}
+	\structure{\textbf{i.e. Partially NNNWNNs for partially monotonic functions.}}\\
+	\vfill
+	Consider two input network, with \alert{$\theta$ monotonic} and $x$ not.
+	\vfill	
+	\begin{tikzpicture}[x=25mm, y=18mm,
+		nodes={draw=brownwrite,circle,minimum width=15mm},
+		mono/.style={draw=bluewrite, text=bluewrite},
+	]
+	\node(out) at (0,0) {$N(x, \theta)$};
+	\node(h1) at (.5,-1){};
+	\node(h2) at (1.5,-1){};
+	\node[mono](m1)  at (-.5,-1) {};
+	\node[mono](m2)  at (-1.5,-1){};
+	\node[mono](theta) at (-.75,-2) {$\theta$};
+	\node(x) at (.75,-2) {$x$};
+	\draw[mono, thick] (theta) -- (m1) -- (out) -- (m2) -- (theta);
+	\draw[thick] (x) -- (h1) -- (out) -- (h2) -- (x);
+	\draw[thick] (x) -- (m1);
+	\draw[thick] (x) -- (m2);
+	\end{tikzpicture}
+	\vfill
+	\alert{All weights on a path between output and monotonic input must be nonnegative.}
+	\vfill
+	\vfill
+	\note{The brown half is for any fixed value of $\theta$ an normal NN}
+	\note{The blue half is for any fixed value of $x$ an normal NNWNN}
+	\note{Brown (normal) oututs can enter blue Monotonic nodes, but the reverse can not happen, or the network could learn a back-path to have a nonmonotic relation with $\theta$}
+\end{frame}
+
+\begin{frame}{All softmax classifiers can be NNWNNs}
+	\begin{itemize}
+		\item This does not only apply to networks where the class probabilities are monotonically related to the inputs
+		\note{I am still working my head around what does it even mean to be monotonic in a multiclass classification setting.}
+		\item A softmax output layer normalized the outputs of the layer below to sum to one.
+		\note{The softmax basically sits on on top of the output layer of the NN (or NNWNN in this case)}
+		\item so increasing one more than the other is the same as decreasing the others
+		\item so this is monotonic
+		\item Note that this does not apply to single output classifier network \note{(e.g. binary choice / sigmoid)}
+		\begin{itemize}
+			\item Those can/will be made monotonic 
+		\end{itemize}
+	
+	\end{itemize}
+	
+	\vfill
+	{\footnotesize Proof in Appendix of \textcite{2014understandblenetworksnonnegweights}} 
+\end{frame}
+
+\section{Application In Continuous Probability Density Estimation}
+
+\begin{frame}{We would like to estimate a PDF based on some observations}
+	This is called non-parametric estimation.
+	There are many methods for doing this.
+	There are many so called neural network methods for doing this
+	Only a subset of those use normal enough structures that you can uses with as an LSTM as its input.
+	
+	\centering
+%	\includegraphics[width=0.6\textwidth]{gru256purplishgrey.pdf}
+	\note{This is the probability distribution for the color meant by Purplish Grey.}
+	\note{This is from a prior project. It uses a 3 softmax layers with 256 bins to represent the colors possibly distributions}
+	\note{It works great, and actually loses no information, as the original data is from monitors with only 8bits per channel}
+	\note{It is highly distatistying though, to discretize the color space like this.}
+	\note{Basically it irks me}
+\end{frame}
+
+
 
 \end{document}
