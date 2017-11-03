@@ -22,6 +22,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Graphics
 \usepackage{graphicx}
+\graphicspath{.}
 
 \usepackage{tikz}
 \usetikzlibrary{positioning}
@@ -123,6 +124,49 @@
 	\note{The Jacobian does not fit on the page when written in full. but it is basically a large matrix of elements that look like the SISO deritivite}
 \end{frame}
 
+\begin{frame}{How to make Weights Non-Negative}
+	\begin{itemize}
+		\item Some works use fancy contained optimisation, or regularisation-style penalties
+		\item But much easier: just replace all the weights with some transforming function, whose output is nonnegative.
+		\item Train it via backprop like usual
+		\note{it is no issue with a autodiffing NN framework, and this is already an unconstrained nonlinear optimisation problem, so it doesn't in theory get anyharder.}
+	\end{itemize}
+	
+	\begin{columns}[onlytextwidth]
+		\begin{column}{0.33\textwidth}
+			\centering
+			\structure{Square} $w \mapsto w^2$
+			\begin{tikzpicture}
+			\begin{axis}[]
+			\addplot {x^2};
+			\end{axis}
+			\end{tikzpicture}
+		\end{column}
+		
+		
+		\begin{column}{0.33\textwidth}
+			\centering
+			\structure{RELU} $w \mapsto max(0,w)$
+			\begin{tikzpicture}
+			\begin{axis}[]
+			\addplot {max(0,x)};
+			\end{axis}
+			\end{tikzpicture}
+		\end{column}
+		
+		
+		\begin{column}{0.33\textwidth}
+			\centering
+			\structure{Exponentiate} $w\mapsto e^w$
+			\begin{tikzpicture}
+			\begin{axis}[scaled y ticks = false]
+			\addplot {exp(x)};
+			\end{axis}
+			\end{tikzpicture}
+		\end{column}	
+	\end{columns}	
+\end{frame}
+
 
 
 \begin{frame}{This is a squashing activation function}
@@ -184,7 +228,8 @@
 			\item Uniformly continuous almost everywhere
 			\item Non-negative, if $W$ is non-negative
 			\item Finitely Integrable (i.e is $L^1$)
-			\item It becomes more concentrated at the origin the larger W is: $\forall \delta>0$, $\displaystyle\lim_{W->\infty} \int_{|x|>\delta} = 0$
+			\item $\forall \delta>0$, $\displaystyle\lim_{W->0} \int_{|x|>\delta} = 0$
+			\note{It becomes more concentrated at the origin the smaller W is}
 		\end{itemize}
 		\note{These basically fall out of the FTC}
 		
@@ -225,7 +270,7 @@
 			\end{axis}
 			\end{tikzpicture}
 		\end{column}	
-	\end{columns}	
+	\end{columns}
 \end{frame}
 
 \begin{frame}{A Summability Kernel is an Approximate Identity for Convolution}
@@ -268,7 +313,7 @@
 	\note{For an actually rigerous definition of approximately.}
 	\note{and if $f$ is nonnegative, then so is $v$}
 	\vfill
-	{\footnotesize c.f. Lemma 2.2 of \textcite{bacharoglou2010approximation}.}
+	{\footnotesize c.f. Lemma 2.2 of \citehere{bacharoglou2010approximation}.}
 \end{frame}
 
 \begin{frame}{Bring that together, with the Approximate Identity Property}
@@ -404,13 +449,19 @@
 \section{Application In Continuous Probability Density Estimation}
 
 \begin{frame}{We would like to estimate a PDF based on some observations}
+	\centering		
 	This is called non-parametric estimation.
-	There are many methods for doing this.
-	There are many so called neural network methods for doing this
-	Only a subset of those use normal enough structures that you can uses with as an LSTM as its input.
+	\note{There are many methods for doing this.}
+	\note{There are many so called neural network methods for doing this}
+	\note{Only a subset of those use normal enough structures that you can uses with as an LSTM as its input.}
 	
-	\centering
-%	\includegraphics[width=0.6\textwidth]{gru256purplishgrey.pdf}
+	\vfill
+	\includegraphics[width=0.9\textwidth]{gru256purplishgrey}\\
+	Output from a color intention distribution estimation NN.\\
+	3 separate softmax outputs on top of a GRU RNN
+	\vfill
+	Completely effective, but dissatisfying
+	\vfill
 	\note{This is the probability distribution for the color meant by Purplish Grey.}
 	\note{This is from a prior project. It uses a 3 softmax layers with 256 bins to represent the colors possibly distributions}
 	\note{It works great, and actually loses no information, as the original data is from monitors with only 8bits per channel}
@@ -418,6 +469,73 @@
 	\note{Basically it irks me}
 \end{frame}
 
+\begin{frame}{Likas' 2001 neural PDF -- Using a normal NN}
+	\begin{align*}
+		f(x) \approx \dfrac{exp(N(z))}{\int_{\min(supp(f))}^{\max(supp(f))} exp(N(z)) dz}
+	\end{align*}
+	
+	\begin{block}<2->{This is a PDF}
+		\begin{itemize}
+			\item Non-negative: via exponentiating
+			\item Unit area: Divide out the area of the numerator.
+		\end{itemize}
+	\end{block}
+
+	
+	\begin{block}<3->{Problem: Slow.}
+		\begin{itemize}
+			\item You cannot integrate a neural network analytically.
+			\item So use e.g. Gaussian Quadrature, every training batch.
+		\end{itemize}
+	\end{block}
+	\vfill
+	\citehere{likas2001probability}
+\end{frame}
+
+\begin{frame}{What if we differentiate it? So we know the integral}
+	\note{I am tossing out the $exp$ as it doesn't do its purpose of nonnegative anymore.}
+	\begin{block}{Neural Networks can be Analytically Differentiated}
+		\begin{align*}
+		f(x) &\approx \dfrac{N^\prime(x)}{N(\max(supp(f))) - N(\min(supp(f)))} \\
+			 &\approx \dfrac{\sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \vp (b_j+W_{j,1}x_1)}{\sum_{k=1}^{k=n_h} \sum V_1,k}
+		\end{align*}
+	\end{block}
+	\begin{block}<2->{This is not a PDF}
+		\begin{itemize}
+			\item Not Non-negative \note{Even if we haven't thrown out the exp it wouldn't have helped}
+			\item Yes, Unit area: as before
+		\end{itemize}
+	\end{block}
+	
+	
+	\begin{block}<3->{Unless W \& V are non-negative!}
+		\begin{itemize}
+			\item And now $N$ must be a NNWNN
+		\end{itemize}
+	\end{block}
+\end{frame}
+
+\begin{frame}{But look, it is actually a Almost GMM}
+	\begin{block}{Neural Networks can be Analytically Differentiated}
+		\begin{align*}
+		f(x) &\approx \dfrac{N^\prime(x)}{N(\max(supp(f))) - N(\min(supp(f)))} \\
+		&\approx \dfrac{\sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \vp (b_j+W_{j,1}x_1)}{\sum_{k=1}^{k=n_h} \sum V_1,k}
+		\end{align*}
+	\end{block}
+	\begin{block}<2->{This is not a PDF}
+		\begin{itemize}
+			\item Not Non-negative \note{Even if we haven't thrown out the exp it wouldn't have helped}
+			\item Yes, Unit area: as before
+		\end{itemize}
+	\end{block}
+	
+	
+	\begin{block}<3->{Unless W \& V are non-negative!}
+		\begin{itemize}
+			\item And now $N$ must be a NNWNN
+		\end{itemize}
+	\end{block}
+\end{frame}
 
 
 \end{document}
