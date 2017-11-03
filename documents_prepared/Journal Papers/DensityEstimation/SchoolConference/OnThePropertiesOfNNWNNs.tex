@@ -1,5 +1,10 @@
-\documentclass[dvipsnames,handout]{beamer}
+\documentclass[dvipsnames,handout, notes]{beamer}
 \input{brownbeamer}
+
+% all notes should just be simple item notes.
+% I neither need nor want more functionality
+\let\oldnote\note
+\renewcommand{\note}{\oldnote[item]}
 
 %%%%%%%%%%%%%%%%%%%%%%%
 % math
@@ -32,7 +37,7 @@
 \pgfplotsset{compat=newest}
 \pgfplotsset{
 	every axis/.append style={
-		width=\textwidth,
+		width=1.15\textwidth,
 		domain=-10:10,
 		samples=101,
 		smooth,
@@ -41,11 +46,31 @@
 		xtick pos = left,
 	}
 }
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ERF
+\makeatletter
+\pgfmathdeclarefunction{erf}{1}{%
+	\begingroup
+	\pgfmathparse{#1 > 0 ? 1 : -1}%
+	\edef\sign{\pgfmathresult}%
+	\pgfmathparse{abs(#1)}%
+	\edef\x{\pgfmathresult}%
+	\pgfmathparse{1/(1+0.3275911*\x)}%
+	\edef\t{\pgfmathresult}%
+	\pgfmathparse{%
+		1 - (((((1.061405429*\t -1.453152027)*\t) + 1.421413741)*\t 
+		-0.284496736)*\t + 0.254829592)*\t*exp(-(\x*\x))}%
+	\edef\y{\pgfmathresult}%
+	\pgfmathparse{(\sign)*\y}%
+	\pgfmath@smuggleone\pgfmathresult%
+	\endgroup
+}
+\makeatother
 	
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bibliography{master}
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \author{\textbf{Lyndon White}, Chris Rackauckas (UCI)\\ Roberto Togneri, Wei Liu, Mohammed Bennamoun}
@@ -72,6 +97,35 @@
 	}
 }
 
+\begin{frame}{NNs and the Universal Approximation theorem}
+	\vfill
+	\begin{itemize}
+		\item Neural networks are common machine learning systems
+		\item They learn to approximate a function $\R^n \to \R^m$
+		\item the function can be any continuous bounded function: that is the UAT \note{It is from several papers from the early 90s}
+	\end{itemize}
+
+	\vfill
+	\citehere{mhaskar1992uat}\\
+	\note{There is a new proof out this year by Sonoda, which to my knowledge is the first UAT proof in about a decade, that extends this. It was underreview for 2 years AFAICT. The math is really quiet scary.}
+	\citehere{SONODA2017uat}
+\end{frame}
+
+
+\begin{frame}{NNs and the Universal Approximation theorem}
+	\vfill
+	\begin{itemize}
+		\item It learns by adjusting neuron linking weight ($W$, $V$) and  activation basis ($\tilde{b}$, $\tilde{c}$).
+		\item the UAT proofs don't actually tell us anyway to adjust those weights and biases.
+		\item It just says that if you don't put any restrictions on them you can approximate anything.
+	\end{itemize}
+	\vfill
+	
+	\note{We generally just assume that gradient decent, based on showing some loss function derived from some training data set of example inputs an outputs works}
+	\note{It normally does.}
+	\centering
+	\structure{\Large What if we did restrict the weights?}
+\end{frame}
 
 \begin{frame}{Why NNWNNs?}
 	
@@ -79,10 +133,12 @@
 		\item Several arguments have been made that neural networks without negative weights are more understandable.
 		\item that they can be looked at as basically feature weightings.
 		\note{I'm not sure that I really agree entirely. They might be more simple but they can still be very hard to interpret.}
+		\note{Though for the clase of binary classifications then the top layer can be interpretted as slices in a way that Chris will probably talk about.}
 		\item This decrease the back-box natural of NNs
 		\item This is similar to Nonnegative Matrix Factorisation (NMF)
 	\end{itemize}
-	
+
+	\citehere{2014understandblenetworksnonnegweights}
 \end{frame}
 
 
@@ -159,7 +215,7 @@
 			\centering
 			\structure{Exponentiate} $w\mapsto e^w$
 			\begin{tikzpicture}
-			\begin{axis}[scaled y ticks = false]
+			\begin{axis}[scaled y ticks = false,  yticklabels={0, 0, 10K, 20K}]
 			\addplot {exp(x)};
 			\end{axis}
 			\end{tikzpicture}
@@ -167,48 +223,33 @@
 	\end{columns}	
 \end{frame}
 
+\def\cw{0.33\textwidth}
 
-
-\begin{frame}{This is a squashing activation function}
-	\begin{block}<1->{$\v:\,\R \to \R$}
-		\begin{itemize}
-			\item monotonic
-			\item bounded above and below
-			\begin{itemize}
-				\item WLOG assume by $0$,$1$
-			\end{itemize}
-			%\begin{align*}
-				%\lim_{z\to-\infty} \v(z)=c_{min} \qquad \lim_{z\to\infty} \v(z)=c_{max}
-			%\end{align*}
-			\item differentiable almost everywhere \note{I might not have 100\% nailed down that regularity requirement yet}
-		\end{itemize}
-	\end{block}
-	\vfill
-	
+\newcommand{\actfuns}{
 	\begin{columns}[onlytextwidth]
-		\begin{column}{0.33\textwidth}
+		\begin{column}{\cw}
 			\centering
-			\structure{Logistic Sigmoid}
+			\structure{Logistic}
 			\begin{tikzpicture}
 			\begin{axis}[]
 			\addplot {1/(1+exp(-x))};
 			\end{axis}
 			\end{tikzpicture}
 		\end{column}
-	
-
-		\begin{column}{0.33\textwidth}
+		
+		
+		\begin{column}{\cw}
 			\centering
 			\structure{RELU6}
 			\begin{tikzpicture}
-			\begin{axis}[]
+			\begin{axis}[ytick={0,3,6}]
 			\addplot {max(0,min(x,6))};
 			\end{axis}
 			\end{tikzpicture}
 		\end{column}
-	
 		
-		\begin{column}{0.33\textwidth}
+		
+		\begin{column}{\cw}
 			\centering
 			\structure{tanh}
 			\begin{tikzpicture}
@@ -216,28 +257,25 @@
 			\addplot {tanh(x)};
 			\end{axis}
 			\end{tikzpicture}
-		\end{column}	
+		\end{column}
+	
+%		\begin{column}{\cw}
+%			\centering
+%			\structure{Normal Erf}
+%			\begin{tikzpicture}
+%			\begin{axis}[]
+%			\addplot {0.5*(1+erf(x/sqrt(2)))};
+%			\end{axis}
+%			\end{tikzpicture}
+%		\end{column}
 	\end{columns}
+}
 
-\end{frame}
 
 
-\begin{frame}{This a squashing activation function's derivative, including the weight}
-	\begin{block}<2->{$\dfrac{\partial\v(Wx)}{\partial x}=W\vp(Wx)$ \hfill It is a Summability Kernel}
-		\begin{itemize}
-			\item Uniformly continuous almost everywhere
-			\item Non-negative, if $W$ is non-negative
-			\item Finitely Integrable (i.e is $L^1$)
-			\item $\forall \delta>0$, $\displaystyle\lim_{W->0} \int_{|x|>\delta} = 0$
-			\note{It becomes more concentrated at the origin the smaller W is}
-		\end{itemize}
-		\note{These basically fall out of the FTC}
-		
-	\end{block}
-	
-	
+\newcommand{\actfundiffs}{
 	\begin{columns}[onlytextwidth]
-		\begin{column}{0.33\textwidth}
+		\begin{column}{\cw}
 			\centering
 			\structure{Logistic Sigmoid}
 			\begin{tikzpicture}
@@ -248,7 +286,7 @@
 		\end{column}
 		
 		
-		\begin{column}{0.33\textwidth}
+		\begin{column}{\cw}
 			\centering
 			\structure{RELU6}
 			\begin{tikzpicture}
@@ -261,7 +299,7 @@
 		\end{column}
 		
 		
-		\begin{column}{0.33\textwidth}
+		\begin{column}{\cw}
 			\centering
 			\structure{tanh}
 			\begin{tikzpicture}
@@ -270,7 +308,52 @@
 			\end{axis}
 			\end{tikzpicture}
 		\end{column}	
+	
+%		\begin{column}{\cw}
+%			\centering
+%			\structure{Normal Erf}
+%			\begin{tikzpicture}
+%			\begin{axis}[]
+%			\addplot {1/sqrt(2*pi) * exp(-0.5*x^2)};
+%			\end{axis}
+%			\end{tikzpicture}
+%		\end{column}
 	\end{columns}
+}
+
+\begin{frame}{This a squashing activation function's derivative, including the weight}
+	\begin{block}<2->{$\dfrac{\partial\v(wx)}{\partial x}=w\vp(wx)$ \hfill It is a Summability Kernel}
+		\begin{itemize}
+			\item Uniformly continuous almost everywhere
+			\item Non-negative, if $w$ is non-negative
+			\item Finitely Integrable (i.e is $L^1$)
+			\item $\forall \delta>0$, $\displaystyle\lim_{w->\infty} \int_{|x|>\delta} w\vp(wx) = 0$
+			\note{It becomes more concentrated at the origin the smaller W is}
+		\end{itemize}
+		\note{These basically fall out of the FTC}
+		
+	\end{block}
+	
+	\actfundiffs{}
+\end{frame}
+
+\begin{frame}{This is a squashing activation function}
+	\begin{block}<1->{$\v:\,\R \to \R$}
+		\begin{itemize}
+			\item monotonic
+			\item bounded above and below
+			\begin{itemize}
+				\item WLOG assume by $0$,$1$
+			\end{itemize}
+			%\begin{align*}
+			%\lim_{z\to-\infty} \v(z)=c_{min} \qquad \lim_{z\to\infty} \v(z)=c_{max}
+			%\end{align*}
+			\item differentiable almost everywhere \note{I might not have 100\% nailed down that regularity requirement yet}
+		\end{itemize}
+	\end{block}
+	\vfill
+	\actfuns{}
+	
 \end{frame}
 
 \begin{frame}{A Summability Kernel is an Approximate Identity for Convolution}
@@ -286,10 +369,10 @@
 	\begin{block}{Convolving with a summability kernal element does not change the function}
 		For a function $f$ that is bounded and uniformly continuous.
 		\begin{align*}
-			\lim_{W\to\infty} f\ast\vp_W = f		\qquad \text{uniformly}
+			\lim_{w\to\infty} f\ast\vp_w = f		\qquad \text{uniformly}
 		\end{align*}
 		
-		\hfill (for $\vp_W(x)=W\vp(Wx)$)
+		\hfill (for $\vp_w(x)=w\vp(wx)$)
 		\note{There are actually a bunch of different similar rules for different kinds of functions}
 	\end{block}
 \end{frame}
@@ -300,14 +383,33 @@
 	\begin{align*}
 		f\ast\vp_W &= \int_{-\infty}^\infty f(x-\tau)\vp_w(\tau) d\tau\\
 		&=\lim_{\Delta \to 0} \sum_{\forall i\in \mathbb{Z}} \Delta (f(i\Delta)\vp_w(x-i\Delta)) \qquad \text{uniformly}\\
-		&=\lim_{\Delta \to 0} \sum_{\forall i\in \mathbb{Z}} \left(\Delta (f(i\Delta)\right)w\vp(wx-i\Delta)) \quad \text{uniformly}
 	\end{align*}
 	
 	\note{Can probably only do this if it $f\ast\vp$ is compactly supported}
 	
+		
+
+	\centering
+	\begin{tikzpicture}
+	\begin{axis}[width=0.9\textwidth,height=0.5\textheight, samples=15, bar width=1.5, yticklabels={}, xticklabels={}]
+		\addplot[ybar, fill=blue]  {abs(0.00001*(x-7)*(4*x)*(x+11)*(x-100))^2};
+		\addplot[samples=101, red, very thick] {abs(0.00001*(x-7)*(4*x)*(x+11)*(x-100))^2};
+	\end{axis}
+	\end{tikzpicture}
+
+	
+\end{frame}
+
+
+\begin{frame}{What does that mean?}
+	\begin{align*}
+	f\ast\vp_W &= \int_{-\infty}^\infty f(x-\tau)\vp_w(\tau) d\tau\\
+	&=\lim_{\Delta \to 0} \sum_{\forall i\in \mathbb{Z}} \bigg(\Delta (f(i\Delta)\bigg)w\vp(wx-i\Delta)) \quad \text{uniformly}
+	\end{align*}
+	
 	\begin{block}{i.e there exists values $\tilde{v}$, $\tilde{\beta}$ such that}
 		\begin{align*}
-			f\ast\vp_W &\approx \sum_{\forall (v_i,\beta_i)} v_i w\vp(wx-\beta_i))
+		f\ast\vp_W &\approx \sum_{\forall (v_i,\beta_i)} v_i w\vp(wx-\beta_i))
 		\end{align*}
 	\end{block}
 	\note{For an actually rigerous definition of approximately.}
@@ -315,6 +417,8 @@
 	\vfill
 	{\footnotesize c.f. Lemma 2.2 of \citehere{bacharoglou2010approximation}.}
 \end{frame}
+
+
 
 \begin{frame}{Bring that together, with the Approximate Identity Property}
 	\begin{block}{We have:}
@@ -326,7 +430,7 @@
 	
 	\begin{block}<2->{For any non-negative, compactly-supported continuous $f$ there exists values $w \ge 0$, $\tilde{v} \ge 0$, $\tilde{\beta}$ such that}
 		\begin{align}
-			f &\approx \sum_{\forall (v_i,\beta_i)} V_i w\vp(wx-\beta_i))
+			f &\approx \sum_{\forall (v_i,\beta_i)} v_i w\vp(wx-\beta_i))
 		\end{align}
 	\end{block}
 \end{frame}
@@ -350,9 +454,9 @@
 			\note{have to do some fiddling to chose $c$}
 			For $F$ being:
 			\begin{itemize}
-				\item Uniformly continuous a.e (FTC)
-				\item Monotonic (integral of nonnegative)
-				\item Bounded (integral of compactly supported function)
+				\item Uniformly continuous a.e \note{(FTC)}
+				\item Monotonic \note{(integral of nonnegative)}
+				\item Bounded \note{(integral of compactly supported function)}
 			\end{itemize}
 			\note{We can throw in a bunch of almost everywheres because of various other densities of function spaces. But most are uninteresting}
 		\end{block}
@@ -392,7 +496,8 @@
 			\item The newer the paper the better the performance on benchmarks.
 		\end{itemize}
 	\end{itemize}
-
+	\note{This is useful as it increases user confidance in the system}
+	\note{It decreases overfitting}
 \end{frame}
 
 \begin{frame}{For Multi-Input Single Output networks, where only some of inputs are Monotonic}
@@ -400,18 +505,18 @@
 	\vspace{-1.5em}
 	\structure{\textbf{i.e. Partially NNNWNNs for partially monotonic functions.}}\\
 	\vfill
-	Consider two input network, with \alert{$\theta$ monotonic} and $x$ not.
+	Consider two input network, with \alert{$x$ monotonic} and $z$ not.
 	\vfill	
 	\begin{tikzpicture}[x=25mm, y=18mm,
 		nodes={draw=brownwrite,circle,minimum width=15mm},
 		mono/.style={draw=bluewrite, text=bluewrite},
 	]
-	\node(out) at (0,0) {$N(x, \theta)$};
+	\node(out) at (0,0) {$N(x, z)$};
 	\node(h1) at (.5,-1){};
 	\node(h2) at (1.5,-1){};
 	\node[mono](m1)  at (-.5,-1) {};
 	\node[mono](m2)  at (-1.5,-1){};
-	\node[mono](theta) at (-.75,-2) {$\theta$};
+	\node[mono](theta) at (-.75,-2) {$z$};
 	\node(x) at (.75,-2) {$x$};
 	\draw[mono, thick] (theta) -- (m1) -- (out) -- (m2) -- (theta);
 	\draw[thick] (x) -- (h1) -- (out) -- (h2) -- (x);
@@ -422,9 +527,9 @@
 	\alert{All weights on a path between output and monotonic input must be nonnegative.}
 	\vfill
 	\vfill
-	\note{The brown half is for any fixed value of $\theta$ an normal NN}
+	\note{The brown half is for any fixed value of $z$ an normal NN}
 	\note{The blue half is for any fixed value of $x$ an normal NNWNN}
-	\note{Brown (normal) oututs can enter blue Monotonic nodes, but the reverse can not happen, or the network could learn a back-path to have a nonmonotic relation with $\theta$}
+	\note{Brown (normal) oututs can enter blue Monotonic nodes, but the reverse can not happen, or the network could learn a back-path to have a nonmonotic relation with $z$}
 \end{frame}
 
 \begin{frame}{All softmax classifiers can be NNWNNs}
@@ -516,25 +621,34 @@
 \end{frame}
 
 \begin{frame}{But look, it is actually a Almost GMM}
-	\begin{block}{Neural Networks can be Analytically Differentiated}
+	\begin{block}{Look a but closer}
 		\begin{align*}
-		f(x) &\approx \dfrac{N^\prime(x)}{N(\max(supp(f))) - N(\min(supp(f)))} \\
-		&\approx \dfrac{\sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \vp (b_j+W_{j,1}x_1)}{\sum_{k=1}^{k=n_h} \sum V_1,k}
+		f(x) &\approx \dfrac{}{\sum_{k=1}^{k=n_h} V_{1,k}} \sum_{j=1}^{j=n_h} V_{1,j}\, \bigg(W_{j,1} \vp (b_j+W_{j,1}x_1) \bigg)
 		\end{align*}
 	\end{block}
-	\begin{block}<2->{This is not a PDF}
+	\begin{block}<2->{ $f_j(x) = W_{j,1} \vp (b_j+W_{j,1}x_1)$}
 		\begin{itemize}
-			\item Not Non-negative \note{Even if we haven't thrown out the exp it wouldn't have helped}
-			\item Yes, Unit area: as before
+			\item $f_j$ is a PDF
+			\item $f$ is a thus mixture model
 		\end{itemize}
 	\end{block}
 	
+	\actfundiffs{}
 	
-	\begin{block}<3->{Unless W \& V are non-negative!}
-		\begin{itemize}
-			\item And now $N$ must be a NNWNN
-		\end{itemize}
-	\end{block}
+	\note{This may or maynot be a particularly good parametric estimator}
+	\note{It can outperform Lika,2001 on their own tests. But I'm not super happy with their methodology for testing.}
+	\note{It is however a pretty normal neural network, compared to many (but not all) neural non-parametric estimators (E.g. generalised regression networks are not neural networks)}
+	\note{This is good because}
+\end{frame}
+
+\begin{frame}{NNWNNs are Pretty Cool}
+	\begin{itemize}
+		\item They are just like normal neural networks except they must be monotonic.
+		\item They can approximate bounded, and continuous any monotonic function.
+		\item They can be useful for incorporating prior knowledge
+		\item They can be useful for modelling CDFs
+
+	\end{itemize}
 \end{frame}
 
 
