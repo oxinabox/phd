@@ -1,4 +1,5 @@
-\documentclass[dvipsnames,handout, notes]{beamer}
+%\documentclass[dvipsnames,handout, notes]{beamer}
+\documentclass[dvipsnames]{beamer}
 \input{brownbeamer}
 
 % all notes should just be simple item notes.
@@ -102,7 +103,7 @@
 	\begin{itemize}
 		\item Neural networks are common machine learning systems
 		\item They learn to approximate a function $\R^n \to \R^m$
-		\item the function can be any continuous bounded function: that is the UAT \note{It is from several papers from the early 90s}
+		\item The function can be any continuous bounded function: that is the UAT \note{It is from several papers from the early 90s}
 	\end{itemize}
 
 	\vfill
@@ -116,7 +117,7 @@
 	\vfill
 	\begin{itemize}
 		\item It learns by adjusting neuron linking weight ($W$, $V$) and  activation basis ($\tilde{b}$, $\tilde{c}$).
-		\item the UAT proofs don't actually tell us anyway to adjust those weights and biases.
+		\item The UAT proofs don't actually tell us anyway to adjust those weights and biases.
 		\item It just says that if you don't put any restrictions on them you can approximate anything.
 	\end{itemize}
 	\vfill
@@ -125,20 +126,6 @@
 	\note{It normally does.}
 	\centering
 	\structure{\Large What if we did restrict the weights?}
-\end{frame}
-
-\begin{frame}{Why NNWNNs?}
-	
-	\begin{itemize}
-		\item Several arguments have been made that neural networks without negative weights are more understandable.
-		\item that they can be looked at as basically feature weightings.
-		\note{I'm not sure that I really agree entirely. They might be more simple but they can still be very hard to interpret.}
-		\note{Though for the clase of binary classifications then the top layer can be interpretted as slices in a way that Chris will probably talk about.}
-		\item This decrease the back-box natural of NNs
-		\item This is similar to Nonnegative Matrix Factorisation (NMF)
-	\end{itemize}
-
-	\citehere{2014understandblenetworksnonnegweights}
 \end{frame}
 
 
@@ -183,8 +170,8 @@
 \begin{frame}{How to make Weights Non-Negative}
 	\begin{itemize}
 		\item Some works use fancy contained optimisation, or regularisation-style penalties
-		\item But much easier: just replace all the weights with some transforming function, whose output is nonnegative.
-		\item Train it via backprop like usual
+		\item<2-> But much easier: just replace all the weights with some transforming function, whose output is nonnegative.
+		\item<3-> Train it via backprop like usual
 		\note{it is no issue with a autodiffing NN framework, and this is already an unconstrained nonlinear optimisation problem, so it doesn't in theory get anyharder.}
 	\end{itemize}
 	
@@ -321,24 +308,9 @@
 	\end{columns}
 }
 
-\begin{frame}{This a squashing activation function's derivative, including the weight}
-	\begin{block}<2->{$\dfrac{\partial\v(wx)}{\partial x}=w\vp(wx)$ \hfill It is a Summability Kernel}
-		\begin{itemize}
-			\item Uniformly continuous almost everywhere
-			\item Non-negative, if $w$ is non-negative
-			\item Finitely Integrable (i.e is $L^1$)
-			\item $\forall \delta>0$, $\displaystyle\lim_{w->\infty} \int_{|x|>\delta} w\vp(wx) = 0$
-			\note{It becomes more concentrated at the origin the smaller W is}
-		\end{itemize}
-		\note{These basically fall out of the FTC}
-		
-	\end{block}
-	
-	\actfundiffs{}
-\end{frame}
 
 \begin{frame}{This is a squashing activation function}
-	\begin{block}<1->{$\v:\,\R \to \R$}
+	\begin{block}<2->{$\v:\,\R \to \R$}
 		\begin{itemize}
 			\item monotonic
 			\item bounded above and below
@@ -356,17 +328,35 @@
 	
 \end{frame}
 
+\begin{frame}{This a squashing activation function's derivative, including the weight}
+	\begin{block}<2->{$\dfrac{\partial\v(wx)}{\partial x}=w\vp(wx)$ \hfill It is a Summability Kernel}
+		\begin{itemize}
+			\item Uniformly continuous almost everywhere
+			\item Non-negative, if $w$ is non-negative
+			\item Finitely Integrable (i.e is $L^1$)
+			\item $\forall \delta>0$, $\displaystyle\lim_{w->\infty} \int_{|x|>\delta} w\vp(wx) = 0$
+			\note{It becomes more concentrated at the origin the smaller W is}
+		\end{itemize}
+		\note{These basically fall out of the FTC}
+		
+	\end{block}
+	
+	\actfundiffs{}
+\end{frame}
+
+
+
 \begin{frame}{A Summability Kernel is an Approximate Identity for Convolution}
 	\begin{block}{What is convolution?}
 		\note{You can relate convolution to convolutional neural networks, but that link is not relevant here}
 		Convolution is an operation that takes two functions and gives a third.\\
 		\begin{align*}
-			f \ast g = \int_{-\infty}^\infty f(x-\tau)g(\tau) d\tau
+			f \ast g = \int_{-\infty}^\infty f(\tau)g(x-\tau) d\tau
 		\end{align*}
 		\note{It has applications in signal processing. Again, we don't care.}
 	\end{block}
 	
-	\begin{block}{Convolving with a summability kernal element does not change the function}
+	\begin{block}<2->{Convolving with a summability kernal element does not change the function}
 		For a function $f$ that is bounded and uniformly continuous.
 		\begin{align*}
 			\lim_{w\to\infty} f\ast\vp_w = f		\qquad \text{uniformly}
@@ -381,7 +371,7 @@
 
 \begin{frame}{Lets evaluate that convolution using a Reimann Sum}
 	\begin{align*}
-		f\ast\vp_W &= \int_{-\infty}^\infty f(x-\tau)\vp_w(\tau) d\tau\\
+		f\ast\vp_W &= \int_{-\infty}^\infty f(x)\vp_w(x-\tau) d\tau\\
 		&=\lim_{\Delta \to 0} \sum_{\forall i\in \mathbb{Z}} \Delta (f(i\Delta)\vp_w(x-i\Delta)) \qquad \text{uniformly}\\
 	\end{align*}
 	
@@ -403,11 +393,11 @@
 
 \begin{frame}{What does that mean?}
 	\begin{align*}
-	f\ast\vp_W &= \int_{-\infty}^\infty f(x-\tau)\vp_w(\tau) d\tau\\
+	f\ast\vp_W &= \int_{-\infty}^\infty f(x)\vp_w(x-\tau) d\tau\\
 	&=\lim_{\Delta \to 0} \sum_{\forall i\in \mathbb{Z}} \bigg(\Delta (f(i\Delta)\bigg)w\vp(wx-i\Delta)) \quad \text{uniformly}
 	\end{align*}
 	
-	\begin{block}{i.e there exists values $\tilde{v}$, $\tilde{\beta}$ such that}
+	\begin{block}<2->{i.e there exists values $\tilde{v}$, $\tilde{\beta}$ such that}
 		\begin{align*}
 		f\ast\vp_W &\approx \sum_{\forall (v_i,\beta_i)} v_i w\vp(wx-\beta_i))
 		\end{align*}
@@ -423,7 +413,7 @@
 \begin{frame}{Bring that together, with the Approximate Identity Property}
 	\begin{block}{We have:}
 	\begin{align*}
-		f\ast\vp_w &\approx \sum_{\forall (v_i,\beta_i)} V_i w\vp(wx-\beta_i)) \\
+		f\ast\vp_w &\approx \sum_{\forall (v_i,\beta_i)} v_i w\vp(wx-\beta_i)) \\
 		f\ast\vp_w &\approx f 
 	\end{align*}
 	\end{block}
@@ -449,7 +439,7 @@
 		\begin{align*}
 		\frac{\partial N(x;W,V,b,c)}{\partial x_1} = \sum_{\forall (v_i,\beta_i)} v_i w\vp(wx-\beta_i) \approx f
 		\end{align*}
-		
+		\pause
 		\begin{block}{Integrate it all out and we get: $N(x;W,V,b,c)\approx F$}
 			\note{have to do some fiddling to chose $c$}
 			For $F$ being:
@@ -473,7 +463,7 @@
 	\begin{itemize}
 		\item It is the composition and sum of such functions.
 		\item If $W$ and $V$ are non-negative.If $W$ and $V$ are non-negative.
-		\item so it is also monotonic bounded \& continuous (a.e) functions
+		\item So it is also monotonic bounded \& continuous (a.e) functions
 	\end{itemize}
 
 	\note{Ignoring the almost everywhere part as it does not matter for approximation. As we used a $L^P$ based measure.}
@@ -500,10 +490,9 @@
 	\note{It decreases overfitting}
 \end{frame}
 
-\begin{frame}{For Multi-Input Single Output networks, where only some of inputs are Monotonic}
+\begin{frame}{Partially NNWNNs for partially monotonic functions.}
 	\centering
-	\vspace{-1.5em}
-	\structure{\textbf{i.e. Partially NNNWNNs for partially monotonic functions.}}\\
+
 	\vfill
 	Consider two input network, with \alert{$x$ monotonic} and $z$ not.
 	\vfill	
@@ -516,8 +505,8 @@
 	\node(h2) at (1.5,-1){};
 	\node[mono](m1)  at (-.5,-1) {};
 	\node[mono](m2)  at (-1.5,-1){};
-	\node[mono](theta) at (-.75,-2) {$z$};
-	\node(x) at (.75,-2) {$x$};
+	\node[mono](theta) at (-.75,-2) {$x$};
+	\node(x) at (.75,-2) {$z$};
 	\draw[mono, thick] (theta) -- (m1) -- (out) -- (m2) -- (theta);
 	\draw[thick] (x) -- (h1) -- (out) -- (h2) -- (x);
 	\draw[thick] (x) -- (m1);
@@ -534,12 +523,13 @@
 
 \begin{frame}{All softmax classifiers can be NNWNNs}
 	\begin{itemize}
-		\item This does not only apply to networks where the class probabilities are monotonically related to the inputs
+		\item Monotonicity doesn't really factor into unordered categories
 		\note{I am still working my head around what does it even mean to be monotonic in a multiclass classification setting.}
 		\item A softmax output layer normalized the outputs of the layer below to sum to one.
 		\note{The softmax basically sits on on top of the output layer of the NN (or NNWNN in this case)}
 		\item so increasing one more than the other is the same as decreasing the others
-		\item so this is monotonic
+		\item{so this is monotonic}
+		\pause
 		\item Note that this does not apply to single output classifier network \note{(e.g. binary choice / sigmoid)}
 		\begin{itemize}
 			\item Those can/will be made monotonic 
@@ -576,7 +566,7 @@
 
 \begin{frame}{Likas' 2001 neural PDF -- Using a normal NN}
 	\begin{align*}
-		f(x) \approx \dfrac{exp(N(z))}{\int_{\min(supp(f))}^{\max(supp(f))} exp(N(z)) dz}
+		f(x) \approx \dfrac{exp(N(x))}{\int_{\min(supp(f))}^{\max(supp(f))} exp(N(z)) dz}
 	\end{align*}
 	
 	\begin{block}<2->{This is a PDF}
@@ -599,21 +589,21 @@
 
 \begin{frame}{What if we differentiate it? So we know the integral}
 	\note{I am tossing out the $exp$ as it doesn't do its purpose of nonnegative anymore.}
-	\begin{block}{Neural Networks can be Analytically Differentiated}
+	\begin{block}{Neural Networks can be analytically differentiated}
 		\begin{align*}
 		f(x) &\approx \dfrac{N^\prime(x)}{N(\max(supp(f))) - N(\min(supp(f)))} \\
-			 &\approx \dfrac{\sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \vp (b_j+W_{j,1}x_1)}{\sum_{k=1}^{k=n_h} \sum V_1,k}
+			 &\approx \dfrac{\sum_{j=1}^{j=n_h} V_{1,j}W_{j,1} \vp (b_j+W_{j,1}x_1)}{\sum_{k=1}^{k=n_h} \sum V_{1,k}}
 		\end{align*}
 	\end{block}
 	\begin{block}<2->{This is not a PDF}
 		\begin{itemize}
-			\item Not Non-negative \note{Even if we haven't thrown out the exp it wouldn't have helped}
-			\item Yes, Unit area: as before
+			\item Not non-negative \note{Even if we haven't thrown out the exp it wouldn't have helped}
+			\item Yes, unit area: as before
 		\end{itemize}
 	\end{block}
 	
 	
-	\begin{block}<3->{Unless W \& V are non-negative!}
+	\begin{block}<2->{Unless W \& V are non-negative!}
 		\begin{itemize}
 			\item And now $N$ must be a NNWNN
 		\end{itemize}
@@ -623,7 +613,7 @@
 \begin{frame}{But look, it is actually a Almost GMM}
 	\begin{block}{Look a but closer}
 		\begin{align*}
-		f(x) &\approx \dfrac{}{\sum_{k=1}^{k=n_h} V_{1,k}} \sum_{j=1}^{j=n_h} V_{1,j}\, \bigg(W_{j,1} \vp (b_j+W_{j,1}x_1) \bigg)
+		f(x) &\approx \dfrac{1}{\sum_{k=1}^{k=n_h} V_{1,k}} \sum_{j=1}^{j=n_h} V_{1,j}\, \bigg(W_{j,1} \vp (b_j+W_{j,1}x_1) \bigg)
 		\end{align*}
 	\end{block}
 	\begin{block}<2->{ $f_j(x) = W_{j,1} \vp (b_j+W_{j,1}x_1)$}
@@ -647,6 +637,7 @@
 		\item They can approximate bounded, and continuous any monotonic function.
 		\item They can be useful for incorporating prior knowledge
 		\item They can be useful for modelling CDFs
+		\item It has been argued that they are more understandable -- less black-box
 
 	\end{itemize}
 \end{frame}
