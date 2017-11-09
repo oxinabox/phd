@@ -21,8 +21,8 @@
 \chapter{Word Sense Representations}\label{sec:word-sense-representations}
 \begin{abstract}
 	Chapter 5: Word Sense Representations (5-10 pages)
-	In this chapter, technologies for representing the multiple meanings of a single word can have will be discussed.
-	This is a growing area, and is particularly important in languages (including English, but other languages even more so), where polysemous and homonymous words are common.
+	In this chapter, technologies for representing the multiple meanings of a single word is discussed.
+	This is an growing area, and is particularly important in languages where polysemous and homonymous words are common (This includes English, but it is even more prevalent in for example Chinese languages).
 	It leads naturally to the next section on phrase representation. Rather than a single word having many meanings, the next chapter will discuss how a single meaning may take multiple words to express.
 \end{abstract}
 	
@@ -32,7 +32,11 @@ Words have multiple meanings.
 When assigning a single representation to a word, it is impossible for that representation to truly describe the meaning in all contexts.
 It may have some features applicable to some uses but not to others,
 it may be an average of all features for particular contexts,
-or it may only represent the 
+or it may only represent the most common sense,
+or a combination of all.
+
+
+
 
 \aside[polysemous/homonymous]{A word with multiple meanings. For purposes of all but the most linguistically driven NLP work there is no need to distinguish between a polyseme and a homonym. Polysemous and homonymous are synonymous.}
 
@@ -131,10 +135,27 @@ Or be unintentionally unknowable, due to poor writing style, such that it would 
 
 
 It can also be said that word senses are highly artificial and do not adequately represent meaning.
-However, WSD is required to access lexicographical resources,
-such as translation dictionaries, ontologies (e.g. OpenCyc), and other datasets (e.g. ImageNet).
+However, WSD is required to interface with  lexicographical resources,
+such as translation dictionaries, ontologies (e.g. OpenCyc), and other datasets (e.g. ImageNet ).
 
+
+It may be interesting to note, that the number of meanings a word has is anti-logarithmically related to its rank \tcite{zipf1945meaning}.
+\pdfcomment{idk if this is the right way to talk about it, can I just say Zipfian, or is that not true in this case?}
+That is to say the most common words have exponentially more meanings than rarer words.
+This aligns well with our notion that precise (e.g. technical) words exist but are used only infrequently -- since they are only explaining a single situation
+This also means that by far most word uses are potentially very ambiguous.
+
+However, also the most commonly used word sense (for a given word ) is also overwhelmingly more frequent than it's less common brethren -- also being Zipfian distributed in there usage \cite{Kilgarriff2004}.
+
+For this reason the most frequent sense (MFS) baseline is often the best performing result in any WSD task.
+
+\subsubsection{Most Frequent Word Sense}
 \pdfcomment{Talk abow MFS baseline and why it always wins}
+For a word use $w_i$, having some sense $h_j$
+then without any further context the 
+probability of that sense being the correct sense is $P(h_j \mid w_i)$.
+
+
 
 \section{Word Sense Representation}
 \pdfcomment{Rewrite this stuff about wordnet being a poor moral baseline to fit the books intended audience better}
@@ -168,6 +189,7 @@ such as translation dictionaries, ontologies (e.g. OpenCyc), and other datasets 
 	And this is why automatic captioning systems recognize wheelchairs as skateboards.
 	
 	Because of the fact that they are based on what people were writing about in 1961.}
+
 \subsection{Supervised Methods}
 The simple and direct method, is to take a dataset that is annotated with word-senses,
 and then treat each tagged word as if it were a word, then apply any of the methods for word representation discussed in \Cref{sec:word-representations}.
@@ -250,6 +272,21 @@ An extension to the method of \textcite{bibid}, to use the phase 2 vectors for W
 
 
 \section{Word Sense Induction}
+
+\aside[Can we go from induced senses to lexical senses]{
+	A natural question given the many WSI systems,
+	and the existing wealth of lexically annotated resources,
+	is if we can induce sense, then align them to the lexically defined senses.
+	\textcite{agirre2006} proposed a method for doing this using a weighted mapping based on the probabilities found using induced sense WSD on a labelled ``mapping'' corpus.
+	This is only been used on relitively small datasets with only hundreds of words,
+	being SenseEval 3 \parencite{mihalcea2004senseval} and SemEval-2007 Task 02 \parencite{SemEval2007WSIandWSD}.
+	It is unclear as to how well it scales to real-word WSD tasks.
+	Our own limited investigations with the larger SemEval 2007 Task 7 \parencite{Navigli:2007:STC:1621474.1621480} suggest that it may not.
+	Finding good methods to link unsupervised representations,
+	to human defined representations remains a topic worthy of research.
+}
+
+
 In this section we will discuss methods for finding a word-sense, without reference to a standard set of senses.
 Such systems must discover the word senses at the same time as they find their representations.
 One strong advantage of these methods is that they do not require a labelled dataset.
@@ -258,6 +295,18 @@ The other key advantage is not relying on fixed senses determined by a lexicogra
 This is particular useful if the words senses are highly domain specific;
 or in a language without strong lexicographical resources.
 This allows the data to inform on what word-senses exist.
+
+\aside[Why do skipgrams perform so well on SCWS?]{
+	SCWS is a corpus designed for evaluating word sense embeddings.
+	Single sense embeddings (e.g. skipgrams) can not take advantage of the context information in the SCWS, however, they do often perform comparably to the word-sense embeddings.
+	Sometimes even outperforming them.
+	It is unclear as to if this highlights the difficulty of the task -- that the impact of context is hard to gauge.
+	Or if it merely shows just how well tuned the more mature single sense embedding methods are.
+}
+
+Most vector WSI and WSR approaches are evaluated on similarity tests.
+Like WordSim-353 \textcite{WordSim353}, for contextless, or Stanford's Contextual Word Similarities (SCWS) \textcite{Huang2012}.
+This evaluation is also suitable for evaluating single sense word-embeddings, e.g. skipgrams.
 
 
 We can divide these into collocation clustering based approaches,
@@ -270,65 +319,27 @@ they are fundamentally very similar.
 
 \subsection{Collocation Clustering Based Approaches}
 The fundamental method for most clustering based approaches is as per \tcite{pantel2002WSI}.
-\textcite{pantel2002WSI} is not a neural word embedding
+\textcite{pantel2002WSI} is not a neural word embedding.
 
 \subsection{Collocation Prediction Based Approaches}
 
+\tcite{tian2014probabilistic} 
 
-
-\section{Word Sense Alignment}
-As there are a great many word sense induction methods
-
-
-
-
-\subsection{Mapping induced senses to lexical senses}\label{mapping}
-By defining a stochastic map between the induced and lexical senses, \tcite{agirre2006}, propose a general method for allowing WSI systems to be used for WSD.
-Their work was used in SemEval-2007 Task 02 \parencite{SemEval2007WSIandWSD} to evaluate all entries. 
-Agirre et al. use a mapping corpus to find the probability of a lexical sense, given the induced sense according to the WSI system.
-
-By exploiting the particular properties of sense embedding based WSI systems we propose a system that can better facilitate the use of this subset of WSI systems for WSD.
-
-
-\section{Word sense induction (WSI)}
-Word sense induction (WSI) is (for purposes of this discussion) the process of using unsupervised data to discover, (and implect in that task represent) word senses.
-We can see this as similar to an unsupervised analogue to WSR.
-
-Most vector WSI and WSR approaches are evaluated on similarity tests.
-Like WordSim-353 \cite{WordSim353}, for contextless, or Stanford's Contextual Word Similarities (SCWS) \cite{Huang2012}. This is also how normal Word2Vec variants are often evaluated.
 
 
 
 
-\tcite{Reisinger2010}
-
-\tcite{Huang2012}
-
-\tcite{AdaGrams}
+\section{Word sense induction (WSI)}
 
 
 
-\section{Word sense disambiguation (WSD)}
-Word sense disambiguation (WSD) is the process to assign a word sense, to an instance of a word. We use this term primarily in the context of WSD to a sense from a standard sense inventory. Those it is also used 
-
-\tcite{veronis2004hyperlex}
-\tcite{pinto2007upv}
-
-\tcite{basile-caputo-semeraro:2014:Coling}
-
-\section{Sense alignment -- going from WSI to WSD}
-Here we look at methods that allow induced word senses (from WSI), to be used on WSD tasks.
-A WSD task, requires determining which of the standard word-senses a particular example of a word in its context belongs to.
-These standard word senses, are from some dictionary (or Sense Inventory) created by 
-lexicographers, such as WordNet, BabelNet.
-
-A related task to this word sense alignment is the composite word embedding creation used in similarity called LocalSim in \textcite{Huang2012} (see above).
 
 
-\tcite{agirre2006}
 
-\subsubsection{\textcite {pantel2002WSI}}
-The method used for evaluation by Pantel et. al. is a form of alignment. I think.
-I really haven't manage to wrap my head around it.
+
+
+
+
+
 
 \end{document}
