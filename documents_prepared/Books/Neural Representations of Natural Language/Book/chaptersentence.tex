@@ -1,0 +1,91 @@
+\documentclass[12pt,parskip]{komatufte}
+\include{preamble}
+\begin{document}
+
+\setchapterpreamble{%
+	\dictum[\textit{English Composition and Literature}, Webster, 1923]
+	{
+		A sentence is a group of words expressing a complete thought.
+	}
+}
+\chapter{Sentence Representations and Beyond}\label{sec:sentence-representations-and-beyond}
+\begin{abstract}
+	Chapter 8: Sentence representations and beyond (5-10 pages)
+	This chapter takes the previous discussion of phrases to the next level: sentences.
+	This will include discussions of works on recursive structure
+	As well work leveraging recurrent neural networks.
+	Methods that do not strongly consider order (including Sum of Word Embeddings; paragraph vectors) will also be discussed here.
+	Many of these techniques extent to arbitrary length sequences of words.
+\end{abstract}
+
+\aside[Documents vs Sentences]{All techniques which can represent documents (or paragraphs) can by necessity represent sentences as well. A single sentence can be a whole document. Similarly for paragraphs. The reverse is not necessarily true.}
+
+
+It can be argued that the core of true AI,
+is the capture a machine manipulatable representation of an idea.
+In natural language a sentence (as defined by Webster in the quote above),
+is such a representation of an idea, but it is not machine manipulatable.
+As such the conversion of sentences to a machine manipulatable representation is an important task in AI research.
+
+
+
+\section{Unordered and Weakly Ordered Representations}
+
+\subsection{Sums of Word Embeddings}
+\aside[SOWE is a BOW product]{
+	The reader may recall from \Cref{sec:word-representations},
+	that a word-embedding lookup is the same as a one-hot vector product:
+	$C_{w_i} = C\,\hat{e}_{w_i}$.
+	Similar can be said for sum of word embeddings (SOWE) and bag of words (BOW).
+	For some set of words $\mathcal{W} = \lbrace{w_1,\ldots, w_n}$:
+	the BOW representation is $B_\mathcal{W} = \sum_{w_i\in \mathcal{W}} \hat{e}_{w_i}$;
+	the SOWE representation is $\sum_{w_i\in \mathcal{W}} C_{w_i} = CB_\mathcal{W}$.
+	As with word-embeddings it is immensely cheaper to calculate this via lookup, than via matrix product;
+	except on systems with suitable sparse matrix product tricks.	
+}
+
+Classically in information retrieval documents have been represented by bags of words (BOW).
+That is to say a vector with length equal to the size of the vocabulary, with each position representing the count of the number of occurrences of a single word.
+This is much the same as a one-hot vector representing a word, but with every word in the sentence/document counted.
+The word embedding equivalent is sums of word embeddings (SOWE), and means of word embeddings (MOWE).
+These methods, like BOW, lose all order information in the representation.
+In many cases it is possible to recover a BOW from a much lower dimensional SOWE 
+
+Surprisingly, they have been found on many tasks to be extremely well performing, better than several of the more advanced techniques discussed later in this chapter  \pcite{White2015SentVecMeaning}, \pcite{RitterPosition}.
+It has been suggested that this is because in English there are only a few likely ways to order any given bag of words and thus original sentences can often be recovered from BOW \pcite{Horvat2014} and thus SOWE, \pcite{White2016a}, given a simple ngram language model.
+The step beyond this is to encode the ngrams into a bag of words like structure.
+The bag of ngrams (BON), e.g. bag of trigrams, has been classically used as an alternative to BOW.
+Each index in the vector thus represents the occurrence of a ngram in the text.
+So \natlang{It is a good day today}, has the 3grams: \natlang{(It is a)},\natlang{(is a good)},\natlang{(a good day)}, \natlang{(good day today)}.
+As is obvious for all but the most pathological sentences, recovering the full sentence order from a bag of ngrams is possible even without a language model.
+
+The natural analogy to this with word embeddings might seem to be to find ngram embeddings by the concatenation of $n$ word embeddings; and then to sum these.
+However, such a sum is less informative than it might seem.
+As the sum in each concatenated section is equal to the others, minus the edge words. To illustrate the case of trigram sums of word embeddings, for \natlang{It is a good day today},
+the sums in each position would be:
+\begin{align}
+\left[\begin{array}{c|c|c}
+	\sum & \sum & \sum\\
+	C_{it} & C_{was} & C_{a}\\
+	C_{was} & C_{a} & C_{good}\\
+	C_{a} & C_{good} & C_{day}\\
+	C_{good} & C_{day} & C_{today}
+\end{array}\right]=\left[\begin{array}{c|c|c}
+	C_{M}+C_{it}-C_{day} & C_{M} & C_{M}-C_{was}+C_{today}\end{array}\right]
+\end{align}
+\begin{align}
+\left[\begin{array}{c|c|c}
+	\quad C_{w_{1}} & \quad C_{w_{2}} & \quad C_{w_{3}}\\
+	+C_{w_{2}} & +C_{w_{3}} & +C_{w_{4}}\\
+	+C_{w_{3}} & +C_{w_{4}} & +C_{w_{5}}\\
+	+C_{w_{4}} & +C_{w_{5}} & +C_{w_{6}}
+\end{array}\right]=\left[\begin{array}{c|c|c}
+	\sum C_{w_{i}}-C_{w_{n-1}}-C_{w_{n-2}} & \sum C_{w_{i}}-C_{w_{1}}-C_{w_{n-1}} & \sum C_{w_{i}}-C_{w_{1}}-C_{w_{2}}\end{array}\right]
+\end{align}
+
+
+
+
+
+
+\end{document}
