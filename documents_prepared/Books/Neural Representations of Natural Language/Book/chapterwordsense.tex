@@ -150,10 +150,21 @@ However, also the most commonly used word sense (for a given word ) is also over
 For this reason the most frequent sense (MFS) baseline is often the best performing result in any WSD task.
 
 \subsubsection{Most Frequent Word Sense}
-\pdfcomment{Talk abow MFS baseline and why it always wins}
-For a word use $w_i$, having some sense $h_j$
+It is easy to count how often each sense of a word occurs,
+once one has a sense annotated corpus.
+Further, for frequent senses, due to there over-whelming commonness this counting is likely to have them win-out even from small training corpora.
+
+For the $i$th word use being the word $w_i$, having some sense $h_j$
 then without any further context the 
 probability of that sense being the correct sense is $P(h_j \mid w_i)$.
+As POS tagging is almost a solved problem, one can use the part of speech tag $p_i$ (for the $i$ word use) as an additional condition, and thus find $P(h_j \mid w_i, p_i)$.
+As WordNet encodes this information for lemma-sense pair using the SemCor corpus counts (this is also used for sense ordering, which is why this is sometimes called First Sense.).
+This is a readily available and practical method for getting a baseline probability of each sense.
+By applying argmax, to always select the most common sense, this can be used for word sense disambiguation:  $\argmax_{\forall h_j} P(h_j \mid w_i, p_i)$.
+
+In the most recent SemEval WSD task \pcite{moro2015semeval},
+MFS beat all submitted entries for English, both overall, and on almost all cuts of the data.
+(The results for other languages were not as good, however in other languages true corpus derived sense counts were not used).
 
 
 
@@ -235,9 +246,9 @@ Or written mathematically, where $C_v$ is the skip-gram word vector for $v$
 \begin{equation}
 cand(w_{s_{i}})=\left\{ u\left|\begin{array}{c}
 u\in gloss(w_{s_{i}})\\
-\wedge d_{cos}(C_w,C_u)<\delta\\
-\wedge pos(u)\in\left\{ verb,adv,noun,adj\right\} \\
-\wedge u\ne w
+\wedge\, d_{cos}(C_w,C_u)<\delta\\
+\wedge\, pos(u)\in\left\{ verb,adv,noun,adj\right\} \\
+\wedge\, u\ne w
 \end{array}\right.\right\} 
 \end{equation}
 The phase 1 sense vector for $w_{s_i}$ is the mean of the word vectors for all the words in $cand(w_{s_{i}})$.
@@ -322,23 +333,118 @@ The fundamental method for most clustering based approaches is as per \tcite{pan
 \textcite{pantel2002WSI} is not a neural word embedding.
 
 \subsection{Collocation Prediction Based Approaches}
+\aside[Probability]{
+One may wish to brush up on basic probability notions for this section.
+In particular joint, conditional and marginal probabilities definitions;
+as well as Bayes law and the probability chain rule which come from those.
+The derivation of the math used for \textcite{tian2014probabilistic} latent senses is as follows and should be understood as clear.
+{\tiny
+\begin{align*}
+P(w_o\mid w_i) &= \sum_{\forall h_k \in \mathcal{H}(w_i)} P(w_o \mid h_k, w_i) P(h_k \mid w_i) \\
+&= \sum_{\forall h_k \in \mathcal{H}(w_i)} \frac{P(w_o, h_k, w_i)}{P(h_k, w_i)} \, 
+\frac{P(h_k, w_i)}{P(w_i)} \\
+&= \sum_{\forall h_k \in \mathcal{H}(w_i)} \frac{P(w_o, h_k, w_i)}{P(w_i)} \\
+&= \sum_{\forall h_k \in \mathcal{H}(w_i)} P(w_o, h_k \mid w_i) \\
+&= P(w_o \mid w_i)
+\end{align*}}
+}
 
-\tcite{tian2014probabilistic} 
+
+\tcite{tian2014probabilistic} observed that word collocation, as used for skip-gram word embeddings could be considered as having a latent variable of the sense.
+That is to say for input word $w_i$ having senses $\mathcal{H}(w_i)$,
+the probability of output word $w_o$ occurring near $w_i$ can be given as:
+
+\begin{align}
+	P(w_o\mid w_i) &= \sum_{\forall h_k \in \mathcal{H}(w_i)} P(w_o \mid h_k, w_i) P(h_k \mid w_i) \label{equ:tianmm} \\
+\end{align}
+
+Given that a sense $h_k$ only belongs to one word $w_i$, as Tian et. al. are not doing any form of sense sharing via synsets etc,
+we know that $k$th sense of the $i$th word only occurs when the $i$th word occurs.
+we have that the intersection probability $P(w_i,h_k) = P(h_k)$.
+%and $P(w_i) = \sum_{\forall h_k \in \mathcal{H}(w_i) P(h_k)}$;
+
+We can thus write \Cref{equ:tianmm} as:
+\pdfcomment{I am not happy with how this math looks.}
+\begin{align}
+P(w_o\mid w_i) &= \sum_{\forall h_k \in \mathcal{H}(w_i)} P(w_o \mid h_k) P(h_k \mid w_i) \label{equ:tianmm2}
+\end{align}
+
+$P(w_o \mid h_k)$ is in a sensible form for writing as a softmax type probability.
+With output embeddings for the words $w_o$, and input embeddings for the word senses $h_k$.
+This softmax can be sped-up using negative sampling or heirachical softmax.
+The later was done by Tian et. al.
+
+\Cref{equ:tianmm2} is in the form of a mixture model form with a latent variable.
+Such a class of problems are often solved using the Expectation Maximisation (EM) method.
+
+The EM procedure functions by performing two alternating steps.
+The E-step calculates the expected chance of assigning word-sense for each training case ($\hat{P}(h_l \mid w_o)$) in the training set $\mathcal{X}$.
+Where a training case is a pairing of a word use $w_i$ paired with a single context word $w_o$
+\begin{align}
+\hat{P}(h_l \mid w_o) = \frac{\hat{P}(h_l \mid w_i) P(w_o \mid h_l)}{\sum_{\forall h_k \in \mathcal{H}(w_i)} \hat{P}(w_o \mid h_k) P(h_k \mid w_i)}
+\end{align}
+
+The M-step updates the prior likelihood of each sense (that is without context) using the expected assignments from the E-step.
+
+\begin{align}
+\hat{P}(h_l \mid w_i) = \frac{1}{|\mathcal{X}|} \sum_{\forall (w_o,w_i)\in \mathcal{X}} \hat{P}(h_l \mid w_o)
+\end{align}
+
+During this step the likelihood of the $P(w_o \mid w_i)$ can be optimised via gradient decent in the neural network parameters of the softmax component: $P(w_o \mid h_k)$,
+to maximise the likelihood of the observations.
+
+By using this EM optimisation the network can fit values for the embeddings in that softmax component.
+The similarities to fitting a Gaussian Mixture Model being used for clustering are notable.
 
 
+A limitation of the method used by \tcite{tian2014probabilistic}, is that the number of each sense must be known in advance.
+While there are ration methods to approach this,
+such as using some multiple of number of senses assigned by a lexicographical resource (e.g. WordNet).
+Situations where such resources are  is not available/suitable or suitable are one of the main circumstances in which WSI is desirable  (e.g. domain specific terminology, or under-resourced languages).
+In these case one could apply a heuristic based on the distribution of senses based on the distribution of words \parencite{zipf1945meaning}.
+However, this would be unable to correctly determine the number of senses for exceptional words.
+Better would be to allow senses to be determined based how the words are used -- if they are used in two different ways, then they should have two different senses.
+How a word is being used can be determined by the contexts in which it appears.
 
 
+\tcite{tian2014probabilistic} presented a fairly heavy classical statistical model.
+The next step beyond this down a Bayesian modelling path,
+its to make number of senses for each word itself a fit-able parameter of the model.
+This is the approach taken by \tcite{AdaGrams}
 
-\section{Word sense induction (WSI)}
+Considering again the form of \Cref{equ:tianmm2}
+\begin{align}
+P(w_o\mid w_i) &= \sum_{\forall h_k \in \mathcal{H}(w_i)} P(w_o \mid h_k) P(h_k \mid w_i) 
+\end{align}
+The prior probability of a sense given a word but no context is 
+$P(h_k \mid w_i)$ is Dirichlet distributed.
+The prior probability of any categorical classification task is a Dirichlet distributed, as this is how a Dirichlet distribution is defined.
+When considering that the sense my be one from an unlimited collection of possible senses,
+then that prior becomes a Dirichlet process.
 
+In essence the prior over a potentially unlimited number of possible sense become another parameter of the model (along with the embeddings for the output words and input embeddings).
+The fitting of such a model is beyond the scope of this book;
+it is not entirely dissimilar to the fitting via EM and gradient descent.
+The final output of \tcite{AdaGrams} is much the same as \Cref{equ:tianmm},
+a set of embeddings for induced senses,
+and a language model that is able to predict how likely a word is to occur near that word sense ($P(w_o \mid h_k)$).
 
+By application of Bayes theorem, this can be inverted to take a word's context,
+and predict the probability of each word sense.
 
+\begin{align}
+P(h_l \mid w_o) = \frac{P(w_o \mid h_l) P(h_l \mid w_i)}{\sum_{\forall h_k \in \mathcal{H}(w_i)} P(w_o \mid h_k) P(h_k \mid w_i)}
+\end{align}
 
+With the common (but technically incorrect) assumption that all words in the context are independent (technically only requires conditionally independent on on the word in question $w_i$, never the less incorrect.)
+For a context window of width $j$ given by $\mathcal{W}_i = \lbrace w_{i-\frac{j}{2}} \ldots w_{i-1} \ldots w_{i-1} \dots w_{i+\frac{j}{2}} \rbrace$
 
+\begin{align}
+P(h_l \mid \mathcal{W}_i) = 
+\frac{\prod_{\forall w_{j}\in \mathcal{W}_i} P(w_{j} \mid h_l) P(h_l | w_i)}{\sum_{h_k \in \mathcal{H}(w_i)} \prod_{\forall w_{j} \in \mathcal{W}_i} P(w_{j} \mid h_k) P(h_k | w_i)}
+\end{align}
 
-
-
-
+\pdfcomment{Check this equation}
 
 
 
