@@ -210,7 +210,7 @@ Iacobacci et al. use a 3rd party WSD tool, BabelFly \cite{Moroetal:14tacl}, to a
 This allows for existing word representation techniques to be applied, but being limited to the use of an existing WSD tool makes it unsuitable for use in WSD tasks.
 
 
-\subsection{Pseudo-semi-supervised Method}
+\subsection{Pseudo-semi-supervised Method}\label{sec:pseudo-semi-supervised-method}
 \tcite{Chen2014} use an almost semi-supervised approach to train sense vectors.
 They partially disambiguate their training corpus, using initial word sense vectors and WordNet.
 They then discard these original sense-vectors, and use the partially disambiguated corpus to train sense-vectors via a skip-gram variant.
@@ -330,7 +330,40 @@ they are fundamentally very similar.
 
 \subsection{Collocation Clustering Based Approaches}
 The fundamental method for most clustering based approaches is as per \tcite{pantel2002WSI}.
-\textcite{pantel2002WSI} is not a neural word embedding.
+\textcite{pantel2002WSI} is not a neural word-sense embedding, however the approach remains similar.
+
+
+\aside[On context representations]{
+These collocation clustering methods require finding a representation for the the context, which can then by combined with cosine similarity (or another metric), to give the similarities for clustering.
+More generally, this can be related to the next chapter: \Cref{sec:sentence-representations-and-beyond}, as any of these methods could be used to derive a vector representation of a context, which could be used with cosine distance to define a usage similarity.
+In most words comparatively simple representations of the contexts are used.
+}
+
+
+First consider all word uses, with their context.
+Define some method of measuring similarity between contexts.
+Contexts can be defines using windows (like in many word-embedding models),
+ using sentences, or defined using some rules.
+In \textcite{pantel2002WSI} this was cosine distance between the mutual information vectors found by considering the frequency of the word and its contexts occurrences.
+\pdfcomment{At somepoint I have to explain what td-idf is}
+In \tcite{Huang2012} this was td-idf weighted averages of (a custom) single sense vectors for their contexts.
+In \tcite{kaageback2015neural} this was again a weighted average of single sense vectors, this time using a factor based on how close the word was, and a factor based on how likely the co-occurrence was according to the word embedding skip-gram models.
+It is interesting to note that td-idf, mutual information, skip-gram cooccurance probabilities (being a proxy for point-wise mutual information \textcite{levy2014neural}), are all closely related measures.
+\pdfcomment{Check if Pointwise mutual information and Mutual information are the same thing}
+
+Secondly, some method is then applied to cluster the word uses based on similarity of the contexts.
+\textcite{pantel2002WSI} used a custom clustering method.
+\textcite{Huang2012} used spherical k-means.
+\textcite{kaageback2015neural} uses k-means for one experiment, and the method of \textcite{neelakantan2015efficient} for a second experiment.
+
+Finally some method is used find an embedding for that cluster.
+\textcite{Huang2012} use a method of relabelling the word uses with the cluster ID,
+then retrain their single sense word embedding method.
+This relabelling technique is similar to the method later used by \textcite{Chen2014} for learning lexical sense representations, as discussed in \Cref{sec:pseudo-semi-supervised-method}.
+\textcite{kaageback2015neural} when using k-means uses the clusters centroid: which is the weighted mean of all context vectors in the cluster.
+
+
+\pdfcomment{Talk about neelakantan2015efficient and Reisinger2010}
 
 \subsection{Collocation Prediction Based Approaches}
 \aside[Probability]{
