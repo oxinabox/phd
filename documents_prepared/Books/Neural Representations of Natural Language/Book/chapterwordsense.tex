@@ -206,7 +206,7 @@ The simple and direct method, is to take a dataset that is annotated with word-s
 and then treat each tagged word as if it were a word, then apply any of the methods for word representation discussed in \Cref{sec:word-representations}.
 \tcite{iacobacci2015sensembed} use a Continuous Bag of Word language model \parencite{mikolov2013efficient}, doing exactly this.
 This does however run into the aforementioned problem, that there is relatively little training data that has been manually sense annotated.
-Iacobacci et al. use a 3rd party WSD tool, BabelFly \cite{Moroetal:14tacl}, to annotate the corpus with senses.
+Iacobacci et al. use a 3rd party WSD tool, BabelFly \cite{Moro2014}, to annotate the corpus with senses.
 This allows for existing word representation techniques to be applied, but being limited to the use of an existing WSD tool makes it unsuitable for use in WSD tasks.
 
 
@@ -279,7 +279,7 @@ In this method the word-sense embeddings are output embeddings.
 The phase 1 sense vectors have not been assesses as their representational quality.
 It can be assumed as it was not reported that it was worse than those found in phase 2.
 The phase 2 sense vectors were not assessed for their capacity to be used for word sense disambiguation.
-An extension to the method of \textcite{bibid}, to use the phase 2 vectors for WSD, would allow this method to be used to disambiguate its own training data. Allowing the method to become self-supervised.
+An extension to the method of \textcite{Chen2014}, to use the phase 2 vectors for WSD, would allow this method to be used to disambiguate its own training data. Allowing the method to become self-supervised.
 
 
 \section{Word Sense Induction}
@@ -344,26 +344,51 @@ First consider all word uses, with their context.
 Define some method of measuring similarity between contexts.
 Contexts can be defines using windows (like in many word-embedding models),
  using sentences, or defined using some rules.
-In \textcite{pantel2002WSI} this was cosine distance between the mutual information vectors found by considering the frequency of the word and its contexts occurrences.
+In vector representational works, this is ubiquitously done by assigning each context a vector, and then using cosine similarity between those vectors as cluster similarity.
+In \textcite{pantel2002WSI} the context vectors are the mutual information vectors found by considering the frequency of the word and its contexts occurrences.
 \pdfcomment{At somepoint I have to explain what td-idf is}
+In \tcite{Reisinger2010}, another non-neural method, this was td-idf or $\chi^2$ weighted bag of words vectors.
 In \tcite{Huang2012} this was td-idf weighted averages of (a custom) single sense vectors for their contexts.
 In \tcite{kaageback2015neural} this was again a weighted average of single sense vectors, this time using a factor based on how close the word was, and a factor based on how likely the co-occurrence was according to the word embedding skip-gram models.
-It is interesting to note that td-idf, mutual information, skip-gram cooccurance probabilities (being a proxy for point-wise mutual information \textcite{levy2014neural}), are all closely related measures.
+It is interesting to note that td-idf, mutual information, skip-gram co-occurrence probabilities (being a proxy for point-wise mutual information \textcite{levy2014neural}), are all closely related measures.
 \pdfcomment{Check if Pointwise mutual information and Mutual information are the same thing}
 
-Secondly, some method is then applied to cluster the word uses based on similarity of the contexts.
-\textcite{pantel2002WSI} used a custom clustering method.
+
+
+Secondly, some method is then applied to cluster the word uses based on the calculated similarity of the contexts.
+\textcite{pantel2002WSI} used a custom hierarchical clustering method.
+\textcite{Reisinger2010} used mixtures of von-Mises-Fisher distributions.
 \textcite{Huang2012} used spherical k-means.
-\textcite{kaageback2015neural} uses k-means for one experiment, and the method of \textcite{neelakantan2015efficient} for a second experiment.
+\textcite{kaageback2015neural} uses k-means.
 
 Finally some method is used find an embedding for that cluster.
+For non-neural embedding methods this step is not always done, as defining a representation is not the goal.
 \textcite{Huang2012} use a method of relabelling the word uses with the cluster ID,
 then retrain their single sense word embedding method.
 This relabelling technique is similar to the method later used by \textcite{Chen2014} for learning lexical sense representations, as discussed in \Cref{sec:pseudo-semi-supervised-method}.
 \textcite{kaageback2015neural} when using k-means uses the clusters centroid: which is the weighted mean of all context vectors in the cluster.
 
 
-\pdfcomment{Talk about neelakantan2015efficient and Reisinger2010}
+\pdfcomment{Maybe use a table to summarise them all}
+
+\subsubsection{Online clustering}
+The methods discussed above all use off-line clustering.
+That is to say the clustering is performed after the embedding is trained.
+\tcite{neelakantan2015efficient} perform the clustering during training.
+They use a modified skipgram formulation.
+They start with a fixed number of randomly initialised sense vectors for each context.
+These sense vectors are used as input embeddings for the skipgram context prediction task, over single sense output word embeddings.
+Each sense also has linked to it a context cluster centroid, which is the average of all output embeddings for contexts that that sense is assigned to.
+Each time a training instance is presented, the average of the context output embeddings is compared to each sense's context cluster centroid.
+The context is assigned to the cluster with the closest centroid, updating the centroid value.
+This can be seen as similar to performing a single k-means update step for each training instance.
+Optionally, if the closest centroid is further from the context vector than some threshold hyper-parameter a new sense can be created using that context vector as the initial centroid.
+After the assignment of the content to a cluster, the corresponding sense vector is selected for use as the input vector in the skip-gram context prediction task.
+
+\textcite{kaageback2015neural} investigated using their weighting function with the online clustering used by \textcite{neelakantan2015efficient}.
+More generally any such weighting function could be used.
+
+
 
 \subsection{Collocation Prediction Based Approaches}
 \aside[Probability]{
