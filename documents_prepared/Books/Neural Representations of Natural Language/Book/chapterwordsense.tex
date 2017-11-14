@@ -316,7 +316,7 @@ This allows the data to inform on what word-senses exist.
 }
 
 Most vector WSI and WSR approaches are evaluated on similarity tests.
-Like WordSim-353 \textcite{WordSim353}, for contextless, or Stanford's Contextual Word Similarities (SCWS) \textcite{Huang2012}.
+Like WordSim-353 \textcite{WordSim353}, for context-less, or Stanford's Contextual Word Similarities (SCWS) \textcite{Huang2012}.
 This evaluation is also suitable for evaluating single sense word-embeddings, e.g. skipgrams.
 
 
@@ -329,8 +329,9 @@ they are fundamentally very similar.
 
 
 \subsection{Collocation Clustering Based Approaches}
-The fundamental method for most clustering based approaches is as per \tcite{pantel2002WSI}.
-\textcite{pantel2002WSI} is not a neural word-sense embedding, however the approach remains similar.
+The fundamental method for most clustering based approaches is as per \tcite{Schutze:1998wordsenseclustering}.
+That original work is not a neural word-sense embedding, however the approach has propagated forward.
+\tcite{pantel2002WSI} and \tcite{Reisinger2010} are also not strictly neural word embedding approaches, however the overall method is also identical so we discuss their work also here so the similarities can be seen.
 
 
 \aside[On context representations]{
@@ -345,24 +346,42 @@ Define some method of measuring similarity between contexts.
 Contexts can be defines using windows (like in many word-embedding models),
  using sentences, or defined using some rules.
 In vector representational works, this is ubiquitously done by assigning each context a vector, and then using cosine similarity between those vectors as cluster similarity.
+\textcite{Schutze:1998wordsenseclustering} investigated using various on subset of log inverse document frequency (idf) weighted bags of words for the contexts, and dimensionality reduced versions of these.
 In \textcite{pantel2002WSI} the context vectors are the mutual information vectors found by considering the frequency of the word and its contexts occurrences.
 \pdfcomment{At somepoint I have to explain what td-idf is}
-In \tcite{Reisinger2010}, another non-neural method, this was td-idf or $\chi^2$ weighted bag of words vectors.
+In \textcite{Reisinger2010}, this was td-idf or $\chi^2$ weighted bag of words vectors.
 In \tcite{Huang2012} this was td-idf weighted averages of (a custom) single sense vectors for their contexts.
 In \tcite{kaageback2015neural} this was again a weighted average of single sense vectors, this time using a factor based on how close the word was, and a factor based on how likely the co-occurrence was according to the word embedding skip-gram models.
-It is interesting to note that td-idf, mutual information, skip-gram co-occurrence probabilities (being a proxy for point-wise mutual information \textcite{levy2014neural}), are all closely related measures.
+It is interesting to note that idf, td-idf, mutual information, skip-gram co-occurrence probabilities (being a proxy for point-wise mutual information \textcite{levy2014neural}), are all closely related measures.
 \pdfcomment{Check if Pointwise mutual information and Mutual information are the same thing}
 
+\aside[On clustering]{
+	Clustering can be defined as a (mixed integer) optimisation task, of assigning points to clusters so as satisfy some loss function based e.g. on minimising intra-cluster variance while maximising inter-cluster variance.
+	As this is NP-hard, most clustering methods are approximate.
+	k-means is very popular because of its simplicity,
+	however it easily falls into local minima,
+	and so normally is run dozens (or more, even thousands) or times to obtain the optimal results.
+	K-means also has the issue of having to select the number of clusters ($k$).
+	It should be remembers that there exist many other clustering methods than  k-means and k-means variants.
+	These use different loss functions, and different strategies to overcome the NP-hard nature of the problem.
+	In particular there mixture model methods, hierarchical methods, spectral methods, and others.
+	I personally favour Affinity Propagation \parencite{frey2007clustering}.
+	On any clustering task (word sense or otherwise) it is worth investigating several clustering algorithms.
+	A serious of interesting and very easy reading articles on clustering can be found at:
+	\url{http://alexhwilliams.info/itsneuronalblog/2015/09/11/clustering1/}, \url{http://alexhwilliams.info/itsneuronalblog/2015/10/01/clustering2/}, and \url{http://alexhwilliams.info/itsneuronalblog/2015/11/18/clustering-is-easy/}
+}
 
 
 Secondly, some method is then applied to cluster the word uses based on the calculated similarity of the contexts.
+\textcite{Schutze:1998wordsenseclustering} used group average agglomerative clustering.
 \textcite{pantel2002WSI} used a custom hierarchical clustering method.
 \textcite{Reisinger2010} used mixtures of von-Mises-Fisher distributions.
 \textcite{Huang2012} used spherical k-means.
 \textcite{kaageback2015neural} uses k-means.
 
 Finally some method is used find an embedding for that cluster.
-For non-neural embedding methods this step is not always done, as defining a representation is not the goal.
+For non-neural embedding methods this step is not always done, as defining a representation is not the goal, though in general it can be derived from most clustering techniques.
+\textcite{Schutze:1998wordsenseclustering} use the centroids of their clusters.
 \textcite{Huang2012} use a method of relabelling the word uses with the cluster ID,
 then retrain their single sense word embedding method.
 This relabelling technique is similar to the method later used by \textcite{Chen2014} for learning lexical sense representations, as discussed in \Cref{sec:pseudo-semi-supervised-method}.
