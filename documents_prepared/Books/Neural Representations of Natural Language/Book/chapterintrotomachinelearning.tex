@@ -521,7 +521,7 @@ It is this property of networks, to implicitly discover and define the most impo
 
 
 
-\section{Recurrent Neural Networks}
+\section{Recurrent Neural Networks}\label{sec:rnn}
 
 A key limitation of a neural network is that the number of inputs and outputs must be known at training time and must always be the same for all cases.
 This is not true for natural language: If an over-all input is a sentence for example, then each sentence input will be made up a varying number of words. Similarly for output.
@@ -541,13 +541,6 @@ but each one acting at a different time-step.
 	\resizebox{\textwidth}{!}{\input{figs/chapterintromachinelearning/rnns.tikz}}
 \end{figure}
 
-
-
-Three general examples of the structure of RNNs are shown in \Cref{fig-rnns}.
-These exampled will be considered in more later in this section below.
-At each time-step the same network is used, with different inputs.
-For purposes of looking at this in the big picture we will first consider each network a black-box recurrent unit (RU).
-
 \aside[Time-Step]{ RNNs are normally described in terms of a time-step.
 	This is the advancement of the network such that the previous output state, is now the input old-state.
 	This doesn't have to be literal time -- indeed it can not be, as it is discrete.
@@ -557,17 +550,50 @@ For purposes of looking at this in the big picture we will first consider each n
 	For example, using laser distance imaging to detect patterns of wear on tyres of differing sizes,
 	each time-step is a different part of the tyre.
 }
+
+Three general examples of the structure of RNNs are shown in \Cref{fig-rnns}.
+These exampled will be considered in more later in this section below.
+At each time-step the same network is used, with different inputs.
+For purposes of looking at this in the big picture we will first consider each network a black-box recurrent unit (RU).
+
+
 \pdfcomment{better example for non-temporal timestep}
 
 
 The recurrent unit takes at each time step, an input for that time-step, some representation its of state for the RU at the previous timestep; and it produces an output for this time-step, and its state representation for the next time-step.
 A diagram of this is shown in \Cref{fig-ru}.
 It is worth distinguishing the unit output is not the same as the overall network output, it is just the output of this sub-network at this time-step.
-Every-time step has this 2 inputs and 2 outputs.
-However, sometimes we will ignore them.
+Every-time step has this 2 inputs (previous state, and actual input at this timestep) and 2 outputs (next state and actual output at this time step).
+However, sometimes we will ignore the outputs or that states.
 The initial state for the first time step is normally set to some zero vector,
 and the final state at end of the sequence of normally discarded.
-The outputs of many states are often discarded (in encoders), and the inputs are often filled deterministically with some low-meaning, or just generally useful prompt (in decoders).
+The outputs of many states are often discarded (in encoders), and the inputs are often filled deterministically with some low-meaning prompt (in decoders).
+
+
+
+
+
+\aside[Terminology: Prompt]{
+The word prompt is out own terminology here.
+We are not aware of a consistent term used in literature for the input at each time step to a decoder RNN.
+Dummy input would also work,
+although as discussed the chose of prompt can allow useful information to be added.
+Simplifying the learning problem.
+}
+
+Prompts are required for decoders as the network must has some input to cause it to give an output.
+In theory this can just be a constant: all inputs and all outputs for those inputs, can be learned and remembered by the networks memory (encoded in its state).
+But it is very common to use as part of the prompt the output of the previous step.
+At training time this is the targeted previous output $y_{t-1}$.
+At test time (and in real deployment) this is the predicted output $\hat{y}_{t-1}$.
+This effectively gives direct bigram state information to the model,
+allowing the memory to focus on higher level tasks.
+It also allows in the case of a language model the probability space to be manually explored.
+For decoders it is also common to include in prompts the original input to the decoder.
+For example in a caption generator, including the vector representation of the image (or the output of a convolutional neural network producing such).
+
+
+
 
 \begin{figure}
 	\caption{A recurrent unit with its 2 inputs and 2 outputs. Not shown are the internal Weight and Bias parameters which are trained to control the interactions.}	
@@ -602,7 +628,11 @@ The output of the final time-step can be the true output.
 
 
 \subsection{Inside the Recurrent Unit}
-
+In Many types of RU (e.g. GRU, Basic RU) the output and the state are always equal.
+This particularly makes sense when they should be capturing the same kinds of information (as in a decoder-encoder).
+In general an one or more feedforward layers (that is to say nonrecurrent) are often put on top of the outputs that are used, and before the inputs.
+These extra layers can be considered part of the RU, or as something that surrounds the RU, only at certain time-steps,
+ depending on point of view.
 
 \subsubsection{Basic Recurrent Unit}
 

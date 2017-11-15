@@ -91,8 +91,94 @@ the sums in each position would be:
 \end{align}
 
 
+\section{Sequential Models}
+
+\begin{figure}
+	\caption{The unrolled structure of an RNN for us in Encoding, Decoding and Encoding-Decoding (sequence-to-sequence) problems. RU is the recurrent unit -- the neural network which reoccurs at each time step. (Repeated from \Cref{fig-rnns})
+	}
+	
+	\label{fig-rnns-sq}
+	
+	\resizebox{\textwidth}{!}{\input{figs/chapterintromachinelearning/rnns.tikz}}
+\end{figure}
+
+The majority of this section draw on the recurrent neural networks (RNN) as discussed in \Cref{sec:rnn}.
+We can used RNN encoders and decoders (as shown in \Cref{fig-rnns-sq}) to generate representations of sequences by extracting a coding layer.
+In one can take any RNN encoder,
+and select the one of the hidden layers after the final recurrent unit (RU) that has processed the last word in the sentence.
+Similarly for any RNN decoder, one can select any hidden layer before the first recurrent unit that begins to produce words.
+For an RNN encoder-decoder, this means selecting the hidden layer from between.
+As for example in \tcite{cho-EtAl:2014:EMNLP2014}.
 
 
+\tcite{Bowman2015SmoothGeneration} presents an extension on this notion,
+where in-between the encoder and the decode stages there is a variational autoencoder (VAE).
+The variational autoencoder \pcite{2014VAE} an autoencoder that has been demonstrated to have very good properties in a number of machine learning applications.
+Using the VAE it is hoped that a better representation can be found for the sequence of words in the input and output.
+
+
+\begin{figure}
+	
+	\numdef{\n}{6}
+	\numdef{\labelwidth}{5.5cm}
+	%%%%%%%%%%%%%%%%%%%%%%%%%
+	% Encoder
+	\resizebox{\textwidth}{!}{
+	\begin{tikzpicture}[]
+	\coordinate (L0) at (lbl.east);
+	\numdef{\nn}{\n/2}
+	\foreach \i[count=\j from 0] in {1,...,\nn}{
+		\ifnumequal{\i}{\nn - 1}{%
+			\node(L\i)[dashed, layer, right = of L\j] {...};
+			\node(w\i)[below = of L\i]{...};
+		}%
+		{
+			\node(L\i)[layer, right = of L\j] {$\mathrm{RU_E}$};
+			\node(w\i)[below = of L\i]{\ifnumequal{\i}{\nn}{$w_n$}{$w_\i$}};
+			\draw[->] (w\i) -- (L\i);
+		}
+	}
+	
+	\numdef{\nvae}{\nn+1}
+	\node(L_\nvae)[right=of L\nn] {VAE};
+	\numdef{\nd}{\nvae+1}
+	
+	\numdef{\np}{\nd - 1}
+	\foreach \j in {\nvae,...,\np}{
+		\numdef{\i}{\j+1}
+		\numdef{\y}{\i - \nn}
+		\ifnumequal{\i}{\n-1}{%
+			\node(L\i)[dashed, layer, right = of L\j] {...};
+			\node(w\i)[below = of L\i]{...};
+			\node(y\i)[above = of L\i]{...};
+		}%
+		{
+			\node(L\i)[layer, right = of L\j] {$\mathrm{RU_D}$};
+			\ifnumequal{\i}{\n}{
+				\node(w\i)[below = of L\i]{$r_n$};
+				\node(y\i)[above = of L\i]{$\hat{y}_m$};
+			}
+			{
+				\node(w\i)[below = of L\i]{$r_\y$};
+				\node(y\i)[above = of L\i]{$\hat{y}_\y$};
+			}
+			
+			\draw[->] (w\i) -- (L\i);
+			\draw[->] (L\i) -- (y\i);		
+		}
+	}
+	
+	\foreach \i[count=\j from 1] in {2,...,\n} {
+		\draw[->] (L\j) edge node[labe] {\ifnumequal{\j}{\nn}{\underline{output}}{state}} (L\i);
+	}
+	% 
+	\end{tikzpicture}}
+	
+\end{figure}
+
+
+\section{Structured Models}
+A limitation of sequential models
 
 
 \end{document}
