@@ -1,5 +1,7 @@
 \documentclass[12pt,parskip]{komatufte}
 \include{preamble}
+
+
 \begin{document}
 
 \setchapterpreamble{%
@@ -116,6 +118,10 @@ where in-between the encoder and the decode stages there is a variational autoen
 The variational autoencoder \pcite{2014VAE} an autoencoder that has been demonstrated to have very good properties in a number of machine learning applications.
 Using the VAE it is hoped that a better representation can be found for the sequence of words in the input and output.
 
+Bowman et. al. training there network as encoder-decoder for English.
+The VAE is the hidden coding layer.
+They found that short syntactically similar sentences were located near to each other according to this space.
+Further the that, because it has a decoder, it can generate these nearby sentences.
 
 \begin{figure}
 	
@@ -140,7 +146,7 @@ Using the VAE it is hoped that a better representation can be found for the sequ
 	}
 	
 	\numdef{\nvae}{\nn+1}
-	\node(L_\nvae)[right=of L\nn] {VAE};
+	\node(L_\nvae)[above=of L\nn] {VAE};
 	\numdef{\nd}{\nvae+1}
 	
 	\numdef{\np}{\nd - 1}
@@ -178,7 +184,116 @@ Using the VAE it is hoped that a better representation can be found for the sequ
 
 
 \section{Structured Models}
-A limitation of sequential models
+\aside[Parsers]{There are many high-quality parsing libraries available.
+	Of particular note is the Stanford parser, included in Core NLP.
+	It has bindings in many languages, including Python via NLTK.
+	It has an interactive web-demo at \url{http://corenlp.run/},
+	which was used to produce \Cref{fig:consparse,fig:depparse}
+}
+
+A limitation of sequential models is information only flows in a sequence.
+However, the actual structure of natural language is not so simple.
+Linguists tend to break sentences down into a tree or graph structure.
+This is referred to as parsing.
+The two most common are constituency parse trees, and dependency parse trees.
+Examples of each are shown in \Cref{fig:consparse,fig:depparse}
+It is beyond the scope of this book to explain the precise meaning of these trees.
+The essence is that that represent the structure of the sentence,
+according to how linguists currently understand how sentences are processed by humans.
+The constituency parse breaks the sentence down into parts such as noun phrase (NP) and verb phrase (VP),
+which are in turn broken down into phrases, or (POS tagged) words.
+The constituency parse is well thought-of as a hierarchical breakdown of a sentence into its parts.
+Conversely, a dependency parse is better thought of as a set of binary relations between head-terms and there dependent terms.
+These structures are well linguistically motivated, so it make sense to use them in the processing of natural language.
+
+\begin{figure}
+	\caption{A constituency parse tree for the sentence \natlang{This is a simple example of a parse tree}}
+	\centering{\includegraphics[width=\textwidth]{constparse}}
+	\label{fig:consparse}
+\end{figure}
+
+
+\begin{figure}
+	\caption{A dependency parse tree for the sentence \natlang{This is a simple example of a parse tree},
+	This flattened view may be misleading.
+	\natlang{example} is at the peak of the tree, with direct children	being:
+	\natlang{this},\natlang{is},\natlang{a},\natlang{simple},
+	and \natlang{tree}.
+	\natlang{tree} has direct children being: \natlang{of},\natlang{a}, and \natlang{parse}.
+}
+	\centering{\includegraphics[width=\textwidth]{depparse}}
+	\label{fig:depparse}
+\end{figure}
+
+We refer here to models incorporating tree, or graph structures as structural models.
+Particular different variations have there own names, such as recursive neural networks (RvNN), and recurssive autoencoders (RAE).
+We use the term structural model as an all encompassing term. 
+It also makes for clearer reading to distinguish recursive and recurrent  neural networks.
+Just as a linked list is but a particular case of a tree, an RNN is a particular case of a structural model,
+however we will exclude them from this discussion except where marked.
+
+
+The initial recent work on structural models was done in for the thesis of \tcite{socher2014recursive}.
+It builds on the work of \tcite{goller1996BPstructure} and \tcite{Pollack199077}, which presents back-propagation through structure.
+Back-propagation can be applied to networks of any structure, much like (and indeed directly because) the chain-rule can be applied to any equation to find its derivative.
+This means that structuring a network according to its parse structure is possible.
+
+
+These tree structured networks function apply an recursive unit (which we will call RV) across pairs (or other groups of) the representations of the lower levels, to produce a combined representation.
+
+\begin{align}
+	RV(u, v) &= \varphi\([S;R][u;v] + b \)\\
+			 &= \varphi\(Su +Rv + b \)
+\end{align}
+
+
+
+\aside[Machine learning frameworks for structural models]{
+Structural networks can not be defined in most modern static neural network frameworks,
+such as TensorFlow.
+These frameworks function by defining a single computational graph that is used to process each training/test case.
+The same graph is used for each input.
+By definition the structure of the network differs from training/test case to training/test case.
+Technically the same problems apply to RNNs, as each case can have a different number of inputs.
+This is normally worked around by defining the network graph for the longest input to be considered,
+then padding all the inputs to this length.
+Such is not possible with structured networks.
+Other tricks are possible but are significantly more difficult.
+The exception to this is of-course via dynamic components to the static frameworks
+(which TensorFlow and other such frameworks certainly do have).
+Even in a dynamic tool it remains a non-trivial task to implement these networks.
+}
+
+
+\aside[Implementing Back-propagation through structure]{
+Back-propagation through structure is conceptually not significantly more complex than back propagation through time,
+in practice a very difficult algorithm to get right.
+In implementation it is very important to test for correctness using gradient checks, as it is easy to make a mistake and end-up with models that seem to work ok, but are actually crippled due to some mistake in the coding.
+Unfolding recursive autoencoders are particularly difficult,
+as the gradient must be propagated from all leaves.
+And output interior nodes can not have there gradients calculated until the gradients of their children are calculated.
+The solution to this is to process the gradients using a priority queue,
+where the priority is set by the depth of the node.
+Thus ensuring all children are processes before there parents.
+}
+
+
+
+A limitation of these structural models compared to the sequential RNNs,
+is there lack of explicit gating on memory (e.g. as in GRU and LSTM).
+Any given path down a tree can be looked at as like an RNN comprised only of basic recurrent units.
+However, these paths are much shorter (being the logarithm of) than the full sequential length of the sentence,
+which offsets the need for such gating.
+Recall that the gating is to provide longer short term memory.
+
+
+\aside[Sequential models are often preferred to structural models]{
+Sequential (RNN) models are much more heavily researched than structural (RvNN) models.
+They have better software libraries, and are easier to implement.
+In theory it is possible for a sequential model (with sufficiently deep and wide RUs) effectively internalise the connections that a structural model would posses.
+}
+
+
 
 
 \end{document}
