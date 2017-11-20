@@ -225,8 +225,39 @@ These structures are well linguistically motivated, so it make sense to use them
 	\label{fig:depparse}
 \end{figure}
 
+
+\aside[Machine learning frameworks for structural models]{
+	Structural networks can not be defined in most modern static neural network frameworks,
+	such as TensorFlow.
+	These frameworks function by defining a single computational graph that is used to process each training/test case.
+	The same graph is used for each input.
+	By definition the structure of the network differs from training/test case to training/test case.
+	Technically the same problems apply to RNNs, as each case can have a different number of inputs.
+	This is normally worked around by defining the network graph for the longest input to be considered,
+	then padding all the inputs to this length.
+	Such is not possible with structured networks.
+	Other tricks are possible but are significantly more difficult.
+	The exception to this is of-course via dynamic components to the static frameworks
+	(which TensorFlow and other such frameworks certainly do have).
+	Even in a dynamic tool it remains a non-trivial task to implement these networks.
+}
+
+
+\aside[Implementing Back-propagation through structure]{
+	Back-propagation through structure is conceptually not significantly more complex than back propagation through time,
+	in practice a very difficult algorithm to get right.
+	In implementation it is very important to test for correctness using gradient checks, as it is easy to make a mistake and end-up with models that seem to work ok, but are actually crippled due to some mistake in the coding.
+	Unfolding recursive autoencoders are particularly difficult,
+	as the gradient must be propagated from all leaves.
+	And output interior nodes can not have there gradients calculated until the gradients of their children are calculated.
+	The solution to this is to process the gradients using a priority queue,
+	where the priority is set by the depth of the node.
+	Thus ensuring all children are processes before there parents.
+}
+
+
 We refer here to models incorporating tree, or graph structures as structural models.
-Particular different variations have there own names, such as recursive neural networks (RvNN), and recurssive autoencoders (RAE).
+Particular different variations have there own names, such as recursive neural networks (RvNN), and recursive autoencoders (RAE).
 We use the term structural model as an all encompassing term. 
 It also makes for clearer reading to distinguish recursive and recurrent  neural networks.
 Just as a linked list is but a particular case of a tree, an RNN is a particular case of a structural model,
@@ -240,42 +271,33 @@ This means that structuring a network according to its parse structure is possib
 
 
 These tree structured networks function apply an recursive unit (which we will call RV) across pairs (or other groups of) the representations of the lower levels, to produce a combined representation.
+For the example of a network which handles binary tree inputs the RV would be:
 
 \begin{align}
 	RV(u, v) &= \varphi\([S;R][u;v] + b \)\\
 			 &= \varphi\(Su +Rv + b \)
 \end{align}
 
+where $u$ and $v$ are the left and right substructures embeddings (word embeddings at the leaf node level), and $S$ and $R$ are the matrices defining the left and right inputs are to be combined.
+
+This is a useful form as all constituency parse trees are commonly converted into binary parse trees, via left-factoring or right factoring (adding new nodes to the left or right to take some of the children).
+This is sometimes call putting binarization, or putting them into  Chomsky normal form.
+This form was used in \tcite{socher2010PhraseEmbedding}, \tcite{SocherEtAl2011:RAE},  \tcite{SocherEtAl2011:PoolRAE},
+ \tcite{Socher2011ParsingPhrases} and \tcite{zhang2014BRAE}.
+Where the $S$ and $R$ matrices are shared for all words.
+
+This is in-contrast to \cite{iyyer2014generating}, which works over dependency parse trees.
 
 
-\aside[Machine learning frameworks for structural models]{
-Structural networks can not be defined in most modern static neural network frameworks,
-such as TensorFlow.
-These frameworks function by defining a single computational graph that is used to process each training/test case.
-The same graph is used for each input.
-By definition the structure of the network differs from training/test case to training/test case.
-Technically the same problems apply to RNNs, as each case can have a different number of inputs.
-This is normally worked around by defining the network graph for the longest input to be considered,
-then padding all the inputs to this length.
-Such is not possible with structured networks.
-Other tricks are possible but are significantly more difficult.
-The exception to this is of-course via dynamic components to the static frameworks
-(which TensorFlow and other such frameworks certainly do have).
-Even in a dynamic tool it remains a non-trivial task to implement these networks.
-}
+\subsection{Unfolding Output layers}
+\textcite{SocherEtAl2011:PoolRAE} and \textcite{iyyer2014generating}
+are what have been call Unfolding Recursive AutoEncoders (URAE)
 
 
-\aside[Implementing Back-propagation through structure]{
-Back-propagation through structure is conceptually not significantly more complex than back propagation through time,
-in practice a very difficult algorithm to get right.
-In implementation it is very important to test for correctness using gradient checks, as it is easy to make a mistake and end-up with models that seem to work ok, but are actually crippled due to some mistake in the coding.
-Unfolding recursive autoencoders are particularly difficult,
-as the gradient must be propagated from all leaves.
-And output interior nodes can not have there gradients calculated until the gradients of their children are calculated.
-The solution to this is to process the gradients using a priority queue,
-where the priority is set by the depth of the node.
-Thus ensuring all children are processes before there parents.
-}
+Simpler than this is the (nonunfolding) Recursive Autoencoder,
+as was used in \textcite{SocherEtAl2011:RAE} and \textcite{zhang2014BRAE}
+ 
+
 
 
 
@@ -293,6 +315,11 @@ They have better software libraries, and are easier to implement.
 In theory it is possible for a sequential model (with sufficiently deep and wide RUs) effectively internalise the connections that a structural model would posses.
 }
 
+\section Implementations
+
+The implementation of \tcite{socher2010PhraseEmbedding}, is publicly available,
+however it does not export embeddings.
+It is nested deep in side the Stanford Parser (Java), accessing the embeddings is highly non-trivial.
 
 
 
