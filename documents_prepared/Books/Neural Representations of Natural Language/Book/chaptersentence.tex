@@ -82,6 +82,7 @@ the sums in each position would be:
 \end{array}\right]=\left[\begin{array}{c|c|c}
 	C_{M}+C_{it}-C_{day} & C_{M} & C_{M}-C_{was}+C_{today}\end{array}\right]
 \end{align}
+
 \begin{align}
 \left[\begin{array}{c|c|c}
 	\quad C_{w_{1}} & \quad C_{w_{2}} & \quad C_{w_{3}}\\
@@ -203,7 +204,7 @@ according to how linguists currently understand how sentences are processed by h
 The constituency parse breaks the sentence down into parts such as noun phrase (NP) and verb phrase (VP),
 which are in turn broken down into phrases, or (POS tagged) words.
 The constituency parse is well thought-of as a hierarchical breakdown of a sentence into its parts.
-Conversely, a dependency parse is better thought of as a set of binary relations between head-terms and there dependent terms.
+Conversely, a dependency parse is better thought of as a set of binary relations between head-terms and there dependent terms, though this likewise does result in a tree structure.
 These structures are well linguistically motivated, so it make sense to use them in the processing of natural language.
 
 \begin{figure}
@@ -274,8 +275,8 @@ These tree structured networks function apply an recursive unit (which we will c
 For the example of a network which handles binary tree inputs the RV would be:
 
 \begin{align}
-	RV(u, v) &= \varphi\([S;R][u;v] + b \)\\
-			 &= \varphi\(Su +Rv + b \)
+	f_{RV}(u, v) &= \varphi\left( [S;R][u;v] + b \right) \\
+			     &= \varphi\left( Su +Rv + b \right)
 \end{align}
 
 where $u$ and $v$ are the left and right substructures embeddings (word embeddings at the leaf node level), and $S$ and $R$ are the matrices defining the left and right inputs are to be combined.
@@ -286,16 +287,64 @@ This form was used in \tcite{socher2010PhraseEmbedding}, \tcite{SocherEtAl2011:R
  \tcite{Socher2011ParsingPhrases} and \tcite{zhang2014BRAE}.
 Where the $S$ and $R$ matrices are shared for all words.
 
-This is in-contrast to \cite{iyyer2014generating}, which works over dependency parse trees.
+This is in-contrast to \tcite{iyyer2014generating} and \tcite{socherDTRNN}, which works over dependency parse trees.
+In this network nodes could have many inputs.
+But depending on the relationship, eg \natlang{nsub}, \natlang{det}, \natlang{nmod}, \natlang{case}, a different matrix was used.
+For $r(i,j)$ giving the relationship between word $i$ and the $j$, where $i$ is the head word, according to the dependency parse,
+the following expressing gives the 
+
+\begin{align}
+	f_{RV}(i) &= \varphi\left(W_{head} C_{w_i} + \sum_{j \in \mathrm{children}(i)} W_{r(i,j)} \, f_{RV}(j) + b \right)
+\end{align}
+
+where $C_{w_i}$ is the word embedding for $w_i$.
+Note that the terminal case is when a node has no children, which is just $f_{RV}(i) = \varphi \left( W_{head} C_{w_i} + b \right)$.
 
 
-\subsection{Unfolding Output layers}
-\textcite{SocherEtAl2011:PoolRAE} and \textcite{iyyer2014generating}
-are what have been call Unfolding Recursive AutoEncoders (URAE)
 
 
-Simpler than this is the (nonunfolding) Recursive Autoencoder,
-as was used in \textcite{SocherEtAl2011:RAE} and \textcite{zhang2014BRAE}
+In \textcite{socherDTRNN}, an a similar network was used for projecting text captions into a common vector space where they would be near to there images.
+The network was first trained to on an accusal language modelling task \pdfcomment{Need to get some more details on this bit}.
+Then once it was trained its weights were locked and a separate CNN was trained to produce image representations such that those representations were near (in vector space) to the sentence's embeddings.
+
+
+A similar technique of multiple inputs distinguished by using different matrices based on there relationship to the whole phrase,
+ could be applied to non-binary constituency part trees.
+This would be using the part of speech (e.g. VBZ, NN) and phrase tags (e.g. NP, VP) for the substructures to choice the weight matrix, to be applied to the embedding that is determined by the input from below (word embedding in the leaf nodes).
+This would however lose order information in some cases.
+
+The next step along this line of reasoning is to allow the input below to not only determine the embedding vector input but also to determine the matrices used to encode the relationship.
+So not only is the representation of the (sub)prase determined by a relationship between  its constituents (as represented by there embeddings),
+but the nature of that relationship (as represented by the matrix) is also determined by the constituents.
+
+
+
+
+\subsection{Autoencoders}
+The models presented in \textcite{SocherEtAl2011:PoolRAE} and \textcite{iyyer2014generating}
+are Unfolding Recursive AutoEncoders (URAE).
+In these models there an inverse tree is defined above the highest 
+
+
+Simpler than this is the (non-unfolding) Recursive Autoencoder,
+as was used in \textcite{SocherEtAl2011:RAE} and \textcite{zhang2014BRAE}.
+Here, during training only a single layer of unfolding takes place at each node.
+This covers the auto-encoding nature of each merge;
+but does not give any direct promise of the auto-encoding nature of the whole structure.
+Though it is possible to use the learned reconstruction network components recursively from the top layer just like in the unfolding case.
+
+\subsection{Semi-supervised}
+In the case of all these autoencoders, except \textcite{iyyer2014generating}, a second source of information is also used to calculate the loss during training.
+The networks are being simultaneously trained to perform a task.
+This is often considered as semi-supervisors learning, as unlabelled data can be used to train the auto-encoding part (unsupervised) gaining good representation, and labelled data can be used train the supervised part making that representation useful for the task.
+This is done by imposing a loss function onto the output of the central/top node.
+\begin{itemize}
+ \item In \textcite{SocherEtAl2011:RAE} this was for sentiment analysis.
+ \item In \textcite{SocherEtAl2011:PoolRAE} this was paraphrase detection.
+ \item In \textcite{zhang2014BRAE} this was the distance between embeddings of equivalent translated phrases for two RAEs for different languages.
+ \item 
+\end{itemize}
+
  
 
 
@@ -322,5 +371,28 @@ however it does not export embeddings.
 It is nested deep in side the Stanford Parser (Java), accessing the embeddings is highly non-trivial.
 
 
+\section{Conclusion}
 
+\subsection{On compositionality}
+\tcite{Mitchell2008} \pdfcomment{Incorperate this}
+
+It is tempting to think of the structured models as compositional,
+and the sequential models as non-compositional.
+However, this is incorrect.
+
+The compositional nature of the structured models is obvious:
+the vector a phrase is composed from the vectors of the words the phrase are formed from.
+
+There is no limitation of a sequential model from learning the structures:
+that is to say learning that a word from X time steps ago is to be remembered in the RNN state, a to be meaningfully combined with the current word, in the determining of the next state.
+This demonstrates the same conditionality.
+There exist works which show sequential models learning such relationships between words such as \tcite{2017arXiv170909360W}.
+Indeed more generally, as language is compositional, and sequential models work very well on language tasks, this implicitly shows they have sufficient representational capacity to learn sufficient degrees of compositional tasks.
+
+In fact, even some unordered models such as sum of word embeddings are able to capture compositional information.
+This was shown by \textcite{RitterPosition}, by their ability of a na\"ive Bayes classifier with these unordered phrase representations were able predict meaning categories relationships that should only be able to be determined using a compositional understanding.
+Several  sum of word embeddings no only exceeded the baseline prediction, but even out performed the structured representation from a RAE.
+This suggests that a surprising amount of compositional information is being captured into the embeddings in such indexes that allows it to be represented through the addition.
+
+ 
 \end{document}
