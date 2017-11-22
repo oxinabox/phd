@@ -18,7 +18,7 @@
 %%%%%%%%%%%%%%%
 % Page Layout
 
-\newcommand\pagedivisions{14}
+
 \LoadClass[
   a4paper,
   twoside,
@@ -34,18 +34,28 @@
   captions = nooneline
 ]{scrbook}
 
+\newcommand\pagedivisions{14}
 \newlength{\completemargin}
 \setlength{\completemargin}{6cm}
 
 \RequirePackage{geometry}
+\geometry{
+	marginpar = 5.5cm,
+	inner  = 21cm /  \pagedivisions,
+	outer  = 21cm / \pagedivisions,
+	top    = 29.7cm / \pagedivisions,
+	bottom = 29.7cm / \pagedivisions,
+	heightrounded,
+}
 \savegeometry{basegeo} % Reset to this geometry for title pages etc
+
 \geometry{
 	marginpar = 5.5cm,
 	inner  = 21cm /  \pagedivisions,
 	outer  = 21cm / \pagedivisions + \completemargin,
 	top    = 29.7cm / \pagedivisions,
 	bottom = 29.7cm / \pagedivisions,
-	heightrounded
+	heightrounded,
 }
 \savegeometry{contentgeo} % use this geometry for normal pages
 
@@ -53,12 +63,14 @@
 
 % Use scrlayer-scrpage, so that package notecolumn works
 \RequirePackage[
-	headwidth = 21cm - 21cm / \pagedivisions * 3 : 0cm,
-	footwidth = 21cm - 21cm / \pagedivisions * 3 : 0cm,
-	plainheadsepline,
-	headsepline = 1pt,
-	plainfootsepline,
+%	headwidth = 21cm - 21cm / \pagedivisions * 3 : 1cm,
+%	footwidth = 21cm - 21cm / \pagedivisions * 3 : 1cm,
+%	plainheadsepline,
+%	headsepline = 1pt,
+%	plainfootsepline,
 ]{scrlayer-scrpage}
+
+
 
 \newlength{\notescolwidth}
 \setlength{\notescolwidth}{\completemargin - \marginparsep}

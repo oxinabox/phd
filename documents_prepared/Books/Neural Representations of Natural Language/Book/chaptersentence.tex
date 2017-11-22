@@ -20,14 +20,24 @@
 	Many of these techniques extent to arbitrary length sequences of words.
 \end{abstract}
 
-\aside[Documents vs Sentences]{All techniques which can represent documents (or paragraphs) can by necessity represent sentences as well. A single sentence can be a whole document. Similarly for paragraphs. The reverse is not necessarily true.}
-
 
 It can be argued that the core of true AI,
 is the capture a machine manipulatable representation of an idea.
 In natural language a sentence (as defined by Webster in the quote above),
 is such a representation of an idea, but it is not machine manipulatable.
 As such the conversion of sentences to a machine manipulatable representation is an important task in AI research.
+
+
+All techniques which can represent documents (or paragraphs) can by necessity represent sentences as well.
+A single sentence can be a whole document, similarly for paragraphs.
+The reverse is not necessarily true: most documents are not just a single sentence.
+When considering on documents beyond sentences,
+neural network embedding models directly compete with vector information retrieval models.
+These information retrieval models include LSI \pcite{dumais1988using}, probabilistic LSI \pcite{hofmann2000learning},  LDA \pcite{blei2003latent}.
+
+\pdfcomment{I need to get my head straight about when these models are like word embeddings vs when they are like document embeddings. I think it is just taking on output instread of the other, but it has been a while since I looked at this}
+
+
 
 \aside[Word Sense Embeddings as a by-product]{
 Almost all sentence representation methods product word embeddings as a by-product
@@ -93,9 +103,13 @@ the sums in each position would be:
 	\sum C_{w_{i}}-C_{w_{n-1}}-C_{w_{n-2}} & \sum C_{w_{i}}-C_{w_{1}}-C_{w_{n-1}} & \sum C_{w_{i}}-C_{w_{1}}-C_{w_{2}}\end{array}\right]
 \end{align}
 
+\subsection{Paragraph Vector Models}
+
+this work is an extension of \tcite{mikolov2012contextRNNLM}
 
 \section{Sequential Models}
 
+\subsection{Every RNN learns a sentence representation in its state}
 \begin{figure}
 	\caption{The unrolled structure of an RNN for us in Encoding, Decoding and Encoding-Decoding (sequence-to-sequence) problems. RU is the recurrent unit -- the neural network which reoccurs at each time step. (Repeated from \Cref{fig-rnns})
 	}
@@ -113,73 +127,133 @@ Similarly for any RNN decoder, one can select any hidden layer before the first 
 For an RNN encoder-decoder, this means selecting the hidden layer from between.
 As for example in \tcite{cho-EtAl:2014:EMNLP2014}.
 
-
+\subsection{VAE and encoder-decoder}
 \tcite{Bowman2015SmoothGeneration} presents an extension on this notion,
 where in-between the encoder and the decode stages there is a variational autoencoder (VAE).
 The variational autoencoder \pcite{2014VAE} an autoencoder that has been demonstrated to have very good properties in a number of machine learning applications.
 Using the VAE it is hoped that a better representation can be found for the sequence of words in the input and output.
 
+As shown in \Cref{fig:bowman}.
+
 Bowman et. al. training there network as encoder-decoder for English.
-The VAE is the hidden coding layer.
+The VAE is the hidden coding layer. 
 They found that short syntactically similar sentences were located near to each other according to this space.
 Further the that, because it has a decoder, it can generate these nearby sentences.
 
 \begin{figure}
+	\caption{The VAE plus encoder-decoder of \textcite{Bowman2015SmoothGeneration}.
+		Note that during training, $\hat{y}_i=w_i$, as it is an autoencoder model,
+		and as is normal for encoder-decoders the prompts are the previous output (target during training, predicted during testing) $r_i=y_{i-1}$,
+		with $r_1=y_0=<EOS>$ being a pseudo-token marker for the end of string.
+	}
+	\label{fig:bowman}
 	
-	\numdef{\n}{6}
-	\numdef{\labelwidth}{5.5cm}
+	
 	%%%%%%%%%%%%%%%%%%%%%%%%%
 	% Encoder
-	\resizebox{\textwidth}{!}{
-	\begin{tikzpicture}[]
-	\coordinate (L0) at (lbl.east);
-	\numdef{\nn}{\n/2}
-	\foreach \i[count=\j from 0] in {1,...,\nn}{
-		\ifnumequal{\i}{\nn - 1}{%
-			\node(L\i)[dashed, layer, right = of L\j] {...};
-			\node(w\i)[below = of L\i]{...};
-		}%
-		{
-			\node(L\i)[layer, right = of L\j] {$\mathrm{RU_E}$};
-			\node(w\i)[below = of L\i]{\ifnumequal{\i}{\nn}{$w_n$}{$w_\i$}};
+	\resizebox{\textwidth}{!}{\begin{tikzpicture}[]
+		\coordinate (L0) at (lbl.east);
+		
+		\node(L1)[layer, right = of L0] {$\mathrm{RU_E}$};
+		\node(w1)[below = of L1]{$w_1$};
+		\draw[->] (w1) -- (L1);
+	
+		\node(L2)[layer, right = of L1] {$\ldots$};
+		\node(w2)[below = of L2]{$\ldots$};
+	
+		\node(L3)[layer, right = of L2] {$\mathrm{RU_E}$};
+		\node(w3)[below = of L3]{$w_n$};
+	
+		\node(L4)[layer, above = of L3] {$VAE$};
+		
+		
+		\node(L5)[layer, above right = of L4] {$\mathrm{RU_D}$};
+		\node(w5)[below = of L5]{$r_1$};
+		\node(y5)[above = of L5]{$\hat{y}_1$};
+		\draw[->] (L5) -- (y5);
+		
+		\node(L6)[layer, right = of L5] {$\ldots$};
+		\node(w6)[below = of L6]{$\ldots$};
+		\node(y6)[above = of L6]{$\ldots$};
+		\draw[->] (L6) -- (y6);
+		
+		
+		\node(L7)[layer, right = of L6] {$\mathrm{RU_D}$};
+		\node(w7)[below = of L7]{$r_m$};
+		\node(y7)[above = of L7]{$\hat{y}_m$};
+		\draw[->] (L7) -- (y7);
+		\draw[->] (w7) -- (L7);
+		
+		
+		\foreach \i/\j in {1/2, 2/3, 5/6,6/7} {
+			\draw[->] (L\i) edge node[labe] {state} (L\j);
 			\draw[->] (w\i) -- (L\i);
 		}
-	}
-	
-	\numdef{\nvae}{\nn+1}
-	\node(L_\nvae)[above=of L\nn] {VAE};
-	\numdef{\nd}{\nvae+1}
-	
-	\numdef{\np}{\nd - 1}
-	\foreach \j in {\nvae,...,\np}{
-		\numdef{\i}{\j+1}
-		\numdef{\y}{\i - \nn}
-		\ifnumequal{\i}{\n-1}{%
-			\node(L\i)[dashed, layer, right = of L\j] {...};
-			\node(w\i)[below = of L\i]{...};
-			\node(y\i)[above = of L\i]{...};
-		}%
-		{
-			\node(L\i)[layer, right = of L\j] {$\mathrm{RU_D}$};
-			\ifnumequal{\i}{\n}{
-				\node(w\i)[below = of L\i]{$r_n$};
-				\node(y\i)[above = of L\i]{$\hat{y}_m$};
-			}
-			{
-				\node(w\i)[below = of L\i]{$r_\y$};
-				\node(y\i)[above = of L\i]{$\hat{y}_\y$};
-			}
-			
-			\draw[->] (w\i) -- (L\i);
-			\draw[->] (L\i) -- (y\i);		
-		}
-	}
-	
-	\foreach \i[count=\j from 1] in {2,...,\n} {
-		\draw[->] (L\j) edge node[labe] {\ifnumequal{\j}{\nn}{\underline{output}}{state}} (L\i);
-	}
-	% 
+		\draw[->] (L3) edge node[labe] {output} (L4);		
+		\draw[->, bend left] (L4) edge node[labe] {output} (L5);
+		 
 	\end{tikzpicture}}
+	
+\end{figure}
+
+\subsection{Skip-thought}
+\tcite{DBLP:journals/corr/KirosZSZTUF15} draws inspiration from language modelling, to attempt to predict the previous and next sentence as an task.
+They use an Encoder-Decoder RNN, with two decoder parts.
+One decoder is to produce the previous sentence.
+The other decoder is to produce the next sentence.
+
+\begin{figure}
+	\caption{The skip-thought model \textcite{DBLP:journals/corr/KirosZSZTUF15}.}
+	\label{fig:skip-thought}
+	
+	%%%%%%%%%%%%%%%%%%%%%%%%%
+	% Encoder
+	\resizebox{\textwidth}{!}{\begin{tikzpicture}[]
+		\coordinate (L0) at (lbl.east);
+		
+		\node(L1)[layer, right = of L0] {$\mathrm{RU_E}$};
+		\node(w1)[below = of L1]{$w_1$};
+		\draw[->] (w1) -- (L1);
+		
+		\node(L2)[layer, right = of L1] {$\ldots$};
+		\node(w2)[below = of L2]{$\ldots$};
+		
+		\node(L3)[layer, right = of L2] {$\mathrm{RU_E}$};
+		\node(w3)[below = of L3]{$w_n$};
+		
+
+		\node(LN5)[layer, above right = 2 of L3] {$\mathrm{RU_N}$};
+		\node(LP5)[layer, below right = 2 of L3] {$\mathrm{RU_P}$};
+		\foreach \d in {N,P} {
+			\draw[->] (L3.east) edge node[labe] {state} (L\d5.west);
+					
+			\node(w\d5)[below = of L\d5]{$r_{\d, 1}$};
+			\node(y\d5)[above = of L\d5]{$\hat{y}_{\d, 1}$};
+			\draw[->] (L\d5) -- (y\d5);
+			
+			\node(L\d6)[layer, right = of L\d5] {$\ldots$};
+			\node(w\d6)[below = of L\d6]{$\ldots$};
+			\node(y\d6)[above = of L\d6]{$\ldots$};
+			\draw[->] (L\d6) -- (y\d6);
+			
+			
+			\node(L\d7)[layer, right = of L\d6] {$\mathrm{RU_\d}$};
+			\node(w\d7)[below = of L\d7]{$r_{\d, m}$};
+			\node(y\d7)[above = of L\d7]{$\hat{y}_{\d, m}$};
+			\draw[->] (L\d7) -- (y\d7);
+			\draw[->] (w\d7) -- (L\d7);	
+		}
+
+
+				
+		\foreach \i/\j in {1/2, 2/3, N5/N6, N6/N7, P5/P6, P6/P7} {
+			\draw[->] (L\i) edge node[labe] {state} (L\j);
+			\draw[->] (w\i) -- (L\i);
+		}
+		
+
+		
+		\end{tikzpicture}}
 	
 \end{figure}
 
@@ -320,10 +394,13 @@ but the nature of that relationship (as represented by the matrix) is also deter
 
 
 
-\subsection{Autoencoders}
+\subsection{Recursive Autoencoders}
+Recursive autoencoders are autoencoders, just as the autoencoder discussed in \Cref{sec:bottle-necking-autoencoder}.
+
+
 The models presented in \textcite{SocherEtAl2011:PoolRAE} and \textcite{iyyer2014generating}
 are Unfolding Recursive AutoEncoders (URAE).
-In these models there an inverse tree is defined above the highest 
+In these models there an inverse tree is defined above the highest node
 
 
 Simpler than this is the (non-unfolding) Recursive Autoencoder,
@@ -362,6 +439,11 @@ Recall that the gating is to provide longer short term memory.
 Sequential (RNN) models are much more heavily researched than structural (RvNN) models.
 They have better software libraries, and are easier to implement.
 In theory it is possible for a sequential model (with sufficiently deep and wide RUs) effectively internalise the connections that a structural model would posses.
+While structural models are theoretically nicer from a linguistics standpoint, pragmatically they are the last resort in modelling.
+When attempting to find an useful representation of a sentence for a task, one should first try a sum of word embeddings with a simple network on-top,
+then sequential model (based on LSTM or GRU), and only if these fail then try a structured model.
+Arguably before using any neural network approach at all, one should eliminated bag of words, bag of ngrams, dimensionality reduced version of those bags, and also eliminated LSI and LDA as inputs for the task.
+Simple is powerful.
 }
 
 \section Implementations
@@ -370,6 +452,7 @@ The implementation of \tcite{socher2010PhraseEmbedding}, is publicly available,
 however it does not export embeddings.
 It is nested deep in side the Stanford Parser (Java), accessing the embeddings is highly non-trivial.
 
+There is a popular implementation the paragraph vector models in recent versions of the python gensim library \pcite{rehurek_lrec}, along with many information retrieval vector models such as LDA.
 
 \section{Conclusion}
 
