@@ -103,9 +103,71 @@ the sums in each position would be:
 	\sum C_{w_{i}}-C_{w_{n-1}}-C_{w_{n-2}} & \sum C_{w_{i}}-C_{w_{1}}-C_{w_{n-1}} & \sum C_{w_{i}}-C_{w_{1}}-C_{w_{2}}\end{array}\right]
 \end{align}
 
-\subsection{Paragraph Vector Models}
+\subsection{Context Vector Models}
 
-this work is an extension of \tcite{mikolov2012contextRNNLM}
+\aside[Window vs Context]{
+It is important to be clear in this section on the difference between the window and the context.
+The window is the words near the target word.
+The context (in this context) refers to the larger structure (sentence, paragraph, document) that a representation is attempting to be found for.
+The window is always a subset of the context.
+And in modelling the context many windows with in it will be considered (one per target word).
+Some works say sentence vector, document vector or paragraph vector.
+We say context vector as it could be any of the above.
+In theory it could even be a whole collection of documents.
+}
+
+\tcite{le2014distributed} introduces two models for representing documents of any length by using augmented word-embedding models.
+The word-embedding models CBOW and skipgram, are extended with an additional context vector that represents the current documented (or other large structure).
+It is also very similar to the methods used in \tcite{Huang2012} and more distantly to \tcite{mikolov2012contextRNNLM}.
+\pdfcomment{actually not that similar, to the contextRNNLM since }
+However those prior works were focused on word-embedding generation, and language modelling respectively.
+They showed that adding an additional context vector would allow for improvement on those tasks.
+\textcite{le2014distributed} took this further and considered that for such improvements the context vector itself must contain useful information about the context.
+That it would be a representation for the context.
+
+
+PV-DBOW is an extension of CBOW.
+The inputs the model are not only the word-embedding $C_{w_j}$ for the words $w_j$ from the window,
+but also a context-embedding $D_{d_k}$ for its current context (sentence, paragraph or document etc) $d_k$.
+The task remain to predict which word was the missing word from the center of the context $w_i$
+\begin{align}
+P(w_i & \mid d_k,\, w_{i-\frac{n}{2}},..., w_{i-1}, w_{i+1},...,w_{i+\frac{n}{2}})  \nonumber
+\\  & = s_{max}(WD_{d_k} + U \sum_{j=i+1}^{j=\frac{n}{2}} \left( C_{w_{i-j}}+C_{w_{i+j}} \right))
+\end{align}
+
+
+
+PV-DM is the equivalent extension for skip-grams.
+Here the input to the model is not only the central word, but also the context vector.
+The task remains to predict the other words from the window.
+\begin{equation}
+P(w_j \mid d_k,\, w_{i}) = \left[ s_{max}(WD_{d_k} + V\,C_{w_{i}}) \right]_{w_j} 
+\end{equation}
+
+The effect in both cases of adding a context vector is to allow the network to learn a mildly different accusal language model depending on the context.
+it is worth noting that as a near linear model (only hidden-layer is the embedding layer), the over-fitting risk on the language modelling task is quiet low.
+
+While in theory a network could learn an entirely different language model based on the differing context vectors,
+this is unlikely (and may not be possible) for these models. \pdfcomment{think about this more and determine if it actually is impossible.}
+
+
+\aside[Multiview Context Extension]{It occurs to us that there is no reason (beyond the  over-fitting risk), to have just a single context vector.
+One could reasonably have many: 1 for the sentence, 1 for the paragraph, one for the document,
+one for the domain/topic.
+This would be an interesting extension to the model.
+}
+
+
+There have been significant issues raise with attempting to replicate the results of \textcite{le2014distributed} \pcite{lau2016doc2vecissues}.
+It is been concluded that the hyper-parameters reported in the original paper were not correct.
+\footnote{The demonstration of the issues with hyper-parameters  was discussed in the email thread at \url{https://groups.google.com/
+forum/#!topic/word2vec-toolkit/Q49FIrNO}. However this no-longer exists, and we have been unable to locate any archived copies.}
+\textcite{lau2016doc2vecissues} showed that with the right tuning these paragraph vector models could perform very well on many tasks.
+
+
+
+
+
 
 \section{Sequential Models}
 
