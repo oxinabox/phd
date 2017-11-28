@@ -103,7 +103,7 @@ the sums in each position would be:
 	\sum C_{w_{i}}-C_{w_{n-1}}-C_{w_{n-2}} & \sum C_{w_{i}}-C_{w_{1}}-C_{w_{n-1}} & \sum C_{w_{i}}-C_{w_{1}}-C_{w_{2}}\end{array}\right]
 \end{align}
 
-\subsection{Context Vector Models}
+\subsection{Context Vector Models (Defunct)}
 
 \aside[Window vs Context]{
 It is important to be clear in this section on the difference between the window and the context.
@@ -158,11 +158,14 @@ This would be an interesting extension to the model.
 }
 
 
-There have been significant issues raise with attempting to replicate the results of \textcite{le2014distributed} \pcite{lau2016doc2vecissues}.
-It is been concluded that the hyper-parameters reported in the original paper were not correct.
-\footnote{The demonstration of the issues with hyper-parameters  was discussed in the email thread at \url{https://groups.google.com/
-forum/#!topic/word2vec-toolkit/Q49FIrNO}. However this no-longer exists, and we have been unable to locate any archived copies.}
-\textcite{lau2016doc2vecissues} showed that with the right tuning these paragraph vector models could perform very well on many tasks.
+The results of this work are now considered of limited validity.
+There were failures to reproduce as documented online by several users,
+cluding by the second author.
+ \footnote{ \url{https://groups.google.com/forum/\#!msg/word2vec-toolkit/Q49FIrNOQRo/DoRuBoVNFb0J}}
+A follow up paper, \tcite{mesnil2014ensemble} it was found that reweighed bags of n-grams \pcite() out perform the paragraph vector models.
+Other evaluations have been carried out on other problems \textcite{lau2016doc2vecissues} showed that with the right tuning these paragraph vector models could perform very well on many tasks.
+This highlights the importance of rigorous testing against a suitable baseline.
+Especially in not rejecting trivial models out of hand.
 
 
 
@@ -411,7 +414,7 @@ These tree structured networks function apply an recursive unit (which we will c
 For the example of a network which handles binary tree inputs the RV would be:
 
 \begin{align}
-	f_{RV}(u, v) &= \varphi\left( [S;R][u;v] + b \right) \\
+	f_{RV}(u, v) &= \varphi\left( [S;R][u;v] + b \right) \\ \label{equ:rnn1}
 			     &= \varphi\left( Su +Rv + b \right)
 \end{align}
 
@@ -419,12 +422,23 @@ where $u$ and $v$ are the left and right substructures embeddings (word embeddin
 
 This is a useful form as all constituency parse trees are commonly converted into binary parse trees, via left-factoring or right factoring (adding new nodes to the left or right to take some of the children).
 This is sometimes call putting binarization, or putting them into  Chomsky normal form.
-This form was used in \tcite{socher2010PhraseEmbedding}, \tcite{SocherEtAl2011:RAE},  \tcite{SocherEtAl2011:PoolRAE},
- \tcite{Socher2011ParsingPhrases} and \tcite{zhang2014BRAE}.
+This form was used in \tcite{socher2010PhraseEmbedding}, \textcite{SocherEtAl2011:RAE},  \textcite{SocherEtAl2011:PoolRAE},
+ \textcite{Socher2011ParsingPhrases} and \textcite{zhang2014BRAE}.
 Where the $S$ and $R$ matrices are shared for all words.
 
-This is in-contrast to \tcite{iyyer2014generating} and \tcite{socherDTRNN}, which works over dependency parse trees.
-In this network nodes could have many inputs.
+
+\tcite{stenetorp2013transition} in the initial work on using structured networks for dependency trees was likewise used a single composition weight matrix.
+That is because it is a parser, like \textcite{socher2010PhraseEmbedding}.
+Given that dependency trees much handle non-adjacent child-nodes (non-projective language) it was necessarily more complex than the greedy approach taken for constituency parsing.
+Traditional transition-based dependency parsers function by iteratively predicting links (transition) to add to the structure based on its current state.
+\textcite{stenetorp2013transition} and later \tcite{bowman2016fast} observed that a composed representation given similarly to in \Cref{equ:rnn1}, was an ideal input to a softmax classifier that would predict the next link to make.
+Form a representation learning perspective, constructing parser is not incredibly interesting.
+The parsers produced by \textcite{socher2010PhraseEmbedding, stenetorp2013transition, bowman2016fast} perform comparably to the standard techniques.
+The interesting notion from this though, is that a dependency parse also can yield up the dependency relationships.
+
+
+The dependency tree work which followed, \tcite{socherDTRNN}, \tcite{iyyer2014neural}, and \tcite{iyyer2014generating} use these dependency relationships to use different composition matrices.
+Unlike the network created from a binary constituency parse, the networks for a dependency parse tree allows a node to have multiple inputs.
 But depending on the relationship, eg \natlang{nsub}, \natlang{det}, \natlang{nmod}, \natlang{case}, a different matrix was used.
 For $r(i,j)$ giving the relationship between word $i$ and the $j$, where $i$ is the head word, according to the dependency parse,
 the following expressing gives the 
@@ -436,9 +450,6 @@ the following expressing gives the
 where $C_{w_i}$ is the word embedding for $w_i$.
 Note that the terminal case is when a node has no children, which is just $f_{RV}(i) = \varphi \left( W_{head} C_{w_i} + b \right)$.
 
-
-
-
 In \textcite{socherDTRNN}, an a similar network was used for projecting text captions into a common vector space where they would be near to there images.
 The network was first trained to on an accusal language modelling task \pdfcomment{Need to get some more details on this bit}.
 Then once it was trained its weights were locked and a separate CNN was trained to produce image representations such that those representations were near (in vector space) to the sentence's embeddings.
@@ -447,11 +458,12 @@ Then once it was trained its weights were locked and a separate CNN was trained 
 A similar technique of multiple inputs distinguished by using different matrices based on there relationship to the whole phrase,
  could be applied to non-binary constituency part trees.
 This would be using the part of speech (e.g. VBZ, NN) and phrase tags (e.g. NP, VP) for the substructures to choice the weight matrix, to be applied to the embedding that is determined by the input from below (word embedding in the leaf nodes).
-This would however lose order information in some cases.
+This would however lose order information in some cases, where there ware .
 
 The next step along this line of reasoning is to allow the input below to not only determine the embedding vector input but also to determine the matrices used to encode the relationship.
 So not only is the representation of the (sub)prase determined by a relationship between  its constituents (as represented by there embeddings),
 but the nature of that relationship (as represented by the matrix) is also determined by the constituents.
+In this approach at the left-nodes every word has not only a word vector, but also a word matrix.
 
 
 
@@ -481,7 +493,6 @@ This is done by imposing a loss function onto the output of the central/top node
  \item In \textcite{SocherEtAl2011:RAE} this was for sentiment analysis.
  \item In \textcite{SocherEtAl2011:PoolRAE} this was paraphrase detection.
  \item In \textcite{zhang2014BRAE} this was the distance between embeddings of equivalent translated phrases for two RAEs for different languages.
- \item 
 \end{itemize}
 
  
@@ -507,6 +518,23 @@ then sequential model (based on LSTM or GRU), and only if these fail then try a 
 Arguably before using any neural network approach at all, one should eliminated bag of words, bag of ngrams, dimensionality reduced version of those bags, and also eliminated LSI and LDA as inputs for the task.
 Simple is powerful.
 }
+
+
+
+
+\section{Matrix Vector Models}
+SOCHERS MATRIX VECTOR MODEL
+
+A similar approach, of capturing a word matrix, 
+was used on a sequential model by CITE RUI HERE.
+While sequential models are a special case of structured models,
+it should be noted that unlike the structured models discussed prior,
+the work of CITE RUI,
+features gated memory.
+
+
+
+
 
 \section Implementations
 
