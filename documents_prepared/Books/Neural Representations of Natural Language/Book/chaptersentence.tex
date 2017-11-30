@@ -539,7 +539,39 @@ Simple is powerful.
 
 \section{Matrix Vector Models}
 \subsection{Structured Matrix Vector Model}
-SOCHER 2012
+\tcite{SocherMVRNN} proposed that each node in the graph should define not only a vector embedding, but a matrix defining how it was to be combined with other nodes.
+That is to say, each word has both an embedding, and a composition matrix.
+This means each phrase node must output both an embedding and a matrix also.
+\tcite{SocherMVRNN} considered this for binary constituency parse trees.
+The options for extending it to Dependency parse trees should be apparent.
+
+\aside[Dependency Tree Extension]{
+It is interesting to consider how one might extend this structure for dependency parse trees.
+We suggest the logical change would be for the $R$ and $S$ matrices to be determined by the relationship of the child node (including \emph{head}),
+Or the $W$ matrix to be determined by the relationship of the head to its own parent (potentially the fake relationship \emph{root}).
+To do both seems redundant (though perhaps no more so than having $W$ in the first place).
+Similar, based on POS could be done for the constituency parse tree.
+}
+
+\begin{align}
+f_{RV}(u, v, U, V) &= \varphi\left( [S;R][Uv;Vu] + b \right) \\ 
+&= \varphi\left( SUv +RVu + b \right)
+F_{RV}(U, V) = W[U;V] = W_L U + W_R V
+\end{align}
+
+$f_{RV}$ gives the output embedding for the node with children $(u,U)$ and $(v,V)$.
+$F_{RV}$ gives the output embedding for the node with children $(u,U)$ and $(v,V)$.
+
+$S$ and $R$ represent the left and right composition matrix components that are the same for all nodes (regardless of content).
+$U$ and $V$ represent the per word/node child composition matrix components.
+$S$ and $R$ could in theory be rolled in to $U$ and $R$.
+$u$ and $v$ represent the per word/node children embeddings.
+$W$ represents the method for merging two composition matrices
+
+
+
+
+
 
 \subsection{Sequential Matrix Vector Model}
 \pdfcomment{Maybe this section should just move to the RNN section/chapter}
@@ -564,18 +596,20 @@ In this method each word, $w_t$ is represented by a word embedding $x_{w_t}$ and
 The network outputs and states are the composed embedding $\hat{y}_t$ and matrix $Y_t$.
 
 \pdfcomment{Subscripts in this section mean time, not index.}
+
+\aside[Remember:]{Product of a matrix with a concatenated vector, is the same as the sum of the two blocks of that matrix each multiplied by the blocks of that vector.}
  
 \begin{align}
 h_t &= \tanh\left(V[x_t; \hat{y}_{t-1}] + c \right)\\
 z_t &= \sigma\left(Y_{t-1}x_t + X_t \hat{y}_{t-1} + k \right)\\
 %
 \hat{y}_t &= r_t \odot c_t + (1-r_t) \odot \hat{y}_{t-1} \\
-Y_t &= \tanh \left( U[Y_{t-1}; X_t] + b \right)
+Y_t &= \tanh \left( W[Y_{t-1}; X_t] + b \right)
 \end{align}
 
 
 
-The matrices $U$ and $V$ are shared across all time steps/compositions.
+The matrices $W$ and $V$ are shared across all time steps/compositions.
 $U$ controls how the next state-composition $Y_t$ matrix is generated from its previous value and the input composition matrix: $X_t$.
 $V$ similarly controls the value of the candidate state-embedding $h_t$.
 
