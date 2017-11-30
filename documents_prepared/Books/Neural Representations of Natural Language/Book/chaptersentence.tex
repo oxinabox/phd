@@ -15,10 +15,20 @@
 	Chapter 8: Sentence representations and beyond (5-10 pages)
 	This chapter takes the previous discussion of phrases to the next level: sentences.
 	This will include discussions of works on recursive structure
-	As well work leveraging recurrent neural networks.
+	As well work levering recurrent neural networks.
 	Methods that do not strongly consider order (including Sum of Word Embeddings; paragraph vectors) will also be discussed here.
 	Many of these techniques extent to arbitrary length sequences of words.
 \end{abstract}
+
+
+\aside[Word Sense Embeddings as a by-product]{
+	Almost all sentence representation methods product word embeddings as a by-product
+	Either output embeddings, from softmax,
+	or input embeddings that are used as the networks inputs.}
+\aside[Initialising input embeddings]{
+	In the case of systems with input embeddings it is common (but not ubiquitous) to initialised them using a pretrained embeddings from one of the methods discussed in the \Cref{sec:word-representations},
+	then allow them to be fine-tuned while training the sentence embeddings.
+}
 
 
 It can be argued that the core of true AI,
@@ -30,6 +40,7 @@ As such the conversion of sentences to a machine manipulatable representation is
 
 All techniques which can represent documents (or paragraphs) can by necessity represent sentences as well.
 A single sentence can be a whole document, similarly for paragraphs.
+Many of these models always work for sub-sentence structures also, like key-phrases.
 The reverse is not necessarily true: most documents are not just a single sentence.
 When considering on documents beyond sentences,
 neural network embedding models directly compete with vector information retrieval models.
@@ -37,16 +48,20 @@ These information retrieval models include LSI \pcite{dumais1988using}, probabil
 
 \pdfcomment{I need to get my head straight about when these models are like word embeddings vs when they are like document embeddings. I think it is just taking on output instread of the other, but it has been a while since I looked at this}
 
-
-
-\aside[Word Sense Embeddings as a by-product]{
-Almost all sentence representation methods product word embeddings as a by-product
-Either output embeddings, from softmax,
-or input embeddings that are used as the networks inputs.}
-\aside[Initialising input embeddings]{
-In the case of systems with input embeddings it is common (but not ubiquitous) to initialised them using a pretrained embeddings from one of the methods discussed in the \Cref{sec:word-representations},
-then allow them to be fine-tuned while training the sentence embeddings.
+\aside[Word Sense Embeddings in Sentence Embeddings]{
+While the last chapter was all about sense embeddings, they are unmentioned here.
+One might think that they would be very useful for sentence embeddings.
+However, they are not as needful as one might expect.
+What sense of a word being used is determined by the context.
+Ideally, it is determined by what the context means.
+As a sentence embedding is a direct attempt to represent the meaning of such a context, determining the sense of each word within is not a requirement.
+Using sense embeddings instead of word embeddings is a valid extension to many of these methods.
+However it requires performing word sense disambiguation.
+Which as discussed in the previous chapter is very difficult.
 }
+
+
+
 
 \section{Unordered and Weakly Ordered Representations}
 
@@ -70,7 +85,8 @@ The word embedding equivalent is sums of word embeddings (SOWE), and means of wo
 These methods, like BOW, lose all order information in the representation.
 In many cases it is possible to recover a BOW from a much lower dimensional SOWE 
 
-Surprisingly, they have been found on many tasks to be extremely well performing, better than several of the more advanced techniques discussed later in this chapter  \pcite{White2015SentVecMeaning}, \pcite{RitterPosition}.
+Surprisingly, they have been found on many tasks to be extremely well performing, better than several of the more advanced techniques discussed later in this chapter.
+This has been noted in several works including: \tcite{White2015SentVecMeaning}, \tcite{RitterPosition} and \tcite{rui2017mvrusemantic}.
 It has been suggested that this is because in English there are only a few likely ways to order any given bag of words and thus original sentences can often be recovered from BOW \pcite{Horvat2014} and thus SOWE, \pcite{White2016a}, given a simple ngram language model.
 The step beyond this is to encode the ngrams into a bag of words like structure.
 The bag of ngrams (BON), e.g. bag of trigrams, has been classically used as an alternative to BOW.
@@ -135,7 +151,7 @@ P(w_i & \mid d_k,\, w_{i-\frac{n}{2}},..., w_{i-1}, w_{i+1},...,w_{i+\frac{n}{2}
 \\  & = s_{max}(WD_{d_k} + U \sum_{j=i+1}^{j=\frac{n}{2}} \left( C_{w_{i-j}}+C_{w_{i+j}} \right))
 \end{align}
 
-
+\pdfcomment{It would be really easy to make really informativive pictures for this. but idk if it is worth the page space for discredited models}
 
 PV-DM is the equivalent extension for skip-grams.
 Here the input to the model is not only the central word, but also the context vector.
@@ -160,7 +176,7 @@ This would be an interesting extension to the model.
 
 The results of this work are now considered of limited validity.
 There were failures to reproduce as documented online by several users,
-cluding by the second author.
+icluding by the second author.
  \footnote{ \url{https://groups.google.com/forum/\#!msg/word2vec-toolkit/Q49FIrNOQRo/DoRuBoVNFb0J}}
 A follow up paper, \tcite{mesnil2014ensemble} it was found that reweighed bags of n-grams \pcite() out perform the paragraph vector models.
 Other evaluations have been carried out on other problems \textcite{lau2016doc2vecissues} showed that with the right tuning these paragraph vector models could perform very well on many tasks.
@@ -367,8 +383,7 @@ These structures are well linguistically motivated, so it make sense to use them
 
 
 \aside[Machine learning frameworks for structural models]{
-	Structural networks can not be defined in most modern static neural network frameworks,
-	such as TensorFlow.
+	Structural networks can not be defined in most modern static neural network frameworks,	such as TensorFlow.
 	These frameworks function by defining a single computational graph that is used to process each training/test case.
 	The same graph is used for each input.
 	By definition the structure of the network differs from training/test case to training/test case.
@@ -379,7 +394,7 @@ These structures are well linguistically motivated, so it make sense to use them
 	Other tricks are possible but are significantly more difficult.
 	The exception to this is of-course via dynamic components to the static frameworks
 	(which TensorFlow and other such frameworks certainly do have).
-	Even in a dynamic tool it remains a non-trivial task to implement these networks.
+	Even in a dynamic framework it remains a non-trivial task to implement these networks.
 }
 
 
@@ -523,16 +538,91 @@ Simple is powerful.
 
 
 \section{Matrix Vector Models}
-SOCHERS MATRIX VECTOR MODEL
+\subsection{Structured Matrix Vector Model}
+SOCHER 2012
 
+\subsection{Sequential Matrix Vector Model}
 A similar approach, of capturing a word matrix, 
-was used on a sequential model by CITE RUI HERE.
+was used on a sequential model by \tcite{rui2017mvrusemantic}.
 While sequential models are a special case of structured models,
 it should be noted that unlike the structured models discussed prior,
-the work of CITE RUI,
-features gated memory.
+this matrix vector RNN features gated memory.
+It is an extension of the GRU and LSTM recurrent units discussed in \Cref{sec:rnn}.
+
+In this sequential model, advancing a time step, is to perform a composition.
+This composition is for between the input and the (previous) state.
+Rather than directly between two nodes in the network as in the structural case.
+It should be understood that composing with the the state is not the same as composing the the previous input.
+The state under normal circumstances will not take the value of the previous input.
+A candidate state is derived from the prior state and the input (and a learned factors).
+Depending on the learned gating learned gating the previous candidate's state may not result in significant changes to the actual previous state at all.
 
 
+In this method each word, $w_t$ is represented by a word embedding $x_{w_t}$ and matrix: $X_{w_t}$, these are the inputs at each time step.
+The network outputs and states are the composed embedding $\hat{y}_t$ and matrix $Y_t$.
+
+\pdfcomment{Subscripts in this section mean time, not index.}
+ 
+\begin{align}
+h_t &= \tanh\left(V[x_t; \hat{y}_{t-1}] + c \right)\\
+r_t &= \sigma\left(Y_{t-I}x_t + X_t \hat{y}_{t-1} + k \right)\\
+%
+\hat{y}_t &= r_t \odot c_t + (1-r_t) \odot \hat{y}_{t-1} \\
+Y_t &= \tanh \left( U[Y_{t-1}; X_t] + b \right)
+\end{align}
+
+
+
+The matrices $U$ and $V$ are shared across all time steps/compositions.
+$U$ controls how the next state-composition $Y_t$ matrix is generated from its previous value and the input composition matrix: $X_t$.
+$V$ similarly controls the value of the candidate state-embedding $h_t$.
+
+$h_t$ is the candidate composed embedding (to be output/used as state).
+$r_t$ is a gate, it controls how much of the actual composed embedding ($\hat{y}_t$) comes from the candidate $h_t$ and how much comes from the previous value ($\hat{y}_{t-1}$).
+The composition matrix $Y_t$ (which is also part of the state/output) is not gated.
+
+
+\begin{figure}
+	\caption{A Matrix Vector Recurrent unit, that an RNN could be made from}
+	\label{fig:gru}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tikzpicture}[]
+		\node(hidden)[layer]{$h_t = \varphi \left( V[x_t; s_{t-1} \circ r_t] + d \right)$};
+		\node(reset)[layer, below left=of hidden]{$r_t = \sigma \left( U[x_t; s_{t-1}] + c \right)$};
+		\node(update)[layer, above left=of reset]{$z_t = \sigma \left( T[x_t; s_{t-1}] + b \right) $};
+		\node(state)[layer, above = 5 of reset]{$s_t = (1-z_t) \odot h_t + z_t \odot s_{t-1}$};
+		
+		\node(in)[below = 3 of reset]{input};
+		\node(stm)[left = 4 of reset]{old state};
+		\node(stp)[right = 3 of state]{new state};
+		\node(out)[above = of state]{output};
+		
+		\draw[->] (in) edge node[labe] {$x_t$} (update);	
+		\draw[->, bend right] (stm) edge node[labe] {$s_{t-1}$} (update.south);
+		\draw[->] (in) edge node[labe] {$x_t$} (reset);	
+		\draw[->, bend right] (stm) edge node[labe] {$s_{t-1}$} (reset.south);
+		
+		
+		
+		\draw[->, thick] (in) edge node[labe] {$x_t$} (hidden);	
+		\draw[->, bend right] (stm) edge node[labe] {$s_{t-1}$} (hidden.south);		
+		\draw[->] (reset.north) edge node[labe] {$z_t$} (hidden.south);
+		\draw[->, bend right] (stm) edge node[labe] {$s_{t-1}$} (hidden.south);
+		
+		\draw[->, bend right] (stm) edge node[labe] {$s_{t-1}$} (state.south);
+		\draw[->, thick] (hidden) edge node[labe] {$h_{t}$} (state.south);
+		\draw[->] (update) edge node[labe] {$z_{t}$} (state.south);
+		\draw[->, bend left] (state) edge node[labe] {$s_{t}$} (stp);
+		\draw[->] (state) edge node[labe] {$\hat{y}_t$} (out);
+		
+		\node(updatelbl)[labe, above= 0 of update]{Update Gate};
+		\node(resetlbl)[labe, above= 0 of reset]{Reset Gate};
+		\node(hiddenlbl)[labe, above= 0 of hidden]{Potential New State};
+		\end{tikzpicture}
+	\end{adjustbox}
+\end{figure}
+
+\pdfcomment{Say somehting about targeting short phrases and the missing gates?}
 
 
 
