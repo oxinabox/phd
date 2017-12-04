@@ -72,12 +72,13 @@
 
 
 
+
 \newlength{\notescolwidth}
 \setlength{\notescolwidth}{\completemargin - \marginparsep}
 
 
 % Font Style for note column
-\NewDocumentCommand{\asidefont}{}{\ifthispageodd{\raggedleft}{\raggedright}\small\sffamily\color{blue}}
+\NewDocumentCommand{\asidefont}{}{\small\sffamily\color{blue}}
 
 % Set up the note column
 \AtEndPreamble{\RequirePackage{scrlayer-notecolumn} %must be loaded ``Lastest''
@@ -116,7 +117,7 @@
 
 \NewEnviron{abstract}{%
 	\addtocontents{toc}{\small\BODY\par}%
-	\rightskip1in\textsc{\BODY}%
+	\rightskip1in{\BODY}%
 }
 
 

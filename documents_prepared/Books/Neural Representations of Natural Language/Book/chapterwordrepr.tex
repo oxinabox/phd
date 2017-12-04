@@ -5,12 +5,24 @@
 
 
 \begin{document}
+\setchapterpreamble{%
+	\dictum[J.R. Firth, 1957]
+	{
+		You shall know a word by the company it keeps.
+}}
 \chapter{Word Representations}\label{sec:word-representations}
 \begin{abstract}
-The core work that began to draw a lot of attention to this area.
-This will cover crucial works such as skip-grams, CBOW, and of course the original neural probabilistic language model.
-As well as the links to traditional matrix factorisations.
+Word Embeddings are a core work that has brought machine learning to the forefront of natural language processing.
+This chapter discusses how one can create a numerical vector that captures the salient features (e.g. semantic meaning) of a word.
+This chapter begins with discussion of the classic language modelling problems and how in solving them with a neural network approach word-embeddings are created.
+It goes on to discuss techniques such as CBOW and skip-gram models (\texttt{word2vec}), and more recent advances in relating this to common linear algebraic reductions on collocations.
+The chapter also includes a detailed discussion of the often confusing hierarchical softmax, and negative sampling techniques.
+It concludes with a brief look at some other applications and related techniques.
 \end{abstract}
+
+
+
+
 
 \aside[Word Vector or Word Embedding?]{In some older literature in the area will use the term \emph{word~vector} to refer to representations from LDA and LSA etc. Whereas in a lot of newer work the term is used synonymously with \emph{word~embedding}.}
 We begin the consideration of the representation of words using neural networks with work on language modeling
@@ -91,11 +103,11 @@ We need representation that holds this information.
 \tcite{NPLM} presents a method that uses neural network representations in a language model, where this representations implicitly learn the crucial traits of words.
 Capturing the trait information in the representation of a word for use in language modeling is not an idea exclusive to neural network approaches.
 Almost a decade earlier was the clustering work of  \tcite{brown1992class}.
-The method of \tcite{NPLM} however, implicitly learns this information into a neural network bases representation in during the training for the language modeling task.
+The method of \textcite{NPLM} however, implicitly learns this information into a neural network bases representation in during the training for the language modeling task.
 
 \subsubsection{Simplified Model considered with Input Embeddings}
 To understand the neural probabilistic language model, first consider a simplified neural trigram language model.
-This model is a simplification of that introduces by \tcite{NPLM}, it forms the basis of several models and introduces the most important idea in neural language representations: that of training a vector representation of a word using a lookup table to map a discrete word to a vector that becomes the first layer of the network.
+This model is a simplification of that introduced by \textcite{NPLM}, it forms the basis of several models and introduces the most important idea in neural language representations: that of training a vector representation of a word using a lookup table to map a discrete word to a vector that becomes the first layer of the network.
 
 
 
@@ -177,19 +189,19 @@ between the output embedding for $w_{i}$ and the hidden layer representation
 of $w_{i-1}$ and $w_{i-2}$ in the form of $z_{2}$. 
 
 It is also clear when we look at the Bayes-like reformulation: (See \Cref{sec:softmax-and-bayes-theorem})
-\begin{equation}
+\begin{multline}
 P(Y=y\mid Z=z)=\frac{R(Z=z\mid Y=y)\,Q(Y=y)}{\sum_{\forall i}R(X=x\mid Y=i)\,Q(Y=i)}
-\end{equation}
+\end{multline}
 
 Which in this case is:
-\begin{equation}
-P(w_{i}\mid w_{i-1},w_{i-2})=\frac{R(Z=z_{2}\mid W_{i}=w_{i})\,Q(W_{i}=w_{i})}{\sum_{\forall j}R(Z=z_{2}\mid W_{i}=w_{j})\,Q(W_{i}=w_{j})}
-\end{equation}
+\begin{multline}
+P(w_{i}\mid w_{i-1},w_{i-2})=\\
+\frac{R(Z=z_{2}\mid W_{i}=w_{i})\,Q(W_{i}=w_{i})}{\sum_{\forall j}R(Z=z_{2}\mid W_{i}=w_{j})\,Q(W_{i}=w_{j})}
+\end{multline}
 
-where $Q(Y=y)=e^{k}$ -- this is linked to the Unigram word probabilities. $P(Y=y)$
-Such that one might suggest a good value for $k$ to be given by the log unigram probabilities: $k=\left(\log P(W_{i}=w_{j})\right)_{j=1}^{j=N}$.
-If $\mathbb{E}(R(Z\mid W_{i})=1$ then this would be optimal.
-That condition is equivalent to if $\mathbb{E}(VZ_{2})=0$
+where $Q(Y=y)=e^{k}$ -- this is linked to the unigram word probabilities: $P(Y=y)$.
+If $\mathbb{E}(R(Z\mid W_{i})=1$ then the optimal value for $k$ would be given by the log unigram probabilities: $k=\left(\log P(W_{i}=w_{j})\right)_{j=1}^{j=N}$.
+This condition is equivalent to if $\mathbb{E}(VZ_{2})=0$
 Given the $V$ is normally initialized as a zero mean Gaussian, this condition is at least initially true.
 
 \subsubsection{The Neural Probabilistic Language Model}
@@ -273,7 +285,7 @@ They found the best was the LSTM network, particularly if the forget gate was bi
 \begin{figure}
 	\caption{\label{fig:neural-language-model} RNN Language Model}
 	\centering
-	\input{figs/chapterwordrepr/rnn-language-model2010.tex} 
+	\resizebox{\textwidth}{!}{\input{figs/chapterwordrepr/rnn-language-model2010.tex}}
 \end{figure}
 
 This ends our discussion of standard language models.
@@ -304,7 +316,7 @@ Any toolkit that can well handle the prior discussed neural network models, can 
 These works, which introduced the CBOW and Skip-Gram is also responsible for the popularisation of Hierarchical Softmax and Negative Sampling methods.
 As these are complicated and often misunderstood, topics in their own right, they are discussed in a more tutorial fashion in \Cref{sec:hierachical-softmax-and-negative-sampling} 
 
-\subsection{CBOW}\label{sec:cbow}
+\subsection{Continuous Bag of Words}\label{sec:cbow}
 \begin{figure}
 	\caption{\label{fig:cbow} CBOW language Language Model}
 	\centering
@@ -457,7 +469,7 @@ then the optimisation critia becomes minimising the cross-entropy between the tr
 weighted by the frequency of the occurrence of the word $X_i$.
 That is to say if skip-gram were optimised globally it would be equivalent to minimising:
 \begin{equation}
-J = - \sum_{\forall w_i} \sum_{\forall w_j} X_{ij} P(w_j\mid w_j) \log (V_{w_j}^\prime\,C_{w_{i}})
+Loss = - \sum_{\forall w_i} \sum_{\forall w_j} X_{ij} P(w_j\mid w_j) \log (V_{w_j}^\prime\,C_{w_{i}})
 \end{equation}
 
 Minimising this cross-entropy efficiently means factorising the true co-occurrence matrix,
@@ -475,7 +487,7 @@ as near as is possible.
 
 The precise measure used to do this, is a weighted the least squares minimisation of 
 \begin{equation}
-J = - \sum_{\forall w_i}  \sum_{\forall w_j} f(X_{ij})\,V_{w_j}^\prime\,C_{w_{i}}+b_i+k_j-\log (X_ij)
+Loss = - \sum_{\forall w_i}  \sum_{\forall w_j} f(X_{ij})\,V_{w_j}^\prime\,C_{w_{i}}+b_i+k_j-\log (X_ij)
 \end{equation}
 
 
@@ -583,12 +595,11 @@ in Hierarchical softmax when used with the common Huffman encoding its depth in 
 \paragraph{First consider a binary tree with just 1 layer and 2 leaves}
 The leaves are $n_{00}$ and $n_{01}$, these leaf notes each correspond to a word from the vocabulary.
 
-
-\aside{\begin{tikzpicture}
+\asidefig[Tree for 2 words]{\begin{tikzpicture}
 	\Tree [.$n_0$ 
 		$n_{00}$
 		$n_{01}$ ]
-\end{tikzpicture} Tree for 2 words}
+\end{tikzpicture}}
 	
 We are at the initial root which we call $n_{0}$, and we can go to
 either node $n_{00}$ or node $n_{01}$, based on the input from the
@@ -637,13 +648,13 @@ P(n_{01}\mid z)=\sigma(-V_{0}^{T}z)
 
 Consider the tree with nodes: $n_{0}$, $n_{00}$,$n_{000}$, $n_{001}$, $n_{01}$
 
-\aside{\begin{tikzpicture}
+\asidefig[Tree for 3 words]{\begin{tikzpicture}
 	\Tree [ .$n_0$ 
 	[ .$n_{00}$
 	$n_{000}$
 	$n_{001}$ ]
 	$n_{01}$ ]
-	\end{tikzpicture} Tree for 3 words}
+	\end{tikzpicture}}
 
 From earlier we still have:
 

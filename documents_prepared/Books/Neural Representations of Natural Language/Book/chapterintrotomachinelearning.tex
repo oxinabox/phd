@@ -11,11 +11,10 @@ Whether one sees the artificial neural network technique described below as lear
 }}
 \chapter{Introduction to neural networks for machine learning}\label{sec:machine-learning-for-representations}
 \begin{abstract}
-This chapter can be skipped by readers already familiar with machine learning.
-It takes a much more tutorial tone than the remainder of the book.
-This will not cover all aspects of machine learning, which of-course could be an entire book on its own.
-It will cover the crucial basic techniques used in the works discussed in part B. The main focus will be on introducing neural networks, going into reasonable detail on hyper-parameters such as activation functions and layer sizes, as well as covering training techniques. 
-It will not cover techniques that are special to natural language processing – those will be discussed in the later chapters.
+	This chapter covers the crucial machine learning techniques required to understand the remained of the book; namely neural networks.
+	Readers already familiar with neural networks can freely skip over this chapter.
+	It does not cover all aspects of machine learning, or even neural networks, which of-course could be many entire books on their its own.
+	It does contain a perhaps surprising amount of detail on recurrent neural networks, and these are very important in natural language tasks.
 \end{abstract}
 
 Machine learning, particularly neural networks has become a hot topic of late.
@@ -175,6 +174,15 @@ This is what the other activation functions provide
 
 
 \subsubsection{Sigmoid}
+
+\asidefig[The sigmoid function]{
+\begin{tikzpicture}
+\begin{axis}[sideplot, enlargelimits={rel=0.25}]
+\addplot+[equ] {1/(1+exp(-x))};
+\end{axis}
+\end{tikzpicture}
+}
+
 This is the classic neural network activation function.
 \begin{equation}
 y=\sigma(z)=\frac{1}{1+e^{-z}}
@@ -209,6 +217,14 @@ This reduces to $s_m(z)= \left( \sigma(z), 1-\sigma(z) \right)$.
 Further consideration of the softmax is given in \Cref{sec:softmax-and-bayes-theorem}.
 
 \subsubsection{Tanh}
+\asidefig[the tanh function]{
+	\begin{tikzpicture}
+	\begin{axis}[sideplot, enlargelimits={rel=0.25}]
+	\addplot+[equ] {tanh(x)};
+	\end{axis}
+	\end{tikzpicture}
+}
+
 The hyperbolic tangent function is a  scaled and shifted sigmoid function.
 
 \begin{equation}
@@ -218,6 +234,14 @@ y=\tanh(z)=\frac{e^{2z}-1}{e^{2z}+1}=2\sigma(2z)+1
 The notable difference is that outputs are restricted to be between $-1$ and $+1$
 
 \subsubsection{RELU}
+\asidefig[The RELU function]{
+	\begin{tikzpicture}
+	\begin{axis}[sideplot, enlarge y limits={abs=2}, enlarge x limits={abs=0.25}]
+	\addplot+[equ] {max(0,x)};
+	\end{axis}
+	\end{tikzpicture}
+}
+
 The Rectified Linear Unit (ReLU) is a more recently popularized activation function \pcite{dahl2013reludropout}.
 It comes from much earlier work on by neuroscience \pcite{hahnloser1998piecewise}.
 \begin{equation}
@@ -236,7 +260,15 @@ ReLU is very commonly used as a hidden layer activation function for deep networ
 
 
 \subsubsection{RELU6}
-\aside[Why are we bringing up ReLU6?]{ReLU6 is one of the more obscure activation functions. As such it may seem a bizarre inclusion in this shorter introduction. However, we have found it surprisingly successful as an activation function, e.g. in the Auto-encoder example. Further to that, as a function bounded both above and below it is much more theoretically nice than the ReLU unit.}
+\asidefig[The RELU6 function]{
+\begin{tikzpicture}
+\begin{axis}[sideplot,  xtick={-6,-3, 0,3,6}, ytick={-3, 0,3,6}, enlarge y limits={abs=2}]
+\addplot[equ] {max(0,min(x,6))};
+\end{axis}
+\end{tikzpicture}
+}
+
+
 
 Closely related to ReLU is ReLU6 \pcite{krizhevsky2010convolutional}.
 This is another linear unit the saturates at 0, but also at 6.
@@ -247,6 +279,8 @@ z & 0\le z\le6\\
 0 & z<0
 \end{cases}
 \end{equation}
+\aside[Why are we bringing up ReLU6?]{ReLU6 is one of the more obscure activation functions. As such it may seem a bizarre inclusion in this shorter introduction. However, we have found it surprisingly successful as an activation function, e.g. in the Auto-encoder example which follows.}
+
 This has similar advantages to ReLU.
 However, as well as units being able to die to zero, it can also die to positive.
 Unlike ReLU, it fully meets the requirements for the original UAT.
@@ -270,7 +304,7 @@ The process of training the network is the process of solving a very high dimens
 
 \aside[Evaluation function vs Loss function]{
 	In this discussion we have distinguished between two types of \emph{error function}.
-	The \emph{evaluation function} is the metric we are truly trying to improve, this could be accuracy for classification, BLEU score for translation, F1 score for retrieval etc. It is tplied to the whole system (which may be greater than just the neural network), and the system may be evaluated in different ways using different evaluations.
+	The \emph{evaluation function} is the metric we are truly trying to improve, this could be accuracy for classification, BLEU score for translation, F1 score for retrieval etc. It is applied to the whole system (which may be greater than just the neural network), and the system may be evaluated in different ways using different evaluations.
 	As the evaluation is often not differentiable, a proxy for it which we call the \textbf{loss function} is used in training.
 	For example, squared error for regression, or cross-entropy for classification.
 	The loss function is such that minimising the loss function also results in the true evaluation function being optimised.
@@ -292,10 +326,12 @@ The choice of loss function depends on the purpose of the network.
 
 The network function is composed into the loss function.
 to the per training case loss, for a training case loss: $loss(y, N(x,\tilde{P}))$.
-For $N(x,\tilde{P})$ being the function that executes some neural network, with weight and bias parameters given by $\tilde{P}$, upon an input $x$ where the target output is $y$ and the actual output is $\hat{y}$.
+For $N(x,\tilde{P})$ being the function that executes some neural network, with weight and bias parameters all grouped into given by $\tilde{P}$, upon an input $x$ where the target output is $y$ and the actual output is $\hat{y}$.
 
 The total loss is defined by taking the mean over the whole train batch:
-$loss_{total} = \frac{1}{K}\sum_{j=1}^{j=K} loss(y^{(j)}, N(x^{(j)},\tilde{P}))$.
+\begin{equation}
+loss_{total} = \frac{1}{K}\sum_{j=1}^{j=K} loss(y^{(j)}, N(x^{(j)},\tilde{P}))
+\end{equation}
 This is now nothing but a nonlinear function to be minimised by adjusted the values of the weights and biases in $\tilde{P}$.
 This can be given to off-the-shelf  unconstrained nonlinear optimisation algorithms \pcite{Ngiam2011} such as L-BFGS  \parencite{nocedal1980updating}.
 Alternatively, and more commonly, the loss and updated can be processed iteratively on sub-sets (minibatches) of the training data at a time -- often using optimisation algorithms specifically targeted at machine learning applications.
@@ -307,11 +343,14 @@ AdaGrad \parencite{AdaGrad}, AdaDelta \parencite{DBLP:journals/corr/abs-1212-570
 In all cases these algorithms dynamically adapt the learning rate during training.
 There are several other algorithms in the family, both older and newer.
 Adam is currently the most commonly used optimiser in recent works.
-We suggest there is an interesting theoretical space about the relationship between adapting the learning rate, and implicitly finding the second derivative (the Hessian), as in the more traditional quasi-netwon methods.}
+We suggest there is an interesting theoretical space about the relationship between adapting the learning rate, and implicitly finding the second derivative (the Hessian), as in the more traditional quasi-Newtonian methods.}
 
 
 To train the network one must find the values for the networks weight and bias parameters, such that that total loss function is minimized over the training set.
-$\argmin{\tilde{P}} loss_{total}(\tilde{P}, X_{train}, Y_{train})$.
+\begin{equation}
+\argmin_{\tilde{P}} loss_{total}(\tilde{P}, X_{train}, Y_{train})
+\end{equation}
+
 As the overall loss function, including the network function, is differentiable
 gradient descent can be used.
 If one considers a plot with the loss given on the vertical axis,
@@ -355,7 +394,8 @@ The MNIST dataset is a collection of images of hand written digits, which much b
 A basic network to complete this task is is shown in \Cref{fig:mnistnetwork}.
 
 \begin{figure}
-	\caption{The structure of a simple classifier network for MNIST. \label{fig:mnistnetwork}}
+	\caption{The structure of a simple classifier network for MNIST.}
+	\label{fig:mnistnetwork}
 	\input{figs/chapterintromachinelearning/mnist-basic.tex}
 \end{figure}
 
@@ -364,7 +404,7 @@ The equations
 z=\varphi(W_1 x+b_1) \\
 \hat{y}=s_m(W_2 z + b_2) \\
 P(Y=y_i\mid X=x) &= \hat{y}_i \\
-P(Y=y_i\mid X=x) &= \left[=s_m(b_2 + W_2 \varphi(b_1 + W_1 x))\right]_i
+&= \left[s_m(b_2 + W_2 \varphi(b_1 + W_1 x))\right]_i
 \end{align}
 For $X$ the input variable of grey-scale pixels intensities, and $Y$ the output as a class.
 Generally the output is represented with an one-hot encoding.
@@ -596,13 +636,6 @@ For example in a caption generator, including the vector representation of the i
 
 
 
-\begin{figure}
-	\caption{A recurrent unit with its 2 inputs and 2 outputs. Not shown are the internal functioning which may be a complex (or simple) neural network of its own.}	
-	
-	\label{fig-ru}
-	
-	\input{./figs/chapterintromachinelearning/rnn-unit.tikz}
-\end{figure}
 
 In general most uses of recurrent networks can be considers as encoders, decoders or as both.
 These common structures are shown in \Cref{fig-rnns}.
@@ -631,9 +664,17 @@ The output of the final time-step can be the true output.
 \subsection{Inside the Recurrent Unit}
 In Many types of RU (e.g. GRU, Basic RU) the output and the state are always equal.
 This particularly makes sense when they should be capturing the same kinds of information (as in a decoder-encoder).
-In general an one or more feedforward layers (that is to say nonrecurrent) are often put on top of the outputs that are used, and before the inputs.
+In general an one or more feed-forward layers (that is to say non-recurrent) are often put on top of the outputs that are used, and before the inputs.
 These extra layers can be considered part of the RU, or as something that surrounds the RU, only at certain time-steps,
  depending on point of view.
+
+\begin{figure}
+	\caption{A recurrent unit with its 2 inputs and 2 outputs. Not shown are the internal functioning which may be a complex (or simple) neural network of its own.}	
+	
+	\label{fig-ru}
+	
+	\input{./figs/chapterintromachinelearning/rnn-unit.tikz}
+\end{figure}
 
 \subsubsection{Basic Recurrent Unit}
 
@@ -728,7 +769,7 @@ $r_t$ controls how much influence the past state $s_{t-1}$ has on calculating th
 It is perhaps clearer if $h_t$ is reformulated to split $V$ into the terms that multiply with $x_t$ and the terms that multiply with $s_{t-1}$:
 \begin{align}
 h_t &= \varphi \left( \sigma \left( V[x_t; s_{t-1} \odot r_t] + d \right) \right) \\
-h_t &= \varphi \left( \sigma \left( V_x x_t + V_s r_t s_{t-1} + d \right) \right) \\
+h_t &= \varphi \left( \sigma \left( V_x x_t + V_s r_t s_{t-1} + d \right) \right)
 \end{align}
 If $r_t$ is one then the value of $s_{t_1}$ is fully present in the activation calculation $h_t$, if it is zero then it is not.
 It $r_t$ is often called the reset-gate.
