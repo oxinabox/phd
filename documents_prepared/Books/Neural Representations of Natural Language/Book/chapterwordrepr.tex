@@ -11,34 +11,39 @@
 		You shall know a word by the company it keeps.
 }}
 \chapter{Word Representations}\label{sec:word-representations}
+
+\aside[Word Vector or Word Embedding?]{Some literature uses the term \emph{word~vector}, or \emph{vector-space model} to refer to representations from LDA and LSA etc.
+	Other works use the terms is used synonymously with \emph{word~embedding}.
+	Word embeddings are vectors, in anycase.
+}
+
 \begin{abstract}
-Word Embeddings are a core work that has brought machine learning to the forefront of natural language processing.
+Word embeddings are the core innovation that as has brought machine learning to the forefront of natural language processing.
 This chapter discusses how one can create a numerical vector that captures the salient features (e.g. semantic meaning) of a word.
-This chapter begins with discussion of the classic language modelling problems and how in solving them with a neural network approach word-embeddings are created.
+Discussion begins with the classic language modelling problem.
+By solving this using a neural network based approach word-embeddings are created.
 It goes on to discuss techniques such as CBOW and skip-gram models (\texttt{word2vec}), and more recent advances in relating this to common linear algebraic reductions on collocations.
 The chapter also includes a detailed discussion of the often confusing hierarchical softmax, and negative sampling techniques.
 It concludes with a brief look at some other applications and related techniques.
 \end{abstract}
 
 
-
-
-
-\aside[Word Vector or Word Embedding?]{In some older literature in the area will use the term \emph{word~vector} to refer to representations from LDA and LSA etc. Whereas in a lot of newer work the term is used synonymously with \emph{word~embedding}.}
-We begin the consideration of the representation of words using neural networks with work on language modeling
-This is not the only place one could begin the consideration: the information retrieval (IR) models such as LSA \pcite{dumais1988using} and LDA \pcite{blei2003latent} based on word co-location with documents would be the other obvious starting point.
+We begin the consideration of the representation of words using neural networks with the work on language modeling
+This is not the only place one could begin the consideration: the information retrieval models such as LSI \pcite{dumais1988using} and LDA \pcite{blei2003latent} based on word co-location with documents would be the other obvious starting point.
 However, as will be discussed there models are closer to the end point of of the chapter than the begin.
-For the language modeling works, comes the contextual language model works such as skip-gram, which in turn lead to the post-neural network co-occurrence based works.
-These model fundamentally are in fact more similar to the information retrieval co-location works than the language modeling from which we began.
+From the language modeling work, comes the contextual (or acausal) language model works such as skip-gram, which in turn lead to the post-neural network co-occurrence based works.
+Which are in turn more similar to the information retrieval co-location based methods than the language modeling methods from which we began.
 
 
 \section{Representations for Language Modeling}
 
-\aside[Random Variable Naming Convention]{We follow convention that capitalised $W_i$ is a random variable, and $w_i$ is a particular value which $W_i$ may take. Writing $P(\ldots W_i{=}w_i)$.
-	Often though we will make uses of the abridged (abuse-of) notation and simply write $P(\ldots w_i)$, allowing the random variable to be implicitly given by the name of its value.
+\aside[Random Variable Naming Convention]{We follow convention that capitalised $W_i$ is a random variable, and $w_i$ is a particular value which $W_i$ may take. The probaility of it taking that value would normally be written $P(W_i{=}w_i)$.
+We simply write $P(w_i)$ to mean the same thing.
+This is a common abridged (abuse-of) notation.
+The random variable to be implicitly given by the name of its value.
 }
 
-The language modeling task it to predict the next word given the words that came prior \pcite{rosenfeld2000two}.
+The language modeling task it to predict the next word given the prior words \pcite{rosenfeld2000two}.
 For example, if a sentence begins \natlang{For lunch I will have a hot}, then there is a high probability that the next word will be \natlang{dog} or \natlang{meal},
 and lower probabilities of words such as \natlang{day} or \natlang{are}.
 Mathematically it is formulated: 
@@ -49,19 +54,18 @@ or to use the compact notation
 \begin{equation}\label{equ:langmodelcompact}
 P(w_i \mid w_{i-1}, \ldots, w_1)
 \end{equation}
-$P(w_i \mid \natlang{hot}, \natlang{a}, \natlang{want}, \natlang{I}, \natlang{lunch}, \natlang{For})$.
+For example: $P(W_i=\natlang{dog} \mid [W_{i-1} \ldots W_{1}] = [\natlang{hot}, \natlang{a}, \natlang{want}, \natlang{I}, \natlang{lunch}, \natlang{For}])$.
 The task is to find the probabilities for the various words that $w_i$ could represent.
 
-\aside[Google n-gram corpora]{Google has created several very large scale corpora of 1,2,3,4, and 5-grams from over $10^{11}$ words.
-Including the 2006 Web corpus from the public internet (Available for fee at \url{https://catalog.ldc.upenn.edu/LDC2006T13}),
-and the 2010-2012 Books corpus made words from the Google Books project (available freely from \url{https://books.google.com/ngrams/datasets}), as described in \textcite{lin2012syntactic}.
-These very large corpora also used outside of statistical language modeling by corpus linguists investigating the use of language.
+\aside[Google n-gram corpora]{Google has created a very large scale corpora of 1,2,3,4, and 5-grams from over $10^{12}$ words from the the Google Books project. It available without cost from \url{https://books.google.com/ngrams/datasets} \parencite{lin2012syntactic}.
+Large scale n-gram corpora also used outside of statistical language modeling by corpus linguists investigating the use of language.
 }
 
   
 The classical approach is trigram statistical language modeling.
-In this, the number of word triples in a corpus is counted,
-then given the previous two words, the next is predicted based on those counts.
+In this, the number occurrences of word triples in a corpus is counted.
+From this joint probability of triples, one can condition upon the first two words,
+to get a conditional probability of the third.
 This is making the Markov assumption that the next state depends only on the current state,
 and that that state can be described by previous two words.
 Under this assumption \Cref{equ:langmodelcompact} becomes:
@@ -69,7 +73,7 @@ Under this assumption \Cref{equ:langmodelcompact} becomes:
 P(w_i \mid w_{i-1}, \ldots, w_1) = P(w_i \mid w_{i-1}, w_{i-2})
 \end{equation}
 More generally, one can use $n$-gram language model where for any value if $n$,
-this is simply a matter of defining the Markov state to contain fewer or greater numbers of previous words than in the trigram case.
+this is simply a matter of defining the Markov state to contain different numbers of words.
 
 This Markov assumption is, of-course, an approximation.
 In the previous example, a trigram language model is finding $P(w_i \mid \natlang{hot}, \natlang{a})$.
@@ -77,145 +81,175 @@ It can be seen that the approximation has lost key information.
 Based only on the previous 2 words the next word $w_i$ could now reasonably be \natlang{day}, but the sentence: \natlang{For lunch I will have a hot day} makes no sense.
 However, the Markov assumption in using $n$-grams is required in order to make the problem tractable -- otherwise an unbound amount of information would need to be stored. 
 
-They key issue with n-gram language models in that in training them there is a data-sparsity problem.
+A key issue with n-gram language models in that in training them there is a data-sparsity problem.
+Particularly for larger values of $n$.
 Most combinations of words occur very rarely \pcite{ha2009extending}.
 It is thus hard to estimate their occurrence probability.
 Combinations of words that do not occur in the model is derived from as naturally given a probability of zero.
 This is unlikely to be true though -- it is simply a matter of rare words never occurring together in a finite corpus.
 Several approaches have been taken to handle this.
-Simplest is add-one smoothing which adds an extra pseudo-observation of every combination of terms.
-In common use is are various back-off methods \pcite{katz1987estimation,kneser1995improved} which use the bigram probabilities to estimate the probabilities of unseen trigrams.
+The simplest is add-one smoothing which adds an extra ``fake'' observation to every combination of terms.
+In common use is are various back-off methods \pcite{katz1987estimation,kneser1995improved} which use the bigram probabilities to estimate the probabilities of unseen trigrams (and so forth for other n-grams.).
 %
 \aside{An extended look at classical techniques in statistical language modelling can be found in \textcite{DBLP:journals/corr/cs-CL-0108005}}
 %
 However, these methods are merely clever statistical tricks -- ways to reassign probability mass after the fact to leave some left-over for unseen cases.
 Back-off is smarter than add-one smoothing, as it portions the probability fairly based of the $n{-}1$-gram probability.
-Better still would be a method which can learn to see the common-role of words.
+Better still would be a method which can learn to see the common-role of words \pcite{brown1992class}.
 By looking at the fragment: \natlang{For lunch I want a hot}, any reader knows that the next word is most likely going to be a food.
 We know this for the same reason we know the next word in \natlang{For elevenses  I had a cold ...} is also going to be a food.
 Even though \natlang{elevenses} is a vary rare word, we know from the context that it is a meal (more on this later), and we know it shares other traits with meals, and similarly \natlang{have} / \natlang{had}, and \natlang{hot} / \natlang{cold}.
 These traits influence the words that can occur after them.
-Thus the motivation is for a language modeling method that use these common properties of the words in the language modeling.
+Hard-clustering words into groups is nontrivial, particularly given words having multiple meanings, and subtle differences in use.
+Thus the motivation is for a language modeling method that use these common properties of the words in the language modeling, but considers them in a flexible soft way.
 We need representation that holds this information.
 
 \subsection{The Neural Probabilistic Language Model}
 
-\tcite{NPLM} presents a method that uses neural network representations in a language model, where this representations implicitly learn the crucial traits of words.
-Capturing the trait information in the representation of a word for use in language modeling is not an idea exclusive to neural network approaches.
-Almost a decade earlier was the clustering work of  \tcite{brown1992class}.
-The method of \textcite{NPLM} however, implicitly learns this information into a neural network bases representation in during the training for the language modeling task.
+\tcite{NPLM} presents a method that uses a neural network to create a language model.
+In doing so it implicitly learns the crucial traits of words, during training.
+The core insight that allowed this was using an embedding or loop-up layer for the input.
+
 
 \subsubsection{Simplified Model considered with Input Embeddings}
 To understand the neural probabilistic language model, first consider a simplified neural trigram language model.
-This model is a simplification of that introduced by \textcite{NPLM}, it forms the basis of several models and introduces the most important idea in neural language representations: that of training a vector representation of a word using a lookup table to map a discrete word to a vector that becomes the first layer of the network.
-
+This model is a simplification of the model introduced by \textcite{NPLM}.
+It follows the same principles, and highlights the the most important idea in neural language representations.
+This is that of training a vector representation of a word using a lookup table to map a discrete scalar word to a continuous-space vector which  becomes the first layer of the network.
 
 
 \aside[Lookup word embeddings: Hashmap or Array?]{
 The question is purely one of implementation.
-Theoretically we do not care if the implementation using a String to Vector dictionary (eg a Hashmap), or a 2D array from which a column is indexed-out (sliced-from) via an integer index representing the word (for column major languages).
+Theoretically we do not care if the implementation using a String to Vector dictionary (eg a Hashmap), or a 2D array from which a column is indexed-out (sliced-from) via an integer index representing the word.
 In tokenization of the source text it is common to transform all the words into integers, so as to save memory, especially if string interning is not in use.
 At that point it makes sense to work with an array.
 For our purposes we will treat the word $w_i$ as if it were an integer index, though thinking of it as a string index into a hashmap changes little in the logic.
 }
 
-\aside[One-hot product or Indexed-lookup]{
-In some works you may see the process of retrieving the word vector from an matrix of word vectors described as a one-hot multiplication.
-For a word represented by the index $i$,
-for $e_i$ the one-hot vector with a 1 in the $i$th position,
-and for $C$ the table of word embeddings.
-one can write  $C\,e_i$.
-We will write $C_i$ and refer to this as looking up the word vector from the $i$th column.
-Of-course $C_i=C\,e_i$, however in practical implementation the performance ramifications are huge.
-A matrix column indexing is a $O(1)$ operation (for column major languages),
-where as a dense matrix-vector product is $O(n^2)$.
-%
-The one-hot product can be used in a pinch to support using embeddings in neural network toolkits that do not support lookup/embedding layers,
-however we strongly suggest that if your toolkit does not support lookup/embedding layers then it is unsuitable for use in NLP applications.
-}
 
-The trigram neural probabilistic network is defined by:
+The  neural trigram probabilistic network is defined by:
 %
 \begin{multline}
 P(w_i \mid w_{i-1}, w_{i-2}) = \\
 s_{max}\left(V \: \varphi\left(U\left[C_{w_{i-1}}; C_{w_{i-2}}\right] + b_1\right)+b_2\right)
 \end{multline}
 %
-where $U,\: V,\: b_1,\: b_2$ are the weight matrices and biases of the network, and $C_{w_{i-1}}$ and $C_{w_{i-2}}$ are the looked-up word embedding for the previous two words, from the embedding table $C$.
-We write $\left[v_1; v_2\right]$ as a notational convenience for the concatenation of vectors $v_1$ and $v_2$.
-The network is shown diagrammatically in \Cref{fig:trigram-neural-language-model}
+where $U,\: V,\: b_1,\: b_2$ are the weight matrices and biases of the network.
+$C_{w_{i-1}}$ and $C_{w_{i-2}}$ are the looked-up word embedding for the previous two words, from the embedding table $C$.
+We write $\left[v_1; v_2\right]$ as a notational convenience for the vertical concatenation of vectors $v_1$ and $v_2$.
+\pdfcomment{Move this to a nomeculture section}
+The network is shown in \Cref{fig:trigram-neural-language-model}
 
 \begin{figure}
+	\caption{The neural Trigram Language Model}
+	\label{fig:trigram-neural-language-model} 
 	\centering
 	\input{figs/chapterwordrepr/trigram-neural-language-model.tex} 
-	\caption{\label{fig:trigram-neural-language-model} Neural Trigram Language Model}
 \end{figure}
 
-In the neural trigram language model, each of the previous two words is used to look-up a vector from the Embedding Table matrix.
-These are then concatenated to give a dense, continuous-space input to the above hidden layer.
-The output layer is a softmax layer, it gives the probabilities for each word in the vocabulary, one of which corresponds to $w_i$ the word being evaluated.
+\aside[$C_{w_i}$ vs $C_i$]{
+Note that here we use the word $w_i$ as the index in to lookup the word embeddings, \emph{not} the words index.
+That is to say that if the $i$th word, and the $j$th word are the same: i.e $w_i = w_j$, then they will index out the same vector from $C$.
+$w_i = w_j \implies C_{w_i} =  C_{w_j}$.
+}
 
-The word embeddings are trained, via the normal neural network method, along with the network weights and biases.
-This allows the embeddings of words which predict the same future word to move to be near each other in vector space.
-It also allows the hidden layer to learn to associate information with regions of the embedding space.
-This thus allows for information sharing between words.
-If two words vectors are close together because they mostly predict the same future words, then that area of space is a associated with predicting those words.
-Thus for cases where there are some words which never co-occur in the training set, but for which the nearby word does co-occur with, then because the knowledge is associated with that region of space, the model predicts that there is a higher-than-zero chance of the first word co-occurring with the unseen word.
-This is a fuzzy and nonlinear relationship, with varying degrees of closeness resulting in (and from) varying levels of exception of the words sharing co-occurring predicted words.
+
+
+\aside[One-hot product or Indexed-lookup]{
+	In some works you may see the process of retrieving the word vector from an matrix of word vectors described as a one-hot multiplication.
+	For a word represented by the index $i$,
+	for $e_i$ the one-hot vector with a 1 in the $i$th position,
+	and for $C$ the table of word embeddings.
+	one can write  $C\,e_i$.
+	We will write $C_i$ and refer to this as looking up the word vector from the $i$th column.
+	Of-course $C_i=C\,e_i$, however in practical implementation the performance ramifications are huge.
+	A matrix column indexing is a $O(1)$ operation (in a column major languages),
+	where as a dense matrix-vector product is $O(n^2)$.
+	%
+	The one-hot product can be used in a pinch to support using embeddings in neural network toolkits that do not support lookup/embedding layers.
+	However, we strongly suggest that if your toolkit does not support lookup/embedding layers then it is unsuitable for use in NLP applications.
+	%
+	Some tool-kits, e.g. Flux.jl (\url{https://github.com/FluxML/Flux.jl}),
+	explicitly handle sparse one-hot types, and automatically make this transformation.
+	In that case, it is outright equivalent.
+}
+
+In the neural trigram language model, each of the previous two words is used to look-up a vector from the embedding matrix.
+These are then concatenated to give a dense, continuous-space input to the above hidden layer.
+The output layer is a softmax layer, it gives the probabilities for each word in the vocabulary.
+Such that $\hat{y}_{w_i} = P(w_i \mid w_{i-1}, w_{i-2})$.
+Thus producing an useful language model.
+
+The word embeddings are trained, just like any other parameter of the network (i.e. the other weights and biases) via gradient descent.
+An effect of this is that the embeddings of words which predict the same future word will be adjusted to be nearer to each other in vector space.
+The hidden the hidden layer to learn to associate information with regions of the embedding space, as the whole network (and every layer) is a continuous function.
+This effectively allows for information sharing between words.
+If two words vectors are close together because they mostly predict the same future words, then that area of the embedding space is a associated with predicting those words.
+If words $A$ and $B$  often occur as the word prior to some similar set of words ($W,X,Y,\ldots$) in the training set
+and word $B$ also often occurs in the training set before word $Z$, but (by chance) $A$ never does,
+then this neural language model will never the less say that $Z$ is likely to occur after $A$.
+This is because $A$ and $B$ have similar embeddings, due to predicting a similar set of words.
+The model has learnt common features about that words implicitly from how they are used, and can used those to make better predictions.
+These features are stored in the embeddings which are looked up during the input.
 
 \subsubsection{Simplified Model considered with input and output embeddings}
-When introducing embeddings we considered that one-hot inputs multiplied by matrices
-are effectively doing column-lookups which we call embeddings.
-Similar same can be said for output layers,
-by considering each the output of softmax element-wise it can be reformulated as
+We can actually reinterpret the softmax output layer as also having embeddings.
+An alternative but equivalent diagram is shown in \Cref{fig:trigram-adv-neural-language-model}.
+
 \begin{figure}
+	\caption{Neural Trigram Language Model as considered with output embeddings. This is mathematically identical to \Cref{fig:trigram-neural-language-model}}
+	\label{fig:trigram-adv-neural-language-model}
 	\centering
-	\caption{\label{fig:trigram-adv-neural-language-model} Neural Trigram Language Model as considered with output embeddings. This is mathematically identical to \Cref{fig:trigram-neural-language-model}}
 	\input{figs/chapterwordrepr/trigram-adv-neural-language-model.tex} 
 \end{figure}
 
-
-With the final layer being defined as:
+The final layer of the neural trigram language model can be rewritten as:
 \begin{equation}
 s_{max}(Vz_{2}+k) = \dfrac{\exp\left(V_{w_{i}}^{T}z_{2}+k_{i}\right)_{i=0}^{i=N}}{\sum_{\forall j}exp\left(V_{j}^{T}z_{2}+k_{j}\right)}
 \end{equation} 
 
-In this formulation, we have $V_{w_{i}}^{T}$ as the output embedding
-for $w_{i}$ -- an output word.
+\aside[Conside this also as a dot product]{
+	Further, $V_{w_{i}}^{T}z_{2}$ can be seen as computing the dot product
+	between the output embedding for $w_{i}$ and the hidden layer representation
+	of $w_{i-1}$ and $w_{i-2}$ in the form of $z_{2}$.
+	This leads to an alternate interpretation of the whole process if one had just a single input embedding and and no hidden layer (as in the  skip-gram model discussed in \Cref{sec:skip-gram}).
+}
+
+In this formulation, we have $V_{w_{i}}^{T}$ as the output embedding for $w_{i}$ the an output word.
 As we considered  $C_{w_{i}}$ as its input embedding.
 
-Further, $V_{w_{i}}^{T}z_{2}$ can be seen as computing the dot product
-between the output embedding for $w_{i}$ and the hidden layer representation
-of $w_{i-1}$ and $w_{i-2}$ in the form of $z_{2}$. 
-
-It is also clear when we look at the Bayes-like reformulation: (See \Cref{sec:softmax-and-bayes-theorem})
+While looking at it this way, we can also consider the the Bayes-like reformulation: (See \Cref{sec:softmax-and-bayes-theorem})
 \begin{multline}
 P(Y=y\mid Z=z)=\frac{R(Z=z\mid Y=y)\,Q(Y=y)}{\sum_{\forall i}R(X=x\mid Y=i)\,Q(Y=i)}
 \end{multline}
-
+\pdfcomment{Update this math to match the math in chapter 1}
 Which in this case is:
 \begin{multline}
 P(w_{i}\mid w_{i-1},w_{i-2})=\\
 \frac{R(Z=z_{2}\mid W_{i}=w_{i})\,Q(W_{i}=w_{i})}{\sum_{\forall j}R(Z=z_{2}\mid W_{i}=w_{j})\,Q(W_{i}=w_{j})}
 \end{multline}
 
-where $Q(Y=y)=e^{k}$ -- this is linked to the unigram word probabilities: $P(Y=y)$.
+We can see that $Q(Y=y)=e^{k}$ -- this is linked to the unigram word probabilities: $P(Y=y)$.
 If $\mathbb{E}(R(Z\mid W_{i})=1$ then the optimal value for $k$ would be given by the log unigram probabilities: $k=\left(\log P(W_{i}=w_{j})\right)_{j=1}^{j=N}$.
 This condition is equivalent to if $\mathbb{E}(VZ_{2})=0$
 Given the $V$ is normally initialized as a zero mean Gaussian, this condition is at least initially true.
+
 
 \subsubsection{The Neural Probabilistic Language Model}
 \tcite{NPLM} is a more advanced version of the neural language model discussed.
 Rather than being a trigram language model, it is an $n$-gram language model, where $n$ is a hyper-parameter of the model.
 The knowledge sharing allows the data-sparsity issues to be ameliorated, thus allowing for $n>3$.
 %
-\aside{\textcite{schwenk2004efficient} suggests using only a subset of the vocabulary as options for the output, while allowing the full vocabulary in the input space -- with a fallback to classical language models for the missed words.
-	This decreases the size of the softmax output layer, substantially decreasing the network evaluation and training time.
-	This technique is now largely eclipsed by hierarchical softmax etc. discussed later in this chapter.
+\aside[Input vocabulary and output vocabulary do not have to be the same]{\textcite{schwenk2004efficient} suggests using only a subset of the vocabulary as options for the output, while allowing the full vocabulary in the input space -- with a fall-back to classical language models for the missed words.
+This decreases the size of the softmax output layer, substantially decreasing the network evaluation and training time.
+This technique is now largely eclipsed by hierarchical softmax and negative sampling discussed in \Cref{sec:hierachical-softmax-and-negative-sampling}.
 }
 %
-Bengio et. al. investigates values for $n$ of 3, 5 and 6.
-The network used in their work also was marginally more complex, as shown in \Cref{fig:neural-language-model} and in the following equation:
+Bengio et. al. investigated values for $n$ of 3, 5 and 6.
+The network used in their work also was marginally more complex than the trigram neural language model.
+As shown in \Cref{fig:neural-language-model},
+it features a layer-bypass connection.
+It is described by:
 \begin{align}
 P(w_i & \mid w_{i-1}, w_{i-2}) = s_{max}( \nonumber
 \\  & \quad U_3 \left[ C_{w_{i-1}};...; C_{w_{i-n}}\right] \nonumber
@@ -223,20 +257,21 @@ P(w_i & \mid w_{i-1}, w_{i-2}) = s_{max}( \nonumber
 \\  & +b_2)
 \end{align}
 
-It includes a layer-bypass, which is primarily present only as connivance to aid in the learning.
+The layer-bypass, which is a connivance to aid in the learning.
 It allowing the input to directly effect the output without being mediated by the shared hidden layer.
-This layer-bypass is a unusual feature, not present in future works deriving from this, such as \tcite{schwenk2004efficient} which presents a bag of tricks to minimize training time. 
-
+This layer-bypass is a unusual feature, not present in future works deriving from this, such as \tcite{schwenk2004efficient}.
+It it not an incredibly unusual feature in machine learnt models in general.
 
 This is the network which begins the notions of using neural networks with vector representations of words.
 Bengio et. al. focused on the use of the of sliding window of previous words -- much like the traditional n-grams.
 At each time-step the window is advanced forward and the next word predicted based on that shifted context of prior words.
+This is of-course exactly identical to extracting all n-grams from the corpus and using those as the training data.
 They do very briefly mention that an RNN could be used in its place.
 
 \begin{figure}
+	\caption{\label{fig:neural-language-model} Neural Probabilistic Language Model}
 	\centering
 	\input{figs/chapterwordrepr/neural-language-model.tex} 
-	\caption{\label{fig:neural-language-model} Neural Probabilistic Language Model}
 \end{figure}
 
 
@@ -244,43 +279,39 @@ They do very briefly mention that an RNN could be used in its place.
 
 \pdfcomment{I'm not sure if Mikolov was using the design matrix formulatiuon where bias terms are skipped, if so this section is the only section so far that skips it}
 
-\aside[Differences in formulation]{
-The network and equations shown here may seem different to those presented in \textcite{mikolov2010recurrent}.
-However they are mathematically identical.
-The apparent difference is simply the choice between considering embeddings as a look-up, or as a one-hot multiplication.
-}
-
 In \tcite{mikolov2010recurrent} an RNN is for a language model.
 To be precise, an Elman network is used \tcite{elman1990finding}.
-In this form of RNN, the output of hidden layer in the previous time-step is appended as an additional input.
-Using an RNN eliminates the sliding window of earlier language models.
-Instead, the context information is stored in the state that is passed forward.
+Using the terminology of \Cref{sec:rnn}, this is an encoder RNN, made using Basic Recurrent Units.
+Using an RNN eliminates the Markov assumption of a finite window of prior word forming the state.
+Instead, the state is learned, and sorted in the state output of the RUs. 
 
-This state $Z_{j}$ being the hidden state output from the first (only) hidden layer when input the $j$th word, 
-is given by 
+\pdfcomment{Make a diagram for this}
 
+This state $h_{i}$ being the hidden state  (and output as this is a Basic RU) from the $i$ time-step.
+The $i$th time-step takes as it input the $i$th word.
+As is usual this hidden layer was the an input to the hidden-layer at the next time-step, as well as to the output softmax.
+
+\aside[Confusing notation]{Here we hit an ambiguity in the notion.
+	$\hat{y}_i$ is total output at time step $i$ a vector with each element giving the probability for a different word in the vocabulary.
+	$\left[ \hat{y_i} \right]_{w_i}$ is the indexing operation applied to that vector,
+	to get back the predicated probability for the $i$th word (i.e. $w_i$).
+}
+\pdfcomment{Is there a less confusing notation I could use here?}
 \begin{equation}
-	Z_{j} = \varphi\left( U\,Z_{j-1} + C_{w_{i-1}} \right)
+	h_{i} = \varphi\left( U\,h_{j-1} + C_{w_{j-1}} \right)
+	\hat{y_i} = s_{max}\left(V \, h_{i-1} \right)
+	P(w_i \mid w_{i-1}, ... w_{1}) = \left[ \hat{y_i} \right]_{w_i}
 \end{equation}
 
 
-This hidden layer was the an input to the hidden-layer at the next time-step, as well as to the output softmax.
-
-\begin{equation}
-	P(w_i \mid w_{i-1}, ... w_{1}) = s_{max}\left(V \, Z_{i-1} \right)
-\end{equation}
-
-
-
-Rather than using an Elman network, a more advanced RNN such as Long-Short-Term-Memory (LSTM), or a Gated Recurrent Unit (GRU) \pcite{cho2014properties}, based network could be used.
-The structure would remain very similar,
+Rather than using a basic RU, a more advanced RNN such as LSTM or GRU based network can be used.
+The structure remains very similar,
 and additional advantages may be found from the improved stability and performance.
 
 \tcite{sundermeyer2012lstm} investigated using LSTM.
 This did indeed offer an improvement over the Elman network used in \textcite{mikolov2010recurrent}.
 \tcite{jozefowicz2015empirical} conducted an extensive search of hyper-parameters for LSTM and GRU networks for language modeling.
 For the best performing networks of both types the results found were significantly better than \textcite{sundermeyer2012lstm} and \textcite{mikolov2010recurrent}.
-They found the best was the LSTM network, particularly if the forget gate was biased to a 1.0 or more.
 
 \begin{figure}
 	\caption{\label{fig:neural-language-model} RNN Language Model}
@@ -290,16 +321,15 @@ They found the best was the LSTM network, particularly if the forget gate was bi
 
 This ends our discussion of standard language models.
 
-
 \section{Acausal Language Modeling}
 The step beyond a normal language model,
-which uses the prior words to predict the next word,
-is what we will term acausal language modelling.
+which uses the prior words to predict the next word, is what we will term acausal language modelling.
 Here we use the word acausal in the signal processing sense.
-The task here is to predict a missing word, using the words the preceed it, as well as the words that come after it.
+It is also sometimes called contextual language modelling, as the whole context is used, not just the prior context.
+The task here is to predict a missing word, using the words the precede it, as well as the words that come after it.
 
-As it is acausal it can not be done in a real-time system, and is not useful for many tasks directly.
-However, what it is very useful for is as a task to learn a good representation for words.
+As it is acausal it can not be done in a real-time system, and is not useful for as many tasks directly as a normal a language model. 
+However, it is very useful for is as a task to learn a good representation for words.
 
 
 \subsection{Context RNN}

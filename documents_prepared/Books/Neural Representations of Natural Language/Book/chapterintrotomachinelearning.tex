@@ -683,6 +683,17 @@ All the outputs at all time-steps except the last can be ignored.
 The output of the final time-step can be connected to connected to a further network with a final output layer giving the overall output.
 This situation with a variable number of inputs but a fixed size of output is described as an encoder network.
 
+\aside[Pseudo-tokens]{
+Pseudo-tokens such as \natlang{<EOS>} (end of string),
+\natlang{<START>} (start of string), and similar are common in RNN tasks.
+As mentioned, outputting \natlang{<EOS>} is required to known when the decode is done outputting.
+\natlang{<START>} can be useful to model things that occur near the start of input; and as an initial prompt.
+In some tasks other non-word tokens might be inserted also.
+Such as in transcription of recorded speech, a \natlang{<PAUSE>} token might be included.
+Pragmatically, as long a the symbols used to represent these never occur amongst the true word tokens, these can be treated just like regular words by the system.
+}
+
+
 The reverse is a decoder network.
 This means a fixed sized input mapping to a variably sized output.
 If the system is attempting to learn from a point in color space to the name of that color \pcite{2016arXiv160603821M}.
@@ -691,6 +702,8 @@ In this decoder type network, there is one true input, at the first time-step, a
 Each output can be connected to a softmax layer giving probability for possible words.
 Some inputs at each time-step after the first in such a network inputs must also be provided for the decoding.
 We call this input a prompt, as it is not providing new information to the network, merely driving it to produce the next output.
+It is common to include an end of string marker token (often literally `\natlang{<EOS>}`),
+so as to know when to stop prompting for additional outputs.
 
 
 The encoder-decoder RNN is the generalise structure for sequence to sequence learning \pcite{cho-EtAl:2014:EMNLP2014}.
@@ -862,6 +875,8 @@ Thus helping the overall network preserve better information in the state.
 	\end{adjustbox}
 \end{figure}
 
+
+
 The gated recurrent unit (GRU) is defined by:
 \begin{align}
 z_t &= \sigma \left( T[x_t; s_{t-1}] + b \right) \\
@@ -927,11 +942,22 @@ The gates can behaver differently based on the inputs and states to recognise im
 
 
 \subsubsection{LSTM Recurrent Unit}\label{sec:ltsm}
+The LSTM is most well known RNN unit, the term is very nearly interchangeable with RNN today.
+The original form was proposed by \tcite{hochreiter1997long}.
+The form in current use is a variant from \tcite{gers1999learning}.
 
 LSTM uses a compound state, comprised of the units previous output, and an addition state vector called the cell.
 we write $s_t = (c_t, \hat{y}_t)$,
 to fit the normal formulation,
 though for maths it is easier to work with these in parts.
+
+\aside[Biasing the Forget Gate]{
+	Practically, it is important to initially set the forget gate bias to 1.
+	Unlike all the other initialisation in the networks to 0 (or a small random number eg \texttt{randn(0.01)}).
+	Equvielently one can also just add a constant additional bias term of ${+}1$ to the forget gate equations.
+	This has been show to benefit almost all used of LSTM \parencite{gers1999learning,jozefowicz2015empirical}.
+	This is the default in most frameworks (though only recently patched in some).
+}
 
 \begin{align}
 s_t &= (c_t, \hat{y}_t)\\
