@@ -104,7 +104,7 @@ Hard-clustering words into groups is nontrivial, particularly given words having
 Thus the motivation is for a language modeling method that use these common properties of the words in the language modeling, but considers them in a flexible soft way.
 We need representation that holds this information.
 
-\subsection{The Neural Probabilistic Language Model}
+\subsection{The Neural Probabilistic Language Model}\label{sec:the-neural-probabilistic-language-model}
 
 \tcite{NPLM} presents a method that uses a neural network to create a language model.
 In doing so it implicitly learns the crucial traits of words, during training.
@@ -276,18 +276,23 @@ They do very briefly mention that an RNN could be used in its place.
 
 
 \subsection{RNN Language Models}
+\begin{figure}
+	\caption{\label{fig:neural-language-model} RNN Language Model. The RU equation shown is the basic RU uses in \textcite{mikolov2010recurrent}.
+	It can be substituted for a LSTM RU or a GRU as was done in \textcite{sundermeyer2012lstm,jozefowicz2015empirical}.
+	}
+	\centering
+	\resizebox{\textwidth}{!}{\input{figs/chapterwordrepr/rnn-language-model2010.tex}}
+\end{figure}
 
 \pdfcomment{I'm not sure if Mikolov was using the design matrix formulatiuon where bias terms are skipped, if so this section is the only section so far that skips it}
 
-In \tcite{mikolov2010recurrent} an RNN is for a language model.
-To be precise, an Elman network is used \tcite{elman1990finding}.
+In \tcite{mikolov2010recurrent} an RNN is used for language modelling.
 Using the terminology of \Cref{sec:rnn}, this is an encoder RNN, made using Basic Recurrent Units.
 Using an RNN eliminates the Markov assumption of a finite window of prior word forming the state.
-Instead, the state is learned, and sorted in the state output of the RUs. 
+Instead, the state is learned, and stored in the state component of the RUs. 
 
-\pdfcomment{Make a diagram for this}
 
-This state $h_{i}$ being the hidden state  (and output as this is a Basic RU) from the $i$ time-step.
+This state $h_{i}$ being the hidden state  (and output as this is a basic RU) from the $i$ time-step.
 The $i$th time-step takes as it input the $i$th word.
 As is usual this hidden layer was the an input to the hidden-layer at the next time-step, as well as to the output softmax.
 
@@ -313,11 +318,7 @@ This did indeed offer an improvement over the Elman network used in \textcite{mi
 \tcite{jozefowicz2015empirical} conducted an extensive search of hyper-parameters for LSTM and GRU networks for language modeling.
 For the best performing networks of both types the results found were significantly better than \textcite{sundermeyer2012lstm} and \textcite{mikolov2010recurrent}.
 
-\begin{figure}
-	\caption{\label{fig:neural-language-model} RNN Language Model}
-	\centering
-	\resizebox{\textwidth}{!}{\input{figs/chapterwordrepr/rnn-language-model2010.tex}}
-\end{figure}
+
 
 This ends our discussion of standard language models.
 
@@ -335,88 +336,95 @@ However, it is very useful for is as a task to learn a good representation for w
 \subsection{Context RNN}
 
 
-\aside[Are CBOW \& Skip-Gram Neural Networks]{As these models do not have any non-linearities  (some would say they have no hidden layer, though is is incorrect: the projection layer of the embedding is functionally an unusual hidden layer) it may be asserted that they are not in-fact neural networks at all.
+\aside[Are CBOW \& Skip-Gram Neural Networks]{As these models do not have any non-linearities it may be asserted that they are not in-fact neural networks at all.
+Some would also say they have no hidden layer, though is is incorrect: the projection layer of the embedding is functionally an unusual hidden layer.
 This distinction is purely academic though.
-Any toolkit that can well handle the prior discussed neural network models, can be very well used to implement CBOW and Skip-Gram.
+Any toolkit that can handle the prior discussed neural network models can be used to implement CBOW and Skip-Gram, more simply than using a non-neural network focused optimiser.
 }
 
 
 \pdfcomment{I think CBOW and Skip-Gram don't feature Biases because they are written in Design Matrix form with a column of ones. If so I need to fix that up to something consistent with the remainder of this chapter or if not then }
 
-These works, which introduced the CBOW and Skip-Gram is also responsible for the popularisation of Hierarchical Softmax and Negative Sampling methods.
-As these are complicated and often misunderstood, topics in their own right, they are discussed in a more tutorial fashion in \Cref{sec:hierachical-softmax-and-negative-sampling} 
+These works also feature Hierarchical Softmax and Negative Sampling methods as alternative output methods.
+As these are complicated and often misunderstood, topics in their own right, they are discussed in a more tutorial fashion in \Cref{sec:hierachical-softmax-and-negative-sampling}.
+This section will focus just on the model logic; and assume the output is a normal softmax layer.
 
 \subsection{Continuous Bag of Words}\label{sec:cbow}
 \begin{figure}
-	\caption{\label{fig:cbow} CBOW language Language Model}
+	\caption{CBOW language Language Model}
+	\label{fig:cbow}
 	\centering
 	\input{figs/chapterwordrepr/cbow.tex} 
 \end{figure}
 
 The continuous bag of words (CBOW) method was introduced by \tcite{mikolov2013efficient}.
-In truth this is not particularly similar to bag of words at all, no more so than any other word representation that does not have regard for order of the context words (e.g. skip-gram, GloVE below).
+In truth this is not particularly similar to bag of words at all.
+No more so than any other word representation that does not have regard for order of the context words (e.g. skip-gram, GloVE below).
 
+The CBOW model takes as its input a context window surrounding a central skipped word, and tries to predict the word that it skipped over.
+It is very similar to earlier discussed neural language models, except that the window is on both sides.
+It also does not have any non-linearities;
+and the only hidden layer is the embedding layer.
 
-For a context window of width $n$ words -- i.e. $\frac{n}{2}$ words to either side, of the target word,
+For a context window of width $n$ words -- i.e. $\frac{n}{2}$ words to either side, of the target word $w_i$,
 the CBOW model is defined by:
 \begin{align}
 P(w_i & \mid w_{i-\frac{n}{2}},..., w_{i-1}, w_{i+1},...,w_{i+\frac{n}{2}})  \nonumber
 \\  & = s_{max}(V \sum_{j=i+1}^{j=\frac{n}{2}} \left( C_{w_{i-j}}+C_{w_{i+j}} \right))
 \end{align}
-
-\pdfcomment{Need to consider that this is always done with a Hierarchical softmax, and check this formulation is correct}
-
-
+This is shown in diagrammatic from in \label{fig:cbow}.
+By optimising across a training dataset
+useful word embeddings are found.
 
 
 \subsection{Skip-gram}\label{sec:skip-gram}
 \begin{figure}
 	\caption{\label{fig:skip-gram} Skip-gram language Language Model. Note that the probability $P(w_j \mid w_i)$ is optimised during training for every $w_j$ in a window around the central word $w_i$.
-	Note that the final layer in this diagram is a softmax layer, however we show it here in output embedding from as it will prove useful in illustrating hierarchical softmax and negative sampling later.
+	Note that the final layer in this diagram is just a softmax layer, shown in in output embedding form.
 	}
 	\centering
 	\input{figs/chapterwordrepr/skip-gram.tex} 
 \end{figure}
 
 
-\aside[Skip-gram naming]{In different publications this model may be called skipgram, skip-gram, skip-ngram, skip gram etc. Further, it may be called \texttt{word2vec} after the publicly released implementation of the algorithm. Though that software also can be used for CBOW.}
+\aside[Skip-gram naming]{In different publications this model may be called skipgram, skip-gram, skip-ngram, skip gram etc. Further, it may be called \texttt{word2vec} after the publicly released implementation of the algorithm. Though  the \texttt{word2vec} software can also be used for CBOW.}
 
 
 The converse of CBOW is the skip-grams model \tcite{mikolov2013efficient}.
 In this model, the central word is used to predict the words in the context.
-While in CBOW each training case of context and target word presents one correct answer,
-in the Skip-gram each training case has a number of correct answers, the probability of all of which in the softmax must be increased.
+While in CBOW each training case is has one output to be trained to predict, in skip-gram there are multiple.
 
+The model itself is single word input, and its output is a softmax for the probability of each word in the vocabulary occurring in the context of the input word.
+This can be indexed as is usual for a language model, to get the individual probability of a given word occurring.
+So for input word $w_i$ the probability of $w_j$ occurring in its context is given by:
 \begin{equation}
-P(w_j \mid w_{i}) = \left[ s_{max}(V\,C_{w_{i}}) \right]_{w_j} 
+P(w_j \mid w_{i}) = \left[s_{max}(V\,C_{w_{i}}) \right]_{w_j} \label{equ:skipgram}
 \end{equation}
 
 
-The goal, is to maximise the probabilities of all the observed outputs from the window's in the training set ($i-\frac{n}{2},...,i-1, i+i,...,i+\frac{n}{2}$).
-This can be done using softmax, or hierarchical softmax, or an approximation call negative sampling
-(Hierarchical softmax and negative sampling are discussed in \Cref{sec:hierachical-softmax-and-negative-sampling}).
+The goal, is to maximise the probabilities of all the observed outputs that actually \emph{do} occur in its context.
+This is done, as in CBOW by defining a window for the context of a word in the training corpus. ($i-\frac{n}{2},...,i-1, i+i,...,i+\frac{n}{2}$).
 It should be understood that while this is presented similarly to a classification task,
 there is no expectation that the model will actually predict the correct result,
-given that there is even during training multiple correct results -- every word from the window.
+given that even during training there are multiple correct results: every word from the window.
 
 
-Note that Skip-Grams only hidden layer is the embedding layer.
-If we take the earlier discussed notion of considering the output matrix $V$ as being an embedding layer
-then this becomes:
+Note that in skip-gram, like CBOW, the only hidden layer is the embedding layer.
+Rewriting \Cref{equ:skipgram} in output embedding form it becomes:
 
 \begin{align}
 P(w_j \mid w_{i}) & = \left[ s_{max}(V\,C_{w_{i}}) \right]_{w_j} \\
 P(w_j \mid w_{i}) & = \frac{\exp(V_{w_j}^\prime\,C_{w_{i}})}{\sum_{k=1}^{k=N} \exp(V_k^\prime\,C_{k})}
 \end{align}
+\pdfcomment{Check math and if required change prime to transpose.}
 
-The key term here is the $V_{w_j}^\prime\,C_{w_{i}}$,
+The key term here is  $V_{w_j}^\prime\,C_{w_{i}}$:
 the remainder of the expression is normalising this into a probability.
 Maximising the probability $P(w_j \mid w_{i})$ is equivalent to maximising the dot produce between $V_{w_j}^\prime$, the output embedding for $w_j$ and  $C_{w_i}$ the input embedding for $w_i$.
-Which is to say that the skip-gram probability is maximises when the angular difference between the input embedding for a word, and the output embeddings for words that it co-occurs with is minimised, and the embeddings themselves are maximised.
-\pdfcomment{Does maximising the embedding cancel out?}.
+Which is to say that the skip-gram probability is maximised when the angular difference between the input embedding for a word, and the output embeddings for its co-occurring words is minimised.
 
 
-While skip-gram and CBOW were introduced in the same set of papers, subsequent work has found the skip-gram is almost always the preferred system for any task. \pdfcomment{Citation for this?}.
+Skip-gram is much more commonly used than CBOW.
 
 
 
@@ -424,7 +432,7 @@ While skip-gram and CBOW were introduced in the same set of papers, subsequent w
 
 \subsection{Analogy Tasks}
 \aside[Analogy Tasks uncover prejudice in corpora]{\textcite{bolukbasi2016man} and \textcite{Caliskan183} use analogy tasks, and related variant formulations to find troubling associations between words, such as Bolukbasi et. al's titular \natlang{Man} is to \natlang{Computer Programmer}, as \natlang{Woman} is to \natlang{Homemaker}. Finding these relationships in the embedding space, indicated that they are present in the training corpus, which in turn shows their prevalence  in society at large.
-As has been observed: Machine learning can be a very good mirror.
+It has been observed that machine learning can be a very good mirror upon society.
 }
 
 
@@ -452,27 +460,25 @@ As has been observed: Machine learning can be a very good mirror.
 	\end{tikzpicture}
 }
 
-It is on these systems that evaluation the analogy tasks became well known, though they were considered earlier on RNN neural language models \pcite{mikolov2013linguisticsubstructures}.
-These tasks are keyed around answering the question: What is  \emph{c} and \emph{b} is to \emph{a}.
+One of the most notable features of  word embeddings is their ability to be used to express analogies as linear algebra.
+These tasks are keyed around answering the question: \emph{b} is to \emph{a}, as what is  to \emph{c}?
 For example, a semantic analogy would be answering that \natlang{Aunt} is to \natlang{Uncle} as \natlang{King} is to \natlang{Queen}.
-For example, a syntactic analogy would be answering that \natlang{Kings} is to \natlang{King} as \natlang{Queens} is to \natlang{Queen}.
+A syntactic analogy would be answering that \natlang{King} is to \natlang{Kings} as \natlang{Queen} is to \natlang{Queens}.
 The latest and largest analogy test set is presented by \tcite{gladkova2016analogy},
 which evaluates embedding on 40 subcategories of knowledge.
+Analogy completion is not a practical task, but rather serves to illustrate the kinds of information being captured, and the way in which it is represented (in this case linearly).
 
 
-
-
-The analogies work by relating similarities of offsets.
-\pdfcomment{fix this to refer to analogy figure}
+The analogies work by relating similarities of differences between the word vectors.
 Word similarity can be evaluated using word embeddings using a number of metrics.
 By far the cosine similarity is the most common.
 This is given by 
-
 \begin{equation}
 sim(C_u, C_v)=\frac{C_{u}\cdot C_{v}}{\left\Vert u\right\Vert \left\Vert v\right\Vert }
 \end{equation}
 A smaller distance in vector space, means the words are more similar -- in some sense.
-Depending on the system this similarity could be syntactic, semantic or otherwise, the analogy tasks can help identify what kinds of similarities the embeddings are capturing.
+This similarity could be syntactic, semantic or otherwise.
+The analogy tasks can help identify what kinds of similarities the embeddings are capturing.
 
 Using the similarity scores a ranking of words to complete the analogy is found.
 To find the correct word for \emph{d} in: \emph{d} is to \emph{c} as \emph{b} is to \emph{a}
@@ -481,77 +487,86 @@ the following is computed for the table of embeddings $C$:
 \qquad & \argmax_{\forall d} sim(C_d - C_c, C_a-C_b)\\
 \text{i.e} & \argmax_{\forall d} sim(C_d, C_a-C_b+C_c)
 \end{align}
+This is shown diagrammaticality in \Cref{fig:analogy,fig:anavecs}.
+Sets of embeddings where the vector displacement between analogy terms are more consistent score better.
 
-%The motivational diagram is shown in \Cref{fig:anavecs}
-\pdfcomment{insert reference to figure here}
 
+Initial results in \textcite{mikolov2013linguisticsubstructures} were relatively poor, but the surprising finding was that this worked at all.
+\textcite{mikolov2013efficient} found that CBOW performed poorly for semantic tasks, and but comparatively well for syntactic tasks; skip-gram performed comparatively well for both, though not quiet as good in the syntactic tasks as CBOW.
+Subsequent results found in  \tcite{pennington2014glove} were significantly better again for both.
 
-Initial results were relatively poor, but the surprising finding was that this worked at all \cite{mikolov2013linguisticsubstructures}.
-Subsequent results found in \tcite{pennington2014glove} and other works were significantly better than the initial results.
 
 \section{Co-location Factorisation}
 
 \subsection{GloVe}
+\aside[Distance weighted co-occurrence and dynamic window sizing]{
+	When training Skip-Gram and CBOW, Mikolov et. al. used dynamic window sizing.
+	This meant that if the specified window size was $n$, in any given training case being considered the actual window size was determined an a random number between $0$ and $n$.
+	
+	Pennington et. al. achieve a similar effect by weighting co-occurrences within a window inversely proportionally to the distance between the word. That is to say if $w_i$ and $w_j$ occur in the same window (i.e. $|i-j|<n$), then rathar than contributing 1 to the entry in the co-occurrence count $X_{w_i, w_j}$, they contribute $\dfrac{1}{|i-j|}$.
+}
+
+
+\aside[Subsampling, and weight saturation]{
+	Skip-gram and CBOW models use a method called subsampling to decrease the effect of common words.
+	The subsampling method is to randomly discard words from training windows based on their unigram frequency.
+	This is related the the saturating of the co-occurrence weights as calculated by $f(X)$ as used by GloVE.
+}
+
+\aside[Key Factors Mentioned as Asides]{
+	There is an interesting pattern of factors being considered as not part of the core algorithm.
+	We have continued this in the side-notes of this section.	
+	While the original papers consider these as unimportant to the main thrust of the algorithms \textcite{levy2015lsaisbasicallyskipgramswithexperimentstoprove} found them to be crucial hyper-parameters.
+}
 
 Skip-grams are intrinsically prediction based methods, effectively predicting what words will co-occur in the context of a local window and optimising as such.
-In \tcite{pennington2014glove}the authors show that if one were to change that optimisation to be global over all co-occurrences,
-then the optimisation critia becomes minimising the cross-entropy between the true co-occurrence probabilities given by $P(w_j\mid w_j)$, and the value of the embedding product: the cross entropy measure.,
-weighted by the frequency of the occurrence of the word $X_i$.
+In \tcite{pennington2014glove} the authors show that if one were to change that optimisation to be global over all co-occurrences,
+then the optimisation criteria becomes minimising the cross-entropy between the true co-occurrence probabilities given by $P(w_j\mid w_j)$, and the value of the embedding product.
+With the cross entropy measure being weighted by the frequency of the occurrence of the word $X_{w_i,w_j}$.
 That is to say if skip-gram were optimised globally it would be equivalent to minimising:
 \begin{equation}
-Loss = - \sum_{\forall w_i} \sum_{\forall w_j} X_{ij} P(w_j\mid w_j) \log (V_{w_j}^\prime\,C_{w_{i}})
+Loss = - \sum_{\forall w_i} \sum_{\forall w_j} X_{w_i,w_j} P(w_j\mid w_j) \log (V_{w_j}^\prime\,C_{w_{i}})
 \end{equation}
 
-Minimising this cross-entropy efficiently means factorising the true co-occurrence matrix,
+
+Minimising this cross-entropy efficiently means  factorising the true co-occurrence matrix $X$,
 into the input and output embedding matrices $C$ and $V$, under a particular set of weightings given by the cross entropy measure.
 
-\tcite{pennington2014glove} consider instead factorizing the logarithm of co-occurrence matrix directly,
-the logarithm giving an different, but similar, weighting to the cross entropy measure.
-Thas is for each word co-occurrence of $w_i$ and $w_j$: Attempting to find optimal values for 
-the embeddings $C_{w_{i}}$, and $V_{w_j}^\prime$, while also allowing constant offsets $b_i$ and $k_j$
+
+
+\textcite{pennington2014glove} propose an approach based on this idea.
+For each word co-occurrence of $w_i$ and $w_j$: they attempting to find optimal values for 
+the embeddings $C_{w_{i}}$, and $V_{w_j}^\prime$, while and biases $b_i$ and $k_j$
 such that:
-$V_{w_j}^\prime\,C_{w_{i}} + b_i + k_j \approx \log(X_{ij})$
-as near as is possible.
-
-\aside[Implementing GloVe]{To implement GloVe in any technical programming language with good support for matrix factorisation via least-squares optimisation is trivial. As is implementing any other matrix factorisation/dimensionality reduction based method.}
-
-The precise measure used to do this, is a weighted the least squares minimisation of 
+$V_{w_j}^\prime\,C_{w_{i}} + b_i + k_j \approx \log(X_{ij})$.
+This is done via the minimisation of 
 \begin{equation}
 Loss = - \sum_{\forall w_i}  \sum_{\forall w_j} f(X_{ij})\,V_{w_j}^\prime\,C_{w_{i}}+b_i+k_j-\log (X_ij)
 \end{equation}
-
-
-using the weighting between 0 and 1 given by $f(x)$
+Where $f(x)$ is a weighing using the weighting between 0 and 1 given by $f(x)$
 \begin{equation}
 f(x)=\begin{cases}
 \left(\frac{x}{100}\right)^{0.75} & x<100\\
 1 & otherwise
 \end{cases}
 \end{equation}
-though they suggest other weightings may be suitable.
-This can be contrasted as a saturating variant of the effective weighing of skip-gram being $X_{ij}$.
-Though the variation in measure away from cross-entropy also significant and has related effects on the weightings of rare vs common words in the minimisation.
+This can be considered as a saturating variant of the effective weighing of skip-gram being $X_{ij}$.
 
-While in initial tests it was found that Glove out-performed  skip-gram,
-subsequent more extensive testing in \tcite{levy2015lsaisbasicallyskipgramswithexperimentstoprove} with more tuned parameters,
-found that skip-gram out-performed GloVE on all tasks, though the performance is relatively comparable.
+
+While GloVe out-performed  skip-gram in initial tests subsequent more extensive testing in \tcite{levy2015lsaisbasicallyskipgramswithexperimentstoprove} with more tuned parameters,
+found that skip-gram marginally out-performed GloVE on all tasks.
 
 
 
-\aside[Key Factors Mentioned as Minor Tweaks]{
-There is an interesting pattern of important factors being considered as not part of the core algorithm.
-GloVe explicitly weights all co-occurrences inversely by the distance from each other -- though this is considered part of finding the co-occurrence matrix rather than part of the algorithm itself.
-Skip-Gram accomplishes something similar with dynamic window sizing tweak -- the true size of the window is uniformly distributed between 1 and the value given.
 
-GloVe explicitly scales the weight of terms to be optimised -- using the weighting function, which saturates for frequent terms.
-Skip-Gram accomplishes something similar again using the sub-sampling tweak -- common words are randomly skipped from the contexts during training, based on how common they are.
-
-While the original papers consider these as unimportant to the main thrust of the algorithms \textcite{levy2015lsaisbasicallyskipgramswithexperimentstoprove} found them to be crucial hyper-parameters.
+\aside[Implementing GloVe]{To implement GloVe in any technical programming language with good support for optimisation is trivial.
+	It is also easy to do in a neural network framework, as these always include and optimiser.
+	Though unlike in normal neural network training there are no discrete training cases, just the global co-occurrence statistics.
 }
 
-However, GloVe loosely highlights the relationship between the co-located word prediction neural network models,
+GloVe highlights the relationship between the co-located word prediction neural network models,
 and the more traditional matrix factorization of collocation counts used in topic modeling.
-Very similar properties were also explored for skip-grams with negative sampling in \tcite{levy2014neural} and then in \tcite{li2015wordemedingasEMF} with more direct mathematical equivalence to weighed co-occurrence matrix factorisation;
+Very similar properties were also explored for skip-grams with negative sampling in \tcite{levy2014neural} and in \tcite{li2015wordemedingasEMF} with more direct mathematical equivalence to weighed co-occurrence matrix factorisation;
 Later in \tcite{cotterell2017SkipgramisEPCA} showed the equivalence to exponential principal component analysis.
 \tcite{wordvecispca} goes on the extend that show that it is a weighted logistic principal component analysis, which is a special case for of the exponential.
 There are many works in this area now.
@@ -561,7 +576,7 @@ There are many works in this area now.
 As we have now concluded that neural predictive co-location models are functionally very similar to matrix factorisation of co-location counts with suitable weightings, and suitable similarity metrics.
 One might suggest a variety of word embeddings to be created from a variety of different matrix factorisations with different weightings and constraints; and indeed this has been done.
 Traditionally large matrix factorisations have significant problems in terms of computational time and memory complexity.
-A common solution to this is to handle it an iterative optimisation procedure.
+A common solution to this in applied mathematics is to handle the factorisation using an iterative optimisation procedure.
 Training a neural network such as skip-gram is an iterative optimisation procedure.
 
 
@@ -569,52 +584,61 @@ Training a neural network such as skip-gram is an iterative optimisation procedu
 
 \section{Hierarchical Softmax and Negative Sampling}\label{sec:hierachical-softmax-and-negative-sampling}
 
+Hierarchical softmax, and negative sampling are effectively alternative output layer that are computationally cheaper to evaluate than regular softmax.
+They are powerful methods that pragmatically allow for large speed-up in any task that involved outputting very large classification probabilities -- such as language modelling.
+
+
 \subsection{Hierarchical Softmax}
 Hierarchical softmax was first presented in  \tcite{morin2005hierarchical}.
-It's recent use was popularised by \tcite{mikolov2013efficient}, where is is used using a huffman tree.
+It's recent use was popularised by \tcite{mikolov2013efficient}, where words are places in a Huffman tree, with depth determined by their frequency.
 
 
-
-\aside[SemHuff]{It can be noted that the huffman encoding scheme specifies only the depth of a given word in the tree. It does not specify the order.
+\aside[SemHuff]{It can be noted that the Huffman encoding scheme specifies only the depth of a given word in the tree. It does not specify the order.
 	\textcite{SemHuff} makes use of the BlossomV algorithm \parencite{Kolmogorov2009} to sort the nodes on each layer according to their similarity.
 	They found that on the language modelling task this improved performance, in the way one would expect.
-	They used a lexical resource to determine similarity, however noted that one could use a prior trained word2vec model as the similarity measure.
-	This is very similar to the original method used by \parencite{morin2005hierarchical},
-	but only using the similarity measure for reordering nodes at the same depth, after the depth is decided by huffman encoding.
-	This is a fun method to implement and is interesting.
-	In our own experimentation with it on other tasks, we were not actually seeing large improvements.
-	As a more obscure method it is worth benchmarking for new tasks.
+	They used a lexical resource to determine similarity, however noted that one could use a prior trained word-embedding model as the similarity measure -- the new encoding can then be used to define a new model which will find new (hopefully better) embeddings.
+	This is similar to the original method used by \parencite{morin2005hierarchical},
+	but only using the similarity measure for reordering nodes at the same depth, after the depth is decided by Huffman encoding.
+	In our own experimentation with using it on other tasks, we did not see large improvements.
+	It is never-the-less a very interesting idea,
+	and quiet fun implement and observe the results.
 }
 
 One of the most expensive parts of training and using a neural language model is calculating the softmax final layer.
-As the softmax denominator includes terms for each word in the vocabulary, the computation of all of them is expensive.
-\pdfcomment{write more intro here. Refer to the Output vector formulation}
-
+This is because the softmax denominator includes terms for each word in the vocabulary.
+Even if only one words probability is to be calculated, one denominator term per word in the vocabulary must be evaluated.
 In hierarchical softmax, each word (output choice), is considered as a leaf on a binary tree.
+Each level of the tree roughly halves the space of output words to be considered.
+Until at the level in which the word-leaf occurs on branch is for the output word, and the other is not.
+
 The tree is normally a Huffman tree \pcite{huffman1952method}, as was found to be effective by \tcite{mikolov2013efficient}.
-This which means that for each word $w_i$, the words depth (i.e its code's length) $L(w_i)$ is such that over all words: $\sum_{\forall w_j \in \mathcal{V}} P(w_j)\times L(w_j)$ is minimised.
+This which means that for each word $w_i$, the word's depth (i.e its code's length) $L(w_i)$ is such that over all words: $\sum_{\forall w_j \in \mathcal{V}} P(w_j)\times L(w_j)$ is minimised.
 Where $P(w_i)$ is word $w_i$'s unigram probability, and $\mathcal{V}$ is the vocabulary.
 The approximate solution to this is that $L(w_i) \approx -\log_2(P(w_i))$.
-From the tree each work is can be assign as code in the usual way, with 0 for example representing taking one branch, and 1 representing the other.
-Each point in the code corresponding to a node, which has decision tied to it.
-This code is used to transform the large  multinomial softmax classication into a series of binary logistic classifications.
-It is important to understand the layers in the tree are not layers of the neural network.
-They are in-fact subsets of the neurons on the output layer, with a relationship imparted on them.
+From the tree each word is can be assign as code in the usual way, with 0 for example representing taking one branch, and 1 representing the other.
+Each point in the code corresponds to a node in the binary tree, which has decision tied to it.
+This code is used to transform the large  multinomial softmax classification into a series of binary logistic classifications.
+It is important to understand the layers in the tree are not layers of the neural network in the normal sense.
+They are rather subsets of the neurons on the output layer, with a relationship imparted on them.
 
-As is noted by \tcite{mikolov2013efficient}, for a vocabulary $\mathcal{V}$,
-using a normal softmax would require each evaluation to perform $|\mathcal{V}$ operations;
-using hierarchical softmax with a balanced tree, would mean the expected number of operations across all words would be $\log_2(|\mathcal{V}|)$;
-but using huffman encoding gives expected number of operations $\sum_{\forall w_j \in \mathcal{V}} -P(w_j)\log_2(P(w_i)) = H(\mathcal{V})$, where $H(\mathcal{V})$ is the entropy (in the information theoretic sense) of the unigrams in the vocabulary.
-The worse case value for that entropy is $\log_2(|\mathcal{V}|)$.
-In-fact huffman encoding is provably optimal in this way, so this is the minimal number of operations required in the average case.
+To quantise the speed-up mathematically:
+it was noted by \tcite{mikolov2013efficient}, the for vocabulary $\mathcal{V}$, that:
+\begin{itemize}
+	\item Using normal softmax would require each evaluation to perform $|\mathcal{V}|$ operations.
+	\item Using hierarchical softmax with a balanced tree, would mean the expected number of operations across all words would be $\log_2(|\mathcal{V}|)$.
+	\item Using a Huffman tree gives expected number of operations $\sum_{\forall w_j \in \mathcal{V}} -P(w_j)\log_2(P(w_i)) = H(\mathcal{V})$, where $H(\mathcal{V})$ is the unigram entropy of words in the training corpus.
+\end{itemize}
+The worse case value for the entropy is $\log_2(|\mathcal{V}|)$.
+In-fact Huffman encoding is provably optimal in this way.
+As such this is the minimal number of operations required in the average case.
 
 
 \subsubsection{An incredibly gentle introduction to hierarchical softmax}
 
 In this section for brevity we will ignore the bias component of each decision at each node.
 It can either be handled nearly identically to the weight;
-or the matrix can be tank in \emph{design matrix form} with an implicitly appended column of ones;
-or it can actually be ignored in implementation.
+or the matrix can be written in \emph{design matrix form} with an implicitly appended column of ones;
+or it can even be ignored in the implementation.
 The reasoning for ignoring it in implementation is that the normal softmax bias encodes unigram probabilities;
 in Hierarchical softmax when used with the common Huffman encoding its depth in tree encodes its unigram probability. In this case, not using bias would at most cause error proportionate to $2^{-k}$, where $k$ is the smallest integer such that $2^{-k}>P(w_i)$.
 \pdfcomment{this seems right, but idk if it is. I need to check this}
@@ -623,7 +647,7 @@ in Hierarchical softmax when used with the common Huffman encoding its depth in 
 \tikzset{every internal node/.style={draw, circle, tight}}
 
 \paragraph{First consider a binary tree with just 1 layer and 2 leaves}
-The leaves are $n_{00}$ and $n_{01}$, these leaf notes each correspond to a word from the vocabulary.
+The leaves are $n_{00}$ and $n_{01}$, these leaf notes each correspond to a word from the vocabulary (Which must have size 2).
 
 \asidefig[Tree for 2 words]{\begin{tikzpicture}
 	\Tree [.$n_0$ 
@@ -631,47 +655,58 @@ The leaves are $n_{00}$ and $n_{01}$, these leaf notes each correspond to a word
 		$n_{01}$ ]
 \end{tikzpicture}}
 	
-We are at the initial root which we call $n_{0}$, and we can go to
+From the initial root which we call $n_{0}$, and we can go to
 either node $n_{00}$ or node $n_{01}$, based on the input from the
 layer below which we will call $z$.
 
 Here we write $n_{01}$ to represent the event of the first nonroot
-node being the branch given by following the 0th branch, vs the $n_{01}$
-being to follow the first branch. 
+node being the branch given by following the left branch, vs the $n_{01}$
+being to follow the right branch.
+However, order within the same level is arbitrary in any-case. 
 
 We are naming the root node as a notation convenience so we can talk
-about the decision made at $n_{0}$. note that $P(n_{0})=1$.
+about the decision made at $n_{0}$. 
+Note that $P(n_{0})=1$.
 
-We want to know the probability of the next node being the 0th (i.e.
-$P(n_{00}\mid z)$ ) or the first (i.e. $P(n_{01}\mid z)$).
+We which to know the probability of the next node being the left node (i.e.
+$P(n_{00}\mid z)$ ) or the right-node (i.e. $P(n_{01}\mid z)$) -- each of which as leaf nodes match to the prediction of one of the 2 words in our vocabulary.
 
 We could represent the decision with a softmax, with two outputs.
- 
 However, since it is a binary decision, we don't need a softmax, we
 can just use a sigmoid.
+\begin{equation}
+P(n_{01}\mid z)=P(n_{00}\mid z)-1
+\end{equation}
 
-$P(n_{01}\mid z)=P(n_{0}\mid z)-1$
-
-So the weight matrix for a sigmoid layer has a number of columns given
+The weight matrix for a sigmoid layer has a number of columns given
 by the number of outputs.
-
 As there is only one output, it is just a vector.
+We will call this vector $V_{0}^{T}$ it is the vector associated with the decision at node $n_{0}$.
 
-We will call this vector $V_{0}^{T}$ the decision
-associated with node $n_{0}$
+\aside[$1-\sigma(x)=\sigma(-x)$]{
+	The trivial proof written out in full:
+	\begin{align}
+		1-\sigma(x)&=\frac{e^{x}+1}{e^{x}+1}-\frac{e^{x}}{e^{x}+1}\\
+		&=\dfrac{1}{e^{x}+1}\frac{e^{-x}}{e^{-x}}\\
+		&=\dfrac{e^{-x}}{1+e^{-1}}\\
+		&=\sigma(-x)		
+	\end{align}
+}
 
 \begin{align}
 P(n_{00}\mid z) &=\sigma(V_{0}^{T}z) \\
 P(n_{01}\mid z) &=1-\sigma(V_{0}^{T}z)
 \end{align}
-Note that the sigmoid function: $1-\sigma(x)=\sigma(-x)$
-
-$1-\sigma(x)=\frac{e^{x}+1}{e^{x}+1}-\frac{e^{x}}{e^{x}+1}=\dfrac{1}{e^{x}+1}\frac{e^{-x}}{e^{-x}}=\dfrac{e^{-x}}{1+e^{-1}}=\sigma(-x)$
+Note that the for sigmoid function: $1-\sigma(x)=\sigma(-x)$
 
 This changes gives the formulation:
-\begin{align}
-P(n_{01}\mid z)=\sigma(-V_{0}^{T}z)
-\end{align}
+\begin{equation}
+P(n_{01}\mid z)=\sigma({-}V_{0}^{T}z)
+\end{equation}
+thus
+\begin{equation}
+P(n_{0i}\mid z)=\sigma(({-}1)^i V_{0}^{T}z)
+\end{equation}
 
 
 \paragraph{Now consider 2 layers with 3 leaves}
@@ -689,25 +724,23 @@ Consider the tree with nodes: $n_{0}$, $n_{00}$,$n_{000}$, $n_{001}$, $n_{01}$
 From earlier we still have:
 
 \begin{align}
-P(n_{00}\mid z)&=\sigma(V_{0}^{T}z)
+P(n_{00}\mid z)&=\sigma(V_{0}^{T}z)\\
 P(n_{01}\mid z)&=\sigma(-V_{0}^{T}z)
 \end{align}
 Now to find $P(n_{000}\mid z)$
+Another another binary decision must be made at node $n_{00}$.
+The decision at $n_{00}$ is to if the predicted next node is $n_{000}$ or $n_{001}$.
+This decision is made, with the assumption that we have reached $n_{00}$ already.
 
-We need another decision at node $n_{00}$
-
-The decision at $n_{00}$ as to if $n_{000}$ or $n_{001}$ is made,
-with the assumption that we have reached $n_{00}$ already.
-
-So the decision is defined by $P(n_{000}\mid z,\:n_{oo})$,
+So the decision is defined by $P(n_{000}\mid z,\:n_{00})$,
 which we can then use the conditional probability chain rule to recombine:
 \begin{align}
-P(n_{000}\mid z)&=P(n_{000}\mid z,\:n_{oo})\,P(n_{00}\mid z) \\
+P(n_{000}\mid z)&=P(n_{000}\mid z,\:n_{00})\,P(n_{00}\mid z) \\
 P(n_{000}\mid z,n_{00})&=\sigma(V_{00}^{T}z) \\
 P(n_{001}\mid z,n_{00})&=\sigma(-V_{00}^{T}z) \\
 \end{align}
 
-Very similar to before.
+This is very similar to before.
 Our 3 leaf nodes final probabilities are given by:
 
 \begin{align}
@@ -719,32 +752,31 @@ P(n_{001}\mid z)=\sigma(-V_{00}^{T}z)\sigma(V_{0}^{T}z) \\
 \paragraph{Continuing this logic}
 
 Using this system,
-we know for a node encoded at position $[t_{1},t_{2},t_{3},...,t_{L}]$
+we know that for a node encoded at position $[0,t_{1},t_{2},t_{3},...,t_{L}]$
 e.g. $[0,1,0,...,1]$.
 
 It's probability can be found as: 
 
 \begin{align}
-P(n_{0,t_{1}...,t_{L}}\mid z) &= P(n_{0t_{1}...,t_{L}}\mid z,\,n_{0t_{1}...,t_{L-1}})\,P(n_{0t_{1}...,t_{L-1}}\mid z)\\
+P(n_{0,t_{1}...,t_{L}}\mid z) &= P(n_{0,t_{1}...,t_{L}}\mid z,\,n_{0,t_{1}...,t_{L-1}})\,P(n_{0,t_{1}...,t_{L-1}}\mid z)\\
 %
 P(n_{0,t_{1}}\mid z)&=\sigma\left((-1)^{t_{1}}V_{0}^{T}z\right)\\
 %
-P(n_{0,t_{1},t_{2}}\mid z,\,n_{0,t_{1}})&=\sigma\left((-1)^{t_{2}}V_{0t_{1}}^{T}z\right)\\
+P(n_{0,t_{1},t_{2}}\mid z,\,n_{0,t_{1}})&=\sigma\left((-1)^{t_{2}}V_{0,t_{1}}^{T}z\right)\\
 %
 P(n_{0,t_{1},...,t_{i}}\mid z,\,n_{0,t_{1}...,t_{i-1}})&=\sigma\left((-1)^{t_{i}}V_{0,t_{1}...,t_{i-1}}^{T}z\right)
 \end{align}
 
 Applying the conditional probability chain rule to get:
-\begin{align}
+\begin{equation}
 P(n_{0,t_{1},...,t_{i}}\mid z,)=\prod_{i=1}^{i=L}\sigma\left((-1)^{t_{i}}V_{0,t_{1}...,t_{i-1}}^{T}z\right)
-\end{align}
+\end{equation}
 
 \subsubsection{Formulation}
 
 \aside[Combining multiplications]{
 	If one wants to find both $V_{00}^{T}z$ and $V_{0}^{T}z$,
-	
-	then this can be done using matrices simultaneously, thus taking advantage
+	then this can be done using matrices simultaneously, thus potentially taking advantage
 	of optimized matrix multiplication routines.
 	
 	Using $V_{0}^{T}$ and $V_{00}^{T}$ as row vectors, and
@@ -763,12 +795,17 @@ P(n_{0,t_{1},...,t_{i}}\mid z,)=\prod_{i=1}^{i=L}\sigma\left((-1)^{t_{i}}V_{0,t_
 	
 	The problem then becomes indexing the relevant node rows.
 	Which is a not at all trivial problem in packing tree node elements into a matrix.
-	The details on optimising such multiplications and tree packing are beyond the scope of this book.
-	In general this path is not a path to gaining speed, and is a trap to be avoided in your design.
+	The details on optimising such multiplications and tree packing are well beyond the scope of this book.
+	In general there may be very little scope here for optimisation,
+	as on most hardware (and BLAS systems) matrix products with $N$ columns and $N$ vector dot products take similar times.
 }
 
-Here  we have determined that the 0th branch represents the positive choice.
-It is equivalent to have the 1th branch represents the positive choice.
+The formulation above is not the same as in other works.
+This subsection shows the final steps to reach the conventional form used in \textcite{mikolovSkip}.
+
+
+Here  we have determined that the 0th/left branch represents the positive choice, and the other probability is defined in terms of this.
+It is equivalent to have the 1th/right branch representing the positive choice.
 
 \begin{equation}
 P(n_{0,t_{1},...,t_{i}}\mid z,)=\prod_{i=1}^{i=L}\sigma\left((-1)^{t_{i}+1}V_{0,t_{1}...,t_{i-1}}^{T}z\right)
@@ -783,42 +820,44 @@ and use an indicator function $\left\llbracket a=b\right\rrbracket =\begin{cases
 \end{cases}$
 
 \aside[How does this relate to word vectors?]{
-Recall that CBOW and Skip-gram and indeed all other language modelling word embedding methods are all about predicting $P(w_o\,mid w_{i},...,w{i+1})$ for some words.
-For skip gram that is just $P(w_o\,mid w_i)$.
+After the length of this section, one may have forgotten why we are doing this in the first place.
+Recall that CBOW, skip-gram and all other language modelling based word embedding methods are based around about predicting $P(w_o\,mid w_{i},...,w{j})$ for some words.
+For skip-gram that is just $P(w_o\,mid w_i)$.
 The term $n_{0,t_{1},...,t_{i}}$ in  $P(n_{0,t_{1},...,t_{i}}\mid z,)$, just represents as  path through the tree to its leave node which represent the word $w_o$. i.e $P(n_{0,t_{1},...,t_{i}}\mid z,)=P(w_o\mid z,)$.
-And $z$ is the final pre-output layer of the model, encoding in normal language models all the information about what comes after $w_{i},...,w{i+1}$.
-In skip-gram there is no hidden layer, and it is just $z=w_i$.
+And $z$ is the final pre-output layer of the model.
+In normal language models $z$ encodes all the information about what the model knows of predictions based on $w_{i},...,w{j}$ -- $z$ is thus a proxy term in the conditional probability for those words.
+In skip-gram there is no hidden layer, and it is just $z=C_{w_i}$,
+and the model defines its probability output by $P(w_o\mid w_i) = P(w_o\mid C_{w_i})$.
 }
 
 \begin{equation}
-P(n_{0,t_{1},...,t_{i}}\mid z,)=\prod_{i=1}^{i=L}\sigma\left(\left\llbracket n_{t_{i}}=ch(n_{t_{i-1}})\right\rrbracket V_{0,t_{1}...,t_{i-1}}^{T}z\right)
+P(n_{0,t_{1},...,t_{i}}\mid z)=\prod_{i=1}^{i=L}\sigma\left(\left\llbracket n_{t_{i}}=ch(n_{t_{i-1}})\right\rrbracket V_{0,t_{1}...,t_{i-1}}^{T}z\right)
 \end{equation}
-
-
 There is no functional difference between the 3 formulations.
 
-\paragraph{Loss Function}
-\pdfcomment{This should  be moved to intro to machine learning. Also should be double checked}
+\subsubsection{Loss Function}
+\pdfcomment{This should maybe be moved to intro to machine learning. Also should be double checked}
 
-\aside[The gradient calculations]{They are not fun. They never are for back-propagation. We recommend using a framework with automated differentiation, and/or performing gradient checks against using an numerical differentiation tool (Simple finite-differencing will do in a pinch).}
+\aside[The gradient calculations]{They are not fun. They never are for back-propagation. We recommend using a framework with automated differentiation, and/or performing gradient checks against a numerical differentiation tool (Simple finite-differencing will do in a pinch).}
 
-Using normal softmax, during training the cross-entropy between the model outputs predictions and the groud truth as given in the training set is minimised.
+Using normal softmax, during training the cross-entropy between the model outputs predictions and the ground truth as given in the training set is minimised.
 Cross entropy is given by
  \pdfcomment{Really check this}
 \begin{equation}
 H(P^\star, P) = \sum_{\forall w_i\in \mathcal{V}} \sum_{\forall z_j \in Z} -P^\star(w_i \mid z_j) \log P(w_i \mid z_j)
 \end{equation}
-Where $P^\star$ is the true distribution, and $P$ is the approximate probability given by our model,
+Where $P^\star$ is the true distribution, and $P$ is the approximate distribution given by our model (In other sections we've abused notation to use $P$ for both),
 and $Z$ is the set of values that are input into the model.
 
-In normal softmax, this is true probabilities (from $P^\star$) are implicitly given by frequency of training pairs the training set (which we take as the ground truth).
+In normal softmax, the true probabilities (from $P^\star$) are implicitly given by frequency of training pairs the training set (which we take as the ground truth).
 \begin{equation}
 Loss=H(P^\star, P) = \frac{1}{|\mathcal{X}|} \sum_{\forall (w_i, z_i) \in \mathcal{X}} -\log P(w_i \mid z_i)
 \end{equation}
 Where $\mathcal{X} \subset \mathcal{V} \times Z$ is the training-set.
-The intuitive understanding of this is that we are maximising the probability estimate of alls pairing that actually occur in the training set, proportionate to how often the occur (though it generalises better to continuous $Z$).
+The intuitive understanding of this is that we are maximising the probability estimate of alls pairing that actually occur in the training set, proportionate to how often the occur.
+Though $Z$ can be non-discrete values, as was the whole benefit of using embeddings, as discussed in \Cref{sec:the-neural-probabilistic-language-model}.
 
-Note: that this works identically for hierarchical softmax as for normal softmax.
+This works identically for hierarchical softmax as for normal softmax.
 It is simply a matter of substituting in the (different) equation for $P$.
 Then applying back-propagation as usual.
 
@@ -826,16 +865,14 @@ Then applying back-propagation as usual.
 
 \pdfcomment{This section is currently written using skip-gram no hidden layer, so uses $w_i$, but it doesn't have to. It could be rewritten like the previous, to use $z$ for the output of the pre-output layer. Which might just so happen to bt $w_i$ in the case of the skip-gram}
 
-Negative Sampling was introduced in \tcite{mikolovSkip} as another method used to speed up this problem
+Negative Sampling was introduced in \tcite{mikolovSkip} as another method used to speed up this problem.
 Much like hierarchical softmax in its purpose.
-However, negative sampling does not modify the networks output,
-but rather the loss function.
+However, negative sampling does not modify the networks output, but rather the loss function.
 
 
 Negative Sampling is a simplification of Noise Contrast Estimation \pcite{gutmann2012noise}.
 Unlike Noise Contrast Estimation (and unlike softmax), it does not in fact result in the model converging ot the same output as if it were trained with softmax and cross-entropy loss.
-However the goal with these newer word embeddings is not to actually perform the language modelling task.
-But only to capture a high-quality vector representation of the word.
+However the goal with these word embeddings is not to actually perform the language modelling task, but only to capture a high-quality vector representation of the words involved.
 
 \subsubsection{A motivation of Negative Sampling}
 Recall from \Cref{sec:skip-gram} the (supposed) goal, is to estimate $P(w_j\mid w_i)$.
@@ -849,7 +886,7 @@ P(w_j \mid w_{i}) & = \frac{\exp(V_{w_j}^T\,C_{w_{i}})}{\sum_{k=1}^{k=N} \exp(V_
 \aside[Why is not using softmax wrong?]{The notation abuse may be hiding just how bad it is to not use softmax.
 Recall that the true meaning of $P(w_j \mid w_i)$  is actually $P(W_j=w_j \mid W_i=w_i)$.
 By not using softmax, with its normalising denominator this means that:
-$\sum_{\forall w_j \in \mathcal{V}} P(w_j \mid w_i) \neq 1$. (Except by coincidence)
+$\sum_{\forall w_j \in \mathcal{V}} P(w_j \mid w_i) \neq 1$ (except by coincidence).
 }
 
 
@@ -857,13 +894,12 @@ This is not the only valid representation.
 One could use a sigmoid neuron for a direct answer to the co-location probability of $w_j$ occurring near $w_i$.
 Though this would throw away the promise of the probability distribution summing to one across all possible would that could be collocated with your $w_i$.
 That promise could be enforced by other constraints in training, but in this case it will not be.
-It is a legal probability if one does not consider it as a multinomial though.
+It is a legal probability if one does not consider it as a single categorical prediction, but rather as independent predictions.
 
 \begin{align}
 P(w_j \mid w_{i}) & = \left[\sigma(V\,C_{w_{i}}) \right]_{w_j} \\
 P(w_j \mid w_{i}) & = \sigma(V_{w_j}^T\,C_{w_{i}})
 \end{align}
-
 
 
 Lets start from the cross-entropy loss.
@@ -874,40 +910,39 @@ Loss = \sum_{\forall (w_i,w_j)\in \mathcal{X}} -\log P(w_j\mid w_i)
 \end{equation}
 This is the cross-entropy loss, excluding the scaling factor.
 
-However, recall that to speed things up, we are not using softmax in the model output,
+However, to speed things up, we are not using softmax in the model output,
 which means that there is no trade off for increasing (for example) $P(w_1\mid w_i)$ vs $P(w_2\mid w_i)$.
 This thus admits the trivially optimal solution $\forall w_j\in \mathcal{V} P(w_j \mid w_i) = 1$.
-This is obviously wrong -- even beyond not being a proper distribution -- some words are more common co-occurring that others.
+This is obviously wrong -- even beyond not being a proper distribution -- some words are more commonly co-occur that others.
 
 So from this we can improve the statement.
-What is desired from the loss function is to reward the probability of words that do co-occur being higher than the probability of words that do not.
+What is desired from the loss function is to reward models that predict that  the probability of words that do co-occur as being higher than the probability of words that do not.
 We know that $w_j$ does occur near $w_i$ as it is in the training set.
-Now let us find via some arbitrary means a $w_k$ that does not -- a negative sample.
-We want it to be so that $P(w_k\mid w_i) < P(w_j\mid w_i)$
+Now let us select via some arbitrary means a $w_k$ that does not -- a negative sample.
+We want the loss function to be such that $P(w_k\mid w_i) < P(w_j\mid w_i)$
 So for this single term in the loss we would have:
 \begin{equation}
-Loss_{w_j,w_i} =   - \log P(w_j\mid w_i)
+Loss_{w_j,w_i} =  P(w_k\mid w_i) - \log P(w_j\mid w_i)
 \end{equation}
 
 \aside[Most words don't co-occur]{
-	Some simple reasoning can account this as a reasonable consequence of Zipf's law \parencite{zipf1949human} and a prior of the principle of indifference, but there is a further depth to it as explained in \textcite{ha2009extending}}
+	Some simple reasoning can account this as a reasonable consequence of Zipf's law \parencite{zipf1949human} and a prior of the principle of indifference, but there is a further depth to it as explained in \textcite{ha2009extending}.}
 
 
-The question is then: how is $w_k$ to be found?
-One option would be to categorically search the corpus for these negative samples,
-but it is memory and time intensive.
-We can instead just pick them randomly,
-we can sample from the unigram distribution.
+The question is then: how is the negative sample $w_k$ to be found?
+One option would be to deterministically search the corpus for these negative samples, making sure to never select words that actually do co-occur.
+However that would require enumerating the entire corpus.
+We can instead just pick them randomly, we can sample from the unigram distribution.
 As statistically in any given corpus most words do not co-occur 
-a randomly selected word probably will not be one that truly does co-occur
+a randomly selected word will in all likelihood will not be one that truly does co-occur
 -- and if it is, then that small mistake will vanish as noise in the training,
 overcome by all the correct truly negative samples.
 
-\aside[Is that a function?]{No, at the point at which the Loss started including random samples, it ceased to be a function in the usual mathematical sense. It is still a function in the common computer programming sense though -- it is just not deterministic.}
+\aside[Is that a function?]{No, at the point at which the Loss started including randomly selected samples, it ceased to be a function in the usual mathematical sense. It is still a function in the common computer programming sense though -- it is just not deterministic.}
 
 At this point, we can question, why limit to one negative sample?
 We could take many, and do several at a time,
-and get more confidence that $P(w_j\mid w_i)$ is indeed greater than all the negative samples it could be from.
+and get more confidence that $P(w_j\mid w_i)$ is indeed greater than other (nonexistant) co-occurrence probabilities.
 This gives the improved loss function of 
 
 \begin{equation}
@@ -922,8 +957,8 @@ And $\text{samples}$ a function that returns some number of samples from it.
 
 Consider, though is this fair to the samples?
 We are taking them as representative of all words that do not co-occur.
-Should a word that is unlikely to occur at all (but was unlucky enough to be sampled), contribute the same to the loss as a word that was very likely to occur?
-No it should not, the loss contribution should be in proportion to how likely the samples were to occur.
+Should a word that is unlikely to occur at all, \emph{but was unlucky enough to be sampled}, contribute the same to the loss as a word that was very likely to occur?
+More reasonable is that the loss contribution should be in proportion to how likely the samples were to occur.
 Otherwise it will add unexpected changes and result in noisy training.
 
 This results in:
@@ -944,8 +979,8 @@ It is another abuse of notation to suggest we write
 
 $\sum_{k=1}^{k=K} \mathbb{E}_{w_k \sim U_{\mathcal{V}}} [\log P(w_k\mid w_i)]$,
 to be the sum of the $K$ samples expected values.
-This notation is one used in \tcite{mikolovSkip}.
-That gives the form:
+This notation (abuse) is as used in \tcite{mikolovSkip}.
+It gives the form:
 
 \begin{equation}
 Loss = \sum_{\forall (w_i,w_j)\in \mathcal{X}} 
@@ -989,18 +1024,11 @@ Loss = -\sum_{\forall (w_i,w_j)\in \mathcal{X}}
 
 Which is the negative sampling lost function used in  \tcite{mikolovSkip}.
 
-\pdfcomment{This whole page needs erious reformatting.}
-
-
-
-
 
 
 \section{Natural Language Applications -- beyond language modeling}
 While statistical language models are useful, they are of-course in no way the be-all and end-all of natural language processing.
-Simultaneously with the developments around representations for the language modelling tasks, work was being done on solving other NLP problems using similar techniques.
-
-\tcite{collobert2008unified}
+Simultaneously with the developments around representations for the language modelling tasks, work was being done on solving other NLP problems using similar techniques \pcite{collobert2008unified}.
 
 
 \subsection{Using Word Embeddings as Features}
@@ -1017,9 +1045,9 @@ Simultaneously with the developments around representations for the language mod
 
 \tcite{turian2010word} discusses what is now perhaps the most important use of word embeddings.
 The use of the embeddings as features, in unrelated feature driven models.
-One can find word embeddings using any of the methods discussed above, for example language modelling.
+One can find word embeddings using any of the methods discussed above.
 These embeddings can be then used as features instead of, for example bag of words or hand-crafted feature sets.
-\tcite{turian2010word} found improvements on the state of the art for chunking and Named Entity Recognition (NER), using the word embedding methods of that time.
+\textcite{turian2010word} found improvements on the state of the art for chunking and Named Entity Recognition (NER), using the word embedding methods of that time.
 Since then, these results have been superseded again using newer methods.
 
 
@@ -1027,32 +1055,31 @@ Since then, these results have been superseded again using newer methods.
 Given two vocabulary vector spaces, for example one for German and one for English,
 a natural and common question is if they can aligned such that one has a single vector space for both.
 Using canonical correlation analysis (CCA) one can do exactly that.
-Here, we will discuss normal CCA for aligning two vectors spaces,
-though there also exists generalised CCA for any number of vector spaces \pcite{gcca}.
+There also exists generalised CCA for any number of vector spaces \pcite{gcca},
+as well as kernel CCA for a non-linear alignment.
 
 The inputs to CCA, are two sets of vectors, normally expressed as matrices,
 Which we will call for consistency $C \subseteq \mathbb{R}^{n_1}$ and $V \subseteq \mathbb{R}^{n_2}$.
 These are both some set of vector representations for words, not necessarily of same dimensionality.
-These could be the output of any of the embeddings dicusses earlier,
+These could be the output of any of the embedding model discussed earlier,
 or even a sparse (non-embedding) representations such as the point-wise mutual information of the co-occurrence counts.
 The other input is an a subset of pairs from those sets that are to be aligned, which we will call, $C^\star \times V^\star$.
 This subset contains only pairs with known translations -- this does not have to be the whole vocabulary of either language.
 
 
 %
-By performing CCA (the details of which are well out of scope for this text),
-one solves to find a series of vectors, $S=\left[ \tilde{s}_1, ..., \tilde{s}_d \right]$ and $T= \left[ \tilde{t}_1, ..., \tilde{t}_d\ \right]$,
+By performing CCA one solves to find a series of vectors, $S=\left[ \tilde{s}_1, ..., \tilde{s}_d \right]$ and $T= \left[ \tilde{t}_1, ..., \tilde{t}_d\ \right]$,
 such that the correlation between $\tilde{s}_i^\prime C^\star$ and $\tilde{t}_i^\prime V^\star$ is maximised,
 while con straining with the requirement for all $j<i$ that $\tilde{s}_i^\prime C^\star$ is uncorrelated with $\tilde{s}_j^\prime C^\star$  and that  $\tilde{t}_i^\prime V^\star$ is uncorrelated with $\tilde{t}_j^\prime V^\star$.
-This is very similar to principal component analysis(PCA), and like PCA number components to use $d$ is a variable that can be deceased to achieve dimensionality reduction.
-When complete, taking $S^\prime$ and $T^\prime$ as matrices gives projection matrixes that project $C$ and $V$ to a space where aligned elements are as correlated as possible.
-That is to say the final new common vector space embeddings are given by:
+This is very similar to principal component analysis (PCA), and like PCA number components to use $d$ is a variable that can be deceased to achieve dimensionality reduction.
+When complete, taking $S^\prime$ and $T^\prime$ as matrices gives projection matrices that project $C$ and $V$ to a space where aligned elements are as correlated as possible.
+The new common vector space embeddings are given by:
 $S^\prime C$ and $T^\prime V$.
+Even for sparse inputs the outputs will be dense embeddings.
 \pdfcomment{Check this, both for correctness in description, and for correctness in notation.}
 
 \textcite{faruqui2014improving} investigated this primarily as a means to use additional data to improve performance on monoligual tasks.
 In this they found small and inconsistent improvement.
-However
 However, we suggest it is much more interesting as a multi-lingual tool.
 It allows similarity measures to be made between words of different languages.
 \tcite{translating-unknown-words-2016} use this on as part of a hybrid system translate out of vocabulary words.
@@ -1063,11 +1090,11 @@ It may be apparent that since this method does produce a representation maximisi
 that given representations for two words from the same context, initialised randomly,
 CCA could be used repeatedly to optimise a towards good word embedding capturing shared meaning from contexts.
 Such a method was investigated in \tcite{dhillon2011multi}; their final process is quiet complex.
+It is perhaps one of the more unusual ways to create word embeddings as compared to any of the methods discussed earlier.
 
-
-
-There are also other means means to directly train embeddings on multiple languages concurrently including the works of \tcite{zou2013bilingual} and \tcite{shi2015learningbiligualcofactorisation}, amongst others.
-On the sentence embedding side () \tcite{zou2013bilingual}, and \tcite{socherDTRNN} train embeddings from different language and modalities (respectively) directly to be near to their partners.
+Aligning embeddings using linear algebra after the fact is not the only means to end up with a common vector space.
+One can also directly train embeddings on multiple languages concurrently including the works of \tcite{zou2013bilingual} and \tcite{shi2015learningbiligualcofactorisation}, amongst others.
+On the sentence embedding side \tcite{zou2013bilingual}, and \tcite{socherDTRNN} train embeddings from different language and modalities (respectively) directly to be near to their partners (These are discussed in \Cref{sec:sentence-representations-and-beyond}).
 A survey paper was recently published by \textcite{Ruder17crosslingreview}.
 
 
