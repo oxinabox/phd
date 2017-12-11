@@ -39,8 +39,8 @@
 	\draw[->] (L\n) -- (out);
 \end{scope}
 
-%%%%%%%%%%%%%%%%%%
-% Decoder
+%%%%%%%%%%%%%%%%
+ Decoder
 \begin{scope}[yshift=-5cm] 
 \node(lbl)[text width= \labelwidth] {\textbf{RNN Decoder:}\\%
 1 input: $x$\\%
@@ -49,13 +49,14 @@ with prompts: $r_t$ (often $y_{t-1}$)
 };
 
 \coordinate (L0) at (lbl.east);
-\node(x)[below right = 2 of lbl.west]{x}
+\coordinate (L1c)[right = of L0];
+\node(x)[below right = 4 of L1c]{$x$};
 
 \foreach \i[count=\j from 0] in {1,...,\n}{
 	\ifnumequal{\i}{\n - 1}{%
 		\node(L\i)[dashed, layer, right = of L\j] {...};
 		\node(w\i)[above = of L\i]{...};
-		\node(w\i)[below = of L\i]{...};
+		\node(y\i)[below = of L\i]{...};
 	}%
 	{	
 		\node(L\i)[layer, right = of L\j] {RU};
@@ -63,7 +64,7 @@ with prompts: $r_t$ (often $y_{t-1}$)
 		\node(w\i)[below = of L\i]{$[r_\i;x]$};
 		\draw[->](w\i) -- (L\i);
 		\draw[->](L\i) -- (v\i);
-		\draw[->](x) -- (w\i);
+		\draw[->](x) to[bend right = 5] (w\i.300);
 	}
 }
 \foreach \i[count=\j from 1] in {2,...,\n} {
@@ -72,10 +73,10 @@ with prompts: $r_t$ (often $y_{t-1}$)
 
 \end{scope}
 
-%%%%%%%%%%%%%%%%%%
-% Encoder Decoder
+%%%%%%%%%%%%%%%%%
+ Encoder Decoder
 
-\begin{scope}[yshift=-10cm]
+\begin{scope}[yshift=-14cm]
 \node(lbl)[text width= \labelwidth] {\textbf{RNN Encoder-Decoder:}\\%
 Variable $n$ inputs: $x_t$\\%
 Variable $m$ outputs $\hat{y_t}$\\%
@@ -95,38 +96,51 @@ Prompts: $r_t$ (often $y_{t-1}$)
 		\draw[->] (w\i) -- (L\i);
 	}
 }
+\foreach \i[count=\j from 1] in {2,...,\nn} {
+	\draw[->] (L\j) edge node[labe] {state} (L\i);
+}
 
+
+
+
+\coordinate[above = 3 of L\nn] (Lp\nn);
 \numdef{\np}{\n - 1}
 \foreach \j in {\nn,...,\np}{
 	\numdef{\i}{\j+1}
 	\numdef{\y}{\i - \nn}
 	\ifnumequal{\i}{\n-1}{%
-		\node(L\i)[dashed, layer, right = of L\j] {...};
-		\node(w\i)[below = of L\i]{...};
-		\node(y\i)[above = of L\i]{...};
+		\node(Lp\i)[dashed, layer, right = of Lp\j] {...};
+		\node(w\i)[below = of Lp\i]{...};
+		\node(y\i)[above = of Lp\i]{...};
 	}%
 	{
-		\node(L\i)[layer, right = of L\j] {$\mathrm{RU_D}$};
+		\node(Lp\i)[layer, right = of Lp\j] {$\mathrm{RU_D}$};
 		\ifnumequal{\i}{\n}{
-			\node(w\i)[below = of L\i]{$r_m$};
-			\node(y\i)[above = of L\i]{$\hat{y}_m$};
+			\node(w\i)[below = of Lp\i]{$[z; r_m]$};
+			\node(y\i)[above = of Lp\i]{$\hat{y}_m$};
 		}
 		{
-			\node(w\i)[below = of L\i]{$r_\y$};
-			\node(y\i)[above = of L\i]{$\hat{y}_\y$};
+			\node(w\i)[below = of Lp\i]{$[z; r_\y]$};
+			\node(y\i)[above = of Lp\i]{$\hat{y}_\y$};
 		}
 
-		\draw[->] (w\i) -- (L\i);
-		\draw[->] (L\i) -- (y\i);		
+		\draw[->] (w\i) -- (Lp\i);
+		\draw[->] (Lp\i) -- (y\i);
+		\path[->] (L\nn.north) edge node[labe]{z} (w\i.south west);
 	}
 }
 
-\foreach \i[count=\j from 1] in {2,...,\n} {
-	\draw[->] (L\j) edge node[labe] {\ifnumequal{\j}{\nn}{\underline{output}}{state}} (L\i);
+
+\numdef{\nnp1}{\nn + 1}
+\foreach \i in {\nnp1,...,\np} {
+	\numdef{\j}{\i+1}
+	\draw[->] (Lp\i) edge node[labe] {state} (Lp\j);
 }
-% 
+ 
 
 \end{scope}
+
+
 \end{tikzpicture}
 
 

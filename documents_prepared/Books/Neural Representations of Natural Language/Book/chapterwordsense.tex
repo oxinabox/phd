@@ -20,59 +20,58 @@
 
 \chapter{Word Sense Representations}\label{sec:word-sense-representations}
 \begin{abstract}
-	In this chapter, techniques for representing the multiple meanings of a single word is discussed.
-	This is an growing area, and is particularly important in languages where polysemous and homonymous words are common (This includes English, but it is even more prevalent in for example Chinese languages).
+	In this chapter, techniques for representing the multiple meanings of a single word are discussed.
+	This is an growing area, and is particularly important in languages where polysemous and homonymous words are common (This includes English, but it is even more prevalent in Mandarin for example).
 	The techniques discussed can be broadly classified as lexical word sense representation,  and as word sense induction.
-	The inductive techniques can be sub-classified as clustering, or as as 
-	It leads naturally to the next section on phrase representation. Rather than a single word having many meanings, the next chapter will discuss how a single meaning may take multiple words to express.
+	The inductive techniques can be sub-classified as clustering based or as prediction based.
 \end{abstract}
 	
 \section{Word Senses}
 
 Words have multiple meanings.
-When assigning a single representation to a word, it is impossible for that representation to truly describe the meaning in all contexts.
+A single representation for a word cannot truly describe the meaning in all contexts.
 It may have some features applicable to some uses but not to others,
-it may be an average of all features for particular contexts,
-or it may only represent the most common sense,
-or a combination of all.
+it may be an average of all features for all uses,
+or it may only represent the most common sense.
+For most word-embeddings it will be an unclear combination of all of the above.
+Word sense embeddings attempt to find representations not of words, but of particular senses of words.
 
 
 
 
-\aside[polysemous/homonymous]{A word with multiple meanings. For purposes of all but the most linguistically driven NLP work there is no need to distinguish between a polyseme and a homonym. Polysemous and homonymous are synonymous.}
+\aside[polysemous/homonymous]{A word with multiple meanings i.e. senses. For NLP representational purposes polysemous and homonymous are synonymous.}
 
 \aside[Part of Speech/POS]{The syntactic category a word belongs to. Different POS tags come from different tag sets.
-Can be simple as the WordNet: noun, adjective, verb, etc. Or complex as in the Brown: VBG-\emph{verb, gerund/present participle}, NN-\emph{	noun, singular or mass}.
+Can be simple as the WordNet tag set: noun, adjective, verb, etc. or complex as in the Brown tag set: VBG-\emph{verb, gerund/present participle}, NN-\emph{	noun, singular or mass}.
  }
 \aside[word use]{An occurrence of a word in a text, such as a training corpus. Each word will have multiple uses in a text. Each word use will only have one particular meaning and will thus belong to one synset.}
-\aside[lemma]{the base form of the word as defined by the lexicographical resource. It is normally closely related to (often identical to) the stem which is defined as the root form of the word with all morphological inflections (e.g. tenses) removed. The words are sometimes used interchangeably, though this is not truly correct.}
+\aside[lemma]{the base form of the word as defined by the lexicographical resource. It is normally closely related to (often identical to) the \emph{stem} which is the word's root form with all morphological inflections (e.g. tenses) removed.}
 \aside[Lexeme]{The set of words that share a common lemma: \natlang{go}, \natlang{going}, \natlang{goes}, and \natlang{went} all belong to the lexeme headed by the lemma \natlang{go}}
 \aside[synset]{A synset is a set of synonymous words: that is words that have the same meaning}
 \aside[gloss]{A gloss is the dictionary entry for a word-sense, it normally includes both the definition and an example of use.
 In WordNet each synset shares a common gloss.}
 
 %\aside[Sensekey]{This is not a commonly used phrase by linquists, but it is an important implementation detail when using WordNet for WSD tasks. It repressents the mapping between lemma+pos and synset, and is needed because that is a many-many relationship. It take the basic form \texttt{lemma\%pos\_id:lex\_filenum}}
-\aside[Lemmatization]{WordNet is indexed by lemmas. This in essence means with tense and plurality information removed. WordNet comes with a lemmatizer called morphy to do this.(c.f. stemming)}
-\aside[Unlemmatization]{Given lemma (as one can extract from WordNet) and a full POS tag (Such as a Brown-style tag) for a word, it is possible to undo the lemmatization with a high degree of reliability using relatively simple rules. The POS tag encodes the key inflectional features that are lost. Patten.en \pcite{de2012pattern} is a python library encoding such rules (pluralisation, verb conjugation, etc.); though combining them with the POS tag to drive them is a task left for the reader. This can can be used to find substitute words using WordNet's features, for finding synonyms, antonyms and other lemmas from lexically related categories.}
+\aside[Lemmatization]{WordNet is indexed by lemmas. This in essence means with tense and plurality information removed. WordNet comes with a lemmatizer called morphy to do this.}
+\aside[Unlemmatization]{Given lemma (as one can extract from WordNet) and a full POS tag (such as a Brown-style tag) for a word, it is possible to undo the lemmatization with a high degree of reliability using relatively simple rules. The POS tag encodes the key inflectional features that are lost. Patten.en \pcite{de2012pattern} is a python library encoding such rules (pluralisation, verb conjugation, etc.); though combining them with the POS tag to drive them is a task left for the reader. This can can be used to find substitute words using WordNet's features, for finding synonyms, antonyms and other lemmas from lexically related categories.}
 
 
-The standard way to assign word senses is via some lexicographical resource.
-i.e. a dictionary, or a thesaurus.
-There is not a canonical list of word senses that are truly real and consistently defined in English.
+The standard way to assign word senses is via some lexicographical resource, such as a dictionary, or a thesaurus.
+There is not a canonical list of word senses that are consistently defined in English.
 Every dictionary is unique, with different definitions and numbers of word senses.
-The most commonly used lexicographical resource is WordNet \pcite{miller1995wordnet},
-there are several WordNets equivalents in other languages,
-as well as the multi-lingual  BabelNet \pcite{navigli2010babelnet}.
-
+The most commonly used lexicographical resource is WordNet \pcite{miller1995wordnet}, and the multi-lingual  BabelNet \pcite{navigli2010babelnet}.
+The relationship between terminology used in word sense problems is shown in \Cref{fig:wordsenseterms}
 
 
 \begin{figure}
 	\caption{The relationship between terms used to discuss word sense problems.
 		The Lemma stands in for the lexeme, for WordNet's purposes when indexing.
 		The core task of WSD is to go from a word-use to the corresponding synset.
-		For WSD tasks the word-use is normally pretagged with its POS tag, and its corresponding lemma,
-		as these can be found with very high reliability by a POS tagger and by a lemmatizer respectively.
+		For WSD tasks the word-use is normally pre-tagged with its lemma and POS tag,
+		as these can be found with high reliability using standard tools.
 	}
+	\label{fig:wordsenseterms}
+
 	\resizebox{\textwidth}{!}{\begin{tikzpicture}[circle/.append style={draw, font=\footnotesize, rounded rectangle}]
 		\node[circle](worduse){\normalsize Word-use\\ e.g.\\ \natlang{Fred \underline{goes} shopping}};
 		\node[circle, above right = 2 of worduse](pos){\normalsize POS\\ e.g.\\ \emph{verb}};
@@ -104,12 +103,12 @@ as well as the multi-lingual  BabelNet \pcite{navigli2010babelnet}.
 
 
 \aside[Semantic Syllepsis]{
-	Also known as pathological sentences that kill almost all WSD systems.
+	(Also known as pathological sentences that kill almost all WSD systems.)
 	Consider the sentence: \natlang{John used to work for the \emph{newspaper} that you are carrying.},
 	In this sentence the word-use newspaper simultaneously have two different meanings: it is both the company, and the object.
 	This violates out earlier statement that every word-use belongs to exactly one synset.
-	As word sense disambiguation systems normally attempt to assign a single sense  to an each word they are unable to handle these sentences.
-	Most word sense induction systems can not much better: at best a new sense could be allocated for the join use, which does not correspond to the human notion of the word having two senses for different parts of the sentence.
+	As word sense disambiguation systems normally attempt to assign a single sense they are unable to handle these sentences.
+	Most word sense induction systems can not much better: at best a new sense could be allocated for the joint use, which does not correspond to the linguistic notion of the word having two senses for different parts of the sentence.
 	Most works on word sense disambiguation outright ignore these sentences, or consider them to be ungrammatical, or incorrect.
 	However, they are readily understood and used without thought by most native speakers.
 	These constructions are also known as zeugma, although zeugma is itself as highly polysemous word, so its usage varies. 
@@ -118,26 +117,30 @@ as well as the multi-lingual  BabelNet \pcite{navigli2010babelnet}.
 
 
 Word sense disambiguation is one of the hardest problems in NLP.
-Very few systems significantly out perform the baseline most common sense (MCS).
+Very few systems significantly out perform the baseline most common sense (MCS) technique.
 
 Progress on the problem is made difficult by several factors.
 
-There are problems with the data available.
-The lack of very large scale training corpora rendering fully supervised methods difficult.
-The limited testing corpora can result in systems that allow 
-Lack of human agreement on the correct sense, resulting in weak ground truth.
-
-There are also issues inherent in the task.
+The sense is hard to know from the context.
 Determining the sense may require very long range information:
 for example the information on context may not even be in the same sentence.
-It may require knowing the domain of the text, where word sense uses vary between domain.
+It may require knowing the domain of the text, where word sense uses vary between domain, this information is external to the text itself.
 It may in-fact be intentionally unclear, with multiple correct interpretations, as in a pun.
-Or be unintentionally unknowable, due to poor writing style, such that it would confuse any human reader also.
+It maybe unintentionally unknowable, due to poor writing style, such that it would confuse any human reader also.
+This difficulties are compounded by the limited amount of data available.
+
+There is only a relatively small amount of labelled data for word sense problems.
+It is the general virtue of machine learning that given enough data almost any input-output mapping problem can be solved.
+Such an amount of word sense annotated data is not available -- compared finding unsupervised word embeddings which can used anything that has ever been written.
+The lack of very large scale training corpora renders fully supervised methods difficult.
+This similarly has resulted in small sized testing corpora can result in systems that do not generalise to real world uses.
+Lack of human agreement on the correct sense, resulting in weak ground truth, and further makes creating new resources harder.
+This limited amount of data compounds the problems inherent difficulties.
 
 
 It can also be said that word senses are highly artificial and do not adequately represent meaning.
 However, WSD is required to interface with  lexicographical resources,
-such as translation dictionaries, ontologies (e.g. OpenCyc), and other datasets (e.g. ImageNet ).
+such as translation dictionaries (e.g. BabelNet), ontologies (e.g. OpenCyc), and other datasets (e.g. ImageNet \pcite{imagenet_cvpr09}).
 
 
 It may be interesting to note, that the number of meanings a word has is anti-logarithmically related to its rank \tcite{zipf1945meaning}.
@@ -147,21 +150,21 @@ This aligns well with our notion that precise (e.g. technical) words exist but a
 This also means that by far most word uses are potentially very ambiguous.
 
 However, also the most commonly used word sense (for a given word ) is also overwhelmingly more frequent than it's less common brethren -- also being Zipfian distributed in there usage \cite{Kilgarriff2004}.
-
 For this reason the most frequent sense (MFS) baseline is often the best performing result in any WSD task.
 
-\subsubsection{Most Frequent Word Sense}
-It is easy to count how often each sense of a word occurs,
-once one has a sense annotated corpus.
-Further, for frequent senses, due to there over-whelming commonness this counting is likely to have them win-out even from small training corpora.
+\subsubsection{Most Frequent Sense}\label{sec:most-frequent-sense}
+Given a sense annotated corpus, it is easy to count how often each sense of a word occurs.
+Due to the over-whelming frequency of the most frequent sense, it is unlikely for even a small training corpus to have most frequents sense differing from the use in the language as a whole.
+
 
 For the $i$th word use being the word $w_i$, having some sense $h_j$
 then without any further context the 
 probability of that sense being the correct sense is $P(h_j \mid w_i)$.
-As POS tagging is almost a solved problem, one can use the part of speech tag $p_i$ (for the $i$ word use) as an additional condition, and thus find $P(h_j \mid w_i, p_i)$.
-As WordNet encodes this information for lemma-sense pair using the SemCor corpus counts (this is also used for sense ordering, which is why this is sometimes called First Sense.).
+One can use the part of speech tag $p_i$ (for the $i$ word use) as an additional condition, and thus find $P(h_j \mid w_i, p_i)$.
+WordNet encodes this information for lemma-sense pair using the SemCor corpus counts (this is also used for sense ordering, which is why this is sometimes called First Sense.).
 This is a readily available and practical method for getting a baseline probability of each sense.
-By applying argmax, to always select the most common sense, this can be used for word sense disambiguation:  $\argmax_{\forall h_j} P(h_j \mid w_i, p_i)$.
+Most frequent sense can be applied for word sense disambiguation using this frequency based probability estimate:  $\argmax_{\forall h_j} P(h_j \mid w_i, p_i)$.
+
 
 In the most recent SemEval WSD task \pcite{moro2015semeval},
 MFS beat all submitted entries for English, both overall, and on almost all cuts of the data.
@@ -170,52 +173,58 @@ MFS beat all submitted entries for English, both overall, and on almost all cuts
 
 
 \section{Word Sense Representation}
-\pdfcomment{Rewrite this stuff about wordnet being a poor moral baseline to fit the books intended audience better}
+
+
 \aside[WordNet is not a strong moral baseline]{
+	WordNet, as a resource based in part on the work of Princeton undergraduate students in the early 1990's,
+	and on the literature of 1961,
+	is not the kind of resource one might hope for from a AI information perspective.
 	
-	WordNet is the standard "dictionary/thesaurus/source of lexicographical information" for algorithms. (ML and otherwise)
-	(It is also the seed for some online dictionaries)
 	
-	The definitions in WordNet were written in a large part by undergrads at Princeton in 1990. That is why it has things like "S: (v) nag, peck, hen-peck (bother persistently with trivial complaints) "She nags her husband all day long"".
+	The glosses include a number of biases.
+	These biases are reflective of language use, but are not necessarily ideal to be encoding into a system.
+	For example: \natlang{"S: (v) nag, peck, hen-peck (bother persistently with trivial complaints) `She nags her husband all day long' ''}.
+	Other dictionaries regularly show up in the News for similar content.
 	
-	Further, the dataset used to determine frequency of Synsets (that is the total count of all words) comes from a dataset now known as SemCore.
-	Which is a sense annotated subset of the Brown Corpus.
-	
+	Another problem is the source of the word sense counts.
+	As discussed in in the main text, sense counts are important in WSD systems.
+	The counts come from SemCor, a sense annotated subset of the Brown Corpus.
 	The Brown Corpus is a sampling of American texts from 1961.
-	The norms of 1961 were not the norms of today.
-	(Remember the US didn't pass the Civil Rights act to end segregation until 1964).
+	The cultural norms of 1961 were not the norms of today.
+	(For context, note that the US didn't pass the Civil Rights act to end segregation until 1964).
+	As such, one should not trust WordNet (or SemCor) to reflect current sense counts,
+	for words which have undergone usage change since 1961.
 	
-	Now here is a fact I will return to later. The word Wheelchair is only mentioned once in the Brown corpus.
-	
-	Moving on:
-	ImageNet is a common resource for image recognition.
-	It labels images with their WordNet synset.
-	More generally, using a high performing ImageNet network minus its final classification layer, is commonly used as a feature extractor on any computer vision machine learning problem.
-	
-	ImageNet only uses the most common synsets.
-	(in 2009 it has 8,000. It is now up to  22,000)
-	Where most common is determined using the counts reported by WordNet (at least originally it was).
-	Which were extracted from SemCore, i.e. The Brown Corpus.
-	Which means that it did not include wheelchairs for example (it does now).
-	
-	And this is why automatic captioning systems recognize wheelchairs as skateboards.
-	
-	Because of the fact that they are based on what people were writing about in 1961.}
+	Further more, when creating down stream resources based on WordNet,
+	one should not use the sense counts to determine how important it is to include a concept.
+	One can imagine the issues that would be caused had ImageNet \parencite{imagenet_cvpr09} had used those counts to determine the synsets for which images would be provided.
+	(They didn't: even the 2009 initial release of ImageNet contains hundreds of images of \natlang{wheelchairs}, and \natlang{prosthesis} -- synsets that almost do not occur in the Brown).
+	Unintentional biasing of data can have on-going effects on the behaviour of machine learning based systems far beyond the original conception.
+}
 
-\subsection{Supervised Methods}
-The simple and direct method, is to take a dataset that is annotated with word-senses,
+\subsection{Directly supervised method}
+The simple and direct method is to take a dataset that is annotated with word-senses,
 and then treat each tagged word as if it were a word, then apply any of the methods for word representation discussed in \Cref{sec:word-representations}.
-\tcite{iacobacci2015sensembed} use a Continuous Bag of Word language model \parencite{mikolov2013efficient}, doing exactly this.
+\tcite{iacobacci2015sensembed} use a CBOW language model \parencite{mikolov2013efficient} to do this.
 This does however run into the aforementioned problem, that there is relatively little training data that has been manually sense annotated.
-Iacobacci et al. use a 3rd party WSD tool, BabelFly \cite{Moro2014}, to annotate the corpus with senses.
-This allows for existing word representation techniques to be applied, but being limited to the use of an existing WSD tool makes it unsuitable for use in WSD tasks.
+Iacobacci et al. use a 3rd party WSD tool, BabelFly \pcite{Moro2014}, to annotate the corpus with senses.
+This allows for existing word representation techniques to be applied, but being limited to the use of an existing WSD tool makes the use of the resulting word sense embeddings questionable in applications to WSD tasks.
+
+\tcite{Chen2014} applies a similar technique, but using a word-embedding based partial WSD system of their own devising.
 
 
-\subsection{Pseudo-semi-supervised Method}\label{sec:pseudo-semi-supervised-method}
-\tcite{Chen2014} use an almost semi-supervised approach to train sense vectors.
+\subsection{Word embedding based disambiguation method}\label{sec:pseudo-semi-supervised-method}
+\aside[WSD with embeddings]{
+It is beyond the scope of this work to discuss WSD systems in general,
+we discussed the baseline Most Frequent Sense in \Cref{sec:most-frequent-sense},
+and a word-embedding based is detailed as a part of the method discussed in \Cref{sec:pseudo-semi-supervised-method}.
+This can be seen as similar to the LSI enhanced Lesk WSD system of \textcite{basile-caputo-semeraro:2014:Coling}.
+}
+
+\textcite{Chen2014} uses an almost semi-supervised approach to train sense vectors.
 They partially disambiguate their training corpus, using initial word sense vectors and WordNet.
 They then discard these original sense-vectors, and use the partially disambiguated corpus to train sense-vectors via a skip-gram variant.
-\pdfcomment{Don't call things Pseudo-semi-supervised Method}
+
 
 %
 \aside[Cosine distance]{
@@ -230,17 +239,17 @@ Cosine distance is usually defined at $d_{cos}(a,b)=\frac{1-sim(a,b)}{2}$.
 It ranged between 0 (most similar) and 1 (most different).
 }
 
-The first phase of there method is in essence a word-embedding based WSD system.
-When assessed as such a WSD result they report that it only marginally exceeds the MFS baseline,
+The first phase of this method is in essence a word-embedding based WSD system.
+When assessed as such, they report that it only marginally exceeds the MFS baseline,
 though that is not at all unusual for WSD algorithms as discussed above.
 
-In phase 1 they assign every word-sense in WordNet, a sense vector.
-This sense vector is the average of word-embeddings of a subset if words in the gloss,
+They assign every word-sense in WordNet a sense vector.
+This sense vector is the average of word-embeddings of a subset of words in the gloss,
 as determined using pretrained skip-grams \parencite{mikolov2013efficient}.
 For the word $w$ with word-sense $w_{s_i}$,
-they select a set of candidate words, $cand(W_{s_i})$, from the gloss to be included in the average
+a set of candidate words, $cand(W_{s_i})$, is selected from the gloss to be included in the average
 based on the follow set of requirements.
-First the word must be a content word: that is a verb, noun, adverb or adjective.
+First, the word must be a content word: that is a verb, noun, adverb or adjective.
 Secondly, its cosine distance to $w$ must be below some threshold $\delta$.
 Finally, it must not be the word itself (One can assume this is in terms of identical lexemes).
 Or written mathematically, where $C_v$ is the skip-gram word vector for $v$
@@ -256,41 +265,38 @@ The phase 1 sense vector for $w_{s_i}$ is the mean of the word vectors for all t
 The effect of this is that most words in the same synset will have similar but not necessarily identical initial vectors.
 \pdfcomment{Consider what this does to rare senses of a word, i.e. the base wordsense will be distant}.
 
-
-
-They then use the phase 1 sense vectors to disambiguate the words in their unlabelled training corpus.
-For each sentence in the corpus, they define an initial content vector.
-This is done by taking the mean of the skip-gram word embedding for all content words in the sentence.
-For each word in the sentence, they then compare each sense vector to the context vector.
-If the closes sense vector is below a given threshold,
+The phase 1 sense vectors are used to disambiguate the words in their unlabelled training corpus.
+For each sentence in the corpus, an initial content vector is defined by taking the mean of the skip-gram word embedding (not word sense) for all content words in the sentence.
+For each word in the sentence, each possible sense-embedding is compared to the context vector.
+If the closest sense vector is below a given threshold,
 then it that word is tagged with that word-sense, and the context vector is updated to use the sense-vector instead of the word vector.
-Words that do not come within the threshold are not tagged.
-This is an important features, as it means that words without clear senses do not get a sense given to them.
+Words that do not come within the threshold are not tagged, and the context vector is not updated.
+This is an important features, as it means that words without clear senses do not get a sense ascribed to them.
 Thus avoiding any dubious sense tags for the next training step.
 
 
 Once the corpus is (partially) tagged Chen et. al. employ the skip-gram word-embedding method with a variation to predict the word-senses.
 The original sense vectors are discarded.
-Rather than the model being tasked only to predict the surrounding words,
-it is tasked to predict surrounding words and their sense-tags (where present).
-For purposes of the loss function predicting tags and words is weighted equally.
-Note that the input the the skip-gram is the central word, not the central word-tag.
-In this method the word-sense embeddings are output embeddings.
+Rather than the model being tasked only to predict the surrounding words, it is tasked to predict surrounding words and their sense-tags (where present).
+For purposes of the loss function the prediction of tags and words is weighted equally.
+Note that the input the the skip-gram is the central word, not the central word and sense-tag.
+In this method the word-sense embeddings are output embeddings, only.
 
-The phase 1 sense vectors have not been assesses as their representational quality.
-It can be assumed as it was not reported that it was worse than those found in phase 2.
+The phase 1 sense vectors have not been assessed on their representational quality.
+(It could be assumed that as it was not reported that it was worse than those found in phase 2.)
 The phase 2 sense vectors were not assessed for their capacity to be used for word sense disambiguation.
-An extension to the method of \textcite{Chen2014}, to use the phase 2 vectors for WSD, would allow this method to be used to disambiguate its own training data. Allowing the method to become self-supervised.
+An extension to the method of \textcite{Chen2014}, to use the phase 2 vectors for WSD, would allow this method to be used to disambiguate its own training data.
+Allowing the method to become self-supervised.
 
 
-\section{Word Sense Induction}
+\section{Word Sense Induction (WSI)}
 
 \aside[Can we go from induced senses to lexical senses]{
 	A natural question given the many WSI systems,
-	and the existing wealth of lexically annotated resources,
+	and the existing wealth of lexically indexed resources,
 	is if we can induce sense, then align them to the lexically defined senses.
 	\textcite{agirre2006} proposed a method for doing this using a weighted mapping based on the probabilities found using induced sense WSD on a labelled ``mapping'' corpus.
-	This is only been used on relitively small datasets with only hundreds of words,
+	This is only been used on relatively small datasets with only hundreds of words,
 	being SenseEval 3 \parencite{mihalcea2004senseval} and SemEval-2007 Task 02 \parencite{SemEval2007WSIandWSD}.
 	It is unclear as to how well it scales to real-word WSD tasks.
 	Our own limited investigations with the larger SemEval 2007 Task 7 \parencite{Navigli:2007:STC:1621474.1621480} suggest that it may not.
@@ -299,7 +305,7 @@ An extension to the method of \textcite{Chen2014}, to use the phase 2 vectors fo
 }
 
 
-In this section we will discuss methods for finding a word-sense, without reference to a standard set of senses.
+In this section we will discuss methods for finding a word-sense without reference to a standard set of senses.
 Such systems must discover the word senses at the same time as they find their representations.
 One strong advantage of these methods is that they do not require a labelled dataset.
 As discussed there are relatively few high-quality word-sense labelled datasets.
@@ -543,14 +549,13 @@ Of the methods discussed in this section the following implementations exist:
 	However, for word sense embeddings, which have many senses per word in the vocabulary,
 	this means many more points to check. With fine-grained senses 30 senses per word is not unusual.
 	Having a total $n=3,000,000$ causes a noticeable delay, when performing thousands of checks for a similarity or analogy task.
-	All is not lost however,
-	data structures exist for fast nearest neighbour querying.
+	To solve this we can use  data structures exist for fast nearest neighbour querying.
 	A k-d tree takes at worst $O(n \log^2(n))$ time to construct.
 	Once constructed on average it takes $O(\log (n))$ to find the nearest neighbour to any point.
 	This makes checking the nearest neighbour nearly instantaneous for even the largest vocabularies.
 }
 
-
+It leads naturally to the next section on phrase representation. Rather than a single word having many meanings, the next chapter will discuss how a single meaning may take multiple words to express.
 
 
 \end{document}
