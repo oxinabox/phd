@@ -172,6 +172,8 @@
 	style=alphabetic,
 	citestyle=authoryear,
 	bibstyle=authoryear,
+	maxbibnames=99,
+	dashed=false
 ]{biblatex}
 
 

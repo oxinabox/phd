@@ -14,23 +14,23 @@
 \begin{abstract}
 	This chapter discusses representations for larger structures in natural language.
 	The primary focus is on the sentence level.
-	However a lot of the techniques also apply for sub-sentence structures (phrases), and super-sentence structures (documents).
-	The three main types of representations discussed here are unordered models, such as sum of word embeddings; sequential models, such as recurrent neural networks; and structured models, such as recursive autoencoders.
+	However, many of the techniques also apply for sub-sentence structures (phrases), and super-sentence structures (documents).
+	The three main types of representations discussed here are: unordered models, such as sum of word embeddings; sequential models, such as recurrent neural networks; and structured models, such as recursive autoencoders.
 \end{abstract}
 
 
 \aside[Word Sense Embeddings as a by-product]{
 	Almost all sentence representation methods product word embeddings as a by-product
-	Either output embeddings, from softmax,
+	Either output embeddings, from the softmax,
 	or input embeddings that are used as the networks inputs.}
 \aside[Initialising input embeddings]{
-	In the case of systems with input embeddings it is common (but not ubiquitous) to initialised them using a pretrained embeddings from one of the methods discussed in the \Cref{sec:word-representations},
+	In the case of systems with input embeddings it is common (but not ubiquitous) to initialise them using a pretrained embeddings from one of the methods discussed in the \Cref{sec:word-representations},
 	then allow them to be fine-tuned while training the sentence embeddings.
 }
 
 
 It can be argued that the core of true AI,
-is the capture a machine manipulatable representation of an idea.
+is the capture and manipulate the representation of an idea.
 In natural language a sentence (as defined by Webster in the quote above),
 is such a representation of an idea, but it is not machine manipulatable.
 As such the conversion of sentences to a machine manipulatable representation is an important task in AI research.
@@ -42,7 +42,7 @@ Many of these models always work for sub-sentence structures also, like key-phra
 The reverse is not necessarily true: most documents are not just a single sentence.
 When considering on documents beyond sentences,
 neural network embedding models directly compete with vector information retrieval models.
-These information retrieval models include LSI \pcite{dumais1988using}, probabilistic LSI \pcite{hofmann2000learning},  LDA \pcite{blei2003latent}.
+These include LSI \pcite{dumais1988using}, probabilistic LSI \pcite{hofmann2000learning} and  LDA \pcite{blei2003latent}.
 
 \pdfcomment{I need to get my head straight about when these models are like word embeddings vs when they are like document embeddings. I think it is just taking on output instread of the other, but it has been a while since I looked at this}
 
@@ -50,7 +50,7 @@ These information retrieval models include LSI \pcite{dumais1988using}, probabil
 While the last chapter was all about sense embeddings, they are unmentioned here.
 One might think that they would be very useful for sentence embeddings.
 However, they are not as needful as one might expect.
-What sense of a word being used is determined by the context.
+The sense of a word being used is determined by the context.
 Ideally, it is determined by what the context means.
 As a sentence embedding is a direct attempt to represent the meaning of such a context, determining the sense of each word within is not a requirement.
 Using sense embeddings instead of word embeddings is a valid extension to many of these methods.
@@ -60,8 +60,17 @@ Which as discussed in the previous chapter is very difficult.
 
 
 
-
 \section{Unordered and Weakly Ordered Representations}
+
+A model that does not take into account word order can not perfectly capture the meaning of an a sentence.
+\tcite{Mitchell2008} give the poignant examples of:
+\begin{itemize}
+	\item \natlang{It  was  not  the  sales  manager who  hit  the  bottle that day, but the office worker with the serious drinking problem.}
+	\item \natlang{That  day  the  office  manager,   who  was drinking, hit the problem sales worker with a bottle, but it was not serious.}
+\end{itemize}
+These two sentences have the same words, but in a different structure, given them a very different meanings.
+However, in practice representations which discard word order can be quiet effective.
+
 
 \subsection{Sums of Word Embeddings}
 \aside[SOWE is a BOW product]{
@@ -76,18 +85,24 @@ Which as discussed in the previous chapter is very difficult.
 	except on systems with suitable sparse matrix product tricks.	
 }
 
-Classically in information retrieval documents have been represented by bags of words (BOW).
+Classically, in information retrieval documents have been represented by bags of words (BOW).
 That is to say a vector with length equal to the size of the vocabulary, with each position representing the count of the number of occurrences of a single word.
 This is much the same as a one-hot vector representing a word, but with every word in the sentence/document counted.
-The word embedding equivalent is sums of word embeddings (SOWE), and means of word embeddings (MOWE).
+The word embedding equivalent is sums of word embeddings (SOWE), and mean of word embeddings (MOWE).
 These methods, like BOW, lose all order information in the representation.
-In many cases it is possible to recover a BOW from a much lower dimensional SOWE 
+In many cases it is possible to recover a BOW from a much lower dimensional SOWE  \pcite{White2015BOWgen}.
 
-Surprisingly, they have been found on many tasks to be extremely well performing, better than several of the more advanced techniques discussed later in this chapter.
+Surprisingly, these unordered methods have been found on many tasks to be extremely well performing, better than several of the more advanced techniques discussed later in this chapter.
 This has been noted in several works including: \tcite{White2015SentVecMeaning}, \tcite{RitterPosition} and \tcite{rui2017mvrusemantic}.
-It has been suggested that this is because in English there are only a few likely ways to order any given bag of words and thus original sentences can often be recovered from BOW \pcite{Horvat2014} and thus SOWE, \pcite{White2016a}, given a simple ngram language model.
+It has been suggested that this is because in English there are only a few likely ways to order any given bag of words.
+It has been noted that given a simple ngram language model the original sentences can often be recovered from BOW \pcite{Horvat2014} and thus also from a SOWE \pcite{White2016a}.
+Thus word-order may not in-fact be as important as one would expect in many natural language tasks, as it is in practice more proscribed than one would expect.
+That is to say very few sentences with the same word content, will in-practice be able to have it rearranged for a very different meaning.
+However, this is unsatisfying, and certainly can not capture fine grained meaning.
+
+
 The step beyond this is to encode the ngrams into a bag of words like structure.
-The bag of ngrams (BON), e.g. bag of trigrams, has been classically used as an alternative to BOW.
+This is a bag of ngrams (BON), e.g. bag of trigrams.
 Each index in the vector thus represents the occurrence of a ngram in the text.
 So \natlang{It is a good day today}, has the 3grams: \natlang{(It is a)},\natlang{(is a good)},\natlang{(a good day)}, \natlang{(good day today)}.
 As is obvious for all but the most pathological sentences, recovering the full sentence order from a bag of ngrams is possible even without a language model.
@@ -106,7 +121,7 @@ the sums in each position would be:
 \end{array}\right]=\left[\begin{array}{c|c|c}
 	C_{M}+C_{it}-C_{day} & C_{M} & C_{M}-C_{was}+C_{today}\end{array}\right]
 \end{align}
-
+\pdfcomment{remove one or both of these}
 \begin{align}
 \left[\begin{array}{c|c|c}
 	\quad C_{w_{1}} & \quad C_{w_{2}} & \quad C_{w_{3}}\\
@@ -116,6 +131,19 @@ the sums in each position would be:
 \end{array}\right]=\left[\begin{array}{c|c|c}
 	\sum C_{w_{i}}-C_{w_{n-1}}-C_{w_{n-2}} & \sum C_{w_{i}}-C_{w_{1}}-C_{w_{n-1}} & \sum C_{w_{i}}-C_{w_{1}}-C_{w_{2}}\end{array}\right]
 \end{align}
+
+
+Instead one should train n-gram embedding model directly.
+The method discussed in \label{sec:word-representations}, can be adpted to use n-grams rather than words as the basic token.
+This was explored in detail by \pcite{li2017neural}.
+Their model is based on the skip-gram.
+They take as input an n-gram embedding, and attempt to predict the surrounding n-grams.
+This reduces to the original skip-gram method for the case of unigrams.
+Note that the surrounding n-grams will overlap in words (for $n>1$)  with the input n-gram.
+As the overlap is not complete, this task remains difficult enough to encourage useful information to be represented in the embeddings.
+Li et. al. also consider training n-gram embeddings as a bi-product of text classification tasks.
+
+
 
 \subsection{Context Vector Models (Defunct)}
 
@@ -130,58 +158,44 @@ We say context vector as it could be any of the above.
 In theory it could even be a whole collection of documents.
 }
 
-\tcite{le2014distributed} introduces two models for representing documents of any length by using augmented word-embedding models.
-The word-embedding models CBOW and skipgram, are extended with an additional context vector that represents the current documented (or other large structure).
-It is also very similar to the methods used in \tcite{Huang2012} and more distantly to \tcite{mikolov2012contextRNNLM}.
-\pdfcomment{actually not that similar, to the contextRNNLM since }
-However those prior works were focused on word-embedding generation, and language modelling respectively.
-They showed that adding an additional context vector would allow for improvement on those tasks.
-\textcite{le2014distributed} took this further and considered that for such improvements the context vector itself must contain useful information about the context.
-That it would be a representation for the context.
+\pdfcomment{I wonder if this method could be used to generate cleaner embeddings. 
+In that document specific biases could be shunted into the context embedding, rather than into the word embeddings.
+}
 
+\tcite{le2014distributed} introduces two models for representing documents of any length by using augmented word-embedding models.
+The CBOW and skipgram are extended with an additional context vector that represents the current documented (or other large structure).
+This extra structure could be used to learn 
+\textcite{le2014distributed} considered the context vector itself must contain useful information about the context.
+The effect in both cases of adding a context vector is to allow the network to learn a mildly different accusal language model depending on the context.
+To do this, the context vector would have to learn a representation for the context.
+\pdfcomment{Can its failure be attributed to it being a linear model, so as such the context vector can not change much?}
 
 PV-DBOW is an extension of CBOW.
 The inputs the model are not only the word-embedding $C_{w_j}$ for the words $w_j$ from the window,
-but also a context-embedding $D_{d_k}$ for its current context (sentence, paragraph or document etc) $d_k$.
-The task remain to predict which word was the missing word from the center of the context $w_i$
+but also a context-embedding $D_{d_k}$ for its current context (sentence, paragraph or document etc.) $d_k$.
+The task remains to predict which word was the missing word from the center of the context $w_i$
 \begin{align}
 P(w_i & \mid d_k,\, w_{i-\frac{n}{2}},..., w_{i-1}, w_{i+1},...,w_{i+\frac{n}{2}})  \nonumber
 \\  & = s_{max}(WD_{d_k} + U \sum_{j=i+1}^{j=\frac{n}{2}} \left( C_{w_{i-j}}+C_{w_{i+j}} \right))
 \end{align}
 
-\pdfcomment{It would be really easy to make really informativive pictures for this. but idk if it is worth the page space for discredited models}
+\pdfcomment{It would be really easy to make really informativive pictures for this. but idk if it is worth the extra page space for discredited models}
 
 PV-DM is the equivalent extension for skip-grams.
 Here the input to the model is not only the central word, but also the context vector.
-The task remains to predict the other words from the window.
+Again, the task remains to predict the other words from the window.
 \begin{equation}
 P(w_j \mid d_k,\, w_{i}) = \left[ s_{max}(WD_{d_k} + V\,C_{w_{i}}) \right]_{w_j} 
 \end{equation}
-
-The effect in both cases of adding a context vector is to allow the network to learn a mildly different accusal language model depending on the context.
-it is worth noting that as a near linear model (only hidden-layer is the embedding layer), the over-fitting risk on the language modelling task is quiet low.
-
-While in theory a network could learn an entirely different language model based on the differing context vectors,
-this is unlikely (and may not be possible) for these models. \pdfcomment{think about this more and determine if it actually is impossible.}
-
-
-\aside[Multiview Context Extension]{It occurs to us that there is no reason (beyond the  over-fitting risk), to have just a single context vector.
-One could reasonably have many: 1 for the sentence, 1 for the paragraph, one for the document,
-one for the domain/topic.
-This would be an interesting extension to the model.
-}
 
 
 The results of this work are now considered of limited validity.
 There were failures to reproduce as documented online by several users,
 including by the second author.
  \footnote{ \url{https://groups.google.com/forum/\#!msg/word2vec-toolkit/Q49FIrNOQRo/DoRuBoVNFb0J}}
-A follow up paper, \tcite{mesnil2014ensemble} it was found that reweighed bags of n-grams \pcite{wang2012baselines} out perform the paragraph vector models.
-Other evaluations have been carried out on other problems \textcite{lau2016doc2vecissues} showed that with the right tuning these paragraph vector models could perform very well on many tasks.
-This highlights the importance of rigorous testing against a suitable baseline.
-Especially in not rejecting trivial models out of hand.
-
-
+A follow up paper, \tcite{mesnil2014ensemble} it was found that reweighed bags of n-grams \pcite{wang2012baselines} out performed these vector models.
+\textcite{lau2016doc2vecissues} found that on other problems  showed that with the right tuning these paragraph vector models could perform well.
+This highlights the importance of rigorous testing against a suitable baseline, on the task in question.
 
 
 
@@ -192,17 +206,16 @@ Especially in not rejecting trivial models out of hand.
 \begin{figure}
 	\caption{The unrolled structure of an RNN for us in Encoding, Decoding and Encoding-Decoding (sequence-to-sequence) problems. RU is the recurrent unit -- the neural network which reoccurs at each time step. (Repeated from \Cref{fig-rnns})
 	}
-	
 	\label{fig-rnns-sq}
 	
 	\resizebox{\textwidth}{!}{\input{figs/chapterintromachinelearning/rnns.tex}}
 \end{figure}
 
-The majority of this section draw on the recurrent neural networks (RNN) as discussed in \Cref{sec:rnn}.
+The majority of this section draws on the recurrent neural networks (RNN) as discussed in \Cref{sec:rnn}.
 We can used RNN encoders and decoders (as shown in \Cref{fig-rnns-sq}) to generate representations of sequences by extracting a coding layer.
-In one can take any RNN encoder,
-and select the one of the hidden layers after the final recurrent unit (RU) that has processed the last word in the sentence.
-Similarly for any RNN decoder, one can select any hidden layer before the first recurrent unit that begins to produce words.
+One can take any RNN encoder,
+and select the one of the hidden state layers after the final recurrent unit (RU) that has processed the last word in the sentence.
+Similarly for any RNN decoder, one can select any hidden state layer before the first recurrent unit that begins to produce words.
 For an RNN encoder-decoder, this means selecting the hidden layer from between.
 This was originally considered in \tcite{cho-EtAl:2014:EMNLP2014}, when using a machine translation RNN, to create embeddings for the translated phrases.
 Several other RNNs have been used in this way since.
@@ -210,25 +223,25 @@ Several other RNNs have been used in this way since.
 \subsection{VAE and encoder-decoder}
 \tcite{Bowman2015SmoothGeneration} presents an extension on this notion,
 where in-between the encoder and the decode stages there is a variational autoencoder (VAE).
-The variational autoencoder \pcite{2014VAE} an autoencoder that has been demonstrated to have very good properties in a number of machine learning applications.
+As shown in \Cref{fig:bowman}.
+The variational autoencoder \pcite{2014VAE} has been demonstrated to have very good properties in a number of machine learning applications.
 Using the VAE it is hoped that a better representation can be found for the sequence of words in the input and output.
 
-As shown in \Cref{fig:bowman}.
 
-Bowman et. al. training there network as encoder-decoder for English.
-The VAE is the hidden coding layer. 
+Bowman et. al. trained the network as encoder-decoder reproducing its exact input.
 They found that short syntactically similar sentences were located near to each other according to this space.
-Further the that, because it has a decoder, it can generate these nearby sentences.
+Further to that, because it has a decoder, it can generate these nearby sentences.
+Which is not possibly for most sentence embedding methods.
 
 \begin{figure}
 	\caption{The VAE plus encoder-decoder of \textcite{Bowman2015SmoothGeneration}.
-		Note that during training, $\hat{y}_i=w_i$, as it is an autoencoder model,
-		and as is normal for encoder-decoders the prompts are the previous output (target during training, predicted during testing) $r_i=y_{i-1}$,
+		Note that during training, $\hat{y}_i=w_i$, as it is an autoencoder model.
+		As is normal for encoder-decoders the prompts are the previous output (target during training, predicted during testing): $r_i=y_{i-1}$,
 		with $r_1=y_0=<EOS>$ being a pseudo-token marker for the end of string.
 	}
 	\label{fig:bowman}
 	
-	
+	\pdfcomment{Recheck this diagram. Is the output going to the right place? or should it go everywhere?}
 	%%%%%%%%%%%%%%%%%%%%%%%%%
 	% Encoder
 	\resizebox{\textwidth}{!}{\begin{tikzpicture}[]
@@ -278,7 +291,7 @@ Further the that, because it has a decoder, it can generate these nearby sentenc
 
 \subsection{Skip-thought}
 \tcite{DBLP:journals/corr/KirosZSZTUF15} draws inspiration from language modelling, to attempt to predict the previous and next sentence as an task.
-They use an Encoder-Decoder RNN, with two decoder parts.
+They use an encoder-decoder RNN, with two decoder parts.
 One decoder is to produce the previous sentence.
 The other decoder is to produce the next sentence.
 
@@ -330,9 +343,6 @@ The other decoder is to produce the next sentence.
 			\draw[->] (L\i) edge node[labe] {state} (L\j);
 			\draw[->] (w\i) -- (L\i);
 		}
-		
-
-		
 		\end{tikzpicture}}
 	
 \end{figure}
@@ -350,15 +360,16 @@ A limitation of sequential models is information only flows in a sequence.
 However, the actual structure of natural language is not so simple.
 Linguists tend to break sentences down into a tree or graph structure.
 This is referred to as parsing.
-The two most common are constituency parse trees, and dependency parse trees.
+The two most common forms are constituency parse trees, and dependency parse trees.
 Examples of each are shown in \Cref{fig:consparse,fig:depparse}
-It is beyond the scope of this book to explain the precise meaning of these trees.
+It is beyond the scope of this book to explain the precise meaning of these trees, and how to find them.
 The essence is that that represent the structure of the sentence,
 according to how linguists currently understand how sentences are processed by humans.
+
 The constituency parse breaks the sentence down into parts such as noun phrase (NP) and verb phrase (VP),
 which are in turn broken down into phrases, or (POS tagged) words.
 The constituency parse is well thought-of as a hierarchical breakdown of a sentence into its parts.
-Conversely, a dependency parse is better thought of as a set of binary relations between head-terms and there dependent terms, though this likewise does result in a tree structure.
+Conversely, a dependency parse is better thought of as a set of binary relations between head-terms and their dependent terms.
 These structures are well linguistically motivated, so it make sense to use them in the processing of natural language.
 
 \begin{figure}
@@ -375,22 +386,21 @@ These structures are well linguistically motivated, so it make sense to use them
 	\natlang{this},\natlang{is},\natlang{a},\natlang{simple},
 	and \natlang{tree}.
 	\natlang{tree} has direct children being: \natlang{of},\natlang{a}, and \natlang{parse}.
-}
+	}
 	\centering{\includegraphics[width=\textwidth]{depparse}}
 	\label{fig:depparse}
 \end{figure}
 
 
 \aside[Machine learning frameworks for structural models]{
-	Structural networks can not be defined in most modern static neural network frameworks,	such as TensorFlow.
+	Structural networks can not be easily defined in most modern static neural network frameworks,	such as TensorFlow.
 	These frameworks function by defining a single computational graph that is used to process each training/test case.
 	The same graph is used for each input.
 	By definition the structure of the network differs from training/test case to training/test case.
 	Technically the same problems apply to RNNs, as each case can have a different number of inputs.
 	This is normally worked around by defining the network graph for the longest input to be considered,
-	then padding all the inputs to this length.
-	Such is not possible with structured networks.
-	Other tricks are possible but are significantly more difficult.
+	then padding all the inputs to this length, and ensuring that the padding does not interfere with the gradient updates.
+	The equivalent tricks for structured networks are significantly more complex.
 	The exception to this is of-course via dynamic components to the static frameworks
 	(which TensorFlow and other such frameworks certainly do have).
 	Even in a dynamic framework it remains a non-trivial task to implement these networks.
@@ -398,15 +408,15 @@ These structures are well linguistically motivated, so it make sense to use them
 
 
 \aside[Implementing Back-propagation through structure]{
-	Back-propagation through structure is conceptually not significantly more complex than back propagation through time,
-	in practice a very difficult algorithm to get right.
+	Back-propagation through structure is conceptually not significantly more complex than back propagation through time.
+	However, in practice it is a very difficult algorithm to get right.
 	In implementation it is very important to test for correctness using gradient checks, as it is easy to make a mistake and end-up with models that seem to work ok, but are actually crippled due to some mistake in the coding.
 	Unfolding recursive autoencoders are particularly difficult,
 	as the gradient must be propagated from all leaves.
-	And output interior nodes can not have there gradients calculated until the gradients of their children are calculated.
-	The solution to this is to process the gradients using a priority queue,
+	And output interior nodes can not have their gradients calculated until the gradients of their children are calculated.
+	The solution to this is to process the node gradient calculation using a priority queue,
 	where the priority is set by the depth of the node.
-	Thus ensuring all children are processes before there parents.
+	Thus ensuring all children are processes before their parents.
 }
 
 
@@ -419,12 +429,12 @@ however we will exclude them from this discussion except where marked.
 
 
 The initial recent work on structural models was done in for the thesis of \tcite{socher2014recursive}.
-It builds on the work of \tcite{goller1996BPstructure} and \tcite{Pollack199077}, which presents back-propagation through structure.
-Back-propagation can be applied to networks of any structure, much like (and indeed directly because) the chain-rule can be applied to any equation to find its derivative.
+It builds on the work of \tcite{goller1996BPstructure} and \tcite{Pollack199077}, which present back-propagation through structure.
+Back-propagation can be applied to networks of any structure, much like (and indeed directly because) the chain-rule can be applied to any equation, formed by the composition of differentiable functions, to find its derivative.
 This means that structuring a network according to its parse structure is possible.
 
 
-These tree structured networks function apply an recursive unit (which we will call RV) across pairs (or other groups of) the representations of the lower levels, to produce a combined representation.
+A tree structured networks function apply an recursive unit (which we will call RV) across pairs (or other groups of) the representations of the lower levels, to produce a combined representation.
 For the example of a network which handles binary tree inputs the RV would be:
 
 \begin{align}
@@ -446,12 +456,12 @@ That is because it is a parser, like \textcite{socher2010PhraseEmbedding}.
 Given that dependency trees much handle non-adjacent child-nodes (non-projective language) it was necessarily more complex than the greedy approach taken for constituency parsing.
 Traditional transition-based dependency parsers function by iteratively predicting links (transition) to add to the structure based on its current state.
 \textcite{stenetorp2013transition} and later \tcite{bowman2016fast} observed that a composed representation given similarly to in \Cref{equ:rnn1}, was an ideal input to a softmax classifier that would predict the next link to make.
-Form a representation learning perspective, constructing parser is not incredibly interesting.
+Conversely, the representation that is suitable for predicting the next link to make, is a composed representation.
 The parsers produced by \textcite{socher2010PhraseEmbedding, stenetorp2013transition, bowman2016fast} perform comparably to the standard techniques.
 The interesting notion from this though, is that a dependency parse also can yield up the dependency relationships.
 
 
-The dependency tree work which followed, \tcite{socherDTRNN}, \tcite{iyyer2014neural}, and \tcite{iyyer2014generating} use these dependency relationships to use different composition matrices.
+In the dependency tree work which followed, \tcite{socherDTRNN}, \tcite{iyyer2014neural}, and \tcite{iyyer2014generating} use these dependency relationships to use different composition matrices.
 Unlike the network created from a binary constituency parse, the networks for a dependency parse tree allows a node to have multiple inputs.
 But depending on the relationship, eg \natlang{nsub}, \natlang{det}, \natlang{nmod}, \natlang{case}, a different matrix was used.
 For $r(i,j)$ giving the relationship between word $i$ and the $j$, where $i$ is the head word, according to the dependency parse,
