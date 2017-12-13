@@ -220,7 +220,7 @@ For an RNN encoder-decoder, this means selecting the hidden layer from between.
 This was originally considered in \tcite{cho-EtAl:2014:EMNLP2014}, when using a machine translation RNN, to create embeddings for the translated phrases.
 Several other RNNs have been used in this way since.
 
-\subsection{VAE and encoder-decoder}
+\subsection{VAE and encoder-decoder}\label{sec:vae-and-encoder-decoder}
 \tcite{Bowman2015SmoothGeneration} presents an extension on this notion,
 where in-between the encoder and the decode stages there is a variational autoencoder (VAE).
 As shown in \Cref{fig:bowman}.
@@ -433,109 +433,134 @@ It builds on the work of \tcite{goller1996BPstructure} and \tcite{Pollack199077}
 Back-propagation can be applied to networks of any structure, much like (and indeed directly because) the chain-rule can be applied to any equation, formed by the composition of differentiable functions, to find its derivative.
 This means that structuring a network according to its parse structure is possible.
 
-
+\subsection{Constituency Parse Tree (Binary)}
 A tree structured networks function apply an recursive unit (which we will call RV) across pairs (or other groups of) the representations of the lower levels, to produce a combined representation.
-For the example of a network which handles binary tree inputs the RV would be:
-
+A network for binary tree structured input is itself be a binary tree of RVs.
+Each RV (i.e. node in the graph) can be defined by the composition function:
 \begin{align}
-	f_{RV}(u, v) &= \varphi\left( [S;R][u;v] + b \right) \\ \label{equ:rnn1}
+	f_{RV}(u, v) &= \varphi\left( [S R][u;v] + b \right) \\ \label{equ:rnn1}
 			     &= \varphi\left( Su +Rv + b \right)
 \end{align}
-
 where $u$ and $v$ are the left and right substructures embeddings (word embeddings at the leaf node level), and $S$ and $R$ are the matrices defining the left and right inputs are to be combined.
 
-This is a useful form as all constituency parse trees are commonly converted into binary parse trees, via left-factoring or right factoring (adding new nodes to the left or right to take some of the children).
-This is sometimes call putting binarization, or putting them into  Chomsky normal form.
-This form was used in \tcite{socher2010PhraseEmbedding}, \textcite{SocherEtAl2011:RAE},  \textcite{SocherEtAl2011:PoolRAE},
+
+This is a useful form as all constituency parse trees can converted into binary parse trees, via left-factoring or right factoring (adding new nodes to the left or right to take some of the children).
+This is sometimes called binarization, or putting them into  Chomsky normal form.
+This is the form of structured network has been used in many words, including \tcite{socher2010PhraseEmbedding}, \textcite{SocherEtAl2011:RAE},  \textcite{SocherEtAl2011:PoolRAE},
  \textcite{Socher2011ParsingPhrases} and \textcite{zhang2014BRAE}.
-Where the $S$ and $R$ matrices are shared for all words.
+Notice that $S$ and $R$ matrices are shared for all RVs, so all substructures are composed the in the same way, based only on if they are on the left, or the right.
 
-
-\tcite{stenetorp2013transition} in the initial work on using structured networks for dependency trees was likewise used a single composition weight matrix.
-That is because it is a parser, like \textcite{socher2010PhraseEmbedding}.
-Given that dependency trees much handle non-adjacent child-nodes (non-projective language) it was necessarily more complex than the greedy approach taken for constituency parsing.
-Traditional transition-based dependency parsers function by iteratively predicting links (transition) to add to the structure based on its current state.
-\textcite{stenetorp2013transition} and later \tcite{bowman2016fast} observed that a composed representation given similarly to in \Cref{equ:rnn1}, was an ideal input to a softmax classifier that would predict the next link to make.
-Conversely, the representation that is suitable for predicting the next link to make, is a composed representation.
-The parsers produced by \textcite{socher2010PhraseEmbedding, stenetorp2013transition, bowman2016fast} perform comparably to the standard techniques.
-The interesting notion from this though, is that a dependency parse also can yield up the dependency relationships.
-
-
-In the dependency tree work which followed, \tcite{socherDTRNN}, \tcite{iyyer2014neural}, and \tcite{iyyer2014generating} use these dependency relationships to use different composition matrices.
-Unlike the network created from a binary constituency parse, the networks for a dependency parse tree allows a node to have multiple inputs.
-But depending on the relationship, eg \natlang{nsub}, \natlang{det}, \natlang{nmod}, \natlang{case}, a different matrix was used.
-For $r(i,j)$ giving the relationship between word $i$ and the $j$, where $i$ is the head word, according to the dependency parse,
-the following expressing gives the 
-
+\subsection{Dependency Tree}
+In dependency tree based structured RNNS, such as in \tcite{socherDTRNN}, \tcite{iyyer2014neural}, and \tcite{iyyer2014generating},
+it is possibly to the dependency relationships to switch in use different composition matrices into the RV.
+This allows for multiple inputs to a single head node distinguished by their relationship rather than their order.
+This is important for networks using a dependency parse tree structure, and this structure allows a node to have any number of inputs.
+If we have a function $r(i,j)$ giving the relationship between head word $i$ and the word $j$, e.g. giving back \natlang{nsub}, \natlang{det}, \natlang{nmod}, \natlang{case} etc.
+Then the composed representation at each RV is given by 
 \begin{align}
 	f_{RV}(i) &= \varphi\left(W_{head} C_{w_i} + \sum_{j \in \mathrm{children}(i)} W_{r(i,j)} \, f_{RV}(j) + b \right)
 \end{align}
-
-where $C_{w_i}$ is the word embedding for $w_i$.
-Note that the terminal case is when a node has no children, which is just $f_{RV}(i) = \varphi \left( W_{head} C_{w_i} + b \right)$.
-
-In \textcite{socherDTRNN}, an a similar network was used for projecting text captions into a common vector space where they would be near to there images.
-The network was first trained to on an accusal language modelling task \pdfcomment{Need to get some more details on this bit}.
-Then once it was trained its weights were locked and a separate CNN was trained to produce image representations such that those representations were near (in vector space) to the sentence's embeddings.
+Here $C_{w_i}$ is the word embedding for $w_i$, and $W_{head}$ encodes the contribition of the headword to the composed representation.
+Note that the terminal case is just $f_{RV}(i) = \varphi \left( W_{head} C_{w_i} + b \right)$ when a node $i$ has no children.
+By using the relationship to determined the composition matrix, it increase both the networks expressiveness, and also handled the non-binary nature of dependency trees.
 
 
-A similar technique of multiple inputs distinguished by using different matrices based on there relationship to the whole phrase,
- could be applied to non-binary constituency part trees.
-This would be using the part of speech (e.g. VBZ, NN) and phrase tags (e.g. NP, VP) for the substructures to choice the weight matrix, to be applied to the embedding that is determined by the input from below (word embedding in the leaf nodes).
-This would however lose order information in some cases, where there ware .
+A similar technique could be applied to constituency part trees.
+This would be using the part of speech (e.g. VBZ, NN) and phrase tags (e.g. NP, VP) for the substructures to choose the weight matrix.
+This would however lose order information in some cases, where multiple inputs have the same tag.
 
 The next step along this line of reasoning is to allow the input below to not only determine the embedding vector input but also to determine the matrices used to encode the relationship.
 So not only is the representation of the (sub)prase determined by a relationship between  its constituents (as represented by there embeddings),
 but the nature of that relationship (as represented by the matrix) is also determined by the constituents.
 In this approach at the left-nodes every word has not only a word vector, but also a word matrix.
+This is discussed in \Cref{sec:matrix-vector-models}
+
+
+\pdfcomment{Maybe all these applications should be moved}
+\subsection{Parsing}
+The initial work for both contingency tree structured networks  \parencite{socher2010PhraseEmbedding} and for dependency tree structured networks \pcite{stenetorp2013transition} was on the creation of parsers.
+This is actually rather different to the works that followed.
+In that in most other work the structure is provided as part of the input.
+Where-as the parser must induce the structure of the network,
+from the unstructured input text.
+This is simpler for the contingency parsing.
+
+In a binary contingency parse any pair of nodes can only be merged with an adjacent node.
+The process is to consider which nodes are to be composed into a higher level structure.
+For each pair of adjacent nodes, an RV can be applied to get a merged representation.
+A linear scoring function was also learned, that took a merged representation and determined how good it was.
+This was trained such that correct merges scored highly.
+This was done using hinge loss, functioning similarly to negative sampling (\Cref{sec:negative-sampling}) to cause the merged actually done in the training set to score well.
+To perform the parse, nodes were merged.
+Replacing them with their composed representation, and the new adjacent pairing score must be recomputed.
+\textcite{socher2010PhraseEmbedding} considered both greedy, and dynamic programming search to determine the order of composition, as well as a number of variants to add additional information to the process.
+The final parser performed almost as well as the state-of-the-art parser.
+The dependency tree parser extends beyond this method
+
+
+Dependency trees can have child-nodes that do not correspond to adjacent words (non-projective language).
+This means the parser must consider that any node could have a link added to any other node (that was not already linked).
+Traditional transition-based dependency parsers function by iteratively predicting links (transition) to add to the structure based on its current state.
+\textcite{stenetorp2013transition}  observed that a composed representation given similarly to in \Cref{equ:rnn1}, was an ideal input to a softmax classifier that would predict the next link to make.
+Conversely, the representation that is suitable for predicting the next link to make, is itself a composed representation.
+Note, that \textcite{stenetorp2013transition}, unlike in future dependency tree structured RNN, uses the same matrices for all relationships; as the relationships must determined from the links made, so cannot readily be used in determining if those links are to be made.
+More recent advancements in dependency tree parsing using structured networks are considered by \tcite{bowman2016fast}.
 
 
 
 
 \subsection{Recursive Autoencoders}
-Recursive autoencoders are autoencoders, just as the autoencoder discussed in \Cref{sec:bottle-necking-autoencoder}.
+\aside[Application to image retrieval]{An interesting application of structured networks was shown in \textcite{socherDTRNN}.
+	A dependency tree structured network was trained on a language modelling task (Not as a recursive autoencoder, although that would also have been a valid option.).
+	Then, separately a convolutional neural network was trained to produce a vector output of the same dimensionality -- an image embedding -- such that its distance to its caption's composed vector representation was minimised.
+	The effect of this was to that images and there captions are projected to a common vector space.
+	This allowed for smart image retrieval, from discriptions, by having a set of all images, and storing their embedding representations,
+	then for any query, the composed embedding can be found and the vector space of images can be search for the nearest.
+	(the reverse is not generally as useful, as one can't reasonably store all possible captions describing an image, so as to be able to search for the best one for an user provided image.)
+	This can be done with any sequence representation.
+	Further, as discussed in \Cref{sec:aligning-vector-spaces-across-languages} it can also be done post-embedding determination on both sides using (kernel) CCA.
+}
 
+Recursive autoencoders are autoencoders, just as the autoencoder discussed in \Cref{sec:bottle-necking-autoencoder} they reproduce there input.
+It should be noted that unlike the encoder-decoder RNN discussed above, e.g. \Cref{sec:vae-and-encoder-decoder},
+they can not be trivially used to generate natural language from an arbitrary embeddings, as they require the knowledge of the tree structured to unfold into.
+Solving this would be the inverse problem of parsing to a composed representation discussed above.
 
 The models presented in \textcite{SocherEtAl2011:PoolRAE} and \textcite{iyyer2014generating}
-are Unfolding Recursive AutoEncoders (URAE).
-In these models there an inverse tree is defined above the highest node
+are unfolding recursive autoencoders ).
+In these models there an identical inverse tree is defined above the highest node.
+The loss function is the sum of the errors at the leaves i.e. the distance in vector space between the reconstructed words embeddings and the input word-embeddings.
+This was based on a simpler earlier model.
 
 
-Simpler than this is the (non-unfolding) Recursive Autoencoder,
-as was used in \textcite{SocherEtAl2011:RAE} and \textcite{zhang2014BRAE}.
-Here, during training only a single layer of unfolding takes place at each node.
+The normal Recursive Autoencoder,
+as was used in \textcite{SocherEtAl2011:RAE} and \textcite{zhang2014BRAE} only performs the unfold at each node.
+That means that it assesses if each merge can be reconstructured, uses errors in the vector space to its inputs embeddings.
+Those inputs are not word embedding, except when the inputs happen to both be leaf nodes.
 This covers the auto-encoding nature of each merge;
 but does not give any direct promise of the auto-encoding nature of the whole structure.
+It should be noted that while it is not trained for, the reconstruction components (that during training are applied only at nodes) can never the less be applied recursively from the top layer, to allow full reconstruction
 Though it is possible to use the learned reconstruction network components recursively from the top layer just like in the unfolding case.
 
-\subsection{Semi-supervised}
+\subsubsection{Semi-supervised}
 In the case of all these autoencoders, except \textcite{iyyer2014generating}, a second source of information is also used to calculate the loss during training.
 The networks are being simultaneously trained to perform a task.
 This is often considered as semi-supervisors learning, as unlabelled data can be used to train the auto-encoding part (unsupervised) gaining good representation, and labelled data can be used train the supervised part making that representation useful for the task.
-This is done by imposing a loss function onto the output of the central/top node.
+This is done by imposing an additional loss function onto the output of the central/top node.
 \begin{itemize}
  \item In \textcite{SocherEtAl2011:RAE} this was for sentiment analysis.
  \item In \textcite{SocherEtAl2011:PoolRAE} this was paraphrase detection.
  \item In \textcite{zhang2014BRAE} this was the distance between embeddings of equivalent translated phrases for two RAEs for different languages.
 \end{itemize}
+The reconstruction loss and the supervised loss can be summed, optimised in alternating sequence, or the reconstructed loss can be optimised first, then the labelled data used for fine-tuning.
 
  
-
-
-
-
-A limitation of these structural models compared to the sequential RNNs,
-is there lack of explicit gating on memory (e.g. as in GRU and LSTM).
-Any given path down a tree can be looked at as like an RNN comprised only of basic recurrent units.
-However, these paths are much shorter (being the logarithm of) than the full sequential length of the sentence,
-which offsets the need for such gating.
-Recall that the gating is to provide longer short term memory.
 
 
 \aside[Sequential models are often preferred to structural models]{
 Sequential (RNN) models are much more heavily researched than structural (RvNN) models.
 They have better software libraries, and are easier to implement.
-In theory it is possible for a sequential model (with sufficiently deep and wide RUs) effectively internalise the connections that a structural model would posses.
+In theory it is possible for a sequential model (with sufficiently deep and wide RUs) internalise the connections that a structural model would posses.
 While structural models are theoretically nicer from a linguistics standpoint, pragmatically they are the last resort in modelling.
 When attempting to find an useful representation of a sentence for a task, one should first try a sum of word embeddings with a simple network on-top,
 then sequential model (based on LSTM or GRU), and only if these fail then try a structured model.
@@ -546,67 +571,59 @@ Simple is powerful.
 
 
 
-\section{Matrix Vector Models}
+\section{Matrix Vector Models}\label{sec:matrix-vector-models}
 \subsection{Structured Matrix Vector Model}
-\tcite{SocherMVRNN} proposed that each node in the graph should define not only a vector embedding, but a matrix defining how it was to be combined with other nodes.
-That is to say, each word has both an embedding, and a composition matrix.
-This means each phrase node must output both an embedding and a matrix also.
-\textcite{SocherMVRNN} considered this for binary constituency parse trees.
-The options for extending it to Dependency parse trees should be apparent.
-
 \aside[Dependency Tree Extension]{
-It is interesting to consider how one might extend this structure for dependency parse trees.
-We suggest the logical change would be for the $R$ and $S$ matrices to be determined by the relationship of the child node (including \emph{head}),
-Or the $W$ matrix to be determined by the relationship of the head to its own parent (potentially the fake relationship \emph{root}).
-To do both seems redundant (though perhaps no more so than having $W$ in the first place).
-Similar, based on POS could be done for the constituency parse tree.
+	It is interesting to consider how one might extend this structure for dependency parse trees.
+	We suggest the logical change would be for the $R$ and $S$ matrices to be determined by the relationship of the child node (including \emph{head}),
+	Or the $W$ matrix to be determined by the relationship of the head to its own parent (potentially the fake relationship \emph{root}).
+	To do both seems redundant (though perhaps no more so than having $W$ in the first place).
+	Similar, based on POS could be done for the constituency parse tree.
 }
 
+\tcite{SocherMVRNN} proposed that each node in the graph should define not only a vector embedding, but a matrix defining how it was to be combined with other nodes.
+That is to say, each word and each phrase has both an embedding, and a composition matrix.
+
+This considered this for binary constituency parse trees.
+The composition function is as follows:
 \begin{align}
 f_{RV}(u, v, U, V) &= \varphi\left( [S;R][Uv;Vu] + b \right) \\ 
 &= \varphi\left( SUv +RVu + b \right)\\
 F_{RV}(U, V) = W[U;V] = W_L U + W_R V
 \end{align}
 
-$f_{RV}$ gives the output embedding for the node with children $(u,U)$ and $(v,V)$.
-$F_{RV}$ gives the output embedding for the node with children $(u,U)$ and $(v,V)$.
 
+$f_{RV}$ gives the composed embedding, and $F_{RV}$ gives the composing matrix.
 $S$ and $R$ represent the left and right composition matrix components that are the same for all nodes (regardless of content).
 $U$ and $V$ represent the per word/node child composition matrix components.
-$S$ and $R$ could in theory be rolled in to $U$ and $R$.
+(We note that $S$ and $R$ could in theory be rolled in to $U$ and $R$ as part of the learning)
 $u$ and $v$ represent the per word/node children embeddings.
-$W$ represents the method for merging two composition matrices
+$W$ represents the method for merging two composition matrices.
 
-
-
-
-
+We note that one can define increasingly complex and powerful structured networks along these lines; though one does run the risk of over-fitting, and very long training times.
 
 \subsection{Sequential Matrix Vector Model}
 \pdfcomment{Maybe this section should just move to the RNN section/chapter}
-A similar approach, of capturing a word matrix, 
+A similar approach, of capturing a per word matrix, 
 was used on a sequential model by \tcite{rui2017mvrusemantic}.
 While sequential models are a special case of structured models,
 it should be noted that unlike the structured models discussed prior,
 this matrix vector RNN features gated memory.
-It is an extension of the GRU discussed in \Cref{sec:rnn}, but without a reset gate.
+This matrix-vector RNN is an extension of the GRU discussed in \Cref{sec:rnn}, but without a reset gate.
 
 
 In this sequential model, advancing a time step, is to perform a composition.
-This composition is for between the input and the (previous) state.
+This composition is for between the input word and the (previous) state.
 Rather than directly between two nodes in the network as in the structural case.
-It should be understood that composing with the the state is not the same as composing the the previous input.
-The state under normal circumstances will not take the value of the previous input.
-A candidate state is derived from the prior state and the input (and a learned factors).
-Depending on the learned gating learned gating the previous candidate's state may not result in significant changes to the actual previous state at all.
-
+It should be understood that composing with the the state is not the same as composing the current input with the previous input.
+But rather as composing the current input with all previous inputs (though not equally).
 
 In this method each word, $w_t$ is represented by a word embedding $x_{w_t}$ and matrix: $X_{w_t}$, these are the inputs at each time step.
 The network outputs and states are the composed embedding $\hat{y}_t$ and matrix $Y_t$.
 
 \pdfcomment{Subscripts in this section mean time, not index.}
 
-\aside[Remember:]{Product of a matrix with a concatenated vector, is the same as the sum of the two blocks of that matrix each multiplied by the blocks of that vector.}
+\aside[Remember:]{The product of a matrix with a concatenated vector, is the same as the sum of the two blocks of that matrix each multiplied by the blocks of that vector.}
  
 \begin{align}
 h_t &= \tanh\left(V[x_t; \hat{y}_{t-1}] + c \right)\\
@@ -688,13 +705,14 @@ $h_t$ is similar to in a normal RU.
 
 
 
-\section Implementations
+\section{Implementations}
 
 The implementation of \tcite{socher2010PhraseEmbedding}, is publicly available,
 however it does not export embeddings.
 It is nested deep in side the Stanford Parser (Java), accessing the embeddings is highly non-trivial.
 
 There is a popular implementation the paragraph vector models in recent versions of the python gensim library \pcite{rehurek_lrec}, along with many information retrieval vector models such as LDA.
+
 
 \section{Conclusion}
 
@@ -708,16 +726,27 @@ However, this is incorrect.
 The compositional nature of the structured models is obvious:
 the vector a phrase is composed from the vectors of the words the phrase are formed from.
 
-There is no limitation of a sequential model from learning the structures:
-that is to say learning that a word from X time steps ago is to be remembered in the RNN state, a to be meaningfully combined with the current word, in the determining of the next state.
-This demonstrates the same conditionality.
-There exist works which show sequential models learning such relationships between words such as \tcite{2017arXiv170909360W}.
-Indeed more generally, as language is compositional, and sequential models work very well on language tasks, this implicitly shows they have sufficient representational capacity to learn sufficient degrees of compositional tasks.
+Sequential model are able to learn learning the structures.
+For example, learning that a word from X time steps ago is to be remembered in the RNN state, a to be meaningfully combined with the current word, in the determining of the next state.
+This demonstrates the same compositionality.
+It has been shown that sequential models are indeed in-practice able to learning such relationships between words \pcite{2017arXiv170909360W}.
+More generally as almost all aspects of language have some degree of compositionality, and sequential models work very well on most language tasks, this implicitly shows they have sufficient representational capacity to learn sufficient degrees of compositional tasks.
 
-In fact, even some unordered models such as sum of word embeddings are able to capture compositional information.
+
+\pdfcomment{I may be over highlighting this it was only 500 datums}
+In fact, it has been suggested that even some unordered models such as sum of word embeddings are able to capture what would be thought of as compositional information.
 This was shown by \textcite{RitterPosition}, by their ability of a na\"ive Bayes classifier with these unordered phrase representations were able predict meaning categories relationships that should only be able to be determined using a compositional understanding.
 Several  sum of word embeddings no only exceeded the baseline prediction, but even out performed the structured representation from a RAE.
 This suggests that a surprising amount of compositional information is being captured into the embeddings in such indexes that allows it to be represented through the addition.
 
- 
+We will also note that a limitation of the structural models compared to the sequential RNNs,
+is there lack of explicit gating on memory (e.g. as in GRU and LSTM).
+Any given path down a tree can be looked at as like an RNN comprised only of basic recurrent units.
+However, these paths are much shorter (being the logarithm of) than the full sequential length of the sentence,
+which offsets the need for such gating.
+Recall that the gating is to provide longer short term memory.
+
+
+
+
 \end{document}
