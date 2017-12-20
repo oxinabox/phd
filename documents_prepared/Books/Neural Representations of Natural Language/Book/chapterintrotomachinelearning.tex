@@ -1,4 +1,4 @@
-\documentclass[12pt,parskip]{komatufte}\right 
+\documentclass[12pt,parskip]{komatufte}
 \include{preamble}
 
 \begin{document}
@@ -16,7 +16,6 @@ the free online web-book: \citetitle{WebBookBackprop} \parencite{WebBookBackprop
 and the comprehensive: \citetitle{TheDeepLearningBook} \parencite{TheDeepLearningBook}
 }
 
-\pdfcomment{Should recommend 3 or so books. but I only know that one as being really good}
 
 \begin{abstract}
 	This chapter covers the crucial machine learning techniques required to understand the remained of the book: namely neural networks.
@@ -164,17 +163,17 @@ As will be discussed in \Cref{sec:rnn} this also has significance when designing
 Beyond determining the range of the output, its derivative also determines the behaviour during training via gradient descent based training methods.
 This is significant for activation functions like ReLU and ReLU6 discussed below.
 
-
-In the following sections $y$ is the vector output from this layer, and $z$ is its input.
-
 \subsubsection{Linear/Affine}
-A linear or affine layer is the most basic activation function.
+A linear layer is the most basic activation function.
 Arguably not truly an activation function at all, the true activation function associated with it would be the identity function.
 It is commonly used as an output function for regression tasks.
+
+It is also known as an affine layer as it corresponds to an affine transformation of its input; as a dense layer, as it corresponds to dense graph of connections between neurons; and as an inner product layer, as it is this described the matrix product used.
+
 \begin{equation}
-y=Wz + b
+\v y=W \v z + \v b
 \end{equation}
-In this equation $W$ and $b$ are a trained matrix and vector respectively.
+In this equation $W$ and $\v b$ are a trained weight matrix and bias vector respectively.
 This allows the output to be any value, within some set of bounds learned during training.
 However, when this is not needed it increases the difficulty of training for no benefit.
 
@@ -201,7 +200,7 @@ This is what the other activation functions provide.
 
 This is the classic neural network activation function.
 \begin{equation}
-y=\sigma(z)=\frac{1}{1+e^{-z}}
+y=\sigma(z)=\frac{1}{1+\exp{-z}}
 \end{equation}
 Sigmoid output values are between zero and one.
 If the network has a single output then this is a fuzzy boolean.
@@ -221,7 +220,7 @@ We will use the terms interchangeably.
 
 For $y_i$ being the $i$th output, which gives the probability of being in class $i$.
 \begin{equation}
-y_i=\left(s_m(z)\right)_i=\left( \frac{e^{z_i}}{\sum_{j=1}^{j=N} e^{z_j}} \right)
+y_i=\left(s_m(z)\right)_i=\left( \frac{\exp{z_i}}{\sum_{j=1}^{j=N} \exp{z_j}} \right)
 \end{equation}
 For $N$ the number of outputs equal to the number of categories in the classification.
 
@@ -248,7 +247,7 @@ Further consideration of the softmax is given in \Cref{sec:softmax-and-bayes-the
 The hyperbolic tangent function is a  scaled and shifted sigmoid function.
 
 \begin{equation}
-y=\tanh(z)=\frac{e^{2z}-1}{e^{2z}+1}=2\sigma(2z)+1
+y=\tanh(z)=\frac{\exp{2z}-1}{\exp{2z}+1}=2\sigma(2z)+1
 \end{equation}
 
 The notable difference is that outputs are restricted to be between $-1$ and $+1$.
@@ -368,6 +367,12 @@ In these algorithms dynamically adapt the learning rate during training.
 There are several other algorithms in the family.
 In recent works, Adam is the most commonly used optimiser.
 We suggest there is an interesting theoretical space about the relationship between adapting the learning rate, and implicitly finding the second derivative as in the more traditional quasi-Newtonian methods.}
+\pdfcomment{See comment in Latex.}
+%jekbradbury 
+%e.g. "When diagonal preconditioners are applied in an online optimization setting (i.e.  in conjunction with SGD), they are often referred to as adaptive learning rates in the neural network literature." from \url{https://arxiv.org/abs/1502.04390}
+%basically what you really want in HF is not gradient descent preconditioned by the inverse Hessian, but gradient descent preconditioned by the inverse of something Hessian-like that's nonetheless positive-definite
+%"we see that RMSProp fairly well estimates $\sqrt diag(H)^2$ in the beginning of training, but then quickly diverges"
+%in \url{http://colinraffel.com/wiki/stochastic_optimization_techniques#fn__8}, that paper is summarized as " In 8, it is shown that the $\sqrt (gt+1)$ term approximates (in expectation) the diagonal of the absolute value of the Hessian matrix (assuming the update steps are N(0,1) distributed). It is also argued that the absolute value of the Hessian is better to use for non-convex problems which may have many saddle points. " (edited)
 
 
 \subsubsection{Gradient Descent and Back-propagation}
@@ -482,17 +487,17 @@ Here $z$  is some features vector, this could be the output of a hidden layer be
 Using softmax the estimated probability is given by
 \pdfcomment{It is probably needful to change y into i for index}
 \begin{align} 
-P(Y=i\mid Z=z)&=\frac{e^{[Wz+b]_{i}}}{\sum_{\forall j}e^{[Wz+b]_{j}}}
-&=\frac{e^{[Wz]_{i}}\,e^{b_{i}}}{\sum_{\forall j}e^{[Wz]_{j}}\,e^{b_{j}}}
+P(Y=i\mid Z=z)&=\frac{\exp{[Wz+b]_{i}}}{\sum_{\forall j}\exp{[Wz+b]_{j}}}
+&=\frac{\exp{[Wz]_{i}}\,\exp{b_{i}}}{\sum_{\forall j}\exp{[Wz]_{j}}\,\exp{b_{j}}}
 \end{align}
 
-One can see that the bias term $e^{b_{i}}$ does not depend on the value of $z$.
+One can see that the bias term $\exp{b_{i}}$ does not depend on the value of $z$.
 The bias term is analogous to the prior probability. Literally, it is the bias towards each element (i.e. each value $Y$ could take) without observing the condition.
-Marginalising the probability over all $Z$ values gives $P(Y=i)=e^{b_{i}}$. \pdfcomment{Shouldn't there be a denominator here?}
+Marginalising the probability over all $Z$ values gives $P(Y=i)=\exp{b_{i}}$. \pdfcomment{Shouldn't there be a denominator here?}
 
 \pdfcomment{Is this actually a probability, or is it a score?}
 
-The other component is $e^{[Wz]_{i}}$.
+The other component is $\exp{[Wz]_{i}}$.
 The key term here is $[Wz]_{i}$, by considering this for each index $i$ (class value) that $Y$ might take then
 we have 
 \begin{equation}
@@ -506,7 +511,7 @@ it can be seen that the row vector $W_{i}^{T}$ as a weighting map for features p
 i.e for some scoring function $R$:
 \pdfcomment{Is this actually a posterior probability, or is it just a score?}
 \begin{equation}
-R(Z=z\mid Y=i)=e^{[Wz]_{i}}
+R(Z=z\mid Y=i)=\exp{[Wz]_{i}}
 \end{equation}
 which is very similar to a posterior probability.
 
