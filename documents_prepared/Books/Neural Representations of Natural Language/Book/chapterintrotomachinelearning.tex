@@ -24,7 +24,7 @@ and the comprehensive: \citetitle{TheDeepLearningBook} \parencite{TheDeepLearnin
 	A large portion of this section is dedicated to recurrent neural networks, and these are very important in natural language tasks.
 \end{abstract}
 
-Machine learning, particularly neural networks has become a hot topic of late.
+Machine learning, particularly neural networks, has become a hot topic of late.
 
 
 The core notion of machine learning is to learn a to perform an function based on examples.
@@ -41,10 +41,13 @@ For most machine learning methods, including neural networks, these rules are no
 
 \section{Neural Networks}
 \aside[Multilayer perceptron or Artificial Neural Network?]{An artificial neural network is sometimes called a multilayer perceptron.
-This is in reference to the related perceptron learning algorithm.
-This term has fallen out of favour in newer works,
-with Hinton, who originally coined the term, expressing his own regret at the naming.
-However, in any case they refer to the same thing.
+This is in reference to the (distantly) related perceptron learning algorithm.
+This term has generally fallen out of favour in newer works,
+with Geoffrey Hinton, who originally coined the term, expressing his own regret at the naming.
+Sometimes the term multilayer perceptron is used to distinguish feed-forward neural networks,
+from other neural network related technologies,
+such as restrict Boltzmann machines, Hopfield networks, self-organizing maps etc.
+Unless otherwise specified, we use the term neural network to refer to a feed-forward network as discussed in this chapter.
 }
 
 A neural network is one particular family of machine learning algorithms.
@@ -73,7 +76,7 @@ It will be incredibly slow in almost any programming languages -- where objects 
 Object orientated is not a good paradigm for this kind of technical computing.
 Instead program in terms of matrix's and vectors.
 Potentially using objects for layers.
-This allows one to take advantage of efficient matrix algrabra routines such as in BLAS and LAPACK.
+This allows one to take advantage of efficient matrix algebra routines such as in BLAS and LAPACK.
 }
 
 
@@ -163,7 +166,10 @@ As will be discussed in \Cref{sec:rnn} this also has significance when designing
 Beyond determining the range of the output, its derivative also determines the behaviour during training via gradient descent based training methods.
 This is significant for activation functions like ReLU and ReLU6 discussed below.
 
-\subsubsection{Linear/Affine}
+The activation functions, other than the linear layer, and the softmax layer, are applied element-wise to vector inputs,
+as such the scalar definitions are given below.
+
+\subsubsection{Linear}
 A linear layer is the most basic activation function.
 Arguably not truly an activation function at all, the true activation function associated with it would be the identity function.
 It is commonly used as an output function for regression tasks.
@@ -207,25 +213,37 @@ If the network has a single output then this is a fuzzy boolean.
 It can be used to classify into two categories.
 It is sometimes called a logistic output function.
 
+Note that this function has the property that, $\sigma(-z)=1-\sigma(z)$.
+This means negating the input to the final sigmoid in a binary classification network,
+is the same as switching the classes, that it is define in terms of.
+
 \subsubsection{Softmax}
-\aside[multinomial logistic regression]{A neural network classifier with a softmax output layer is sometimes called a multinomial logistic regression network (especially if there is no hidden layer).
+\aside[multinomial logistic regression]{A neural network classifier with a softmax output layer is sometimes called a multinomial logistic regression network (especially if there are no hidden layers).
 	This can lead to some confusion with a sigmoid outputting network.
 	However, the similarity can be understood by considering a softmax output layer with 2 classes.
-	This reduces to $s_m(z)= \left[ \sigma(z), 1-\sigma(z) \right]$.
+	For $v=\i{\v z}_2 - \i{\v z}_1$
+	This reduces to $s_m(\v z)= \left[ \sigma({v});  1-\sigma(v) \right]$.
 }
 
 Softmax is the standard output layer for categorical classification.
 Formally, one should say that it is a regression to a class probability, rather than a true classifier as it does not return the class.
 We will use the terms interchangeably.
 
-For $y_i$ being the $i$th output, which gives the probability of being in class $i$.
+Defining the layer $\v y$ in terms of its elements:
 \begin{equation}
-y_i=\left(s_m(z)\right)_i=\left( \frac{\exp{z_i}}{\sum_{j=1}^{j=N} \exp{z_j}} \right)
+\iv y_i=\i {\left(s_m(\v z)\right)}_i= \frac{\exp{\iv z_i}}{\sum_{j=1}^{j=N} \exp{\iv z_j}}
 \end{equation}
 For $N$ the number of outputs equal to the number of categories in the classification.
 
-These outputs have  values are between zero and one, and sum to one.
-They thus define a discrete, probability mass function (pmf).
+These elements have  values are between zero and one, and sum to one.
+They thus define a discrete probability mass function.
+
+When used for classification $\v y_i$ gives the probability of being in class $i$.
+\begin{equation}
+P(Y=i\mid \v z) = \i {\left(s_m(\v z)\right)}_i  = \iv y_i
+\end{equation}
+
+
 
 Softmax is a \emph{soft}, i.e. differentiable,  version of what could be called \emph{hard-max}.
 In this conceptual hard-max function, the largest output is set to one, and the others set to zero.
@@ -250,7 +268,7 @@ The hyperbolic tangent function is a  scaled and shifted sigmoid function.
 y=\tanh(z)=\frac{\exp{2z}-1}{\exp{2z}+1}=2\sigma(2z)+1
 \end{equation}
 
-The notable difference is that outputs are restricted to be between $-1$ and $+1$.
+The notable difference from sigmoid is that the outputs are restricted to be between $-1$ and $+1$.
 
 \subsubsection{ReLU}
 \asidefig[The ReLU function]{
@@ -300,13 +318,13 @@ z & 0\le z\le6\\
 0 & z<0
 \end{cases}
 \end{equation}
-\aside[Why are we bringing up ReLU6?]{ReLU6 is one of the more obscure activation functions. As such it may seem a bizarre inclusion in this shorter introduction. However, we have found it surprisingly successful as an activation function, e.g. in the auto-encoder example which follows in \Cref{sec:bottle-necking-autoencoder}.}
+\aside[Why are we bringing up ReLU6?]{ReLU6 is one of the more obscure activation functions. As such it may seem a bizarre inclusion in this shorter introduction. However, we have found it surprisingly successful as an activation function, e.g. in the auto-encoder example which follows in \Cref{sec:bottle-necking-autoencoder}. It also nicely illustrates the flexibility and indeed arbitrariness in how acti}
 
 This has similar advantages to ReLU.
 However, as well as units being able to die to zero, it can also die to positive.
 The bounding at 6, rather than any other number is rather arbitrary -- particularly given scaling with the intervening affine layers.
 The important point is that it is bound both above and below.
-Unlike ReLU, it fully meets the requirements for the original UAT, which is nice for proving theoretical capabilities of variant networks as it hugely simplifies the proofs.
+This greatly simplifies any proving of capacities for proving theoretical capabilities of variant networks as it hugely simplifies the proofs.
 
 
 
@@ -338,23 +356,27 @@ However, this does not pose an issue for more neural networks as finding the tru
 To train the network one must find the values for the networks weight and bias parameters, such that that total loss function is minimized over the training set.
 
 To define the training problems as an optimisation problem one first considers the loss function for a single training case.
-For a target outputs $y$ and an actual outputs $\hat{y}$, a loss function is defined $loss(y, \hat{y})$.
-For example the squared error loss (sometimes called L2 loss) used in regression is defined by 
-$SE(y, \hat{y})=\sum_{\forall i} (y_i-\hat{y_i})^2$.
+For a target output $y$ and an actual output $\hat{y}$, (considering the scalar case) a loss function is defined $loss(y, \hat{y})$.
+For example the squared error loss (sometimes called L2 loss, though that risks confusion with L2 weight penalty for regularisation) used in regression is defined by
+\begin{equation}
+SE(y, \hat{y})=(y-\hat{y})(y-\hat{y})
+\end{equation}
 The cross-entropy loss used in binary classification is defined by
-$CE(y, \hat{y})=-\sum_{\forall i} (1-y)(\log (1-\hat{y}))) + y(\log (\hat{y})))$.
+\begin{equation}
+	CE(y, \hat{y})=-\left((1-y)(\log (1-\hat{y})) + y(\log (\hat{y}))\right)
+\end{equation}
 The choice of loss function depends on the purpose of the network.
 
 The network function is composed into the loss function.
-to the per training case loss, for a training case loss: $loss(y, N(x,\tilde{P}))$.
-For $N(x,\tilde{P})$ being the function that executes some neural network, with weight and bias parameters all grouped into given by $\tilde{P}$, upon an input $x$ where the target output is $y$ and the actual output is $\hat{y}$.
+to the per training case loss, for a training case loss: $loss(\v y, \v f(\v x,\tilde{P}))$.
+For $\v f(\v x,\tilde{P})$ being the function that executes some neural network, with weight and bias parameters all grouped into given by $\tilde{P}$, upon an input $\v x$ where the target output is $\v y$.
 
-The total loss is defined by taking the mean over the whole training set batch ($\mathcal{X}$):
+The total loss ($Loss$) is defined by taking the sum over the whole training set ($\s{X}$) of input output pairs.
 \begin{equation}
-loss_{total}(\tilde{P}) = \frac{1}{|\mathcal{X}|}\sum_{\forall (x, y)\in\mathcal{X}} loss(y, N(x),\tilde{P}))
+Loss(\tilde{P}, \s X) = \sum_{\forall (\v x, \v y)\in\s{X}} loss(\v y, \v f(\v x),\tilde{P}))
 \end{equation}
 This is now nothing but a nonlinear function to be minimised by adjusting the values of the weights and biases in $\tilde{P}$.
-
+\pdfcomment{P is not in the notation section, maybe change to W}
 
 This can be given to off-the-shelf  unconstrained nonlinear optimisation algorithms \pcite{Ngiam2011} such as L-BFGS  \parencite{nocedal1980updating}.
 Alternatively, and more commonly, the loss and updated can be processed iteratively on sub-sets (minibatches) of the training data at a time -- often using optimisation algorithms specifically targeted at machine learning applications such as Adam \parencite{kingma2014adam}.
@@ -378,35 +400,34 @@ We suggest there is an interesting theoretical space about the relationship betw
 \subsubsection{Gradient Descent and Back-propagation}
 \aside[Back-propagation vs Gradient Descent?]{%
 	Formally speaking, back-propagation finds the gradients, and Gradient Descent uses those gradients to update the network parameters.
-	However the two terms of often used interchangeably.
+	However, the terms are often used interchangeably.
 }
 
 
-Gradient descent is, as mentioned, the basis of most commonly used optimisers in machine learning.
-In gradient descent based methods the derivative of the loss function relative to the parameters are used to update the parameters.
+Gradient descent is the basis of most commonly used optimisers in machine learning.
+In gradient descent based methods the derivatives of the loss function relative to the parameters are used to update those parameters.
 The parameters in this case are the network weights and biases.
 To calculate the gradients the back-propagation algorithm is used.
 
 Back-propagation is simply a method of applying the well-known chain-rule of calculus to the neural network loss functions \pcite{backprop}.
-It one to calculate:  $\frac{\partial loss_{total}}{\partial{W_{i,j}}}$
-for any weight (or bias) parameter $W_{i,j}$ in the network.
+It one to calculate:  $\frac{\partial Loss}{\partial{\i W_{i,j}}}$
+for any weight (or bias) parameter $\i W_{i,j}$ in the network.
 These can always be found as the overall loss function, including the network, is differentiable \footnote{Technically most networks are differentiable almost everywhere. For some functions like ReLU they have some single points of where the derivative is not defined. But the derivatives here can be forced to a known value.} (when using typical activation functions and loss functions).
 
 Using this gradient the network parameters can thus be updated.
 Updating the parameters to a new value in the direction of the gradient decreases the loss (for the right step size).
 This means for each $W_{i,j} \in \tilde{P}$ updating its value according to the local gradient.
 \begin{equation}
-W_{i,j} \leftarrow W_{i,j} - \alpha \frac{\partial loss_{total}}{\partial{W_{i,j}}}
+\i W_{i,j} \leftarrow \i W_{i,j} - \alpha \frac{\partial Loss}{\partial{\i W_{i,j}}}
 \end{equation}
 Where $\alpha$ is a update step size, commonly called the learning rate.
-The more advance methods discussed earlier, such as Adam, and L-BFGS, are advancements on this same core principle.
+The more advance methods discussed earlier, such as Adam, and L-BFGS, are extensions along this core principle.
 
 
 If one considers a plot with the loss given on the vertical axis,
 and the values of the parameters as describing a position on the horizontal axes,
 then gradient descent is moving that the parameter-point downward on that surface based on local estimate of the slope.
 \pdfcomment{Insert Plot Here}
-
 
 
 
@@ -444,10 +465,10 @@ A basic network to complete this task is is shown in \Cref{fig:mnistnetwork}.
 
 The network is defined by the equations:
 \begin{align}
-z=\varphi(W_1 x+b_1) \\
-\hat{y}=s_m(W_2 z + b_2) \\
-P(Y=i\mid X=x) &= \hat{y}_i \\
-&= \left[s_m(b_2 + W_2 \varphi(b_1 + W_1 x))\right]_i
+\v z=\varphi(\d W_1 x + \dv b_1) \\
+\hat{y}=s_m(\d W_2 z + \dv b_2) \\
+P(Y=i\mid X=\v x) &= \hat{y}_i \\
+&= \left[s_m(\d W_2 \varphi(\d W_1 \v x + \dv b_1)+\dv b_2)\right]_i
 \end{align}
 For $X$ the input variable of grey-scale pixels intensities, and $Y$ the output as a class.
 The output is represented with 1 hot encoding, where the index corresponding to the class is 1, and the others zero.
@@ -460,19 +481,19 @@ The output is represented with 1 hot encoding, where the index corresponding to 
 }
 
 To go into details about each layer:
-The input is given by the grey scale pixel indentities in the original $28\times 28$ image.
-This is flattened giving a $784$ element sized vector ($x$).
+The input is given by the grey scale pixel intensities in the original $28\times 28$ image.
+This is flattened giving a $784$ element sized vector ($\v x$).
 The first weight matrix projects that up onto a hidden layer  of width $1024$.
-Thus $W_1$ is a $1024\times 784$ matrix.
-The bias $b_1$ is for that hidden layer, so it is a vector of length $1024$.
-The hidden layer's actual activation values ($z$) for any input can be considered as being the values taken by 1024 different latent variables describing that input.
-Variables that are chosen (via training) to be useful in discriminating the correct class for the next layer.
+Thus $\d W_1$ is a $1024\times 784$ matrix.
+The bias $\d {\v b}_1$ is for that hidden layer, and so is a vector of length $1024$.
+The hidden layer's actual activation values ($\v z$) for any input can be considered as being the values taken by 1024 different latent variables describing that input.
+Variables that are chosen  from a continuous abstract space of variables (via training) o be useful in discriminating the correct class in the next layer.
 
 As this is a shallow network, without one hidden layer, the next layer is the output layer.
 A deep network would have more hidden layers, for additional latent variables describing relations.
 For the output layer we must project down to 10 dimensions, as there are 10 classes to choose from: the numbers from 0 to 9.
-thus $W_2$ is a $10 \times 1024$ matrix,
-and the bias $b_2$ is a 10 element vector.
+thus $\d W_2$ is a $10 \times 1024$ matrix,
+and the bias $\dv b_2$ is a 10 element vector.
 Using the softmax layer here ensures that output $\hat{y}$ is a valid probability mass function (nonnegative and summing to one).
 
 
@@ -480,51 +501,65 @@ Using the softmax layer here ensures that output $\hat{y}$ is a valid probabilit
 As a digression, it is worth considering the similarity between a network with a softmax output layer, and the application of Bayes' Theorem.
 This will become important for understanding output embeddings, and hierarchical softmax in the future chapters.
 
-The conditional probability of a classification given the value of some observed variable is defined by $P(Y=y\mid Z=z)$.
+The conditional probability of a classification given the value of some observed variable is defined by $P(Y=y\mid Z=\v z)$.
 For $Y$ being the class taking value $i$;
-and $Z$ being the variable being conditioned upon, taking value $z$.
-Here $z$  is some features vector, this could be the output of a hidden layer below, or it could be a direct input.
+and $Z$ being the variable being conditioned upon, taking value $\v z$.
+Here $\v z$  is some features vector, this could be the output of a hidden layer below, or it could be a direct input.
 Using softmax the estimated probability is given by
-\pdfcomment{It is probably needful to change y into i for index}
 \begin{align} 
-P(Y=i\mid Z=z)&=\frac{\exp{[Wz+b]_{i}}}{\sum_{\forall j}\exp{[Wz+b]_{j}}}
-&=\frac{\exp{[Wz]_{i}}\,\exp{b_{i}}}{\sum_{\forall j}\exp{[Wz]_{j}}\,\exp{b_{j}}}
+P(Y{=}i\mid Z{=}\v z) &= \i {s_m(\v z)}_i\\
+&=\frac{\exp{\i \left( W \v z+\v b\right)_{i}}}{\sum_{\forall j}\exp{\i \left( W \v z+\v b\right)_{j}}}\\
+&=\frac{\exp{\i \left(W \v z \right)_{i}}\,\exp{\iv b_{i}}}{\sum_{\forall j}\exp{\i \left(W \v z\right)_{j}}\,\exp{\iv b_{j}}}
 \end{align}
 
-One can see that the bias term $\exp{b_{i}}$ does not depend on the value of $z$.
-The bias term is analogous to the prior probability. Literally, it is the bias towards each element (i.e. each value $Y$ could take) without observing the condition.
-Marginalising the probability over all $Z$ values gives $P(Y=i)=\exp{b_{i}}$. \pdfcomment{Shouldn't there be a denominator here?}
+One can see that the bias term $\exp{\iv b_{i}}$ does not depend on the value of $z$.
+The bias term is analogous to the prior probability.
+Literally, it is the bias towards each element (i.e. each value $Y$ could take) without observing the condition.
+We will define an unnormalised probability-like scoring function $R$;
+and say $R(Y=i)=\exp{\iv b_{i}}$,
+representing the marginal score contribution towards class $i$ from the bias.
 
-\pdfcomment{Is this actually a probability, or is it a score?}
 
-The other component is $\exp{[Wz]_{i}}$.
-The key term here is $[Wz]_{i}$, by considering this for each index $i$ (class value) that $Y$ might take then
-we have 
+The other component is $\exp{\i \left(W \v z \right)_{i}}$.
+By considering this for each index $i$ (class value) that $Y$ might take then we have 
 \begin{equation}
-[Wz]_{i}=\sum_{\forall j}W_{j,i}\,z_{j}=W_{i}^{T}z.
-\end{equation}
-\pdfcomment{Check columns vs rows}.
-
-Given one is considering the case for a particular $Y=i$, then 
-it can be seen that the row vector $W_{i}^{T}$ as a weighting map for features possessed by $z$.
-
-i.e for some scoring function $R$:
-\pdfcomment{Is this actually a posterior probability, or is it just a score?}
-\begin{equation}
-R(Z=z\mid Y=i)=\exp{[Wz]_{i}}
-\end{equation}
-which is very similar to a posterior probability.
-
-
-Then reformulating the original statement we have:
-\begin{equation}
-P(Y=y\mid Z=z)=\frac{R(Z=z\mid Y=y)\,P(Y=y)}{\sum_{\forall i}R(Z=z\mid Y=i)\,P(Y=i)}
+\i \left(W \v z \right)_{i}=\sum_{\forall j} \i W_{i,j} \, \iv z_{j} = \i W_{i,:} \v z
 \end{equation}
 
-Contrast this to Bayes' Theorem:
+Given one is considering the case for a particular class $Y=i$,
+then it can be seen that the row vector $\i W_{i,:}$ as a weighting map for features possessed by $\v z$
+i.e. for input ($Z$) feature $j$, $\i W_{i,j}$ determines the relative weighting for that feature vs the other features of $Z$,
+when the class is $i$.
+When trained, the weight values should be such that it scores how likely the features are to occur for a given output class.
+\pdfcomment{This sentence can be replaced wit ha stronger statement I think}
+
+We can say that our scoring function $R$, has a likelihood term:
 \begin{equation}
-P(Y=y\mid Z=z)=\frac{P(Z=z\mid Y=y)\,P(Y=y)}{\sum_{\forall i}P(Z=z\mid Y=i)\,P(Y=i)}
+R(Z{=}\v z\mid Y{=}i)=\exp{\i \left(W \v z \right)_{i}}
 \end{equation}
+
+We will return to this these row vectors  $\i W_{i,:}$ when we discuss as output embeddings in \Cref{sec:word-representations}.
+$\i W_{i,:}$ must characterise the output class $i$, since difference classes would assign have different importance to different features in the $Z$.
+Furthermore, to some degree similar classes, i.e. classes triggered by similar features, would thus have more similar weights.
+
+
+%
+We can combine the unnormalised score factors to reformulated the original statement:
+\begin{equation}
+P(Y{=}i\mid Z{=}\v z)=\frac{R(Z{=}\v z\mid Y{=}i)\,R(Y{=}i)}{\sum_{\forall j}R(Z{=}\v z\mid Y{=}j)\,R(Y{=}j)}
+\end{equation}
+
+
+Contrast this to Bayes' Theorem:%
+\aside[Marginal Denominator in Bayes Theorem]{In \Cref{eq:bayesmarginal}, notice that we replace $P(Z{=}\v z)$.
+	We do this using the rule for finding marginal probabilities, from conditional probabilities with mutually exclusive and exhaustive condition values. This is always possible when working with classification.}%
+%
+\begin{align}
+P(Y{=}i\mid Z{=}\v z)&=\frac{P(Z{=}\v z\mid Y{=}i)\,P(Y{=}i)}{P(Z{=}\v z)}\\
+&=\frac{P(Z{=}\v z\mid Y{=}i)\,P(Y{=}i)}{\sum_{\forall j}P(Z{=}\v z\mid Y{=}j)\,P(Y{=}j)} \label{eq:bayesmarginal}
+\end{align}
+
+
 
 The similarities can be seen.
 The bias effectively determines a prior probability like term.
@@ -536,18 +571,18 @@ In the next chapter we will consider this as an output embedding.
 A more traditional way of finding a representation of an input (rather than an output class) is to use an autoencoder.
 
 \subsection{Bottlenecking Autoencoder}\label{sec:bottle-necking-autoencoder}
+
+An autoencoder is a tool primarily used for finding a representation of their input.
+There are many varieties of autoencoder based on neural network related techniques, including the works of \textcite{hinton2002RBM,hinton2006reducing,hinton2006fastDBN,vincent2010stacked,ICML2012Chen_416,2014VAE}.
+This is itself a whole sub-field of machine learning.
+Here we look at a simple bottlenecking autoencoder
+\parencite{bourlard1988auto,japkowicz2000nonlinear}.
+It has been used in a variety of tasks to attempt to find an optimal representation for an input e.g. as in \tcite{Usui:92}.
 \begin{figure}
 	\caption{A sampling of MNIST images from the test-set, arranged according to the values of 2 neurons on the encoding layer.}
 	\label{mnist-encoding}
 	\includegraphics[width=\textwidth]{figs/chapterintromachinelearning/mnist-encoding.png}
 \end{figure}
-An autoencoder is a tool primarily used for finding a representation of their input.
-There are many varieties of autoencoder based on neural network related techniques, including the works of \textcite{hinton2002RBM,hinton2006reducing,hinton2006fastDBN,vincent2010stacked,ICML2012Chen_416,2014VAE}.
-This is itself a whole subfield of machine learning.
-Here we look at a bottlenecking autoencoder
-\parencite{bourlard1988auto,japkowicz2000nonlinear}.
-It has been used in a variety of tasks to attempt to find an optimal representation for an input e.g. as in \tcite{Usui:92}.
-
 An autoencoder is a neural network tasked with outputting its input.
 This in and of itself is a pointless task -- one already has the perfect reproduction of the input, in the input itself.
 However, the true use of an autoencoder is to extract the output of one of the intermediary layers.
