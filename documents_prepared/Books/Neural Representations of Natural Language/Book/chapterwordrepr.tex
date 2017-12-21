@@ -118,6 +118,15 @@ In doing so it implicitly learns the crucial traits of words, during training.
 The core insight that allowed this was using an embedding or loop-up layer for the input.
 
 
+\aside[Lookup word embeddings: Hashmap or Array?]{
+	The question is purely one of implementation.
+	Theoretically we do not care if the implementation using a String to Vector dictionary (e.g. a hashmap), or a 2D array from which a column is indexed-out (sliced-from) via an integer index representing the word.
+	In tokenization of the source text it is common to transform all the words into integers, so as to save memory, especially if string interning is not in use.
+	At that point it makes sense to work with an array.
+	For our purposes we will treat the word $\n w_i$ as if it were an integer index, though thinking of it as a string index into a hashmap changes little in the logic.
+}
+
+
 \subsubsection{Simplified Model considered with Input Embeddings}
 To understand the neural probabilistic language model, first consider a simplified neural trigram language model.
 This model is a simplification of the model introduced by \textcite{NPLM}.
@@ -125,52 +134,42 @@ It follows the same principles, and highlights the the most important idea in ne
 This is that of training a vector representation of a word using a lookup table to map a discrete scalar word to a continuous-space vector which  becomes the first layer of the network.
 
 
-\aside[Lookup word embeddings: Hashmap or Array?]{
-The question is purely one of implementation.
-Theoretically we do not care if the implementation using a String to Vector dictionary (eg a Hashmap), or a 2D array from which a column is indexed-out (sliced-from) via an integer index representing the word.
-In tokenization of the source text it is common to transform all the words into integers, so as to save memory, especially if string interning is not in use.
-At that point it makes sense to work with an array.
-For our purposes we will treat the word $\n w_i$ as if it were an integer index, though thinking of it as a string index into a hashmap changes little in the logic.
-}
-
 
 The  neural trigram probabilistic network is defined by:
 %
 \begin{multline}
 P(\n w_i \mid \n w_{i-1}, \n w_{i-2}) = \\
-\softmax\left(V\varphi\left(U\left[C_{\n w_{i-1}}; C_{\n w_{i-2}}\right] + \dv b_1\right) + \dv b_2\right)
+\softmax\left(V\varphi\left(U\left[\i C_{\n w_{i-1}}; \i C_{\n w_{i-2}}\right] + \dv b_1\right) + \dv b_2\right)
 \end{multline}
 %
 where $U,\: V,\: \dv b_1,\: \dv b_2$ are the weight matrices and biases of the network.
-$C_{\n w_{i-1}}$ and $C_{\n w_{i-2}}$ are the looked-up word embedding for the previous two words, from the embedding table $C$.
-We write $\left[v_1; v_2\right]$ as a notational convenience for the vertical concatenation of vectors $v_1$ and $v_2$.
-\pdfcomment{Move this to a nomeculture section}
+$\i C_{\n w_{i-1}}$ and $\i C_{\n w_{i-2}}$ are the looked-up word embedding for the previous two words, from the embedding table $C$.
+They are column vectors.
 The network is shown in \Cref{fig:trigram-neural-language-model}
 
 \begin{figure}
-	\caption{The neural Trigram Language Model}
+	\caption{The Neural Trigram Language Model}
 	\label{fig:trigram-neural-language-model} 
 	\centering
 	\input{figs/chapterwordrepr/trigram-neural-language-model.tex} 
 \end{figure}
 
-\aside[$C_{\n w_i}$ vs $C_i$]{
+\aside[$\i C_{\n w_i}$ vs $\i C_i$]{
 Note that here we use the word $\n w_i$ as the index in to lookup the word embeddings, \emph{not} the words index.
-That is to say that if the $i$th word, and the $j$th word are the same: i.e $\n w_i = w_j$, then they will index out the same vector from $C$.
-$\n w_i = w_j \implies C_{\n w_i} =  C_{w_j}$.
+That is to say that if the $i$th word, and the $j$th word are the same: i.e $\n w_i = \n w_j$, then they will index out the same vector from $C$.
+$\n w_i = \n w_j \implies \i C_{\n w_i} =  \i C_{\n w_j}$.
 }
-
 
 
 \aside[One-hot product or Indexed-lookup]{
 	In some works you may see the process of retrieving the word vector from an matrix of word vectors described as a one-hot multiplication.
 	For a word represented by the index $i$,
-	for $e_i$ the one-hot vector with a 1 in the $i$th position,
+	for $\nv e_i$ the one-hot vector with a 1 in the $i$th position,
 	and for $C$ the table of word embeddings.
-	one can write  $C\,e_i$.
+	one can write  $C\,\nv e_i$.
 	We will write $C_i$ and refer to this as looking up the word vector from the $i$th column.
-	Of-course $C_i=C\,e_i$, however in practical implementation the performance ramifications are huge.
-	A matrix column indexing is a $O(1)$ operation (in a column major languages),
+	Of-course $\i C_i=C\,\nv e_i$, however in practical implementation the performance ramifications are huge.
+	Matrix column indexing is effectively an $O(1)$ operation (in a column major languages),
 	where as a dense matrix-vector product is $O(n^2)$.
 	%
 	The one-hot product can be used in a pinch to support using embeddings in neural network toolkits that do not support lookup/embedding layers.
@@ -184,7 +183,7 @@ $\n w_i = w_j \implies C_{\n w_i} =  C_{w_j}$.
 In the neural trigram language model, each of the previous two words is used to look-up a vector from the embedding matrix.
 These are then concatenated to give a dense, continuous-space input to the above hidden layer.
 The output layer is a softmax layer, it gives the probabilities for each word in the vocabulary.
-Such that $\hat{y}_{\n w_i} = P(\n w_i \mid \n w_{i-1}, \n w_{i-2})$.
+Such that $\i \hat{y}_{\n w_i} = P(\n w_i \mid \n w_{i-1}, \n w_{i-2})$.
 Thus producing an useful language model.
 
 The word embeddings are trained, just like any other parameter of the network (i.e. the other weights and biases) via gradient descent.
@@ -192,10 +191,10 @@ An effect of this is that the embeddings of words which predict the same future 
 The hidden the hidden layer to learn to associate information with regions of the embedding space, as the whole network (and every layer) is a continuous function.
 This effectively allows for information sharing between words.
 If two words vectors are close together because they mostly predict the same future words, then that area of the embedding space is a associated with predicting those words.
-If words $A$ and $B$  often occur as the word prior to some similar set of words ($W,X,Y,\ldots$) in the training set
-and word $B$ also often occurs in the training set before word $Z$, but (by chance) $A$ never does,
-then this neural language model will never the less say that $Z$ is likely to occur after $A$.
-This is because $A$ and $B$ have similar embeddings, due to predicting a similar set of words.
+If words $a$ and $b$  often occur as the word prior to some similar set of words ($w,x,y,\ldots$) in the training set
+and word $b$ also often occurs in the training set before word $z$, but (by chance) $a$ never does,
+then this neural language model will never the less say that $z$ is likely to occur after $a$.
+This is because $a$ and $b$ have similar embeddings, due to predicting a similar set of words.
 The model has learnt common features about that words implicitly from how they are used, and can used those to make better predictions.
 These features are stored in the embeddings which are looked up during the input.
 
@@ -212,7 +211,7 @@ An alternative but equivalent diagram is shown in \Cref{fig:trigram-adv-neural-l
 
 The final layer of the neural trigram language model can be rewritten as:
 \begin{equation}
-s_{max}(Vz_{2}+k) = \dfrac{\exp{V_{w_{i}}^{T}z_{2}+k_{i}}_{i=0}^{i=N}}{\sum_{\forall j}\exp{V_{j}^{T}z_{2}+k_{j}}}
+\softmax(V \dv z_{2}+ \v k) = \dfrac{\exp{V_{w_{i}}^{T}z_{2}+k_{i}}_{i=0}^{i=N}}{\sum_{\forall j}\exp{V_{j}^{T}z_{2}+k_{j}}}
 \end{equation} 
 
 \aside[Conside this also as a dot product]{
@@ -223,7 +222,7 @@ s_{max}(Vz_{2}+k) = \dfrac{\exp{V_{w_{i}}^{T}z_{2}+k_{i}}_{i=0}^{i=N}}{\sum_{\fo
 }
 
 In this formulation, we have $V_{w_{i}}^{T}$ as the output embedding for $w_{i}$ the an output word.
-As we considered  $C_{w_{i}}$ as its input embedding.
+As we considered  $\i C_{w_{i}}$ as its input embedding.
 
 While looking at it this way, we can also consider the the Bayes-like reformulation: (See \Cref{sec:softmax-and-bayes-theorem})
 \begin{multline}
@@ -258,9 +257,9 @@ As shown in \Cref{fig:neural-language-model},
 it features a layer-bypass connection.
 It is described by:
 \begin{align}
-P(\n w_i & \mid \n w_{i-1}, \n w_{i-2}) = s_{max}( \nonumber
-\\  & \quad U_3 \left[ C_{\n w_{i-1}};...; C_{w_{i-n}}\right] \nonumber
-\\  & + V \: \varphi\left( U\left[C_{\n w_{i-1}};...; C_{w_{i-n}} \right] + b_1\right) \nonumber
+P(\n w_i & \mid \n w_{i-1}, \n w_{i-2}) = \softmax( \nonumber
+\\  & \quad U_3 \left[ \i C_{\n w_{i-1}};...; \i C_{w_{i-n}}\right] \nonumber
+\\  & + V \: \varphi\left( U\left[\i C_{\n w_{i-1}};...; \i C_{w_{i-n}} \right] + b_1\right) \nonumber
 \\  & +b_2)
 \end{align}
 
@@ -310,8 +309,8 @@ As is usual this hidden layer was the an input to the hidden-layer at the next t
 }
 \pdfcomment{Is there a less confusing notation I could use here?}
 \begin{equation}
-	h_{i} = \varphi\left( U\,h_{j-1} + C_{w_{j-1}} \right)
-	\hat{y_i} = s_{max}\left(V \, h_{i-1} \right)
+	h_{i} = \varphi\left( U\,h_{j-1} + \i C_{w_{j-1}} \right)
+	\hat{y_i} = \softmax\left(V \, h_{i-1} \right)
 	P(\n w_i \mid \n w_{i-1}, ... w_{1}) = \left[ \hat{y_i} \right]_{\n w_i}
 \end{equation}
 
@@ -377,7 +376,7 @@ For a context window of width $n$ words -- i.e. $\frac{n}{2}$ words to either si
 the CBOW model is defined by:
 \begin{align}
 P(\n w_i & \mid w_{i-\frac{n}{2}},..., \n w_{i-1}, w_{i+1},...,w_{i+\frac{n}{2}})  \nonumber
-\\  & = s_{max}(V \sum_{j=i+1}^{j=\frac{n}{2}} \left( C_{w_{i-j}}+C_{w_{i+j}} \right))
+\\  & = \softmax(V \sum_{j=i+1}^{j=\frac{n}{2}} \left( \i C_{w_{i-j}}+\i C_{w_{i+j}} \right))
 \end{align}
 This is shown in diagrammatic from in \Cref{fig:cbow}.
 By optimising across a training dataset
@@ -386,7 +385,7 @@ useful word embeddings are found.
 
 \subsection{Skip-gram}\label{sec:skip-gram}
 \begin{figure}
-	\caption{\label{fig:skip-gram} Skip-gram language Language Model. Note that the probability $P(w_j \mid \n w_i)$ is optimised during training for every $w_j$ in a window around the central word $\n w_i$.
+	\caption{\label{fig:skip-gram} Skip-gram language Language Model. Note that the probability $P(\n w_j \mid \n w_i)$ is optimised during training for every $\n w_j$ in a window around the central word $\n w_i$.
 	Note that the final layer in this diagram is just a softmax layer, shown in in output embedding form.
 	}
 	\centering
@@ -403,9 +402,9 @@ While in CBOW each training case is has one output to be trained to predict, in 
 
 The model itself is single word input, and its output is a softmax for the probability of each word in the vocabulary occurring in the context of the input word.
 This can be indexed as is usual for a language model, to get the individual probability of a given word occurring.
-So for input word $\n w_i$ the probability of $w_j$ occurring in its context is given by:
+So for input word $\n w_i$ the probability of $\n w_j$ occurring in its context is given by:
 \begin{equation}
-P(w_j \mid w_{i}) = \left[s_{max}(V\,C_{w_{i}}) \right]_{w_j} \label{equ:skipgram}
+P(\n w_j \mid w_{i}) = \left[\softmax(V\,\i C_{w_{i}}) \right]_{\n w_j} \label{equ:skipgram}
 \end{equation}
 
 
@@ -420,14 +419,14 @@ Note that in skip-gram, like CBOW, the only hidden layer is the embedding layer.
 Rewriting \Cref{equ:skipgram} in output embedding form it becomes:
 
 \begin{align}
-P(w_j \mid w_{i}) & = \left[ s_{max}(V\,C_{w_{i}}) \right]_{w_j} \\
-P(w_j \mid w_{i}) & = \frac{\exp(V_{w_j}^\prime\,C_{w_{i}})}{\sum_{k=1}^{k=N} \exp(V_k^\prime\,C_{k})}
+P(\n w_j \mid w_{i}) & = \left[ \softmax(V\,\i C_{w_{i}}) \right]_{\n w_j} \\
+P(\n w_j \mid w_{i}) & = \frac{\exp(V_{\n w_j}^\prime\,\i C_{w_{i}})}{\sum_{k=1}^{k=N} \exp(V_k^\prime\,\i C_{k})}
 \end{align}
 \pdfcomment{Check math and if required change prime to transpose.}
 
-The key term here is  $V_{w_j}^\prime\,C_{w_{i}}$:
+The key term here is  $V_{\n w_j}^\prime\,\i C_{w_{i}}$:
 the remainder of the expression is normalising this into a probability.
-Maximising the probability $P(w_j \mid w_{i})$ is equivalent to maximising the dot produce between $V_{w_j}^\prime$, the output embedding for $w_j$ and  $C_{\n w_i}$ the input embedding for $\n w_i$.
+Maximising the probability $P(\n w_j \mid w_{i})$ is equivalent to maximising the dot produce between $V_{\n w_j}^\prime$, the output embedding for $\n w_j$ and  $\i C_{\n w_i}$ the input embedding for $\n w_i$.
 Which is to say that the skip-gram probability is maximised when the angular difference between the input embedding for a word, and the output embeddings for its co-occurring words is minimised.
 
 
@@ -445,13 +444,13 @@ It has been observed that machine learning can be a very good mirror upon societ
 
 
 \asidefig[\label{fig:analogy}Example of analogy algebra]{\begin{tikzpicture}
-\node(a) {$C_{aunt}$};
-\node(b)[above right = of a] {$C_{uncle}$};
-\node(c)[below right = of a] {$C_{queen}$};
-\node(d)[above right = of c] {$C_{king}$};
+\node(a) {$\i C_{aunt}$};
+\node(b)[above right = of a] {$\i C_{uncle}$};
+\node(c)[below right = of a] {$\i C_{queen}$};
+\node(d)[above right = of c] {$\i C_{king}$};
 
-\draw[->] (b) -- (a) node[labe,midway]{$C_{aunt}-C_{uncle}$};
-\draw[->] (d) -- (c) node[labe,midway]{$C_{queen}-C_{king}$};
+\draw[->] (b) -- (a) node[labe,midway]{$\i C_{aunt}-\i C_{uncle}$};
+\draw[->] (d) -- (c) node[labe,midway]{$\i C_{queen}-\i C_{king}$};
 \end{tikzpicture}
 }
 
@@ -481,7 +480,7 @@ Word similarity can be evaluated using word embeddings using a number of metrics
 By far the cosine similarity is the most common.
 This is given by 
 \begin{equation}
-sim(C_u, C_v)=\frac{C_{u}\cdot C_{v}}{\left\Vert u\right\Vert \left\Vert v\right\Vert }
+sim(C_u, C_v)=\frac{\i C_{u}\cdot \i C_{v}}{\left\Vert u\right\Vert \left\Vert v\right\Vert }
 \end{equation}
 A smaller distance in vector space, means the words are more similar -- in some sense.
 This similarity could be syntactic, semantic or otherwise.
@@ -510,7 +509,7 @@ Subsequent results found in  \tcite{pennington2014glove} were significantly bett
 	When training Skip-Gram and CBOW, Mikolov et. al. used dynamic window sizing.
 	This meant that if the specified window size was $n$, in any given training case being considered the actual window size was determined an a random number between $0$ and $n$.
 	
-	Pennington et. al. achieve a similar effect by weighting co-occurrences within a window inversely proportionally to the distance between the word. That is to say if $\n w_i$ and $w_j$ occur in the same window (i.e. $|i-j|<n$), then rathar than contributing 1 to the entry in the co-occurrence count $X_{\n w_i, w_j}$, they contribute $\dfrac{1}{|i-j|}$.
+	Pennington et. al. achieve a similar effect by weighting co-occurrences within a window inversely proportionally to the distance between the word. That is to say if $\n w_i$ and $\n w_j$ occur in the same window (i.e. $|i-j|<n$), then rathar than contributing 1 to the entry in the co-occurrence count $X_{\n w_i, \n w_j}$, they contribute $\dfrac{1}{|i-j|}$.
 }
 
 
@@ -528,11 +527,11 @@ Subsequent results found in  \tcite{pennington2014glove} were significantly bett
 
 Skip-grams are intrinsically prediction based methods, effectively predicting what words will co-occur in the context of a local window and optimising as such.
 In \tcite{pennington2014glove} the authors show that if one were to change that optimisation to be global over all co-occurrences,
-then the optimisation criteria becomes minimising the cross-entropy between the true co-occurrence probabilities given by $P(w_j\mid w_j)$, and the value of the embedding product.
-With the cross entropy measure being weighted by the frequency of the occurrence of the word $X_{\n w_i,w_j}$.
+then the optimisation criteria becomes minimising the cross-entropy between the true co-occurrence probabilities given by $P(\n w_j\mid \n w_j)$, and the value of the embedding product.
+With the cross entropy measure being weighted by the frequency of the occurrence of the word $X_{\n w_i,\n w_j}$.
 That is to say if skip-gram were optimised globally it would be equivalent to minimising:
 \begin{equation}
-Loss = - \sum_{\forall \n w_i} \sum_{\forall w_j} X_{\n w_i,w_j} P(w_j\mid w_j) \log (V_{w_j}^\prime\,C_{w_{i}})
+Loss = - \sum_{\forall \n w_i} \sum_{\forall \n w_j} X_{\n w_i,\n w_j} P(\n w_j\mid \n w_j) \log (V_{\n w_j}^\prime\,\i C_{w_{i}})
 \end{equation}
 
 
@@ -542,13 +541,13 @@ into the input and output embedding matrices $C$ and $V$, under a particular set
 
 
 \textcite{pennington2014glove} propose an approach based on this idea.
-For each word co-occurrence of $\n w_i$ and $w_j$: they attempting to find optimal values for 
-the embeddings $C_{w_{i}}$, and $V_{w_j}^\prime$, while and biases $b_i$ and $k_j$
+For each word co-occurrence of $\n w_i$ and $\n w_j$: they attempting to find optimal values for 
+the embeddings $\i C_{w_{i}}$, and $V_{\n w_j}^\prime$, while and biases $b_i$ and $k_j$
 such that:
-$V_{w_j}^\prime\,C_{w_{i}} + b_i + k_j \approx \log(X_{ij})$.
+$V_{\n w_j}^\prime\,\i C_{w_{i}} + b_i + k_j \approx \log(X_{ij})$.
 This is done via the minimisation of 
 \begin{equation}
-Loss = - \sum_{\forall \n w_i}  \sum_{\forall w_j} f(X_{ij})\,V_{w_j}^\prime\,C_{w_{i}}+b_i+k_j-\log (X_ij)
+Loss = - \sum_{\forall \n w_i}  \sum_{\forall \n w_j} f(X_{ij})\,V_{\n w_j}^\prime\,\i C_{w_{i}}+b_i+k_j-\log (X_ij)
 \end{equation}
 Where $f(x)$ is a weighing using the weighting between 0 and 1 given by $f(x)$
 \begin{equation}
@@ -619,7 +618,7 @@ Each level of the tree roughly halves the space of output words to be considered
 Until at the level in which the word-leaf occurs on branch is for the output word, and the other is not.
 
 The tree is normally a Huffman tree \pcite{huffman1952method}, as was found to be effective by \tcite{mikolov2013efficient}.
-This which means that for each word $\n w_i$, the word's depth (i.e its code's length) $L(\n w_i)$ is such that over all words: $\sum_{\forall w_j \in \mathcal{V}} P(w_j)\times L(w_j)$ is minimised.
+This which means that for each word $\n w_i$, the word's depth (i.e its code's length) $L(\n w_i)$ is such that over all words: $\sum_{\forall \n w_j \in \mathcal{V}} P(\n w_j)\times L(\n w_j)$ is minimised.
 Where $P(\n w_i)$ is word $\n w_i$'s unigram probability, and $\mathcal{V}$ is the vocabulary.
 The approximate solution to this is that $L(\n w_i) \approx -\log_2(P(\n w_i))$.
 From the tree each word is can be assign as code in the usual way, with 0 for example representing taking one branch, and 1 representing the other.
@@ -633,7 +632,7 @@ it was noted by \tcite{mikolov2013efficient}, the for vocabulary $\mathcal{V}$, 
 \begin{itemize}
 	\item Using normal softmax would require each evaluation to perform $|\mathcal{V}|$ operations.
 	\item Using hierarchical softmax with a balanced tree, would mean the expected number of operations across all words would be $\log_2(|\mathcal{V}|)$.
-	\item Using a Huffman tree gives expected number of operations $\sum_{\forall w_j \in \mathcal{V}} -P(w_j)\log_2(P(\n w_i)) = H(\mathcal{V})$, where $H(\mathcal{V})$ is the unigram entropy of words in the training corpus.
+	\item Using a Huffman tree gives expected number of operations $\sum_{\forall \n w_j \in \mathcal{V}} -P(\n w_j)\log_2(P(\n w_i)) = H(\mathcal{V})$, where $H(\mathcal{V})$ is the unigram entropy of words in the training corpus.
 \end{itemize}
 The worse case value for the entropy is $\log_2(|\mathcal{V}|)$.
 In-fact Huffman encoding is provably optimal in this way.
@@ -833,8 +832,8 @@ For skip-gram that is just $P(w_o\,mid \n w_i)$.
 The term $n_{0,t_{1},...,t_{i}}$ in  $P(n_{0,t_{1},...,t_{i}}\mid z,)$, just represents as  path through the tree to its leave node which represent the word $w_o$. i.e $P(n_{0,t_{1},...,t_{i}}\mid z,)=P(w_o\mid z,)$.
 And $z$ is the final pre-output layer of the model.
 In normal language models $z$ encodes all the information about what the model knows of predictions based on $w_{i},...,w{j}$ -- $z$ is thus a proxy term in the conditional probability for those words.
-In skip-gram there is no hidden layer, and it is just $z=C_{\n w_i}$,
-and the model defines its probability output by $P(w_o\mid \n w_i) = P(w_o\mid C_{\n w_i})$.
+In skip-gram there is no hidden layer, and it is just $z=\i C_{\n w_i}$,
+and the model defines its probability output by $P(w_o\mid \n w_i) = P(w_o\mid \i C_{\n w_i})$.
 }
 
 \begin{equation}
@@ -882,54 +881,54 @@ Unlike Noise Contrast Estimation (and unlike softmax), it does not in fact resul
 However the goal with these word embeddings is not to actually perform the language modelling task, but only to capture a high-quality vector representation of the words involved.
 
 \subsubsection{A motivation of Negative Sampling}
-Recall from \Cref{sec:skip-gram} the (supposed) goal, is to estimate $P(w_j\mid \n w_i)$.
-In  \Cref{sec:skip-gram}  we considered the representation of $P(w_j\mid \n w_i)$ as the $\n w_i$th element of the softmax output.
+Recall from \Cref{sec:skip-gram} the (supposed) goal, is to estimate $P(\n w_j\mid \n w_i)$.
+In  \Cref{sec:skip-gram}  we considered the representation of $P(\n w_j\mid \n w_i)$ as the $\n w_i$th element of the softmax output.
 
 \begin{align}
-P(w_j \mid w_{i}) & = \left[ s_{max}(V\,C_{w_{i}}) \right]_{w_j} \\
-P(w_j \mid w_{i}) & = \frac{\exp{V_{w_j}^T\,C_{w_{i}}}}{\sum_{k=1}^{k=N} \exp{V_k^T\,C_{k}}}
+P(\n w_j \mid w_{i}) & = \left[ \softmax(V\,\i C_{w_{i}}) \right]_{\n w_j} \\
+P(\n w_j \mid w_{i}) & = \frac{\exp{V_{\n w_j}^T\,\i C_{w_{i}}}}{\sum_{k=1}^{k=N} \exp{V_k^T\,\i C_{k}}}
 \end{align}
 
 \aside[Why is not using softmax wrong?]{The notation abuse may be hiding just how bad it is to not use softmax.
-Recall that the true meaning of $P(w_j \mid \n w_i)$  is actually $P(W_j=w_j \mid \n W_i=\n w_i)$.
+Recall that the true meaning of $P(\n w_j \mid \n w_i)$  is actually $P(W_j=\n w_j \mid \n W_i=\n w_i)$.
 By not using softmax, with its normalising denominator this means that:
-$\sum_{\forall w_j \in \mathcal{V}} P(w_j \mid \n w_i) \neq 1$ (except by coincidence).
+$\sum_{\forall \n w_j \in \mathcal{V}} P(\n w_j \mid \n w_i) \neq 1$ (except by coincidence).
 }
 
 
 This is not the only valid representation.
-One could use a sigmoid neuron for a direct answer to the co-location probability of $w_j$ occurring near $\n w_i$.
+One could use a sigmoid neuron for a direct answer to the co-location probability of $\n w_j$ occurring near $\n w_i$.
 Though this would throw away the promise of the probability distribution summing to one across all possible would that could be collocated with your $\n w_i$.
 That promise could be enforced by other constraints in training, but in this case it will not be.
 It is a legal probability if one does not consider it as a single categorical prediction, but rather as independent predictions.
 
 \begin{align}
-P(w_j \mid w_{i}) & = \left[\sigma(V\,C_{w_{i}}) \right]_{w_j} \\
-P(w_j \mid w_{i}) & = \sigma(V_{w_j}^T\,C_{w_{i}})
+P(\n w_j \mid w_{i}) & = \left[\sigma(V\,\i C_{w_{i}}) \right]_{\n w_j} \\
+P(\n w_j \mid w_{i}) & = \sigma(V_{\n w_j}^T\,\i C_{w_{i}})
 \end{align}
 
 
 Lets start from the cross-entropy loss.
-In training word $w_j$ does occur near $\n w_i$, we know this because they are a training pair presented from the training set $\mathcal{X}$.
+In training word $\n w_j$ does occur near $\n w_i$, we know this because they are a training pair presented from the training set $\mathcal{X}$.
 So since it occurs, we could make a loss function based on minimising the negative likelihood of all observations.
 \begin{equation}
-Loss = \sum_{\forall (\n w_i,w_j)\in \mathcal{X}} -\log P(w_j\mid \n w_i)
+Loss = \sum_{\forall (\n w_i,\n w_j)\in \mathcal{X}} -\log P(\n w_j\mid \n w_i)
 \end{equation}
 This is the cross-entropy loss, excluding the scaling factor.
 
 However, to speed things up, we are not using softmax in the model output,
 which means that there is no trade off for increasing (for example) $P(\n w_1\mid \n w_i)$ vs $P(w_2\mid \n w_i)$.
-This thus admits the trivially optimal solution $\forall w_j\in \mathcal{V} P(w_j \mid \n w_i) = 1$.
+This thus admits the trivially optimal solution $\forall \n w_j\in \mathcal{V} P(\n w_j \mid \n w_i) = 1$.
 This is obviously wrong -- even beyond not being a proper distribution -- some words are more commonly co-occur that others.
 
 So from this we can improve the statement.
 What is desired from the loss function is to reward models that predict that  the probability of words that do co-occur as being higher than the probability of words that do not.
-We know that $w_j$ does occur near $\n w_i$ as it is in the training set.
+We know that $\n w_j$ does occur near $\n w_i$ as it is in the training set.
 Now let us select via some arbitrary means a $w_k$ that does not -- a negative sample.
-We want the loss function to be such that $P(w_k\mid \n w_i) < P(w_j\mid \n w_i)$
+We want the loss function to be such that $P(w_k\mid \n w_i) < P(\n w_j\mid \n w_i)$
 So for this single term in the loss we would have:
 \begin{equation}
-Loss_{w_j,\n w_i} =  P(w_k\mid \n w_i) - \log P(w_j\mid \n w_i)
+Loss_{\n w_j,\n w_i} =  P(w_k\mid \n w_i) - \log P(\n w_j\mid \n w_i)
 \end{equation}
 
 \aside[Most words don't co-occur]{
@@ -949,14 +948,14 @@ overcome by all the correct truly negative samples.
 
 At this point, we can question, why limit to one negative sample?
 We could take many, and do several at a time,
-and get more confidence that $P(w_j\mid \n w_i)$ is indeed greater than other (nonexistant) co-occurrence probabilities.
+and get more confidence that $P(\n w_j\mid \n w_i)$ is indeed greater than other (nonexistant) co-occurrence probabilities.
 This gives the improved loss function of 
 
 \begin{equation}
-Loss = \sum_{\forall (\n w_i,w_j)\in \mathcal{X}} 
+Loss = \sum_{\forall (\n w_i,\n w_j)\in \mathcal{X}} 
 \left(\sum_{\forall w_k \in \text{samples($U_{\mathcal{V}}$)}}
  \log P(w_k\mid \n w_i) \right) 
- -\log P(w_j\mid \n w_i)
+ -\log P(\n w_j\mid \n w_i)
 \end{equation}
 
 Writing $U_{\mathcal{V}}$ for the unigram distribution of the vocabulary.
@@ -971,10 +970,10 @@ Otherwise it will add unexpected changes and result in noisy training.
 This results in:
 
 \begin{equation}
-Loss = \sum_{\forall (\n w_i,w_j)\in \mathcal{X}} 
+Loss = \sum_{\forall (\n w_i,\n w_j)\in \mathcal{X}} 
 \left(\sum_{\forall w_k \in \text{samples($U_{\mathcal{V}}$)}}
 P_{U_\mathcal{V}}(w_k) \log P(w_k\mid \n w_i) \right)
--\log P(w_j\mid \n w_i)
+-\log P(\n w_j\mid \n w_i)
 \end{equation}
 
 \pdfcomment{The abuse of using samples as random variables, and distributions as random variables in this section burns}
@@ -990,9 +989,9 @@ This notation (abuse) is as used in \tcite{mikolovSkip}.
 It gives the form:
 
 \begin{equation}
-Loss = \sum_{\forall (\n w_i,w_j)\in \mathcal{X}} 
+Loss = \sum_{\forall (\n w_i,\n w_j)\in \mathcal{X}} 
 \left(\sum_{k=1}^{k=K} \mathbb{E}_{w_k \sim U_{\mathcal{V}}} [\log P(w_k\mid \n w_i)]) \right)
--\log P(w_j\mid \n w_i)
+-\log P(\n w_j\mid \n w_i)
 \end{equation}
 
 Consider that the choice of Unigram distribution for the negative samples is not the only choice.
@@ -1006,26 +1005,26 @@ which they find to give better performance than the unigram or uniform distribut
 
 Switching in that, and the sigmoid for the probabilities, this is:
 \begin{equation}
-Loss = \sum_{\forall (\n w_i,w_j)\in \mathcal{X}} 
-\left(\sum_{k=1}^{k=K} \mathbb{E}_{w_k \sim D_{\mathcal{V}}} [\log \sigma(V_{w_k}^T\,C_{w_{i}}) \right)
--\log \sigma(V_{w_j}^T\,C_{w_{i}}
+Loss = \sum_{\forall (\n w_i,\n w_j)\in \mathcal{X}} 
+\left(\sum_{k=1}^{k=K} \mathbb{E}_{w_k \sim D_{\mathcal{V}}} [\log \sigma(V_{w_k}^T\,\i C_{w_{i}}) \right)
+-\log \sigma(V_{\n w_j}^T\,\i C_{w_{i}}
 \end{equation}
 
 By adding a constant we do not change the optimal value.
 If we add the constant $-K$, we can subtract 1 in each sample term
 
 \begin{equation}
-Loss = \sum_{\forall (\n w_i,w_j)\in \mathcal{X}} 
-\left(\sum_{k=1}^{k=K} \mathbb{E}_{w_k \sim D_{\mathcal{V}}} [-1 + \log \sigma(V_{w_k}^T\,C_{w_{i}}) \right)
--\log \sigma(V_{w_j}^T\,C_{w_{i}}
+Loss = \sum_{\forall (\n w_i,\n w_j)\in \mathcal{X}} 
+\left(\sum_{k=1}^{k=K} \mathbb{E}_{w_k \sim D_{\mathcal{V}}} [-1 + \log \sigma(V_{w_k}^T\,\i C_{w_{i}}) \right)
+-\log \sigma(V_{\n w_j}^T\,\i C_{w_{i}}
 \end{equation}
 
 Finally we negate the whole thing, and make use of the identity $1-\sigma(z) = \sigma(-z)$
 giving
 \begin{equation}
-Loss = -\sum_{\forall (\n w_i,w_j)\in \mathcal{X}}
+Loss = -\sum_{\forall (\n w_i,\n w_j)\in \mathcal{X}}
 \left(
-\log \sigma(V_{w_j}^T\,C_{w_{i}}) + \sum_{k=1}^{k=K} \mathbb{E}_{w_k \sim D_{\mathcal{V}}} [\log \sigma(-V_{w_k}^T\,C_{w_{i}})] 
+\log \sigma(V_{\n w_j}^T\,\i C_{w_{i}}) + \sum_{k=1}^{k=K} \mathbb{E}_{w_k \sim D_{\mathcal{V}}} [\log \sigma(-V_{w_k}^T\,\i C_{w_{i}})] 
 \right)
 \end{equation}
 
