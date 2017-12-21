@@ -50,12 +50,16 @@ Whiled identical in terms of parameters, they each acting at a different time-st
 
 At each time-step the same network is used, with different inputs.
 For purposes of looking at this in the big picture we will first consider each network a black-box recurrent unit (RU).
-
-
-The recurrent unit takes at each time-step, an input for that time-step, some representation its of state for the RU at the previous timestep; and it produces an output for this time-step, and its state representation for the next time-step.
+The recurrent unit takes at each time-step, an input for that time-step, some representation its of state for the RU at the previous time-step; and it produces an output for this time-step, and its state representation for the next time-step.
 A diagram of this is shown in \Cref{fig-ru}.
 It is worth distinguishing the unit output is not the same as the overall network output, it is just the output of this sub-network at this time-step.
 Every-time step can be considered as having two effective inputs (previous state, and actual input at this time-step) and two effective outputs (next state and actual output at this time step).
+
+\begin{figure}
+	\caption{A recurrent unit with its 2 inputs and 2 outputs. Not shown are the internal functioning which may be a complex (or simple) neural network of its own.}
+	\label{fig-ru}
+	\resizebox{\textwidth}{!}{\input{./figs/chapterintromachinelearning/rnn-unit.tikz}}
+\end{figure}
 
 Not all of these inputs and outputs are actually used at all time steps meaningfully.
 The initial state for the first time step is normally set to some zero vector,
@@ -149,13 +153,7 @@ Ensuring the state is able to capture all information is part of designing the i
 
 
 \section{Inside the Recurrent Unit}
-\begin{figure}
-	\caption{A recurrent unit with its 2 inputs and 2 outputs. Not shown are the internal functioning which may be a complex (or simple) neural network of its own.}	
-	
-	\label{fig-ru}
-	
-	\input{./figs/chapterintromachinelearning/rnn-unit.tikz}
-\end{figure}
+
 
 \aside[Output/Input layers]{
 	Extra feedfordward layers are often applied between the overall networks input and output and the RU's input an output.
@@ -183,41 +181,42 @@ However, it is a distinction made in the very well known LSTM unit (\Cref{sec:lt
 \begin{figure}
 	\caption{A basic recurrent unit.}
 	\label{fig:basicrnn}
-	\begin{tikzpicture}[]
-	\node(hidden)[layer, above= of in]{$h_t = \varphi\left([x_t; s_{t-1}] W + b \right)$};
+	\resizebox{\textwidth}{!}{\begin{tikzpicture}[]
+	\node(hidden)[layer]{$\nv h_t = \varphi\left(W \left[\nv x_t;\; \nv s_{t-1}\right] + \v b \right)$};
 	
 	\node(in)[below = of hidden]{input};
 	\node(stm)[left = of hidden]{old state};
 	\node(stp)[right = of hidden]{new state};
 	\node(out)[above = of hidden]{output};
 	
-	\draw[->] (in) edge node[labe] {$x_t$} (hidden);	
-	\draw[->, bend right] (stm) edge node[labe] {$s_{t-1}$} (hidden.south);
-	\draw[->, bend left] (hidden.north) edge node[labe] {$s_{t}=h_t$} (stp);
-	\draw[->] (hidden) edge node[labe] {$\hat{y}_t=h_t$} (out);
+	\draw[->] (in) edge node[labe] {$\nv x_t$} (hidden);	
+	\draw[->, bend right] (stm) edge node[labe] {$\nv s_{t-1}$} (hidden.south);
+	\draw[->, bend left] (hidden.north) edge node[labe] {$\nv s_t=\nv h_t$} (stp);
+	\draw[->] (hidden) edge node[labe] {$\n \hat{y}_t=\nv h_t$} (out);
 	
-	\end{tikzpicture}
+	\end{tikzpicture}}
 \end{figure}
 
 \aside[Jordan RU]{The formulation is not commonly used today, however analogously to considering the Basic RU as an Elman RU,
 	a similar formulation can be done for a Jordan network \parencite{jordan1986rnnTR}.
 	The Jordan RU would be given by:
 	\begin{align*}
-	h_t &= \varphi\left(W[x_t; s_{t-1}]+ b \right) \\
-	o_t &= \varphi\left(Vh_t + c \right) \\
-	s_t & = o_t \\
-	\hat{y}_t &= o_t
+	\nv h_t &= \varphi\left(W \left[\nv x_t;\; \nv s_{t-1}\right]+ \v b \right) \\
+	\nv o_t &= \varphi\left(V\nv h_t + \v c \right) \\
+	\nv s_t & = \nv o_t \\
+	\n \hat{y}_t &= \nv o_t
 	\end{align*}
 	It would not need an additional output layer. One of these RUs alone is a Jordan network.
+	As an RU the difference is in the additional layer $\nv o_t$ without direct access to the previous state.
 }
 
-The most basic recurrent unit, is a single layer $h_t$, with the unit output, and the unit state both being the value of this layer.
+The most basic recurrent unit, is a single layer $\nv h_t$, with the unit output, and the unit state both being the value of this layer.
 The layer is not hidden from the perspective of the recurrent unit, but is from the perspective of the whole network.
 The network inside the basic recurrent unit is given by:
 \begin{align}
-h_t &= \varphi\left(W[x_t; s_{t-1}]+ b \right)\\
-s_t & = h_t \\
-\hat{y}_t &= h_t
+\nv h_t &= \varphi\left(W \left[\nv x_t; \nv s_{t-1}\right]+ \v b \right)\\
+\nv s_t & = \nv h_t \\
+\n \hat{y}_t &= \nv h_t
 \end{align}
 As shown in \Cref{fig:basicrnn}
 Where $W$ and $b$ are the weight matrix and bias vector that are trained, for this single hidden layer.
@@ -249,31 +248,31 @@ Thus helping the overall network preserve better information in the state.
 	\label{fig:gru}
 	\begin{adjustbox}{max width=\textwidth}
 		\begin{tikzpicture}[]
-		\node(hidden)[layer]{$h_t = \varphi \left( V[x_t; s_{t-1} \circ r_t] + d \right)$};
-		\node(reset)[layer, below left=of hidden]{$r_t = \sigma \left( U[x_t; s_{t-1}] + c \right)$};
-		\node(update)[layer, above left=of reset]{$z_t = \sigma \left( T[x_t; s_{t-1}] + b \right) $};
-		\node(state)[layer, above = 5 of reset]{$\hat{y}_t=s_t = (1-z_t) \odot h_t + z_t \odot s_{t-1}$};
+		\node(hidden)[layer]{$\nv h_t = \varphi \left( \d W_h\left[\nv x_t; \nv s_{t-1} \odot \nv r_t\right] + \dv b_h \right) $};
+		\node(reset)[layer, below left=of hidden]{$\nv r_t = \sigma \left( \d W_r \left[\nv x_t; \nv s_{t-1}\right] + \dv b_r \right) $};
+		\node(update)[layer, above left=of reset]{$\nv z_t = \sigma \left( \d W_z \left[\nv x_t; \nv s_{t-1}\right] + \dv b_z \right)$};
+		\node(state)[layer, above = 5 of reset]{$\n \hat{y}_t=\nv s_t = (1-\nv z_t) \odot \nv h_t + \nv z_t \odot \nv s_{t-1}$};
 		
 		\node(in)[below = 3 of reset]{input};
 		\node(stm)[left = 4 of reset]{old state};
 		\node(stp)[right = 3 of state]{new state};
 		\node(out)[above = of state]{output};
 		
-		\draw[->] (in) edge node[labe] {$x_t$} (update);	
-		\draw[->, bend right] (stm) edge node[labe] {$s_{t-1}$} (update.south);
-		\draw[->] (in) edge node[labe] {$x_t$} (reset);	
-		\draw[->, bend right] (stm) edge node[labe] {$s_{t-1}$} (reset.south);
+		\draw[->] (in) edge node[labe] {$\nv x_t$} (update);	
+		\draw[->, bend right] (stm) edge node[labe] {$\nv s_{t-1}$} (update.south);
+		\draw[->] (in) edge node[labe] {$\nv x_t$} (reset);	
+		\draw[->, bend right] (stm) edge node[labe] {$\nv s_{t-1}$} (reset.south);
 		
-		\draw[->, thick] (in) edge node[labe] {$x_t$} (hidden);	
-		\draw[->, bend right] (stm) edge node[labe] {$s_{t-1}$} (hidden.south);		
-		\draw[->] (reset.north) edge node[labe] {$r_t$} (hidden.south);
-		\draw[->, bend right] (stm) edge node[labe] {$s_{t-1}$} (hidden.south);
+		\draw[->, thick] (in) edge node[labe] {$\nv x_t$} (hidden);	
+		\draw[->, bend right] (stm) edge node[labe] {$\nv s_{t-1}$} (hidden.south);		
+		\path[->] (reset.north) edge node[labe] {$\nv r_t$} (hidden.south);
+		\draw[->, bend right] (stm) edge node[labe] {$\nv s_{t-1}$} (hidden.south);
 		
-		\draw[->, bend right] (stm) edge node[labe] {$s_{t-1}$} (state.south);
-		\draw[->, thick] (hidden) edge node[labe] {$h_{t}$} (state.south);
-		\draw[->] (update) edge node[labe] {$z_{t}$} (state.south);
-		\draw[->, bend left] (state) edge node[labe] {$s_{t}$} (stp);
-		\draw[->] (state) edge node[labe] {$\hat{y}_t$} (out);
+		\draw[->, bend right] (stm) edge node[labe] {$\nv s_{t-1}$} (state.south);
+		\draw[->, thick] (hidden) edge node[labe] {$\nv h_t$} (state.south);
+		\draw[->] (update) edge node[labe] {$\nv z_t$} (state.south);
+		\draw[->, bend left] (state) edge node[labe] {$\nv s_t$} (stp);
+		\draw[->] (state) edge node[labe] {$\n \hat{y}_t$} (out);
 		
 		\node(updatelbl)[labe, above= 0 of update]{Update Gate};
 		\node(resetlbl)[labe, above= 0 of reset]{Reset Gate};
@@ -286,14 +285,14 @@ Thus helping the overall network preserve better information in the state.
 
 The gated recurrent unit (GRU) is defined by:
 \begin{align}
-z_t &= \sigma \left( T[x_t; s_{t-1}] + b \right) \\
-r_t &= \sigma \left( U[x_t; s_{t-1}] + c \right) \\
+\nv z_t &= \sigma \left( \d W_z \left[\nv x_t; \nv s_{t-1}\right] + \dv b_z \right) \\
+\nv r_t &= \sigma \left( \d W_r \left[\nv x_t; \nv s_{t-1}\right] + \dv b_r \right) \\
 %
-h_t &= \varphi \left( V[x_t; s_{t-1} \odot r_t] + d \right)  \\
-s_t &= (1-z_t) \odot h_t + z_t\odot s_{t-1}\\
-\hat{y}_t &= s_t
+\nv h_t &= \varphi \left( \d W_h\left[\nv x_t; \nv s_{t-1} \odot \nv r_t\right] + \dv b_h \right)  \\
+\nv s_t &= (1-\nv z_t) \odot \nv h_t + \nv z_t\odot \nv s_{t-1}\\
+\n \hat{y}_t &= \nv s_t
 \end{align}
-Where $T$,$U$ and $V$ are the weight-vectors, and $b$,$c$ and $d$ are the bias vectors for the 3 separate layers.
+Where $\d W_z$,$\d W_r$ and $\d W_h$ are the weight-vectors, and $\dv b_z$, $\dv b_r$ and $\dv b_h$are the bias vectors for the 3 separate layers.
 
 \aside[Trade-off formula]{It may be stating the obvious, 
 	but a standard way (and the only sensible way) to trade-off a value between two possible choices: $a$ and $b$,
@@ -303,47 +302,45 @@ Where $T$,$U$ and $V$ are the weight-vectors, and $b$,$c$ and $d$ are the bias v
 This may look complex, but it can be broken down into parts.
 First we can see that like in the basic RU, the output and the state are the same value.
 
-$h_t$ is our core layer, as in the basic cell.
-However, unlike in the basic cell, it does not immediately become the state: $s_t$.
-There is a trade-off between the state keeping its old value $s_{t-1}$, and getting the hidden layer value $h_t$.
-This trade-off is element-wise controlled by $z_t$ which is valued between 0 and 1 (due to the sigmoid unit).
-When an element of $z_t$ is $1$, then the value of $s_{t-1}$ for the corresponding element is kept.
-Conversely, when the $z_t$ element is $0$,  then the element of the new state is fully given by $h_t$.
+$\nv h_t$ is our core layer, as in the basic cell.
+However, unlike in the basic cell, it does not immediately become the state: $\nv s_t$.
+There is a trade-off between the state keeping its old value $\nv s_{t-1}$, and getting the hidden layer value $\nv h_t$.
+This trade-off is element-wise controlled by $\nv z_t$ which is valued between 0 and 1 (due to the sigmoid unit).
+When an element of $\nv z_t$ is $1$, then the value of $\nv s_{t-1}$ for the corresponding element is kept.
+Conversely, when the $\nv z_t$ element is $0$,  then the element of the new state is fully given by $\nv h_t$.
 
-$z_t$ is often called the \emph{update gate} as it controls (``gates'') how much the state is updated using the new value in $h_t$.
-The update-gate sub-network uses the previous state $s_{t-1}$ and present input $x_t$ to make this determination.
+$\nv z_t$ is often called the \emph{update gate} as it controls (``gates'') how much the state is updated using the new value in $\nv h_t$.
+The update-gate sub-network uses the previous state $\nv s_{t-1}$ and present input $\nv x_t$ to make this determination.
 
 \aside[Multiplication, Concatenation, and Addition]{
 	It is important to grasp that the product of a matrix and the concentration of two vectors can also be expressed as the sum of the product of a block of that matrix 
-	The area the same thing.
+	The are the same thing.
 	
-	$W\cdot [a; b] = U\cdot a + V\cdot b$  
+	$W\cdot \left[\v a; \v b\right] = U\v a + V \v b$  
 	if  $W=[U\; V]$
-	
-	For $[a;b]$ being the vertical concatenation of the vectors (considered as column matrices) 
-	and  $[U\; V]$ the horizontal concatenation of the  matrices respectively.
-	
+		
 	The difference is purely notation.
 }
 
 The \emph{reset gate} is loosely similar.
-$r_t$ controls how much influence the past state $s_{t-1}$ has on calculating the new value of $h_t$ -- which is the new potential state/output as discussed.
-It is perhaps clearer if $h_t$ is reformulated to split $V$ into the terms that multiply with $x_t$ and the terms that multiply with $s_{t-1}$:
-%
+$\nv r_t$ controls how much influence the past state $\nv s_{t-1}$ has on calculating the new value of $\nv h_t$ -- which is the new potential state/output as discussed.
+It is perhaps clearer if $\nv h_t$ is reformulated to split $V$ into the terms that multiply with $\nv x_t$ and the terms that multiply with $\nv s_{t-1}$.
+
+For $\d W_h = \left[\d W_{hx}\; \d W_{hs} \right]$ we can write:
 \begin{align}
-h_t &= \varphi \left( \sigma \left( V[x_t; s_{t-1} \odot r_t] + d \right) \right) \\
-&= \varphi \left( \sigma \left( V_x x_t + V_s r_t \odot s_{t-1} + d \right) \right)
+\nv h_t &= \varphi \left( \d W_h\left[\nv x_t; \nv s_{t-1} \odot \nv r_t\right] + \dv b_h \right)  \\
+&= \varphi \left( \d W_{hx} \nv x_t + \d W_{hs} \left( \nv s_{t-1} \odot \nv r_t \right) + \dv b_h \right)
 \end{align}
 %
-It $r_t$ is called the reset-gate because it wipes the effect of the old-state in calculating the potential new state $h_t$.
-When $r_t$ is reduced to zero, then the updated value for $h_t$ is as if $s_{t-1}$ was just like for the initial zero-vector state -- it is zeroed out by $r_t$.
-If the update gate $z_t$ is high then it would fully reset the system.
+$\nv r_t$ is called the reset-gate because it wipes the effect of the old-state in calculating the potential new state $\nv h_t$.
+When $\nv r_t$ is reduced to zero, then the updated value for $\nv h_t$ is as if $\nv s_{t-1}$ was just like for the initial zero-vector state -- it is zeroed out by $\nv r_t$.
+If the update gate $\nv z_t$ is high then it would fully reset the system.
 
 
-Notice that when $z_t=0$ and $r_t=1$ then the system is identical to the Basic RU.
+Notice that when $\nv z_t=0$ and $\nv r_t=1$ then the system is identical to the Basic RU.
 This could be achieved by setting suitably large biasses.
 However, the system is more flexible than that, 
-since $z_t$ and $r_t$ are themselves very similar to Basic RUs -- though they do not control their own state.
+since $\nv z_t$ and $\nv r_t$ are themselves very similar to Basic RUs -- though they do not control their own state.
 The gates can behaver differently based on the inputs and states to recognise important information that must be stored.
 
 
@@ -354,55 +351,55 @@ The original form was proposed by \tcite{hochreiter1997long}.
 The form in current use is a variant from \tcite{gers1999learning}.
 
 LSTM uses a compound state, comprised of the units previous output, and an addition state vector called the cell.
-we write $s_t = (c_t, \hat{y}_t)$,
+we write $\nv s_t = (\nv c_t, \n \hat{y}_t)$,
 to fit the normal formulation,
 though for maths it is easier to work with these in parts.
 
 \aside[Biasing the Forget Gate]{
 	Practically, it is important to initially set the forget gate bias to 1.
 	Unlike all the other initialisation in the networks to 0 (or a small random number eg \texttt{randn(0.01)}).
-	Equvielently one can also just add a constant additional bias term of ${+}1$ to the forget gate equations.
+	Equivalently one can also just add a constant additional bias term of ${+}1$ to the forget gate equations.
 	This has been show to benefit almost all used of LSTM \parencite{gers1999learning,jozefowicz2015empirical}.
 	This is the default in most frameworks (though only recently patched in some).
 }
 
 \begin{align}
-s_t &= (c_t, \hat{y}_t)\\
+\nv s_t &= (\nv c_t, \n \hat{y}_t)\\
 %
-i_t &= \sigma \left( W[x_t; \hat{y}_{t-1}] + d \right) \\
-f_t &= \sigma \left( T[x_t; \hat{y}_{t-1}] + b \right) \\
-o_t &= \sigma \left( U[x_t; \hat{y}_{t-1}] + k \right) \\
+\nv i_t &= \sigma \left( \d W_i \left[\nv x_t; \hat{y}_{t-1}\right] + \dv b_i \right) \\
+\nv f_t &= \sigma \left( \d W_f\left[\nv x_t; \hat{y}_{t-1}\right] + \dv b_f \right) \\
+\nv o_t &= \sigma \left( \d W_o\left[\nv x_t; \hat{y}_{t-1}\right] + \dv b_o \right) \\
 %
-h_t &= \tanh \left( V[x_t; \hat{y}_{t-1}] + a \right) \\
-c_t &=  i_t\odot h_{t} + f_t \odot c_{t-1} \\
-\hat{y}_t &= o_t \odot \varphi(c_t)
+\nv h_t &= \tanh \left( \d W_h\left[\nv x_t; \hat{y}_{t-1}\right] + \dv b_h \right) \\
+\nv c_t &=  \nv i_t\odot \nv h_t + \nv f_t \odot \nv c_{t-1} \\
+\n \hat{y}_t &= \nv o_t \odot \varphi(\nv c_t)
 \end{align}
 
 
 
 In LSTM there are 3 gate sub-networks:
-the input gate $i_t$, the forget gate $f_t$, and the output gate $o_t$.
+the input gate $\nv i_t$, the forget gate $\nv f_t$, and the output gate $\nv o_t$.
 
 Together the input and forget-gates take the purpose of the GRU's update-gate.
-Consider the case if $o_t=1$ and $\varphi$ is the identify function,
-and with $i_t=1-f_t$, that would make the value for $c_t$ very similar to GRU's $s_t$ (and $\hat{y}_t$ identical)
+Consider the case if $\nv o_t=1$ and $\varphi$ is the identify function,
+and with $\nv i_t=1-\nv f_t$, that would make the value for $\nv c_t$ very similar to GRU's $\nv s_t$ (and $\n \hat{y}_t$ identical)
 \pdfcomment{Should I rewrite out the equation in this form, or would that be more confusing?}
 
-Individually, the forget gate $f_t$ controls the extent that previous value of the cell is used,
-and the input gate $i_t$ controls the extent to which the new potential value $h_t$ is used for the new value of $c_t$.
+Individually, the forget gate $\nv f_t$ controls the extent that previous value of the cell is used,
+and the input gate $\nv i_t$ controls the extent to which the new potential value $\nv h_t$ is used for the new value of $\nv c_t$.
 
 The output-gates obvious purpose is to gate the output $y_t$.
 However, as the output forms part of the state,
-this has an effect on the networks next time step.
+this has an effect on the networks next time-step.
 Loosely this can be seen as similar to the GRU's reset gate.
-If we substitute the value for $\hat{y}_{t-1} = o_{t-1}\cdot\varphi(\odot c_{t-1})$
-into $h_t$:
+If we substitute the value for $\hat{y}_{t-1} = \nv o_{t-1} \odot \varphi(\nv c_{t-1})$
+into $\nv h_t$:
 \begin{align}
-h_t &= \tanh \left( V[x_t; \hat{y}_{t-1}] + a \right) \\
-&=\tanh \left( V[x_t; o_{t-1}\cdot\varphi(\odot c_{t-1})] + a \right)
+\nv h_t &= \tanh \left( \d W_h\left[\nv x_t; \hat{y}_{t-1}\right] + \dv b_h \right) \\
+\nv h_t &= \tanh \left( \d W_h\left[\nv x_t;  \nv o_{t-1} \odot \varphi(\nv c_{t-1})\right] + \dv b_h \right) 
 \end{align}
-Similar for $o_t$, $f_t$ and $o_t$ as for $h_t$.
-It can be seen that at the previous time step setting an element of $o_{t-1}$ to zero effectively removes the effect of the previous cell-state from the equations for all the gates and the the potential new cell $h_t$.
+(Similar substitutions can be done for $\nv i_t$, $\nv f_t$ and $\nv o_t$)
+It can be seen that at the previous time step setting an element of $o_{t-1}$ to zero effectively removes the effect of the previous cell-state from the equations for all the gates and the the potential new cell $\nv h_t$.
 Thus resetting the network.
 
 
@@ -411,12 +408,12 @@ Thus resetting the network.
 	\label{fig:lstm}
 	\begin{adjustbox}{max width=\textwidth}
 		\begin{tikzpicture}[]
-		\node(hidden)[layer]{$h_t = \tanh \left( V[x_t; \hat{y}_{t-1}] + a \right) $};
-		\node(igate)[layer, below left=of hidden]{$i_t = \sigma \left( W[x_t; \hat{y}_{t-1}] + d \right)$};
-		\node(fgate)[layer, left=of igate]{$f_t = \sigma \left( T[x_t; \hat{y}_{t-1}] + b \right)$};
-		\node(ogate)[layer, above left=of fgate]{$o_t = \sigma \left( U[x_t; \hat{y}_{t-1}] + k \right)$};
-		\node(state)[layer, above = 5 of igate]{$c_t =  i_t\odot h_{t} + f_t \odot c_{t-1}$};
-		\node(preout)[layer, above left = of state]{$\hat{y}_t = o_t \odot \varphi(c_t)$};
+		\node(hidden)[layer]{$\nv h_t = \tanh \left( \d W_h\left[\nv x_t; \hat{y}_{t-1}\right] + \dv b_h \right)$};
+		\node(igate)[layer, below left=of hidden]{$\nv i_t = \sigma \left( \d W_i \left[\nv x_t; \hat{y}_{t-1}\right] + \dv b_i \right)$};
+		\node(fgate)[layer, left=of igate]{$\nv f_t = \sigma \left( \d W_f\left[\nv x_t; \hat{y}_{t-1}\right] + \dv b_f \right)$};
+		\node(ogate)[layer, above left=of fgate]{$\nv o_t = \sigma \left( \d W_o\left[\nv x_t; \hat{y}_{t-1}\right] + \dv b_o \right)$};
+		\node(state)[layer, above = 5 of igate]{$\nv c_t =  \nv i_t\odot \nv h_t + \nv f_t \odot \nv c_{t-1}$};
+		\node(preout)[layer, above left = of state]{$\n \hat{y}_t = \nv o_t \odot \varphi(\nv c_t)$};
 		
 		\node(in)[below = 4 of igate]{input};
 		\node(stm)[left = 4 of fgate]{old state};
@@ -441,7 +438,7 @@ Thus resetting the network.
 		
 		\draw[->] (fgate) edge node[labe] {$f_{t}$} (state.south);
 		\draw[->] (igate) edge node[labe] {$i_{t}$} (state.south);
-		\draw[->, thick] (hidden) edge node[labe] {$h_{t}$} (state.south);
+		\draw[->, thick] (hidden) edge node[labe] {$\nv h_t$} (state.south);
 		
 		
 		
@@ -484,7 +481,7 @@ There also exist many other RNNs.
 Some are similar in structure to those discussed and can be analysed similarly via their recurrent units.
 Such as the two models of \tcite{mikolovLongerSTM}, which incorporate a decaying sum of past states into the current state (either gated, or constant).
 Other networks incorporate various other data-structures (or analogies to such structures) into there recurrent structure:
-such as stacks \tcite{stacklstm}, pointers/arrays \tcite{MemoryNN}, or tapes \tcite{DBLP:journals/corr/GravesWD14}.
+such as stacks \pcite{stacklstm}, pointers/arrays \pcite{MemoryNN}, or tapes \pcite{DBLP:journals/corr/GravesWD14}.
 
 At natural language is primarily a sequential task, RNNs in various forms will be discussed in almost every chapter of this book.
 
