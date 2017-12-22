@@ -157,13 +157,13 @@ Given a sense annotated corpus, it is easy to count how often each sense of a wo
 Due to the over-whelming frequency of the most frequent sense, it is unlikely for even a small training corpus to have most frequents sense differing from the use in the language as a whole.
 
 
-For the $i$th word use being the word $w_i$, having some sense $\n s_j$
+For the $i$th word use being the word $\n w_i$, having some sense $\n s_j$
 then without any further context the 
-probability of that sense being the correct sense is $P(\n s_j \mid w_i)$.
-One can use the part of speech tag $p_i$ (for the $i$ word use) as an additional condition, and thus find $P(\n s_j \mid w_i, p_i)$.
+probability of that sense being the correct sense is $P(\n s_j \mid \n w_i)$.
+One can use the part of speech tag $p_i$ (for the $i$ word use) as an additional condition, and thus find $P(\n s_j \mid \n w_i, p_i)$.
 WordNet encodes this information for lemma-sense pair using the SemCor corpus counts (this is also used for sense ordering, which is why this is sometimes called First Sense.).
 This is a readily available and practical method for getting a baseline probability of each sense.
-Most frequent sense can be applied for word sense disambiguation using this frequency based probability estimate:  $\argmax_{\forall \n s_j} P(\n s_j \mid w_i, p_i)$.
+Most frequent sense can be applied for word sense disambiguation using this frequency based probability estimate:  $\argmax_{\forall \n s_j} P(\n s_j \mid \n w_i, p_i)$.
 
 
 In the most recent SemEval WSD task \pcite{moro2015semeval},
@@ -447,21 +447,21 @@ but rather a word sense.
 So the word sense can be modelled as a hidden variable, where the word, and the context words are being observed.
 
 \tcite{tian2014probabilistic} used this to define a  skip-gram based method for word sense embeddings.
-For input word $w_i$ having senses given by $\seq S(w_i)$,
-the probability of output word $\n w_o$ occurring near $w_i$ can be given as:
+For input word $\n w_i$ having senses given by $\seq S(\n w_i)$,
+the probability of output word $\n w_o$ occurring near $\n w_i$ can be given as:
 \begin{equation}
-	P(\n w_o\mid w_i) = \sum_{\forall \n s_k \in \seq S(w_i)} P(\n w_o \mid \n s_k, w_i) P(\n s_k \mid w_i) \label{equ:tianmm}
+	P(\n w_o\mid \n w_i) = \sum_{\forall \n s_k \in \seq S(\n w_i)} P(\n w_o \mid \n s_k, \n w_i) P(\n s_k \mid \n w_i) \label{equ:tianmm}
 \end{equation}
 
-Given that a sense $\n s_k$ only belongs to one word $w_i$ (as Tian et. al. are not doing any form of sense sharing via synsets etc.),
+Given that a sense $\n s_k$ only belongs to one word $\n w_i$ (as Tian et. al. are not doing any form of sense sharing via synsets etc.),
 we know that $k$th sense of the $i$th word only occurs when the $i$th word occurs.
-we have that the intersection probability $P(w_i,\n s_k) = P(\n s_k)$.
-%and $P(w_i) = \sum_{\forall \n s_k \in \seq S(w_i) P(\n s_k)}$;
+we have that the intersection probability $P(\n w_i,\n s_k) = P(\n s_k)$.
+%and $P(\n w_i) = \sum_{\forall \n s_k \in \seq S(\n w_i) P(\n s_k)}$;
 
 We can thus write \Cref{equ:tianmm} as:
 \pdfcomment{I am not happy with how this math looks.}
 \begin{align}
-P(\n w_o\mid w_i) &= \sum_{\forall \n s_k \in \seq S(w_i)} P(\n w_o \mid \n s_k) P(\n s_k \mid w_i) \label{equ:tianmm2}
+P(\n w_o\mid \n w_i) &= \sum_{\forall \n s_k \in \seq S(\n w_i)} P(\n w_o \mid \n s_k) P(\n s_k \mid \n w_i) \label{equ:tianmm2}
 \end{align}
 
 A softmax classifier can be used to define $P(\n w_o \mid \n s_k)$, just like in normal language modelling.
@@ -472,19 +472,19 @@ The later was done by Tian et. al.
 \Cref{equ:tianmm2} is in the form of a mixture model with a latent variable.
 Such a class of problems are often solved using the Expectation Maximisation (EM) method.
 In short, the EM procedure functions by performing two alternating steps.
-The E-step calculates the expected chance of assigning word-sense for each training case ($\hat{P}(\n s_l \mid \n w_o)$) in the training set $\mathcal{X}$.
-Where a training case is a pairing of a word use $w_i$, and context word $\n w_o$, with $\n s_l\in \seq S(w_i)$
+The E-step calculates the expected chance of assigning word-sense for each training case ($\hat{P}(\n s_l \mid \n w_o)$) in the training set $\seq X$.
+Where a training case is a pairing of a word use $\n w_i$, and context word $\n w_o$, with $\n s_l\in \seq S(\n w_i)$
 \begin{align}
-\hat{P}(\n s_l \mid \n w_o) = \frac{\hat{P}(\n s_l \mid w_i) P(\n w_o \mid \n s_l)}{\sum_{\forall \n s_k \in \seq S(w_i)} \hat{P}(\n w_o \mid \n s_k) P(\n s_k \mid w_i)}
+\hat{P}(\n s_l \mid \n w_o) = \frac{\hat{P}(\n s_l \mid \n w_i) P(\n w_o \mid \n s_l)}{\sum_{\forall \n s_k \in \seq S(\n w_i)} \hat{P}(\n w_o \mid \n s_k) P(\n s_k \mid \n w_i)}
 \end{align}
 
 The M-step updates the prior likelihood of each sense (that is without context) using the expected assignments from the E-step.
 
 \begin{align}
-\hat{P}(\n s_l \mid w_i) = \frac{1}{|\mathcal{X}|} \sum_{\forall (\n w_o,w_i)\in \mathcal{X}} \hat{P}(\n s_l \mid \n w_o)
+\hat{P}(\n s_l \mid \n w_i) = \frac{1}{\left|\seq X\right|} \sum_{\forall (\n w_o,\n w_i)\in \seq X} \hat{P}(\n s_l \mid \n w_o)
 \end{align}
 
-During this step the likelihood of the $P(\n w_o \mid w_i)$ can be optimised to maximise the likelihood of the observations.
+During this step the likelihood of the $P(\n w_o \mid \n w_i)$ can be optimised to maximise the likelihood of the observations.
 This is done via gradient descent on the neural network parameters of the softmax component: $P(\n w_o \mid \n s_k)$.
 
 By using this EM optimisation the network can fit values for the embeddings in that softmax component.
@@ -499,14 +499,14 @@ How a word is being used can be determined by the contexts in which it appears.
 
 
 \tcite{AdaGrams} extends on this work by making the the number of senses for each word itself a fit-able parameter of the model.
-This is a rather Bayesian modelling approach, where one considers the distribution of the priors.
+This is a rather Bayesian modelling approach, where one considers the distribution of the prior
 
 Considering again the form of \Cref{equ:tianmm2}
 \begin{align}
-P(\n w_o\mid w_i) &= \sum_{\forall \n s_k \in \seq S(w_i)} P(\n w_o \mid \n s_k) P(\n s_k \mid w_i) 
+P(\n w_o\mid \n w_i) &= \sum_{\forall \n s_k \in \seq S(\n w_i)} P(\n w_o \mid \n s_k) P(\n s_k \mid \n w_i) 
 \end{align}
 The prior probability of a sense given a word, but no context, is 
-$P(\n s_k \mid w_i)$.
+$P(\n s_k \mid \n w_i)$.
 This is Dirichlet distributed.
 The prior probability of any categorical classification task is a Dirichlet distributed, by  definition.
 When considering that the sense my be one from an unlimited collection of possible senses,
@@ -523,16 +523,21 @@ By application of Bayes' theorem, the sense language model can be inverted to ta
 and predict the probability of each word sense.
 
 \begin{equation}
-P(\n s_l \mid \n w_o) = \frac{P(\n w_o \mid \n s_l) P(\n s_l \mid w_i)}{\sum_{\forall \n s_k \in \seq S(w_i)} P(\n w_o \mid \n s_k) P(\n s_k \mid w_i)}
+P(\n s_l \mid \n w_o) = \frac{P(\n w_o \mid \n s_l) P(\n s_l \mid \n w_i)}{\sum_{\forall \n s_k \in \seq S(\n w_i)} P(\n w_o \mid \n s_k) P(\n s_k \mid \n w_i)}
 \end{equation}
 
-With the common (but technically incorrect) assumption that all words in the context are independent \footnote{Technically, this use of Bayes theorem only requires that the context words be conditionally independent on on the word in question $w_i$, never the less incorrect.}
+With the common (but technically incorrect) assumption that all words in the context are independent \footnote{Technically, this use of Bayes theorem only requires that the context words be conditionally independent on on the word in question $\n w_i$, never the less incorrect.}
+Given a sequence of context words:
+\begin{equation}
+\n \seq{W}_i = \n w_{i-\frac{n}{2}},\ldots, \n w_{i-1}, \n w_{i+1},\ldots, \n w_{i+\frac{n}{2}}
+\end{equation}
+being a context window (as in \Cref{sec:acausal-language-modeling})
 
 \begin{equation}
-P(\n s_l \mid \mathcal{W}_i) = 
-\frac{\prod_{\forall w_{j}\in \mathcal{W}_i} P(w_{j} \mid \n s_l) P(\n s_l | w_i)}{\sum_{\n s_k \in \seq S(w_i)} \prod_{\forall w_{j} \in \mathcal{W}_i} P(w_{j} \mid \n s_k) P(\n s_k | w_i)}
+P(\n s_l \mid \n \seq{W}_i) = 
+\frac{\prod_{\forall \n w_{j}\in \n \seq{W}_i} P(\n w_{j} \mid \n s_l) P(\n s_l | \n w_i)}{\sum_{\n s_k \in \seq S(\n w_i)} \prod_{\forall \n w_{j} \in \n \seq{W}_i} P(\n w_{j} \mid \n s_k) P(\n s_k | \n w_i)}
 \end{equation}
-For $\mathcal{W}_i$ giving a context window of width $n$. i.e. $\mathcal{W}_i = \lbrace w_{i-\frac{n}{2}} \ldots w_{i-1} \ldots w_{i-1} \dots w_{i+\frac{n}{2}} \rbrace$
+For $\n \seq{W}_i$ giving a context window of width $n$. i.e. $\n \seq{W}_i = \lbrace \n w_{i-\frac{n}{2}} \ldots \n w_{i-1} \ldots \n w_{i-1} \ldots \n w_{i+\frac{n}{2}} \rbrace$
 
 \pdfcomment{Check this equation}
 
@@ -557,7 +562,7 @@ Of the methods discussed in this section the following implementations exist:
 	30 senses per word is not unusual for fine-grained word sense induction.
 	Having a total $n=3,000,000$ representations to check causes a noticeable delay, when performing thousands of checks for a similarity or analogy task.
 	To solve this we can use  data structures exist for fast nearest neighbour querying.
-	A k-d tree takes at worst $O(n \log^2(n))$ time to construct.
+	A k-d tree takes at worst $O(n \log_2(n))$ time to construct.
 	Once constructed on average it takes $O(\log (n))$ to find the nearest neighbour to any point.
 	This makes checking the nearest neighbour nearly instantaneous for even the largest vocabularies.
 }
