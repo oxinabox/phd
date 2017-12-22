@@ -157,13 +157,13 @@ Given a sense annotated corpus, it is easy to count how often each sense of a wo
 Due to the over-whelming frequency of the most frequent sense, it is unlikely for even a small training corpus to have most frequents sense differing from the use in the language as a whole.
 
 
-For the $i$th word use being the word $w_i$, having some sense $h_j$
+For the $i$th word use being the word $w_i$, having some sense $\n s_j$
 then without any further context the 
-probability of that sense being the correct sense is $P(h_j \mid w_i)$.
-One can use the part of speech tag $p_i$ (for the $i$ word use) as an additional condition, and thus find $P(h_j \mid w_i, p_i)$.
+probability of that sense being the correct sense is $P(\n s_j \mid w_i)$.
+One can use the part of speech tag $p_i$ (for the $i$ word use) as an additional condition, and thus find $P(\n s_j \mid w_i, p_i)$.
 WordNet encodes this information for lemma-sense pair using the SemCor corpus counts (this is also used for sense ordering, which is why this is sometimes called First Sense.).
 This is a readily available and practical method for getting a baseline probability of each sense.
-Most frequent sense can be applied for word sense disambiguation using this frequency based probability estimate:  $\argmax_{\forall h_j} P(h_j \mid w_i, p_i)$.
+Most frequent sense can be applied for word sense disambiguation using this frequency based probability estimate:  $\argmax_{\forall \n s_j} P(\n s_j \mid w_i, p_i)$.
 
 
 In the most recent SemEval WSD task \pcite{moro2015semeval},
@@ -231,11 +231,11 @@ They then discard these original sense-vectors, and use the partially disambigua
 As a refresher:
 here we talk of cosine distance, as it is more reasonable as smaller implies closer.
 
-(Though it is still not a true metric as $d_{cos}(v,kv)=0$ for all $k\in \mathbb{R}_+$).
+(Though it is still not a true metric as $\d d_{cos}(v,kv)=0$ for all $k\in \mathbb{R}_+$).
 Other times you may see cosine similarity, it ranged between -1 (most different) and 1 (most similar).
-Cosine similarity is given by $sim(a,b)=\frac{a\cdot b}{\left\Vert a\right\Vert _{2}\left\Vert b\right\Vert _{2}}=\cos(\angle a b )$
+Cosine similarity is given by $sim(a,b)=\frac{\v a\cdot \v b}{\left\Vert \v a\right\Vert _{2}\left\Vert \v b\right\Vert _{2}}=\cos(\angle \v a \v b )$
 i.e. the unit-length normalised dot product of the vectors.
-Cosine distance is usually defined at $d_{cos}(a,b)=\frac{1-sim(a,b)}{2}$.
+Cosine distance is usually defined at $\d d_{cos}(\v a,\v b)=\frac{1-sim(\v a,\v b)}{2}$.
 It ranged between 0 (most similar) and 1 (most different).
 }
 
@@ -246,22 +246,22 @@ though that is not at all unusual for WSD algorithms as discussed above.
 They assign every word-sense in WordNet a sense vector.
 This sense vector is the average of word-embeddings of a subset of words in the gloss,
 as determined using pretrained skip-grams \parencite{mikolov2013efficient}.
-For the word $w$ with word-sense $w_{s_i}$,
-a set of candidate words, $cand(W_{s_i})$, is selected from the gloss to be included in the average
+For the word $w$ with word-sense $\d w_{\n s_i}$,
+a set of candidate words, $cands(\d w_{\n s_i})$, is selected from the gloss to be included in the average
 based on the follow set of requirements.
 First, the word must be a content word: that is a verb, noun, adverb or adjective.
 Secondly, its cosine distance to $w$ must be below some threshold $\delta$.
 Finally, it must not be the word itself (One can assume this is in terms of identical lexemes).
 Or written mathematically, where $C_v$ is the skip-gram word vector for $v$
 \begin{equation}
-cand(w_{s_{i}})=\left\{ u\left|\begin{array}{c}
-u\in gloss(w_{s_{i}})\\
-\wedge\, d_{cos}(C_w,C_u)<\delta\\
+cands(\d w_{\n s_{i}})=\left\{ u\left|\begin{array}{c}
+u \in gloss(\d w_{\n s_{i}})\\
+\wedge\, d_{cos}(\i C_w, \i C_u)<\delta\\
 \wedge\, pos(u)\in\left\{ verb,adv,noun,adj\right\} \\
 \wedge\, u\ne w
 \end{array}\right.\right\} 
 \end{equation}
-The phase 1 sense vector for $w_{s_i}$ is the mean of the word vectors for all the words in $cand(w_{s_{i}})$.
+The phase 1 sense vector for $\d w_{\n s_i}$ is the mean of the word vectors for all the words in $cand(\d w_{\n s_{i}})$.
 The effect of this is that most words in the same synset will have similar but not necessarily identical initial vectors.
 \pdfcomment{Consider what this does to rare senses of a word, i.e. the base wordsense will be distant}.
 
@@ -440,16 +440,6 @@ This online clustering approach is loosely similar to the co-location prediction
 One may wish to brush up on basic probability notions for this section.
 In particular joint, conditional and marginal probabilities definitions;
 as well as Bayes law and the probability chain rule which come from those.
-The derivation of the math used for \textcite{tian2014probabilistic} latent senses is as follows and should be understood as clear.
-{\tiny
-\begin{align*}
-P(w_o\mid w_i) &= \sum_{\forall h_k \in \mathcal{H}(w_i)} P(w_o \mid h_k, w_i) P(h_k \mid w_i) \\
-&= \sum_{\forall h_k \in \mathcal{H}(w_i)} \frac{P(w_o, h_k, w_i)}{P(h_k, w_i)} \, 
-\frac{P(h_k, w_i)}{P(w_i)} \\
-&= \sum_{\forall h_k \in \mathcal{H}(w_i)} \frac{P(w_o, h_k, w_i)}{P(w_i)} \\
-&= \sum_{\forall h_k \in \mathcal{H}(w_i)} P(w_o, h_k \mid w_i) \\
-&= P(w_o \mid w_i)
-\end{align*}}
 }
 Rather than clustering the contexts, and using those clusters to determine embeddings for different senses, one could consider the sense as a latent variable in the task used to find word embeddings -- normally a language modelling task.
 The principle is that it is not the word that determined it's collocated context words,
@@ -457,45 +447,45 @@ but rather a word sense.
 So the word sense can be modelled as a hidden variable, where the word, and the context words are being observed.
 
 \tcite{tian2014probabilistic} used this to define a  skip-gram based method for word sense embeddings.
-For input word $w_i$ having senses given by $\mathcal{H}(w_i)$,
-the probability of output word $w_o$ occurring near $w_i$ can be given as:
+For input word $w_i$ having senses given by $\seq S(w_i)$,
+the probability of output word $\n w_o$ occurring near $w_i$ can be given as:
 \begin{equation}
-	P(w_o\mid w_i) = \sum_{\forall h_k \in \mathcal{H}(w_i)} P(w_o \mid h_k, w_i) P(h_k \mid w_i) \label{equ:tianmm}
+	P(\n w_o\mid w_i) = \sum_{\forall \n s_k \in \seq S(w_i)} P(\n w_o \mid \n s_k, w_i) P(\n s_k \mid w_i) \label{equ:tianmm}
 \end{equation}
 
-Given that a sense $h_k$ only belongs to one word $w_i$ (as Tian et. al. are not doing any form of sense sharing via synsets etc.),
+Given that a sense $\n s_k$ only belongs to one word $w_i$ (as Tian et. al. are not doing any form of sense sharing via synsets etc.),
 we know that $k$th sense of the $i$th word only occurs when the $i$th word occurs.
-we have that the intersection probability $P(w_i,h_k) = P(h_k)$.
-%and $P(w_i) = \sum_{\forall h_k \in \mathcal{H}(w_i) P(h_k)}$;
+we have that the intersection probability $P(w_i,\n s_k) = P(\n s_k)$.
+%and $P(w_i) = \sum_{\forall \n s_k \in \seq S(w_i) P(\n s_k)}$;
 
 We can thus write \Cref{equ:tianmm} as:
 \pdfcomment{I am not happy with how this math looks.}
 \begin{align}
-P(w_o\mid w_i) &= \sum_{\forall h_k \in \mathcal{H}(w_i)} P(w_o \mid h_k) P(h_k \mid w_i) \label{equ:tianmm2}
+P(\n w_o\mid w_i) &= \sum_{\forall \n s_k \in \seq S(w_i)} P(\n w_o \mid \n s_k) P(\n s_k \mid w_i) \label{equ:tianmm2}
 \end{align}
 
-A softmax classifier can be used to define $P(w_o \mid h_k)$, just like in normal language modelling.
-With output embeddings for the words $w_o$, and input embeddings for the word senses $h_k$.
+A softmax classifier can be used to define $P(\n w_o \mid \n s_k)$, just like in normal language modelling.
+With output embeddings for the words $\n w_o$, and input embeddings for the word senses $\n s_k$.
 This softmax can be sped-up using negative sampling or hierarchical softmax.
 The later was done by Tian et. al.
 
 \Cref{equ:tianmm2} is in the form of a mixture model with a latent variable.
 Such a class of problems are often solved using the Expectation Maximisation (EM) method.
 In short, the EM procedure functions by performing two alternating steps.
-The E-step calculates the expected chance of assigning word-sense for each training case ($\hat{P}(h_l \mid w_o)$) in the training set $\mathcal{X}$.
-Where a training case is a pairing of a word use $w_i$, and context word $w_o$, with $h_l\in \mathcal{H}(w_i)$
+The E-step calculates the expected chance of assigning word-sense for each training case ($\hat{P}(\n s_l \mid \n w_o)$) in the training set $\mathcal{X}$.
+Where a training case is a pairing of a word use $w_i$, and context word $\n w_o$, with $\n s_l\in \seq S(w_i)$
 \begin{align}
-\hat{P}(h_l \mid w_o) = \frac{\hat{P}(h_l \mid w_i) P(w_o \mid h_l)}{\sum_{\forall h_k \in \mathcal{H}(w_i)} \hat{P}(w_o \mid h_k) P(h_k \mid w_i)}
+\hat{P}(\n s_l \mid \n w_o) = \frac{\hat{P}(\n s_l \mid w_i) P(\n w_o \mid \n s_l)}{\sum_{\forall \n s_k \in \seq S(w_i)} \hat{P}(\n w_o \mid \n s_k) P(\n s_k \mid w_i)}
 \end{align}
 
 The M-step updates the prior likelihood of each sense (that is without context) using the expected assignments from the E-step.
 
 \begin{align}
-\hat{P}(h_l \mid w_i) = \frac{1}{|\mathcal{X}|} \sum_{\forall (w_o,w_i)\in \mathcal{X}} \hat{P}(h_l \mid w_o)
+\hat{P}(\n s_l \mid w_i) = \frac{1}{|\mathcal{X}|} \sum_{\forall (\n w_o,w_i)\in \mathcal{X}} \hat{P}(\n s_l \mid \n w_o)
 \end{align}
 
-During this step the likelihood of the $P(w_o \mid w_i)$ can be optimised to maximise the likelihood of the observations.
-This is done via gradient descent on the neural network parameters of the softmax component: $P(w_o \mid h_k)$.
+During this step the likelihood of the $P(\n w_o \mid w_i)$ can be optimised to maximise the likelihood of the observations.
+This is done via gradient descent on the neural network parameters of the softmax component: $P(\n w_o \mid \n s_k)$.
 
 By using this EM optimisation the network can fit values for the embeddings in that softmax component.
 
@@ -513,10 +503,10 @@ This is a rather Bayesian modelling approach, where one considers the distributi
 
 Considering again the form of \Cref{equ:tianmm2}
 \begin{align}
-P(w_o\mid w_i) &= \sum_{\forall h_k \in \mathcal{H}(w_i)} P(w_o \mid h_k) P(h_k \mid w_i) 
+P(\n w_o\mid w_i) &= \sum_{\forall \n s_k \in \seq S(w_i)} P(\n w_o \mid \n s_k) P(\n s_k \mid w_i) 
 \end{align}
 The prior probability of a sense given a word, but no context, is 
-$P(h_k \mid w_i)$.
+$P(\n s_k \mid w_i)$.
 This is Dirichlet distributed.
 The prior probability of any categorical classification task is a Dirichlet distributed, by  definition.
 When considering that the sense my be one from an unlimited collection of possible senses,
@@ -527,20 +517,20 @@ The fitting of the parameters of such a model is beyond the scope of this book;
 it is not entirely dissimilar to the fitting via EM and gradient descent used by Tian et. al.
 The final output of \tcite{AdaGrams} is as desired:
 a set of induced sense embeddings, 
-and a language model that is able to predict how likely a word is to occur near that word sense ($P(w_o \mid h_k)$).
+and a language model that is able to predict how likely a word is to occur near that word sense ($P(\n w_o \mid \n s_k)$).
 
 By application of Bayes' theorem, the sense language model can be inverted to take a word's context,
 and predict the probability of each word sense.
 
 \begin{equation}
-P(h_l \mid w_o) = \frac{P(w_o \mid h_l) P(h_l \mid w_i)}{\sum_{\forall h_k \in \mathcal{H}(w_i)} P(w_o \mid h_k) P(h_k \mid w_i)}
+P(\n s_l \mid \n w_o) = \frac{P(\n w_o \mid \n s_l) P(\n s_l \mid w_i)}{\sum_{\forall \n s_k \in \seq S(w_i)} P(\n w_o \mid \n s_k) P(\n s_k \mid w_i)}
 \end{equation}
 
 With the common (but technically incorrect) assumption that all words in the context are independent \footnote{Technically, this use of Bayes theorem only requires that the context words be conditionally independent on on the word in question $w_i$, never the less incorrect.}
 
 \begin{equation}
-P(h_l \mid \mathcal{W}_i) = 
-\frac{\prod_{\forall w_{j}\in \mathcal{W}_i} P(w_{j} \mid h_l) P(h_l | w_i)}{\sum_{h_k \in \mathcal{H}(w_i)} \prod_{\forall w_{j} \in \mathcal{W}_i} P(w_{j} \mid h_k) P(h_k | w_i)}
+P(\n s_l \mid \mathcal{W}_i) = 
+\frac{\prod_{\forall w_{j}\in \mathcal{W}_i} P(w_{j} \mid \n s_l) P(\n s_l | w_i)}{\sum_{\n s_k \in \seq S(w_i)} \prod_{\forall w_{j} \in \mathcal{W}_i} P(w_{j} \mid \n s_k) P(\n s_k | w_i)}
 \end{equation}
 For $\mathcal{W}_i$ giving a context window of width $n$. i.e. $\mathcal{W}_i = \lbrace w_{i-\frac{n}{2}} \ldots w_{i-1} \ldots w_{i-1} \dots w_{i+\frac{n}{2}} \rbrace$
 
