@@ -76,11 +76,11 @@ However, in practice representations which discard word order can be quiet effec
 \aside[SOWE is a BOW product]{
 	The reader may recall from \Cref{sec:word-representations},
 	that a word-embedding lookup is the same as a one-hot vector product:
-	$C_{w_i} = C\,\hat{e}_{w_i}$.
+	$\i C_{\n w_i} = C\,\hat{e}_{\n w_i}$.
 	Similar can be said for sum of word embeddings (SOWE) and bag of words (BOW).
-	For some set of words $\mathcal{W} = \lbrace{w_1,\ldots, w_n}$:
-	the BOW representation is $B_\mathcal{W} = \sum_{w_i\in \mathcal{W}} \hat{e}_{w_i}$;
-	the SOWE representation is $\sum_{w_i\in \mathcal{W}} C_{w_i} = CB_\mathcal{W}$.
+	For some set of words $\seq{W} = \lbrace{w_1,\ldots, w_n}$:
+	the BOW representation is $B_\seq{W} = \sum_{\n w_i\in \seq{W}} \hat{e}_{\n w_i}$;
+	the SOWE representation is $\sum_{\n w_i\in \seq{W}} C_{\n w_i} = CB_\seq{W}$.
 	As with word-embeddings it is immensely cheaper to calculate this via lookup, than via matrix product;
 	except on systems with suitable sparse matrix product tricks.	
 }
@@ -111,26 +111,28 @@ The natural analogy to this with word embeddings might seem to be to find ngram 
 However, such a sum is less informative than it might seem.
 As the sum in each concatenated section is equal to the others, minus the edge words. To illustrate the case of trigram sums of word embeddings, for \natlang{It is a good day today},
 the sums in each position would be:
-\begin{align}
+\begin{multline}
 \left[\begin{array}{c|c|c}
 	\sum & \sum & \sum\\
-	C_{it} & C_{was} & C_{a}\\
-	C_{was} & C_{a} & C_{good}\\
-	C_{a} & C_{good} & C_{day}\\
-	C_{good} & C_{day} & C_{today}
-\end{array}\right]=\left[\begin{array}{c|c|c}
-	C_{M}+C_{it}-C_{day} & C_{M} & C_{M}-C_{was}+C_{today}\end{array}\right]
-\end{align}
+	\i C_{it} & \i C_{was} & \i C_{a}\\
+	\i C_{was} & \i C_{a} & \i C_{good}\\
+	\i C_{a} & \i C_{good} & \i C_{day}\\
+	\i C_{good} & \i C_{day} & \i C_{today}
+\end{array}\right]\\
+=\left[\begin{array}{c|c|c}
+	\i C_{M}+\i C_{it}-\i C_{day} & \i C_{M} & \i C_{M}-\i C_{was}+\i C_{today}\end{array}\right]
+\end{multline}
 \pdfcomment{remove one or both of these}
-\begin{align}
+\begin{multline}
 \left[\begin{array}{c|c|c}
-	\quad C_{w_{1}} & \quad C_{w_{2}} & \quad C_{w_{3}}\\
-	+C_{w_{2}} & +C_{w_{3}} & +C_{w_{4}}\\
-	+C_{w_{3}} & +C_{w_{4}} & +C_{w_{5}}\\
-	+C_{w_{4}} & +C_{w_{5}} & +C_{w_{6}}
-\end{array}\right]=\left[\begin{array}{c|c|c}
-	\sum C_{w_{i}}-C_{w_{n-1}}-C_{w_{n-2}} & \sum C_{w_{i}}-C_{w_{1}}-C_{w_{n-1}} & \sum C_{w_{i}}-C_{w_{1}}-C_{w_{2}}\end{array}\right]
-\end{align}
+	\quad \i C_{\n w_{1}} & \quad \i C_{\n w_{2}} & \quad \i C_{\n w_{3}}\\
+	+\i C_{\n w_{2}} & +\i C_{\n w_{3}} & +\i C_{\n w_{4}}\\
+	+\i C_{\n w_{3}} & +\i C_{\n w_{4}} & +\i C_{\n w_{5}}\\
+	+\i C_{\n w_{4}} & +\i C_{\n w_{5}} & +\i C_{\n w_{6}}
+\end{array}\right]=\\
+\left[\begin{array}{c|c|c}
+	\sum \i C_{\n w_{i}}-\i C_{\n w_{n-1}}-\i C_{\n w_{n-2}} & \sum \i C_{\n w_{i}}-\i C_{\n w_{1}}-\i C_{\n w_{n-1}} & \sum \i C_{\n w_{i}}-\i C_{\n w_{1}}-\i C_{\n w_{2}}\end{array}\right]
+\end{multline}
 
 
 Instead one should train n-gram embedding model directly.
@@ -171,12 +173,13 @@ To do this, the context vector would have to learn a representation for the cont
 \pdfcomment{Can its failure be attributed to it being a linear model, so as such the context vector can not change much?}
 
 PV-DBOW is an extension of CBOW.
-The inputs the model are not only the word-embedding $C_{w_j}$ for the words $w_j$ from the window,
-but also a context-embedding $D_{d_k}$ for its current context (sentence, paragraph or document etc.) $d_k$.
-The task remains to predict which word was the missing word from the center of the context $w_i$
+The inputs the model are not only the word-embedding $\i C_{w_j}$ for the words $\n w_j$ from the window,
+but also a context-embedding $\i D_{\n d_k}$ for its current context (sentence, paragraph or document etc.) $\n d_k$.
+The task remains to predict which word was the missing word from the center of the context $\n w_i$
+\pdfcomment{consider grouping the context words into a named sequence to clarify the equations, like in wordsense chapter}
 \begin{align}
-P(w_i & \mid d_k,\, w_{i-\frac{n}{2}},..., w_{i-1}, w_{i+1},...,w_{i+\frac{n}{2}})  \nonumber
-\\  & = s_{max}(WD_{d_k} + U \sum_{j=i+1}^{j=\frac{n}{2}} \left( C_{w_{i-j}}+C_{w_{i+j}} \right))
+P(\n w_i & \mid \n d_k,\, \n w_{i-\frac{n}{2}},..., \n w_{i-1}, \n w_{i+1},...,\n w_{i+\frac{n}{2}})  \nonumber
+\\  & = \softmax(W\i D_{\n d_k} + U \sum_{j=i+1}^{j=\frac{n}{2}} \left( \i C_{\n w_{i-j}}+\i C_{\n w_{i+j}} \right))
 \end{align}
 
 \pdfcomment{It would be really easy to make really informativive pictures for this. but idk if it is worth the extra page space for discredited models}
@@ -185,7 +188,7 @@ PV-DM is the equivalent extension for skip-grams.
 Here the input to the model is not only the central word, but also the context vector.
 Again, the task remains to predict the other words from the window.
 \begin{equation}
-P(w_j \mid d_k,\, w_{i}) = \left[ s_{max}(WD_{d_k} + V\,C_{w_{i}}) \right]_{w_j} 
+P(\n w_j \mid \n d_k,\, \n w_{i}) = \left[ \softmax(W\i D_{\n d_k} + V\,\i C_{\n w_{i}}) \right]_{w_j} 
 \end{equation}
 
 
@@ -235,9 +238,9 @@ Which is not possibly for most sentence embedding methods.
 
 \begin{figure}
 	\caption{The VAE plus encoder-decoder of \textcite{Bowman2015SmoothGeneration}.
-		Note that during training, $\hat{y}_i=w_i$, as it is an autoencoder model.
-		As is normal for encoder-decoders the prompts are the previous output (target during training, predicted during testing): $r_i=y_{i-1}$,
-		with $r_1=y_0=<EOS>$ being a pseudo-token marker for the end of string.
+		Note that during training, $\n \hat{y}_i=\n w_i$, as it is an autoencoder model.
+		As is normal for encoder-decoders the prompts are the previous output (target during training, predicted during testing): $\n r_i=\n y_{i-1}$,
+		with $\n r_1= \n y_0= \natlang{<EOS>}$ being a pseudo-token marker for the end of string.
 	}
 	\label{fig:bowman}
 	
@@ -248,21 +251,22 @@ Which is not possibly for most sentence embedding methods.
 		\coordinate (L0) at (lbl.east);
 		
 		\node(L1)[layer, right = of L0] {$\mathrm{RU_E}$};
-		\node(w1)[below = of L1]{$w_1$};
+		\node(w1)[below = of L1]{$\n w_1$};
 		\draw[->] (w1) -- (L1);
 	
 		\node(L2)[layer, right = of L1] {$\ldots$};
 		\node(w2)[below = of L2]{$\ldots$};
 	
 		\node(L3)[layer, right = of L2] {$\mathrm{RU_E}$};
-		\node(w3)[below = of L3]{$w_n$};
+		\node(w3)[below = of L3]{$\n w_n$};
+		\draw[->] (w3) -- (L3);
 	
 		\node(L4)[layer, above = of L3] {$VAE$};
 		
 		
 		\node(L5)[layer, above right = of L4] {$\mathrm{RU_D}$};
-		\node(w5)[below = of L5]{$r_1$};
-		\node(y5)[above = of L5]{$\hat{y}_1$};
+		\node(w5)[below = of L5]{$\nv r_1$};
+		\node(y5)[above = of L5]{$\n \hat{y}_1$};
 		\draw[->] (L5) -- (y5);
 		
 		\node(L6)[layer, right = of L5] {$\ldots$};
@@ -272,8 +276,8 @@ Which is not possibly for most sentence embedding methods.
 		
 		
 		\node(L7)[layer, right = of L6] {$\mathrm{RU_D}$};
-		\node(w7)[below = of L7]{$r_m$};
-		\node(y7)[above = of L7]{$\hat{y}_m$};
+		\node(w7)[below = of L7]{$\nv r_m$};
+		\node(y7)[above = of L7]{$\n \hat{y}_m$};
 		\draw[->] (L7) -- (y7);
 		\draw[->] (w7) -- (L7);
 		
@@ -295,8 +299,14 @@ They use an encoder-decoder RNN, with two decoder parts.
 One decoder is to produce the previous sentence.
 The other decoder is to produce the next sentence.
 
+\pdfcomment{Check that this is not mean to have the final encoder output as part of every prompt}
 \begin{figure}
-	\caption{The skip-thought model \textcite{DBLP:journals/corr/KirosZSZTUF15}.}
+	\caption{The skip-thought model \textcite{DBLP:journals/corr/KirosZSZTUF15}.
+	Note the outputs are $\n \hat{q}_t$ and $\n \hat{p}_t$,
+	and the prompts are $\n {a}_t$ and $\n {b}_t$,
+	for the next and previous sentences respectively.
+	The input (being the current sentence) is $\n w_t$.
+}
 	\label{fig:skip-thought}
 	
 	%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -305,36 +315,36 @@ The other decoder is to produce the next sentence.
 		\coordinate (L0) at (lbl.east);
 		
 		\node(L1)[layer, right = of L0] {$\mathrm{RU_E}$};
-		\node(w1)[below = of L1]{$w_1$};
+		\node(w1)[below = of L1]{$\n w_1$};
 		\draw[->] (w1) -- (L1);
 		
 		\node(L2)[layer, right = of L1] {$\ldots$};
 		\node(w2)[below = of L2]{$\ldots$};
 		
 		\node(L3)[layer, right = of L2] {$\mathrm{RU_E}$};
-		\node(w3)[below = of L3]{$w_n$};
+		\node(w3)[below = of L3]{$\n w_n$};
 		
 
 		\node(LN5)[layer, above right = 2 of L3] {$\mathrm{RU_N}$};
 		\node(LP5)[layer, below right = 2 of L3] {$\mathrm{RU_P}$};
-		\foreach \d in {N,P} {
-			\draw[->] (L3.east) edge node[labe] {state} (L\d5.west);
+		\foreach \y/\r/\dd in {q/a/N, p/b/P} {
+			\path[draw, ->] (L3.east) edge node[labe] {output} (L\dd5);
 					
-			\node(w\d5)[below = of L\d5]{$r_{\d, 1}$};
-			\node(y\d5)[above = of L\d5]{$\hat{y}_{\d, 1}$};
-			\draw[->] (L\d5) -- (y\d5);
+			\node(w\dd5)[below = of L\dd5]{$\nv \r_{1}$};
+			\node(y\dd5)[above = of L\dd5]{$\n \hat{\y}_{1}$};
+			\draw[->] (L\dd5) -- (y\dd5);
 			
-			\node(L\d6)[layer, right = of L\d5] {$\ldots$};
-			\node(w\d6)[below = of L\d6]{$\ldots$};
-			\node(y\d6)[above = of L\d6]{$\ldots$};
-			\draw[->] (L\d6) -- (y\d6);
+			\node(L\dd6)[layer, right = of L\dd5] {$\ldots$};
+			\node(w\dd6)[below = of L\dd6]{$\ldots$};
+			\node(y\dd6)[above = of L\dd6]{$\ldots$};
+			\draw[->] (L\dd6) -- (y\dd6);
 			
 			
-			\node(L\d7)[layer, right = of L\d6] {$\mathrm{RU_\d}$};
-			\node(w\d7)[below = of L\d7]{$r_{\d, m}$};
-			\node(y\d7)[above = of L\d7]{$\hat{y}_{\d, m}$};
-			\draw[->] (L\d7) -- (y\d7);
-			\draw[->] (w\d7) -- (L\d7);	
+			\node(L\dd7)[layer, right = of L\dd6] {$\mathrm{RU_\dd}$};
+			\node(w\dd7)[below = of L\dd7]{$\nv \r_{\d m_\dd}$};
+			\node(y\dd7)[above = of L\dd7]{$\n \hat{\y}_{\d m_\dd}$};
+			\draw[->] (L\dd7) -- (y\dd7);
+			\draw[->] (w\dd7) -- (L\dd7);	
 		}
 
 
@@ -438,10 +448,10 @@ A tree structured networks function apply an recursive unit (which we will call 
 A network for binary tree structured input is itself be a binary tree of RVs.
 Each RV (i.e. node in the graph) can be defined by the composition function:
 \begin{align}
-	f_{RV}(u, v) &= \varphi\left( [S R][u;v] + b \right) \\ \label{equ:rnn1}
-			     &= \varphi\left( Su +Rv + b \right)
+	\d f_{RV}(\v u, \v v) &= \varphi\left( [S R][\v u;\v v] + \v b \right) \\ \label{equ:rnn1}
+			     &= \varphi\left( S\v u +R\v v + \v b \right)
 \end{align}
-where $u$ and $v$ are the left and right substructures embeddings (word embeddings at the leaf node level), and $S$ and $R$ are the matrices defining the left and right inputs are to be combined.
+where $\v u$ and $\v v$ are the left and right substructures embeddings (word embeddings at the leaf node level), and $S$ and $R$ are the matrices defining the left and right inputs are to be combined.
 
 
 This is a useful form as all constituency parse trees can converted into binary parse trees, via left-factoring or right factoring (adding new nodes to the left or right to take some of the children).
@@ -451,17 +461,17 @@ This is the form of structured network has been used in many words, including \t
 Notice that $S$ and $R$ matrices are shared for all RVs, so all substructures are composed the in the same way, based only on if they are on the left, or the right.
 
 \subsection{Dependency Tree}
-In dependency tree based structured RNNS, such as in \tcite{socherDTRNN}, \tcite{iyyer2014neural}, and \tcite{iyyer2014generating},
+In dependency tree based structured networks, such as in \tcite{socherDTRNN}, \tcite{iyyer2014neural}, and \tcite{iyyer2014generating},
 it is possibly to the dependency relationships to switch in use different composition matrices into the RV.
 This allows for multiple inputs to a single head node distinguished by their relationship rather than their order.
 This is important for networks using a dependency parse tree structure, and this structure allows a node to have any number of inputs.
 If we have a function $r(i,j)$ giving the relationship between head word $i$ and the word $j$, e.g. giving back \natlang{nsub}, \natlang{det}, \natlang{nmod}, \natlang{case} etc.
 Then the composed representation at each RV is given by 
 \begin{align}
-	f_{RV}(i) &= \varphi\left(W_{head} C_{w_i} + \sum_{j \in \mathrm{children}(i)} W_{r(i,j)} \, f_{RV}(j) + b \right)
+	f_{RV}(i) &= \varphi\left(\d W_{head} \i C_{\n w_i} + \sum_{j \in \mathrm{children}(i)} \d W_{r(i,j)} \, f_{RV}(j) + \v b \right)
 \end{align}
-Here $C_{w_i}$ is the word embedding for $w_i$, and $W_{head}$ encodes the contribition of the headword to the composed representation.
-Note that the terminal case is just $f_{RV}(i) = \varphi \left( W_{head} C_{w_i} + b \right)$ when a node $i$ has no children.
+Here $\i C_{\n w_i}$ is the word embedding for $\n w_i$, and $\d W_{head}$ encodes the contribution of the headword to the composed representation.
+Note that the terminal case is just $f_{RV}(i) = \varphi \left( \d W_{head} \i C_{\n w_i} + \v b \right)$ when a node $i$ has no children.
 By using the relationship to determined the composition matrix, it increase both the networks expressiveness, and also handled the non-binary nature of dependency trees.
 
 
@@ -470,7 +480,7 @@ This would be using the part of speech (e.g. VBZ, NN) and phrase tags (e.g. NP, 
 This would however lose order information in some cases, where multiple inputs have the same tag.
 
 The next step along this line of reasoning is to allow the input below to not only determine the embedding vector input but also to determine the matrices used to encode the relationship.
-So not only is the representation of the (sub)prase determined by a relationship between  its constituents (as represented by there embeddings),
+So not only is the representation of the (sub)phrase determined by a relationship between  its constituents (as represented by there embeddings),
 but the nature of that relationship (as represented by the matrix) is also determined by the constituents.
 In this approach at the left-nodes every word has not only a word vector, but also a word matrix.
 This is discussed in \Cref{sec:matrix-vector-models}
@@ -514,7 +524,7 @@ More recent advancements in dependency tree parsing using structured networks ar
 	A dependency tree structured network was trained on a language modelling task (Not as a recursive autoencoder, although that would also have been a valid option.).
 	Then, separately a convolutional neural network was trained to produce a vector output of the same dimensionality -- an image embedding -- such that its distance to its caption's composed vector representation was minimised.
 	The effect of this was to that images and there captions are projected to a common vector space.
-	This allowed for smart image retrieval, from discriptions, by having a set of all images, and storing their embedding representations,
+	This allowed for smart image retrieval, from descriptions, by having a set of all images, and storing their embedding representations,
 	then for any query, the composed embedding can be found and the vector space of images can be search for the nearest.
 	(the reverse is not generally as useful, as one can't reasonably store all possible captions describing an image, so as to be able to search for the best one for an user provided image.)
 	This can be done with any sequence representation.
@@ -535,7 +545,7 @@ This was based on a simpler earlier model.
 
 The normal Recursive Autoencoder,
 as was used in \textcite{SocherEtAl2011:RAE} and \textcite{zhang2014BRAE} only performs the unfold at each node.
-That means that it assesses if each merge can be reconstructured, uses errors in the vector space to its inputs embeddings.
+That means that it assesses if each merge can be reconstructed, uses errors in the vector space to its inputs embeddings.
 Those inputs are not word embedding, except when the inputs happen to both be leaf nodes.
 This covers the auto-encoding nature of each merge;
 but does not give any direct promise of the auto-encoding nature of the whole structure.
@@ -558,7 +568,7 @@ The reconstruction loss and the supervised loss can be summed, optimised in alte
 
 
 \aside[Sequential models are often preferred to structural models]{
-Sequential (RNN) models are much more heavily researched than structural (RvNN) models.
+Sequential (RNN) models are much more heavily researched than structural models.
 They have better software libraries, and are easier to implement.
 In theory it is possible for a sequential model (with sufficiently deep and wide RUs) internalise the connections that a structural model would posses.
 While structural models are theoretically nicer from a linguistics standpoint, pragmatically they are the last resort in modelling.
@@ -587,9 +597,9 @@ That is to say, each word and each phrase has both an embedding, and a compositi
 This considered this for binary constituency parse trees.
 The composition function is as follows:
 \begin{align}
-f_{RV}(u, v, U, V) &= \varphi\left( [S;R][Uv;Vu] + b \right) \\ 
-&= \varphi\left( SUv +RVu + b \right)\\
-F_{RV}(U, V) = W[U;V] = W_L U + W_R V
+f_{RV}(\v u, \v v, U, V) &= \varphi\left( [S;R][U\v v;V\v u] + \v b \right) \\ 
+&= \varphi\left( S\,U\v v +R\,V\v u + \v b \right)\\
+F_{RV}(U, V) &= W\left[U;V\right] = \d W_l U + \d W_r V
 \end{align}
 
 
@@ -597,7 +607,7 @@ $f_{RV}$ gives the composed embedding, and $F_{RV}$ gives the composing matrix.
 $S$ and $R$ represent the left and right composition matrix components that are the same for all nodes (regardless of content).
 $U$ and $V$ represent the per word/node child composition matrix components.
 (We note that $S$ and $R$ could in theory be rolled in to $U$ and $R$ as part of the learning)
-$u$ and $v$ represent the per word/node children embeddings.
+$\v u$ and $\v v$ represent the per word/node children embeddings.
 $W$ represents the method for merging two composition matrices.
 
 We note that one can define increasingly complex and powerful structured networks along these lines; though one does run the risk of over-fitting, and very long training times.
@@ -618,34 +628,35 @@ Rather than directly between two nodes in the network as in the structural case.
 It should be understood that composing with the the state is not the same as composing the current input with the previous input.
 But rather as composing the current input with all previous inputs (though not equally).
 
-In this method each word, $w_t$ is represented by a word embedding $x_{w_t}$ and matrix: $X_{w_t}$, these are the inputs at each time step.
-The network outputs and states are the composed embedding $\hat{y}_t$ and matrix $Y_t$.
+In this method each word, $\n w_t$ is represented by a word embedding $\nv x_{t}$ and matrix: $\nv X_{\n w_t}$, these are the inputs at each time step.
+The network outputs and states are the composed embedding $\n \hat{y}_t$ and matrix $\n Y_t$.
 
-\pdfcomment{Subscripts in this section mean time, not index.}
+\pdfcomment{shoud I put word embeddings into column vectors? Like in rest of book? and then matrixes into tensors?}
 
 \aside[Remember:]{The product of a matrix with a concatenated vector, is the same as the sum of the two blocks of that matrix each multiplied by the blocks of that vector.}
  
+
 \begin{align}
-h_t &= \tanh\left(V[x_t; \hat{y}_{t-1}] + c \right)\\
-z_t &= \sigma\left(Y_{t-1}x_t + X_t \hat{y}_{t-1} + k \right)\\
+\n h_t &= \tanh\left(\d W_h [\n x_t; \n \hat{y}_{t-1}] + \dv b_h \right)\\
+\n z_t &= \sigma\left(\n Y_{t-1} \n x_t + \n X_t \n \hat{y}_{t-1} + \dv b_z \right)\\
 %
-\hat{y}_t &= r_t \odot c_t + (1-r_t) \odot \hat{y}_{t-1} \\
-Y_t &= \tanh \left( W[Y_{t-1}; X_t] + b \right)
+\n \hat{y}_t &= \n z_t \odot \n h_t + (1 - \n z_t) \odot \n \hat{y}_{t-1} \\
+\n Y_t &= \tanh \left( \d W_Y [\n Y_{t-1}; \n X_t] + \dv b_Y \right)
 \end{align}
 
 
 
-The matrices $W$ and $V$ are shared across all time steps/compositions.
-$U$ controls how the next state-composition $Y_t$ matrix is generated from its previous value and the input composition matrix: $X_t$.
-$V$ similarly controls the value of the candidate state-embedding $h_t$.
+The matrices $\d W_h$, $\d W_Y$ and the biases $\dv b_h,\; \dv b_z,\; \dv b_Y$ are shared across all time steps/compositions.
+$\d W_Y$ controls how the next state-composition $\n Y_t$ matrix is generated from its previous value and the input composition matrix: $\n X_t$.
+$\d W_h$ similarly controls the value of the candidate state-embedding $\n h_t$.
 
-$h_t$ is the candidate composed embedding (to be output/used as state).
-$z_t$ is the update gate, it controls how much of the actual composed embedding ($\hat{y}_t$) comes from the candidate $h_t$ and how much comes from the previous value ($\hat{y}_{t-1}$).
-The composition matrix $Y_t$ (which is also part of the state/output) is not gated.
+$\n h_t$ is the candidate composed embedding (to be output/used as state).
+$z_t$ is the update gate, it controls how much of the actual composed embedding ($\n \hat{y}_t$) comes from the candidate $\n h_t$ and how much comes from the previous value ($\n \hat{y}_{t-1}$).
+The composition matrix $\n Y_t$ (which is also part of the state/output) is not gated.
 
-Notice, that the state composition matrix $Y_{t-1}$ is only used to control the gate $z_t$, not to directly effect the candidate composited embedding $h_t$.
-Indeed, in fact one can note that all similarity to the structural method of \textcite{SocherMVRNN} is applied in the gate $r_t$.
-$h_t$ is similar to in a normal RU.
+Notice, that the state composition matrix $\n Y_{t-1}$ is only used to control the gate $\n z_t$, not to directly effect the candidate composited embedding $\n h_t$.
+Indeed, in fact one can note that all similarity to the structural method of \textcite{SocherMVRNN} is applied in the gate $\n z_t$.
+The method for calculating $\n h_t$ is similar to in a normal RU.
 
 
 
@@ -654,44 +665,44 @@ $h_t$ is similar to in a normal RU.
 	\label{fig:mvrnn}
 	\begin{adjustbox}{max width=\textwidth}
 		\begin{tikzpicture}[]
-		\node(hidden)[layer]{$h_t = \tanh\left(V[x_t; \hat{y}_{t-1}] + c \right)$};
-		\node(update)[layer, left=of hidden]{$z_t = \sigma\left(Y_{t-1}x_t + X_t \hat{y}_{t-1} + k \right)$};
-		\node(state)[layer, above = 4 of update]{$\hat{y}_t = r_t \odot c_t + (1-r_t) \odot \hat{y}_{t-1}$};
+		\node(hidden)[layer]{$\n h_t = \tanh\left(\d W_h [\n x_t; \n \hat{y}_{t-1}] + \dv b_h \right)$};
+		\node(update)[layer, left=of hidden]{$\n z_t = \sigma\left(\n Y_{t-1} \n x_t + \n X_t \n \hat{y}_{t-1} + \dv b_z \right)$};
+		\node(state)[layer, above = 4 of update]{$\n \hat{y}_t = \n z_t \odot \n h_t + (1 - \n z_t) \odot \n \hat{y}_{t-1}$};
 		
-		\node(matrix)[layer, above left = of update]{$Y_t = \tanh \left( U[Y_{t-1}; X_t] + b \right)$};
+		\node(matrix)[layer, above left = of update]{$\n Y_t = \tanh \left( \d W_Y [\n Y_{t-1}; \n X_t] + \dv b_Y \right)$};
 		
-		\draw[->] (update) edge node[labe] {$z_{t}$} (state.south);		
-		\draw[->] (hidden) edge node[labe] {$h_{t}$} (state.south);
+		\draw[->] (update) edge node[labe] {$\n z_{t}$} (state.south);		
+		\draw[->] (hidden) edge node[labe] {$\n h_{t}$} (state.south);
 		
 		
 		
 		\node(in)[below = 4 of update]{input};
-		\node(inX)[above = 0 of in.north west]{$X_t$};
-		\node(inx)[above = 0 of in.north east]{$x_t$};
+		\node(inX)[above = 0 of in.north west]{$\n X_t$};
+		\node(inx)[above = 0 of in.north east]{$\n x_t$};
 		
-		\draw[->] (inX) edge node[labe] {$X_t$} (matrix);
-		\draw[->] (inx) edge node[labe] {$x_t$} (hidden);
-		\draw[->] (inx) edge node[labe] {$x_t$} (update);
+		\draw[->] (inX) edge node[labe] {$\n X_t$} (matrix);
+		\draw[->] (inx) edge node[labe] {$\n x_t$} (hidden);
+		\draw[->] (inx) edge node[labe] {$\n x_t$} (update);
 		
 		\node(stm)[left = 9 of update]{old state};
-		\node(stmY)[below = 0 of stm.south east]{$Y_{t-1}$};
-		\node(stmy)[below = 0 of stm.south west]{$\hat{y}_{t-1}$};
+		\node(stmY)[below = 0 of stm.south east]{$\n Y_{t-1}$};
+		\node(stmy)[below = 0 of stm.south west]{$\n \hat{y}_{t-1}$};
 		
 		
-		\draw[->, bend right] (stmy) edge node[labe] {$\hat{y}_{t-1}$} (update.south);
-		\draw[->, bend right] (stmy) edge node[labe] {$\hat{y}_{t-1}$} (hidden.south);
-		\draw[->, bend right] (stmy) edge node[labe] {$y_{t-1}$} (state.south);
+		\draw[->, bend right] (stmy) edge node[labe] {$\n \hat{y}_{t-1}$} (update.south);
+		\draw[->, bend right] (stmy) edge node[labe] {$\n \hat{y}_{t-1}$} (hidden.south);
+		\draw[->, bend right] (stmy) edge node[labe] {$\n \hat{y}_{t-1}$} (state.south);
 		
-		\draw[->, bend right] (stmY) edge node[labe] {$Y_{t-1}$} (update.south);
-		\draw[->, bend right] (stmY) edge node[labe] {$Y_{t-1}$} (matrix.south);
+		\draw[->, bend right] (stmY) edge node[labe] {$\n Y_{t-1}$} (update.south);
+		\draw[->, bend right] (stmY) edge node[labe] {$\n Y_{t-1}$} (matrix.south);
 				
 		
 		\node(stp)[above = 2 of state.west]{new state\\i.e output};
-		\node(stpY)[below = 0 of stp.south west]{$Y_{t}$};
-		\node(stpy)[below = 0 of stp.south east]{$\hat{y}_{t}$};
+		\node(stpY)[below = 0 of stp.south west]{$\n Y_{t}$};
+		\node(stpy)[below = 0 of stp.south east]{$\n \hat{y}_{t}$};
 
-		\draw[->] (matrix) edge node[labe] {$Y_{t}$} (stpY);
-		\draw[->] (state) edge node[labe] {$\hat{y}_t$} (stpy);
+		\draw[->] (matrix) edge node[labe] {$\n Y_{t}$} (stpY);
+		\draw[->] (state) edge node[labe] {$\n \hat{y}_t$} (stpy);
 
 		
 		\node(updatelbl)[labe, above= 0 of update]{Update Gate};
