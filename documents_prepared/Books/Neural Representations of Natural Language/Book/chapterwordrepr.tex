@@ -989,14 +989,15 @@ We could take many, and do several at a time,
 and get more confidence that $P(\n w_j\mid \n w_i)$ is indeed greater than other (non-existent) co-occurrence probabilities.
 This gives the improved loss function of 
 
+\pdfcomment{should there be an averagesing across all negative samples?}
 \begin{equation}
-Loss = \sum_{\forall (\n w_i,\n w_j)\in \seq{X}} 
-\left( \sum_{\forall \n w_k \in \text{samples}(\d D_{unigram})}
- \log P(\n w_k\mid \n w_i) \right) 
- -\log P(\n w_j\mid \n w_i)
+Loss_{\n w_j,\n w_i} = 
+\left(\sum_{\mathrlap{\!\!\!\!\!\!\forall \n w_k \in \text{samples}(\d D_{1g})}}
+\log P(\n w_k\mid \n w_i) \right)
+- \log P(\n w_j\mid \n w_i)
 \end{equation}
 
-Writing $\d D_{unigram}$ for the unigram distribution of the vocabulary.
+Writing $\d D_{1g}$ for the unigram distribution of the vocabulary.
 And $\text{samples}$ a function that returns some number of samples from it.
 
 Consider, though is this fair to the samples?
@@ -1004,36 +1005,39 @@ We are taking them as representative of all words that do not co-occur.
 Should a word that is unlikely to occur at all, \emph{but was unlucky enough to be sampled}, contribute the same to the loss as a word that was very likely to occur?
 More reasonable is that the loss contribution should be in proportion to how likely the samples were to occur.
 Otherwise it will add unexpected changes and result in noisy training.
-Adding a weighting based on the unigram probability ($\d P_{unigram}(\n w_k)$) gives:
+Adding a weighting based on the unigram probability ($\d P_{1g}(\n w_k)$) gives:
 %
-\begin{equation}
-Loss = \sum_{\forall (\n w_i,\n w_j)\in \seq{X}} 
-\left(\sum_{\forall \n w_k \in \text{samples}(\d D_{unigram})}
-\d P_{unigram}(\n w_k) \log P(\n w_k\mid \n w_i) \right)
+\begin{multline}
+Loss_{\n w_j,\n w_i} = \\
+\left(\sum_{\mathrlap{\!\!\!\!\!\!\forall \n w_k \in \text{samples}(\d D_{1g})}}
+\d P_{1g}(\n w_k) \log P(\n w_k\mid \n w_i) \right)
 -\log P(\n w_j\mid \n w_i)
+\end{multline}
+
+The expected value is defined by
+\begin{equation}
+\mathbb{E}_{X \sim D} \left[ f(x) \right]= \sum_{\text{$\forall x$ values for $X$}} \d P_d f(x)$
 \end{equation}
 
-In an abuse of notation, this is sometimes written as the expected value: $\mathbb{E}_{\n w_k \sim \d D_{unigram}} [\log P(\n w_k\mid \n w_i)]$.
-In another abuse of notation to write:
-
-$\sum_{k=1}^{k=K} \mathbb{E}_{\n w_k \sim \d D_{unigram}} [\log P(\n w_k\mid \n w_i)]$,
+In an abuse of notation, we apply this to the samples, as a sample expected value and write:
+$\sum_{k=1}^{k=K} \mathbb{E}_{\n w_k \sim \d D_{1g}} [\log P(\n w_k\mid \n w_i)]$,
 to be the sum of the $K$ samples expected values.
 This notation (abuse) is as used in \tcite{mikolovSkip}.
 It gives the form:
 
 \begin{equation}
 Loss = \sum_{\forall (\n w_i,\n w_j)\in \seq{X}} 
-\left(\sum_{k=1}^{k=K} \mathbb{E}_{\n w_k \sim \d D_{unigram}} [\log P(\n w_k\mid \n w_i)]) \right)
+\left(\sum_{k=1}^{k=K} \mathbb{E}_{\n w_k \sim \d D_{1g}} [\log P(\n w_k\mid \n w_i)]) \right)
 -\log P(\n w_j\mid \n w_i)
 \end{equation}
 
 Consider that the choice of unigram distribution for the negative samples is not the only choice.
 For example we might wish to increase the relative occurrence of rare words in the negative samples, to help them fit better from limited training data.
 (Something that is done via subsampling in the positive samples (i.e. the training cases)).
-So replace $\d D_{unigram}$ with $\d D_{ns}$ being an the distribution of negative samples from the vocabulary,
+So replace $\d D_{1g}$ with $\d D_{ns}$ being an the distribution of negative samples from the vocabulary,
 to be specified as a hyper-parameter of training.
 
-\tcite{mikolovSkip} uses a distribution such that $\d P_{\d D_{ns}}(\n w_k) =  \frac{\d P_{\d D_{unigram}}(\n w_k)^{\frac{2}{3}}}{\sum {\forall \n w_o\in \set{V}} \d P_{\d D_{unigram}}(\n w_o)^{\frac{2}{3}}}$,
+\tcite{mikolovSkip} uses a distribution such that $\d P_{\d D_{ns}}(\n w_k) =  \frac{\d P_{\d D_{1g}}(\n w_k)^{\frac{2}{3}}}{\sum {\forall \n w_o\in \set{V}} \d P_{\d D_{1g}}(\n w_o)^{\frac{2}{3}}}$,
 which they find to give better performance than the unigram or uniform distributions.
 
 Switching in that, and the substituting in the sigmoid for the probabilities, this is:
@@ -1069,7 +1073,7 @@ Without the abuses around expected value, this is written:
 Loss = -\sum_{\forall (\n w_i,\n w_j)\in \seq{X}}
 \left(
 \log \sigma(\i V_{\n w_j,:} \i C_{\n w_i}) 
-+ \sum_{\forall \n w_k \in \text{samples}(\d D_{unigram})}
++ \sum_{\forall \n w_k \in \text{samples}(\d D_{1g})}
 \d P_{\d D_{ns}}(\n w_k) \log \sigma(- \i V_{\n w_k,:} \i C_{\n w_i})]
 \right) 
 \end{equation}
