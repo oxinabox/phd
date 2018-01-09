@@ -1014,22 +1014,24 @@ Loss_{\n w_j,\n w_i} = \\
 -\log P(\n w_j\mid \n w_i)
 \end{multline}
 
+
 The expected value is defined by
 \begin{equation}
-\mathbb{E}_{X \sim D} \left[ f(x) \right]= \sum_{\text{$\forall x$ values for $X$}} \d P_d f(x)
+\expected_{X \sim D} \left[ f(x) \right]= \sum_{\text{$\forall x$ values for $X$}} \d P_d f(x)
 \end{equation}
 
 In an abuse of notation, we apply this to the samples, as a sample expected value and write:
-$\sum_{k=1}^{k=K} \mathbb{E}_{\n w_k \sim \d D_{1g}} [\log P(\n w_k\mid \n w_i)]$,
-to be the sum of the $K$ samples expected values.
+\begin{equation}
+	\sum_{k=1}^{k=n} \expected_{\n w_k \sim \d D_{1g}} [\log P(\n w_k\mid \n w_i)]
+\end{equation}
+to be the sum of the $n$ samples expected values.
 This notation (abuse) is as used in \tcite{mikolovSkip}.
 It gives the form:
-
-\begin{equation}
-Loss = \sum_{\forall (\n w_i,\n w_j)\in \seq{X}} 
-\left(\sum_{k=1}^{k=K} \mathbb{E}_{\n w_k \sim \d D_{1g}} [\log P(\n w_k\mid \n w_i)]) \right)
+\begin{multline}
+Loss_{\n w_j,\n w_i} = \\
+\left(\sum_{k=1}^{k=n} \expected_{\n w_k \sim \d D_{1g}} [\log P(\n w_k\mid \n w_i)]) \right)
 -\log P(\n w_j\mid \n w_i)
-\end{equation}
+\end{multline}
 
 Consider that the choice of unigram distribution for the negative samples is not the only choice.
 For example we might wish to increase the relative occurrence of rare words in the negative samples, to help them fit better from limited training data.
@@ -1037,46 +1039,51 @@ For example we might wish to increase the relative occurrence of rare words in t
 So replace $\d D_{1g}$ with $\d D_{ns}$ being an the distribution of negative samples from the vocabulary,
 to be specified as a hyper-parameter of training.
 
-\tcite{mikolovSkip} uses a distribution such that $\d P_{\d D_{ns}}(\n w_k) =  \frac{\d P_{\d D_{1g}}(\n w_k)^{\frac{2}{3}}}{\sum {\forall \n w_o\in \set{V}} \d P_{\d D_{1g}}(\n w_o)^{\frac{2}{3}}}$,
+\textcite{mikolovSkip} uses a distribution such that 
+\begin{equation}
+\d P_{\d D_{ns}}(\n w_k) =  \frac{\d P_{\d D_{1g}}(\n w_k)^{\frac{2}{3}}}{\sum_{\forall \n w_o\in \set{V}} \d P_{\d D_{1g}}(\n w_o)^{\frac{2}{3}}}
+\end{equation}
 which they find to give better performance than the unigram or uniform distributions.
 
 Switching in that, and the substituting in the sigmoid for the probabilities, this is:
-\begin{equation}
-Loss = \sum_{\forall (\n w_i,\n w_j)\in \seq{X}} 
-\left(\sum_{k=1}^{k=K} \mathbb{E}_{\n w_k \sim \d D_{ns}} [\log \sigma(\i V_{\n w_k,:}\i C_{\n w_i}) \right)
+\begin{multline}
+Loss_{\n w_j,\n w_i} = \\
+\left(\sum_{k=1}^{k=n} \expected_{\n w_k \sim \d D_{ns}} [\log \sigma(\i V_{\n w_k,:}\i C_{\n w_i}) \right)
 -\log \sigma(\i V_{\n w_j,:} \i C_{\n w_i}
-\end{equation}
+\end{multline}
 
 By adding a constant we do not change the optimal value.
 If we add the constant $-K$, we can subtract 1 in each sample term
 
-\begin{equation}
-Loss = \sum_{\forall (\n w_i,\n w_j)\in \seq{X}} 
-\left(\sum_{k=1}^{k=K} \mathbb{E}_{\n w_k \sim \d D_{ns}} [-1 + \log \sigma(\i V_{\n w_k,:} \i C_{\n w_i}) \right)
+\begin{multline}
+Loss_{\n w_j,\n w_i} = \\
+\left(\sum_{k=1}^{k=n} \expected_{\n w_k \sim \d D_{ns}} [-1 + \log \sigma(\i V_{\n w_k,:} \i C_{\n w_i}) \right)
 -\log \sigma(\i V_{\n w_j,:}\i C_{\n w_i}
-\end{equation}
+\end{multline}
 
-Finally we negate the whole thing, and make use of the identity $1-\sigma(\v z) = \sigma(-\v z)$
-giving
-\begin{equation}
-Loss = -\sum_{\forall (\n w_i,\n w_j)\in \seq{X}}
-\left(
+Finally we make use of the identity $1-\sigma(\v z) = \sigma(-\v z)$ giving
+\begin{multline}
+Loss_{\n w_j,\n w_i} = \\
+-\log \sigma(\i V_{\n w_j,:} \i C_{\n w_i}) 
+- \sum_{k=1}^{k=n} \expected_{\n w_k \sim \d D_{ns}} [\log \sigma(- \i V_{\n w_k,:} \i C_{\n w_i})] 
+\end{multline}
+
+Calculating to the total loss over the whole training set $\seq{X}$
+\begin{multline}
+Loss = \quad -\sum_{\mathclap{\forall (\n w_i,\n w_j)\in \seq{X}}}\\
 \log \sigma(\i V_{\n w_j,:} \i C_{\n w_i}) 
-+ \sum_{k=1}^{k=K} \mathbb{E}_{\n w_k \sim \d D_{ns}} [\log \sigma(- \i V_{\n w_k,:} \i C_{\n w_i})] 
-\right)
-\end{equation}
++ \sum_{k=1}^{k=n} \expected_{\n w_k \sim \d D_{ns}} [\log \sigma(- \i V_{\n w_k,:} \i C_{\n w_i})] 
+\end{multline}
 
-Which is the negative sampling loss function used in  \tcite{mikolovSkip}.
+Which is the negative sampling loss function used in  \textcite{mikolovSkip}.
 Perhaps the most confusing part of this, is the notation.
 Without the abuses around expected value, this is written:
-\begin{equation}
-Loss = -\sum_{\forall (\n w_i,\n w_j)\in \seq{X}}
-\left(
-\log \sigma(\i V_{\n w_j,:} \i C_{\n w_i}) 
-+ \sum_{\forall \n w_k \in \text{samples}(\d D_{1g})}
+\begin{multline}
+Loss = \quad -\sum_{\mathclap{\forall (\n w_i,\n w_j)\in \seq{X}}}\\
+\qquad\qquad \log \sigma(\i V_{\n w_j,:} \i C_{\n w_i}) \\
+\qquad + \sum_{\mathclap{\forall \n w_k \in \text{samples}(\d D_{1g})}}
 \d P_{\d D_{ns}}(\n w_k) \log \sigma(- \i V_{\n w_k,:} \i C_{\n w_i})]
-\right) 
-\end{equation}
+\end{multline}
 
 
 
