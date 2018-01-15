@@ -1,0 +1,153 @@
+\documentclass[]{article}
+
+\usepackage{cleveref}
+
+\newcommand{\tcite}{\cite}
+
+%opening
+\title{Reproducible Data Loading For Repeatable Data Science}
+\author{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We present a framework DataDeps.jl for the reproducible handling of static datasets to allow for easily repeatable Data and Computational Science.
+
+
+\end{abstract}
+
+
+One would expect that data driven computer science research would be easily replicable.
+Unlike experimental science where there are many avenues for human error, and for key information to be left out of the methods sections of papers, a computer program runs the same every time.
+
+
+\section{The need to repeatable acquire data}
+
+\subsection{Reproducing researchers' don't have time to manually acquire date}
+\tcite{VabdewakkeReproduceableResearch} distinguishes 6 degrees of reproducibility:
+\begin{enumerate}
+\addtocounter{enumi}{-1} % start at zero
+\item The results cannot be reproduced by an independent researcher.
+\item The results cannot seem to be reproduced by an independent researcher.
+\item The results could be reproduced by an independent researcher, requiring extreme effort. 
+\item The results can be reproduced by an independent researcher, requiring considerable effort.
+\item The results can be easily reproduced by an independent researcher with at most 15 minutes of user effort, requiring some proprietary source packages (MATLAB, etc.).
+\item The results can be easily reproduced by an independent researcher with at most 15 min of user effort, requiring only standard, freely available tools (C compiler, etc.).
+\end{enumerate}
+Note Vandewalle et. al. say 15 minutes of user effort, so excluding the time taken for the running of the simulations etc.
+Vandewalle's 15 minutes still is pretty harsh, but it is not unreasonable.
+Consider a busy reviewer who has spent several hours reviewing a paper.
+They don't want to spend several more trying to get the code working.
+But if it is just 15 minutes, its hard to justify not doing so.
+
+Consider a graduate student new to the area and the tools involved.
+Given their unfamiliarity, we can expect everything to take 4 times as long.
+At 15 minutes, that is still just an hour.
+But if it takes someone who is familiar with the field over an hour to get things running, then that is the best part of a day.
+
+
+Let us consider how this time may be spent:
+\begin{itemize}
+	\item 1 minute on finding and downloading the code for the paper.
+	\item 5 minutes on reading the read-me, and working out how to run the script,
+	\item 5 minutes on finding, downloading the data, extracting it, putting it on the right location on disk. (Being generous and not including the download times for large datasets).
+	\item 3 minutes are spent quickly glancing over the code to make sure it vaguely does what the paper says.
+	\item 3 minutes are spent interpreting and checking the results
+\end{itemize}
+We are already several minutes over budget, and that is assuming nothing went wrong.
+That we had the same assumptions as the author about ``standard, freely available tools'', and didn't have to install anything,
+and that the read-me, the code, and the format of the results were quiet understandable.
+
+What is happening during those 5 minutes of dealing with the data.
+They are looking in the readme for where to download the data.
+Going to that website, downloading it, then maybe transferring it from their workstation to the faster server.
+They are trying to remember the flags to the \texttt{tar} command.
+They are trying to determine if the code wants the path to the folder, to its parent folder, or to a file within it.
+
+
+To use a phrase from Agile software engineering practices, Vanderalle's 15 minutes can not be achieved without \emph{pervasive automation}.
+
+\subsection{The original researchers don't have time to reaquire data}
+It often occurs that we want to rerun experiments in a new environment.
+If the data was manually set-up onto a computer, then those steps must be repeated on every new machine.
+If for example we are running our simulations on a cloud computing environment,
+and unexpected (or even expected) maintenance occurs, and we want to run some move variations on our local workstation -- it won't be as fast as the original environment, but it can be made to run now.
+
+Another example:
+A paper was submitted, and the reviewer feedback comes back 3 months later.
+They want a few more experiments run.
+Unfortunately, in the intervening time, you've replaced your PC.
+None of the data is where you left it.
+So now to satisfy those reviewers you have to go and repeat the work of downloading the data,
+and setting it up again.
+
+
+\section{Assumptions About Data}
+We make the following assumptions about data used in research.
+They do not hold universally, but we target the cases where they do.
+Which we suggest are the majority of cases.
+
+
+\begin{enumerate}
+	\item Data is publicly available.
+	\item Data is static.
+	\item Data is file-based
+\end{enumerate}
+
+\subsection{Data is publicly available}
+Once researchers held their data secret and close, and to get it you had to contact them personally and directly.
+That is not the case today.
+Universities, publishers and conferences have open-data policies forcing (or at least strongly encouraging) data to be made public.
+Papers should report results based on standard datasets other people have also used.
+Writing a paper where the primary contribution is a new dataset for others to use is a real thing.
+
+
+\subsection{Data is static}
+A new version of a dataset is considered a new dataset.
+This makes sense, since results reported on the old version won't precisely repeat on the new version.
+
+For prototypes and models that are being developed along side the creation of a new dataset this won't always hold.
+However, by the time the paper about the model and the dataset is submitted the dataset will now be static.
+
+\subsection{Data is file-based}
+Not all data is file based, this assumption is the one that is most-likely to fail.
+For example data might be accessible only via an API call to some large privately held database.
+Or the data might be too large to fit on a traditional file system.
+
+In the case of data that is only available via API, many of the data management concerns do not apply (different concerns do instead).
+In the case of data tool large to fit on a traditional file-system we simply do not handle it.
+
+The majority of academic research however is not on such true ``Big Data''.
+but rather on small data, or moderately large data.
+
+
+\section{Issues Researcher's have with data}
+\begin{enumerate}
+	\item Where do I put it? \label{itm:where}
+	\begin{itemize}
+		\item Should it be on the local disk? but that is small
+		\item Should it be on the network file-store? but that is slow
+		\item If I move it, I'm going to have to reconfigure everything
+	\end{itemize}
+	\item Is it ok to include it with my work? \item{itm:ownredistribute}
+	\begin{itemize}
+		\item I don't own copyright on this data.
+		\item Am I allowed to redistribute this data?
+		\item What if people getting the data from me as part of my experiments don't realize the original creator?
+	\end{itemize}
+	\item Should I hard-code the path, or make it an argument to my script? \label{itm:path}
+	\begin{itemize}
+		\item If I make it an argument to my script, then running my code is annoying as I have to remember where it is and enter that.
+		\item If I hard code it, then I have to edit my script when I move it, and anyone running the script will have to know where to put it, or edit the script too.
+	\end{itemize}
+\end{enumerate}
+
+
+
+
+
+DataDeps.jl is a compact tool with a single job, following the unix philosophy.
+
+\end{document}
