@@ -5,7 +5,7 @@
 \newcommand{\tcite}{\cite}
 
 %opening
-\title{Reproducible Data Loading For Repeatable Data Science}
+\title{Reproducible Data Loading For\part{title} Repeatable Data Science}
 \author{}
 
 \begin{document}
@@ -13,10 +13,16 @@
 \maketitle
 
 \begin{abstract}
-We present a framework DataDeps.jl for the reproducible handling of static datasets to allow for easily repeatable Data and Computational Science.
+We present a framework DataDeps.jl for the reproducible handling of static datasets to allow for repeatable Data and Computational Sciences.
+
 
 
 \end{abstract}
+
+One would expect that data driven computer science research would be easily replicable.
+Unlike experimental science where there are many avenues for human error, and for key information to be left out of the methods sections of papers, a computer program runs the same every time.
+The vast majority of research in Data Science, and in the Computational Sciences depend on data.
+Even in cases where the data is not directly required for the result, it is required for the demonstration that the methods work.
 
 DataDeps.jl is a compact tool with a single job, following the unix philosophy of doing one job well.
 It allows code to depend on data, and have that data automatically downloaded as required.
@@ -26,10 +32,17 @@ What it does do is increase repeatability of any scientific code that uses data.
 Decreasing the effort to get such a program working on a new system, while also decreasing the effort to write the code in the first place.
 
 
-One would expect that data driven computer science research would be easily replicable.
-Unlike experimental science where there are many avenues for human error, and for key information to be left out of the methods sections of papers, a computer program runs the same every time.
-The vast majority of research in Data Science, and in the Computational Sciences depend on data.
-Even in cases where the data is not directly required for the result, it is required for the demonstration that the methods work.
+
+In this paper we will use the word acquisition of data to refer to the downloading of the dataset, extracting it from an archive and any post processing that need to be done to it before the experimental or analytical code is run.
+We do not use it to refer to the original collection of data from a primary source, i.e. the creation of the dataset.
+
+
+
+Automating the acquisition of the data is in-line with one of the key best practices for Scientific Computing identified by \textcite{10.1371/journal.pbio.1001745}.
+This is to ``Let the computer do the work.''.
+While it is possible, and indeed common, to include in the readme instructions on how to download the data, it is possible for the computer to do the work.
+DataDeps.jl provides a mechanisms by which this is done.
+
 
 
 
@@ -154,6 +167,72 @@ but rather on small data, or moderately large data.
 		\item If I hard code it, then I have to edit my script when I move it, and anyone running the script will have to know where to put it, or edit the script too.
 	\end{itemize}
 \end{enumerate}
+
+
+\subsection{Where do I put it}
+We resolve the issue of where to put data, by allowing the data to be put any a number of locations, and then checking if it is in any of them.
+The default locations include locations with-in the users home directory, and several locations commonly used for local, and network file stores.
+Further locations can be configured per machine.
+Checking multiple locations is trivial in the time taken, thus it is worth doing to save the user effort of working out where the data is.
+
+The actual decision as to where to put the data is made automatically by DataDeps.jl, using the first existent location in the list of locations it checks.
+The user can then move the data to any other location later if that would be more convenient.
+Allowing users to move data without concerns, about updating code removes a level of complexity from any data management problem.
+
+
+\subsection{Is it ok to include it with my work?}
+It is a common worry that by including a dataset may be violating the original creators legal or moral rights.
+This worry is indeed not unjustified many datasets do not have clear licensing statements,
+or even have licensing statements forbidding redistribution.
+Use or Redistribution may require the display of a notice about the data's origin.
+Even when it does not there is the further worry that someone acquiring the dataset may not realise the original author, which would be failing to give due credit.
+
+
+DataDeps.jl solves this in two ways.
+Firstly, it avoids the need to redistribute data.
+DataDeps.jl fetches the data from the original source, just like an user following the readme would.
+Secondly it allows (and indeed requires), that when the data dependency is declared it include a message which is then displayed to the user when the data is retrieved.
+This message is intended to allow the display of such copyright information and terms of use -- the user is able to refused after the message is displayed, in which case the data is not downloaded.
+
+\subsection{Should I hard-code the path, or make it an argument to my script?}
+Write about using evaluation order on optional arguments
+
+
+\section{Examples of need}
+
+\subsection{WordNet.jl}
+To quote the WordNet.jl package \footnote{\url{https://github.com/JuliaText/WordNet.jl#wordnet-data}} ``I don't include the data in this repository. Ignoring copyright concerns, I dislike big chunks of data in my .julia/vX.X directory. Something about it worries me. To use this library, you must download and install version 3.0 of WordNet. Download it here. Then, decompress it. The resulting directory is the one to use when constructing a Worknet.DB type.''.
+
+
+The first point is that they do not include the data in the repository.
+This is good practice, as git does not handle static data storage well.
+However, as the repository is what is redistributed to users when they install the package,
+including the data in the repository is the obvious way to make sure the users acquire it.
+
+
+We see the author has has copyright concerns (but is putting them aside for the discussion), even though license to use and redistribute the data for any purposes is expressly granted\footnote{\url{https://wordnet.princeton.edu/wordnet/license/}}.
+
+They are also concerned about having the data in the .julia/vX.X directory.
+If the data was included in the repository that would be where it ends up.
+The default location for that directory is in the users home directory.
+This is often subject to size quotas, and is often a networked directory.
+This is an understandable concern.
+
+The paragraph concludes with instruction on how to acquire the data.
+This instructions must be followed manually and require the user to understand how to extract the data.
+They are not unambiguous.
+The linked file is a gzipped tarball an an unfamiliar user might only extract the gzip part, and be left with a tarball.
+However, a more familiar user would know one has to both unzip the archive then untar the tarball (and indeed would know the single command to do both as one step).
+Further to this, even after extracting it is unclear as to if the folder to be used is \texttt{WNdb-3.0} (which may not exist depending on the method used to extract), or its sole contents: the directory \texttt{dict}.
+It is in fact the former.
+This manual labour, and opportunities for misunderstanding is what this software package aims to remove.
+
+
+
+
+
+
+
 
 
 
