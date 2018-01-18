@@ -2,7 +2,12 @@
 \documentclass{jors}
 \usepackage[author={Lyndon}]{pdfcomment}
 
-
+%%%%%%%%%%%
+%Graphics
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows}
+%%%%%%%%%%%%%%%%%
 
 \usepackage[backend=bibtex, url=false,
 style=authoryear-ibid 
@@ -355,10 +360,37 @@ Write about using evaluation order on optional arguments
 
 
 \subsubsection{How can I be sure someone running my code has the same data?}
-One of the problems withj 
+One of the problems with
 
+\newcommand{\datadep}[1]{\texttt{datadep"{}#1"{}}}
 
 \subsection{DataDeps.jl Architecture}
+From most users experience the DataDeps.jl has just two components.
+The \texttt{RegisterDataDep} function, which constructs a data dependency and registers it in a global variable;
+and  a string macro \datadep{NAME}, which the user can use as if it were the path to the data \texttt{NAME} on disk -- which at runtime it evaluates into.
+
+
+\begin{figure}
+	\resizebox{\textwidth}{!}{
+		\begin{tikzpicture}[every text node part/.style={align=center}, auto,node distance=2, ->,
+							every edge/.append style={every node/.style={font=\footnotesize}}]
+			\node(start) {}; 
+			\node[draw, rectangle, right= of start] (msg) {1.\\Display\\ message\\ get user acceptance};
+			\node[draw, rectangle, right= of msg] (fetch) {2.\\Perform\\ fetch method\\ (download)};
+			\node[draw, rectangle, right= of fetch] (checksum) {3.\\Validate\\ using\\ checksum};
+			\node[draw, rectangle, right= of checksum] (postfetch) {4.\\Perform \\post fetch method\\ e.g. unpack archive};
+			\node[right=of postfetch](end) {};
+			
+			\path (start)  edge[above] node{datadep}  (msg);
+			\path (msg)	edge[above] node{remote paths}  (fetch);
+			\path (fetch)	edge[above] node{local paths}  (checksum);
+			\path (checksum)	edge[above] node{local paths}  (postfetch);
+			\path (postfetch)	edge[above] node{local path}  (end);
+		\end{tikzpicture}
+	}
+	\caption{The core process for resolving a data dependency if a local copy is not found. Each step linked to one of the properties declared in the registration block.}
+\end{figure}
+
 
 \subsubsection{Registration Blocks}
 
@@ -427,8 +459,7 @@ The user can trigger these tests to ensure everything is working on their local 
 
 
 The primary mechanism for user feedback is via Github issues on the repository.
-Secondary mechanisms are the JuliaLang gitter, and slack channels and the Discourse forums.
-Bugs and feature requests (even purely by the authors) are tracked using the Github issues.
+Bugs and feature requests, even purely by the authors, are tracked using the Github issues.
 
 \section{Availability}
 \subsection{Operating system}
