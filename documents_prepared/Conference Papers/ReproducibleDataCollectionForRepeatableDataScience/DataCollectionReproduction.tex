@@ -40,7 +40,12 @@ style=authoryear-ibid
 ]{biblatex}
 
 \bibliography{master}
+%%%%%%%%%%%%%%%%%%%
 
+
+\newcommand{\datadep}[1]{\texttt{datadep"{}#1"{}}}
+
+%%%%%%%%%%%%%%
 
 
 %% Set the header information
@@ -382,13 +387,56 @@ Secondly it allows (and indeed requires), that when the data dependency is decla
 This message is intended to allow the display of such copyright information and terms of use -- the user is able to refused after the message is displayed, in which case the data is not downloaded.
 
 \subsubsection{Should I hard-code the path, or make it an argument to my script?}
-Write about using evaluation order on optional arguments
+Dealing with paths can be problematic in software.
+From a functionality perspective ideally, one would use an absolute paths to real files everywhere.
+All functions work with these, where-as many commands (such as in external software being invoked) will not function correctly for files given by relative paths, or with symlinks.
+However, working with such paths is very inconvient.
+They will break every time the environment is not identical.
+They are also often long and hard to remember for example \texttt{H:/Users/Staff03/12345678/Documents/Data/ExcellentProject/observations.txt}.
+
+Further: passing paths in as arguments to a script makes it flexible allowing the invoker to decide where to store the data.
+However, it also increases the work to run it compare to paths that are hardcoded into the script.
+A work-around is to include an extra invoking script that has the paths hardcoded.
+DataDeps.jl presents a better solution.
+
+A distinctive feature of the Julia language is the presents of string macros, written for examples as \datadep{NAME}.
+These are similar to the LISP reader macros, however their scope is delimitted by the quote characters -- making them look like strings.
+At parse time, the macro is invoked on the contents of the string, and is replaced with an expression -- generated code.
+DataDeps.jl uses this to replace \datadep{NAME}, with a block of code that when exectute returns an absolute path to the data with the given name.
+\datadep{NAME} is expanded into code invoking the mechanisms to locate the directory in it loadpath, and if not found to download it.
+
+
+\pdfcomment{Write about using this with optional dependencies}
+
 
 
 \subsubsection{How can I be sure someone running my code has the same data?}
-One of the problems with
+One of the problems with depending on data is ensuring the user has the same data you did.
+It could have been updated, or corrupted in transit or on disk.
 
-\newcommand{\datadep}[1]{\texttt{datadep"{}#1"{}}}
+To depend against this, DataDeps.jl takes the well established approach of using checksums.
+Many data stores provide checksums (hashes) for their data.
+Through the use of the SHA.jl\footnote{\url{https://github.com/staticfloat/SHA.jl}} package, and the MD5.jl \footnote{\url{https://github.com/oxinabox/MD5.jl}} package support is provided for all versions of SHA and for MD5.
+Given suitable packages (external to DataDeps.jl) any such hashing algorithm may be used.
+If the hash of the downloaded file matches the prodided checksum, one can be very confidant the files is the same, free from coruption, and modification (be it intentional update, accident, or malcious tampering).
+If it doesn't match DataDeps.jl prompts the user as to retry the download, ignore, or abort.
+
+
+When a checksum is not provided DataDeps.jl calculates the file hash, and outputs a warning message to the user displaying the checksum, such that they can copy-and-paste it into the registration block.
+It is assumed that the first user to download the data, when the checksum is not provided, is going to be the author.
+They can then add the checksum, removing that warning message.
+In the small chace the initial download was corrupted in transit, it will readily become apparent as all latter downloads will fail.
+By improving the user experience for researchers who don't want to be spending their time fiddling with checksum calculating tools, DataDeps.jl encourages the use of checksums.
+Thus making it more certain that the data has not been changed.
+
+If the data has been changed (and the checksum that failing) it is a separate problem.
+Outside the scope of DataDeps.jl to fix.
+Given the information that it has, then via normal channels this can be fixed.
+Either to update everything depending on the data (including results),
+or to change the data dependency to point to an archieved copy of the earlier version.
+
+
+
 
 \subsection{DataDeps.jl Architecture}
 From most users experience the DataDeps.jl has just two components.
@@ -418,7 +466,7 @@ and  a string macro \datadep{NAME}, which the user can use as if it were the pat
 \end{figure}
 
 
-\begin{lstlisting}[frame=single, caption={Example registration block for Word Net. The majority of it is a message for the user.}] 
+\begin{lstlisting}[frame=single, caption={Example registration block for WordNet. The majority of it is a message for the user.}, label={lst:regblock}] 
   RegisterDataDep("WordNet 3.0",
   """
   Dataset: WordNet 3.0
@@ -444,12 +492,26 @@ and  a string macro \datadep{NAME}, which the user can use as if it were the pat
 \end{lstlisting}
 
 \subsubsection{Registration Blocks}
+The registration block is how a data dependency is described in DataDeps.jl.
+It is executable metadata, that when exectuted returns the data.
+Shown in \Cref{lst:regblock} is an example of registration block.
+The key information provided in the registration block is:
+\begin{description}
+\item[name] used to refer to the dependency in code, as in the described \datadep{NAME}
+\item[message] the message displayed to the user.
+\item[remotepath] a path or a list of paths (normally URLs)to remote copies of the data.
+\item[checksum] a checksum (or list of checksums) for the remote files.
+\end{description}
 
 
 
-\subsubsection{Keeping it light weight by avoiding the inclusion of code to generate Registration Block (DataDepsGenerators.jl)}
+
+\subsubsection{Automating the writing of registration block blocks (DataDepsGenerators.jl)}
 Writing a registration block is not complex, however even this can be further automated.
 DataDepsGenerators.jl is a package which does this.
+In principle it converts metadata of one kind, for example a website describing a dataset,
+into another: namely the registration block.
+
 
 
 
