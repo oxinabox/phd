@@ -1,18 +1,19 @@
 %% Journal of Open Research Software Latex template -- Created By Stephen Bonner and John Brennan, Durham Universtiy, UK.
+%\PassOptionsToPackage{xcolor}{dvipsnames}
 \documentclass{jors}
 \usepackage[author={Lyndon}]{pdfcomment}
 
+
 \usepackage{listings}
-%%
-%% Julia definition (c) 2014 Jubobs
-%%
-\lstdefinelanguage{Julia}%
+
+
+\lstdefinelanguage{Julia}%%% Julia definition (c) 2014 Jubobs
 {morekeywords={abstract,begin, break,case,catch,const,continue,do,else,elseif,%
 		end,export,false,for,function,immutable,import,importall,if,in,%
 		macro,module,otherwise,quote,return,switch,true,try,type,typealias,%
 		using,while},%
 	sensitive=true,%
-	alsoother={$},%
+	alsoother={$},%$ fix sybtaxhighligh
 	morecomment=[l]\#,%
 	morecomment=[n]{\#=}{=\#},%
 	morestring=[s]{"}{"},%
@@ -24,7 +25,7 @@
 	basicstyle       = \ttfamily,
 	keywordstyle     = \bfseries\color{blue},
 	stringstyle      = \color{magenta},
-	commentstyle     = \color{ForestGreen},
+	commentstyle     = \color{green!50!black},
 	showstringspaces = false,
 }
 
@@ -32,7 +33,11 @@
 %Graphics
 \usepackage{graphicx}
 \usepackage{tikz}
-\usetikzlibrary{positioning,arrows}
+\usetikzlibrary{positioning,arrows,shapes}
+\tikzset{
+	every picture/.style={/utils/exec={\sffamily}},
+	every matrix/.style={ampersand replacement=\&, rounded corners=10pt},
+}
 %%%%%%%%%%%%%%%%%
 
 \usepackage[backend=bibtex, url=false,
@@ -53,7 +58,7 @@ style=authoryear-ibid
 \definecolor{mygray}{gray}{0.6}
 \renewcommand\headrule{}
 \rhead{\footnotesize 3}
-\rhead{\textcolor{gray}{{DataDeps.jl -- Reproducible Data Setup For Repeatable Data and Computational Science}}}
+\rhead{\textcolor{gray}{{DataDeps.jl -- Repeatable Data Setup For Reproducible Data and Computational Science}}}
 
 
 %opening
@@ -81,6 +86,34 @@ DataDeps.jl makes it easier to rerun another authors code in a new environment.
 
 \rule{\textwidth}{1pt}
 
+
+\begin{figure}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[]
+	\node[ellipse, thick, draw, inner sep = 10] (datadeps) {\textbf{DataDeps.jl}};
+	\node[matrix, below right = 2 of datadeps, draw, column sep=15, row sep=10] (datasetpackages) {
+		\node{\textbf{Dataset packages}}; \\
+		\node[draw,ellipse]{MLDatasets.jl};\\
+		\node[draw,ellipse]{CorpusLoaders.jl}; \\
+		\node{\phantom{M} \ldots \phantom{M}};\\
+	};
+	\node[matrix, below left = 2 of datadeps, draw, column sep=15] (packages) {
+		\node{\textbf{Packages}}; \\
+		\node{\textbf{needing data}}; \\
+		\node[draw,ellipse]{WordNet.jl}; \\
+		\node{\phantom{M} \ldots \phantom{M}};\\
+	};
+	\node[ellipse, draw, inner sep = 10, below = 8 of datadeps] (researchcode) {Research Scripts/Software};
+	
+	\path[->,draw] (datadeps) edge node{raw data} (packages);
+	\path[->,draw] (packages) edge node{functionality} (researchcode);
+	\path[->,draw] (datadeps) edge node{raw data} (datasetpackages);
+	\path[->,draw] (datasetpackages) edge node[xshift=10]{processed/loaded data} (researchcode);
+	\path[->,draw] (datadeps) edge node{raw data} (researchcode);	
+\end{tikzpicture}
+}
+	
+\end{figure}
 
 \section{Overview}
 
@@ -157,9 +190,9 @@ are cheap compare to the smaller number of hours it takes to debug issues with r
 	\item The results can be easily reproduced by an independent researcher with at most 15 minutes of user effort, requiring some proprietary source packages (MATLAB, etc.).
 	\item The results can be easily reproduced by an independent researcher with at most 15 min of user effort, requiring only standard, freely available tools (C compiler, etc.).
 \end{enumerate}
-Note Vandewalle et. al. say 15 minutes of user effort, so excluding the time taken for the running of the simulations etc.
-Vandewalle's 15 minutes still is pretty harsh, but it is not unreasonable.
-Consider a busy reviewer who has spent several hours reviewing a paper.
+Note Vandewalle et. al. say 15 minutes of \emph{user effort}, so excluding the time taken for the running of the simulations etc.
+Vandewalle's 15 minutes still is pretty challenging, but it is not unreasonable.
+Consider a busy reviewer who has already spent several hours, or days, reviewing a paper.
 They don't want to spend several more trying to get the code working.
 But if it is just 15 minutes, its hard to justify not doing so.
 
@@ -174,20 +207,21 @@ Let us consider how this time may be spent:
 \begin{itemize}
 	\item 1 minute on finding and downloading the code for the paper.
 	\item 5 minutes on reading the read-me, and working out how to run the script,
-	\item 5 minutes on finding, downloading the data, extracting it, putting it on the right location on disk. (Being generous and not including the download times for large datasets).
+	\item 5 minutes on finding, downloading the dataset/s, extracting it, putting it on the right location on disk. (Not including the download times for large datasets).
 	\item 3 minutes are spent quickly glancing over the code to make sure it vaguely does what the paper says.
 	\item 3 minutes are spent interpreting and checking the results
 \end{itemize}
 We are already several minutes over budget, and that is assuming nothing went wrong.
+It is assuming the reproducible code was not challenging to run at all.
 That we had the same assumptions as the author about ``standard, freely available tools'', and didn't have to install anything,
 and that the read-me, the code, and the format of the results were quiet understandable.
+The focus of DataDeps.jl is to eliminate those 5 minutes of setting up the data environment.
 
 What is happening during those 5 minutes of dealing with the data.
 They are looking in the readme for where to download the data.
 Going to that website, downloading it, then maybe transferring it from their workstation to the faster server.
 They are trying to remember the flags to the \texttt{tar} command.
 They are trying to determine if the code wants the path to the folder, to its parent folder, or to a file within it.
-
 
 To use a phrase from Agile software engineering practices, Vanderalle's 15 minutes can not be achieved without \emph{pervasive automation}.
 
@@ -208,10 +242,6 @@ One of the important features of a good CI test is that they can run (and should
 This eliminates the ability of the automated test to rely on any environmental setup that isn't automated as part of the testing/build script.
 This includes the download of data.
 DataDeps.jl thus allows for this 
-
-
-
-
 
 
 
@@ -307,8 +337,7 @@ Papers should report results based on standard datasets other people have also u
 Writing a paper where the primary contribution is a new dataset for others to use is a real thing.
 
 
-For the case of research with concurrent data gathering a publicly available, but secret (https) URL is generally sufficient and works well with DataDeps.jl.
-For data which must be truly secured (e.g. medical data) it is theoretically possible to substituted in an a authenticated  download mechanism into DataDeps.jl in the registration block, however this has not been tried in practice.
+
 
 
 \subsubsection{Data is static}
@@ -390,31 +419,43 @@ This message is intended to allow the display of such copyright information and 
 Dealing with paths can be problematic in software.
 From a functionality perspective ideally, one would use an absolute paths to real files everywhere.
 All functions work with these, where-as many commands (such as in external software being invoked) will not function correctly for files given by relative paths, or with symlinks.
-However, working with such paths is very inconvient.
+However, working with such paths is very inconvenient
 They will break every time the environment is not identical.
-They are also often long and hard to remember for example \texttt{H:/Users/Staff03/12345678/Documents/Data/ExcellentProject/observations.txt}.
+They are also often long and hard to remember for example \texttt{H:/Staff03/12345678/Documents/Data/GreatProject/observations.txt}.
 
 Further: passing paths in as arguments to a script makes it flexible allowing the invoker to decide where to store the data.
-However, it also increases the work to run it compare to paths that are hardcoded into the script.
-A work-around is to include an extra invoking script that has the paths hardcoded.
+However, it also increases the work to run it compare to paths that are hard-coded into the script.
+A work-around is to include an extra invoking script that has the paths hard-coded
 DataDeps.jl presents a better solution.
 
 A distinctive feature of the Julia language is the presents of string macros, written for examples as \datadep{NAME}.
-These are similar to the LISP reader macros, however their scope is delimitted by the quote characters -- making them look like strings.
+These are similar to the LISP reader macros, however their scope is delimited by the quote characters -- making them look like strings.
 At parse time, the macro is invoked on the contents of the string, and is replaced with an expression -- generated code.
-DataDeps.jl uses this to replace \datadep{NAME}, with a block of code that when exectute returns an absolute path to the data with the given name.
-\datadep{NAME} is expanded into code invoking the mechanisms to locate the directory in it loadpath, and if not found to download it.
+DataDeps.jl uses this to replace \datadep{NAME}, with a block of code that when execute returns an absolute path to the data with the given name.
+\datadep{NAME} is expanded into code invoking the mechanisms to locate the directory in it load-path, and if not found to download it.
+Using DataDep.jl removes the need to have the user worry about passing in, or hard-coding the path.
+
+It is also simple to used DataDeps.jl as fallback if the user does not pass in the path.
+If a datadep string macro is never evaluated, then the dependency is never fetched.
+This can be done using conditionals such as an if-statement,
+or by taking advantage of julia's behaviour for functions with optional arguments, as shown in \Cref{lst:function}
 
 
-\pdfcomment{Write about using this with optional dependencies}
+\begin{lstlisting}[frame=single, caption={Example of a function with an optional argument. If an argument is passed to the function then the datadep string macro will never be evaluated and thus will never be fetched}, label={lst:function}] 
+
+function train_model(training_datapath=datadep"XCorpus")
+	data = load_xdata(training_datapath)
+	#....
+end
+\end{lstlisting}
 
 
-
-\subsubsection{How can I be sure someone running my code has the same data?}
+\subsubsection{How can I be sure someone running my code has exactly the same data?}
 One of the problems with depending on data is ensuring the user has the same data you did.
-It could have been updated, or corrupted in transit or on disk.
+As described above DataDeps.jl already removes the main risk: that the user will mistakenly download the wrong dataset (and likely have the software several malfunction), but the secondary concern that the data fetched by a future user may not match what was originally fetched by the author.
+The data could have been updated, or corrupted in transit or on disk.
 
-To depend against this, DataDeps.jl takes the well established approach of using checksums.
+To depend against this, DataDeps.jl makes use of  the well established approach of file verification checksums.
 Many data stores provide checksums (hashes) for their data.
 Through the use of the SHA.jl\footnote{\url{https://github.com/staticfloat/SHA.jl}} package, and the MD5.jl \footnote{\url{https://github.com/oxinabox/MD5.jl}} package support is provided for all versions of SHA and for MD5.
 Given suitable packages (external to DataDeps.jl) any such hashing algorithm may be used.
@@ -462,7 +503,8 @@ and  a string macro \datadep{NAME}, which the user can use as if it were the pat
 			\path (postfetch)	edge[above] node{local path}  (end);
 		\end{tikzpicture}
 	}
-	\caption{The core process for resolving a data dependency if a local copy is not found. Each step linked to one of the properties declared in the registration block.}
+	\caption{The core process for resolving a data dependency if a local copy is not found. Each step linked to one of the properties declared in the registration block. \label{fig:retrieve}
+	}
 \end{figure}
 
 
@@ -501,7 +543,13 @@ The key information provided in the registration block is:
 \item[message] the message displayed to the user.
 \item[remotepath] a path or a list of paths (normally URLs)to remote copies of the data.
 \item[checksum] a checksum (or list of checksums) for the remote files.
+\item[fetch_method]  a function  (or list of functions) specifying the method used to download the file, for almost all uses the default \texttt{Base.download} is sufficient.
+\item[post_fetch_method] a function  (or list of functions)to call on the fetched files. Most commonly used to unpack an archive.
 \end{description}
+This properties directy match as the key configurations for the stages shown in \Cref{fig:retrieve}.
+When a list of remotepaths is provided,
+a the later properties can also be provided as list or individually
+The properties after message 
 
 
 
@@ -560,6 +608,25 @@ This is the work-flow for how an experimental scientist using their software for
 	\item Update data registration block to use new URL, check that the checksum matches.
 	\item Publish results and software
 \end{enumerate}
+Or 
+\begin{enumerate}
+	\item Add a manual data registration block for the data
+	\item Create (locally, or on a mounted network store) the corresponding folder as the data store
+	\item Collect data add it to data store
+	\item Develop analysis script
+	\item \emph{Repeat as necessary}
+	\item Prepare publication
+	\item Transfer data store to a archival storage provider (Eg figshare, datadryad etc. or an institutional repository)
+	\item Update data registration block to use new URL, as an automatic datadep
+	\item Publish results and software
+\end{enumerate}
+
+
+This is an exception to DataDeps.jl's assumption that data is public.
+For the case of research with concurrent data gathering a publicly available, but secret (https) URL is generally sufficient and works well with DataDeps.jl.
+For data which must be truly secured (e.g. medical data) it is theoretically possible to substituted in an a authenticated  download mechanism into DataDeps.jl in the registration block, however this has not been tried in practice.
+The other alternative, is the use of a ManualDataDep during development, which functions like a normal automatic DataDep but without the functionality for automatic download, instead the user should manually manage the data.
+This allows all the code to be identical except for registration block, which can be changed after the final data is uploaded.
 
 
 
