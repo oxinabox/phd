@@ -2,7 +2,7 @@
 \usepackage[hyperref]{acl2018}
 
 \usepackage{newtxtext}
-%\usepackage[author={Lyndon}]{pdfcomment}
+\usepackage[author={Lyndon}]{pdfcomment}
 
 \usepackage{booktabs}
 \usepackage{pgfplotstable}
@@ -53,11 +53,11 @@
 \maketitle
 
 \begin{abstract}
-We present a proof of concept for a tool to allow consumers to subset ebooks, based on the chapters main character.
-Many novels have multiple main characters, and vary with each chapter which character the story is focused on.
+We present a proof of concept for a tool to allow consumers to subset ebooks, based on the main character of the section.
+Many novels have multiple main characters, and vary with each chapter (or sub-chapter) which character the story is focused on.
 A well known example is George R. R. Martin's ``Game of Thrones'' novel, and others from that series.
-The NovelPerspective tool detects which character the chapter is about,
-and allowed the user to generate a new ebook with only those chapters.
+The NovelPerspective tool detects which character the section is about,
+and allows the user to generate a new ebook with only those section.
 The detection of main character can be done by many means.
 We present two simple baselines, and several machine learning based methods.
 \end{abstract}
@@ -107,22 +107,23 @@ We (the first author) can personally attest for some books reading the chapters 
 \section{Character Detection Systems}
 
 \subsection{Baseline systems: First and Most Common}
-The obvious way to determine the main character of the chapter is to select the first named entity. This works well for many examples: ``It was a dark and stormy night. Bill heard a knock at the door.''; however it fails for many others ``'Is that Tom knocking on my door' thought Bill, one storm night.''.
-Sometimes a chapter may go several paragraphs describing events before it even mentions the character who is perceiving them.
+The obvious way to determine the main character of the section is to select the first named entity. This works well for many examples: ``It was a dark and stormy night. Bill heard a knock at the door.''; however it fails for many others ``'Is that Tom knocking on my door' thought Bill, one storm night.''.
+Sometimes a section  may go several paragraphs describing events before it even mentions the character who is perceiving them.
 This is a varying element of style.
 
 A more robust method is to use the most commonly named entity.
 This works well, as once can assume the most commonly named entity is the main character.
-However, it is fooled by book chapters that are, for example, about the main character's relationship with a secondary character.
+However, it is fooled, for example, by book chapters that are about the main character's relationship with a secondary character.
 In such cases the secondary character may be mentioned more often.
 
 A better system would combine both the information about when a named entity appeared,
 with a how often it occurs, and other information about how that named entity token is being used.
-It is not obvious as to how these should be combined to determine which named entity chapter is about.
+It is not obvious as to how these should be combined to determine which named entity section is about.
 We thus attempt to solve it using machine learning, to combine these features to make a classifier.
 
 \subsection{Machine learning systems}
-
+One can see the determination of the main character as a multi-class classification problem.
+From the set of all named entities in the chapter, classify the chapter as to which one is the main character.
 
 
 
@@ -138,8 +139,11 @@ and the two books of  Leigh Bardugo's ``Six of Crows'' duology (hereafter referr
 ASOIAF has a total of 256 chapters and 15 point of view characters.
 SOC has a a total of 92 chapters and 7  point of view characters.
 
-The requirements of the books to use in the training and evaluation of the NovelPerspective system is that they provide ground truth for the chapter's main characters.
+The requirements of the books to use in the training and evaluation of the NovelPerspective system is that they provide ground truth for the section's main characters.
 These books do so in the chapter names -- each matching to a character name.
+
+We do not have any datasets with labelled sub-chapter sections,
+though the tool does support such works.
 
 \subsection{Evaluation Details}
 In the evaluation, the books chapters are pre-separated into body text and chapter name (character name).
@@ -147,14 +151,30 @@ The detection systems are given the body text and asked to predict the character
 To mimic the human users ability to select multiple aliases of a character, before final classification the scores of character's nicknames are merged.
 For example merging \texttt{Ned} into \texttt{Eddard}.
 
+\subsection{Evaluation Metrics}
+We report overall accuracy, and weighted-average precision, recall and F1-score.
+The weighted-average scores are calculated by calculating the macro scores for each true class (as in macro averaging \parencite{SOKOLOVA2009427}), then weighting by the size of the class.
+Note that this means the overall accuracy is the same as the recall.
+\pdfcomment{I am  uncertain about the correct metrics to use}.
+
+In the case of the cross-validation results, we report the mean results over 10 random folds, using the same 10 folds for each model being evaluated.
+
 \subsection{Implementation}
+The full implementation is available at \url{https://github.com/oxinabox/NovelPerspective/}
+
 The text is preprocessed using NLTK \parencite{bird2009natural} to added features.
 The text is first tokenised, part of speech (POS) tagged , and finally named entity chunked (binary), using NLTK's default methods\footnote{(Punkt sentence tokenizer, improved TreeBank tokenizer (regex), Greedy Averaged Perceptron POS tagger, Max Entropy Named Entity Chunker)}.
 The use of a binary, rather than a multi-class named entity chunker is significant.
 Because fantasy novels often use ``exotic'' names for characters, we found that it often  fooled the multi-class named entity recogniser, into thinking characters were organisations or places rather than people.
+Note however this is particularly disadvantageous to the First Mentioned Named Entity Baseline, as any kind of named entity will steal the place.
+Never-the-less, it is required to ensure that all character names are a possibility to be selected.
 
 XGBoost tree ensemble's are used for the machine learning methods \parencite{chen2016xgboost}.
-The full implementation is available at \url{https://github.com/oxinabox/NovelPerspective/}
+
+%Scikit-Learn is used to calculate the evaluation metrics and to orchestrate the cross-validation tests \parencite{scikit-learn}.
+
+
+
 
 
 \section{Results and Discussion}\label{sec:results-and-discussion}
@@ -165,12 +185,12 @@ An online demonstration is available at \url{http://white.ucc.asn.au/tools/np}.
 This is a web-app, made using the CherryPy framework\footnote{\url{http://cherrypy.org/}}.
 The users uploads an ebook, and selects one of the character detection systems we have discussed above.
 
-The users is then presented with a page displaying a list of chapters,
-with the predicted main character in the left, and an excerpt from the beginning of the chapter on the right.
+The users is then presented with a page displaying a list of sections,
+with the predicted main character in the left, and an excerpt from the beginning of the section on the right.
 To avoid the user having to wait while the whole book is processed this list is dynamically loaded as it is computed.
 We find that the majority of the time is spend on running the preprocessing to annotate the data before the classification.
 
-When the whole book has been loaded and classified, the user can select chapters to download as a new ebook.
+The user can select sections to keep.
 This is done via checkboxes to the right of each author
 The user can input a regular expression for a character name to have the corresponding check-boxes marked.
 This uses the character name as predicted by the model.
