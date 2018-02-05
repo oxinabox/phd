@@ -128,7 +128,7 @@ We (the first author) can personally attest for some books reading the chapters 
 		\path (classify) edge node[above]{character name}  (end);
 		\end{tikzpicture}
 	}
-	\caption{The full process of the using NovelPerspective. Note that step 5 uses the original ebook to subset. \label{fig:classify}
+	\caption{\label{fig:classify}
 	}
 \end{figure*}
 
@@ -152,15 +152,50 @@ We thus attempt to solve it using machine learning, to combine these features to
 \subsection{Machine learning systems}
 One can see the determination of the main character as a multi-class classification problem.
 From the set of all named entities in the section, classify that section as to which one is the main character.
-Unlike typical multiclass classification problems
+Unlike typical multi-class classification problems
 the set of possible classes varies per section being classified.
+\pdfcomment{Relate this to named enity detection?}
 Further, even the total set of possible named characters, and thus classes, varies from book to book.
 
 An information extraction approach is required which can handle these varying classes.
 As such, any machine learning model used can not incorporate knowledge of the classes themselves into it's learned system.
 
+We reconsider the problem as a series of binary predictions.
+For each possible character (i.e. each named-entity that occurs), a feature vector is extracted.
+This feature vector is the input to a binary classifier, which determines the probability that it represents the main character.
+We consider than binary probability as the score for the corresponding character.
+We chose the highest scoring character.
+
+It should be noted that the base-line systems, while not using machine learning for the final character classification, they do make extensive use of machine learning based systems during the preprocessing stages (in the same way the machine learning systems to also for preprocessing).
+The POS-tagger, and the Named Entity recogniser are based on machine learning.
+
+\subsection{Classifier}
+XGBoost tree ensemble's are used for the machine learning methods \parencite{chen2016xgboost}.
+We use the default hyper-parameters:  100 trees with a max depth of 3,
+using the logistic loss function.
+
+During training, from each chapter in the training dataset,
+we generated a training example for every named entity that occurred.
+All bar one of these was a negative example.
 
 
+\subsection{Feature Extraction}
+For the models we investigated several feature sets.
+XGBoost is based on decision trees with limited depth.
+It thus performs implicit pruning, so we are not concerned with redundant or useless features.
+As such we use large numbers of features, many of which are not actually used in the trained model, as discussed in \Cref{sec:featureweights}.
+
+
+We define the  ``Classical Features-Set'' using features that are well established in NLP related tasks.
+We start with the features from the Baseline systems.
+The position in the text that the named Entity first occurs, and for symmetry also the last position.
+The the number of occurrences, as well as the rank of that score compared to the other named entity in this text.
+This occurrence rank is the only feature which gives direct reference to the other possibly labels.
+It would be possible to create more rank based-features for the other features.
+This give 100 base features.
+To allow for text length invariance we also provide each as a percentage its maximum possible value, For a total of 200 features.
+
+We define a ``Word Embedding Feature-Set'' using FastText word vectors
 
 
 
@@ -198,13 +233,14 @@ In the case of the cross-validation results, we report the mean results over 10 
 The full implementation is available at \url{https://github.com/oxinabox/NovelPerspective/}
 
 The text is preprocessed using NLTK \parencite{bird2009natural} to added features.
-The text is first tokenised, part of speech (POS) tagged , and finally named entity chunked (binary), using NLTK's default methods\footnote{(Punkt sentence tokenizer, improved TreeBank tokenizer (regex), Greedy Averaged Perceptron POS tagger, Max Entropy Named Entity Chunker)}.
+The text is first tokenised, part of speech (POS) tagged , and finally named entity chunked (binary), using NLTK's default methods.
+That is the Punkt sentence tokenizer \parencite{kiss2006unsupervised}, regex based improved TreeBank word tokenizer, Greedy Averaged Perceptron POS tagger, and the Max Entropy Named Entity Chunker.
 The use of a binary, rather than a multi-class named entity chunker is significant.
 Because fantasy novels often use ``exotic'' names for characters, we found that it often  fooled the multi-class named entity recogniser, into thinking characters were organisations or places rather than people.
 Note however this is particularly disadvantageous to the First Mentioned Named Entity Baseline, as any kind of named entity will steal the place.
 Never-the-less, it is required to ensure that all character names are a possibility to be selected.
 
-XGBoost tree ensemble's are used for the machine learning methods \parencite{chen2016xgboost}.
+
 
 %Scikit-Learn is used to calculate the evaluation metrics and to orchestrate the cross-validation tests \parencite{scikit-learn}.
 
@@ -213,6 +249,13 @@ XGBoost tree ensemble's are used for the machine learning methods \parencite{che
 
 
 \section{Results and Discussion}\label{sec:results-and-discussion}
+
+\subsection{Feature Weights}\label{sec:featureweights}
+From a model trained on the full combined dataset,
+we can extract the feature weights.
+
+
+
 
 
 \section{Demonstration}
