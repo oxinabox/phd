@@ -11,13 +11,20 @@
 \usepackage{url}
 \usepackage[subtle]{savetrees}
 
-
-\usepackage{tikz}
-\usetikzlibrary{positioning, fit,  shapes.geometric}
+%%%%%%%%%%%
+%Graphics
 \usepackage{graphicx}
-
-\graphicspath{{./figs/}, {./}}
-
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows,shapes,fit,  shapes.geometric}
+\tikzset{
+	every picture/.style={/utils/exec={\sffamily}},
+	every matrix/.style={ampersand replacement=\&, rounded corners=10pt},
+	every node/.style = {font=\small, inner sep = 3},
+	>=latex,
+	every text node part/.style={align=center}, auto,node distance=2.4, ->,
+	every edge/.append style={every node/.style={font=\footnotesize}}
+}
+%%%%%%%%%%%
 
 \usepackage[subpreambles=false]{standalone}
 
@@ -105,6 +112,27 @@ We (the first author) can personally attest for some books reading the chapters 
 
 
 \section{Character Detection Systems}
+\begin{figure*}
+	\resizebox{\textwidth}{!}{
+		\begin{tikzpicture}		
+		\node(start){};
+		\node(enrich)[draw, right=of start] {Tokenization\\POS Tagging\\Named Entity Tagging};
+		\node(features)[draw, right=of enrich] {Feature\\ Extraction};
+		\node(classify)[draw, right=of features] {Main Character\\ Classification};
+		\node(end)[right=of classify] {};
+		
+		\path (start) edge node[above]{Raw Text \\ of Section}  (enrich);
+		\path (enrich) edge node[above]{enriched\\text} (features);
+		\path (features) edge node[above]{feature-vector\\character-name\\pairs
+		} (classify);
+		\path (classify) edge node[above]{character name}  (end);
+		\end{tikzpicture}
+	}
+	\caption{The full process of the using NovelPerspective. Note that step 5 uses the original ebook to subset. \label{fig:classify}
+	}
+\end{figure*}
+
+
 
 \subsection{Baseline systems: First and Most Common}
 The obvious way to determine the main character of the section is to select the first named entity. This works well for many examples: ``It was a dark and stormy night. Bill heard a knock at the door.''; however it fails for many others ``'Is that Tom knocking on my door' thought Bill, one storm night.''.
@@ -123,7 +151,14 @@ We thus attempt to solve it using machine learning, to combine these features to
 
 \subsection{Machine learning systems}
 One can see the determination of the main character as a multi-class classification problem.
-From the set of all named entities in the chapter, classify the chapter as to which one is the main character.
+From the set of all named entities in the section, classify that section as to which one is the main character.
+Unlike typical multiclass classification problems
+the set of possible classes varies per section being classified.
+Further, even the total set of possible named characters, and thus classes, varies from book to book.
+
+An information extraction approach is required which can handle these varying classes.
+As such, any machine learning model used can not incorporate knowledge of the classes themselves into it's learned system.
+
 
 
 
@@ -181,10 +216,33 @@ XGBoost tree ensemble's are used for the machine learning methods \parencite{che
 
 
 \section{Demonstration}
+
+\begin{figure*}
+	\resizebox{\textwidth}{!}{
+		\begin{tikzpicture}		
+		\node(start)[draw] {1.\\User\\ uploads\\ ebook};
+		\node(convert)[draw, right=of start] {2.\\ File is\\ converted and \\preprocessed};
+		\node(classify)[draw, right=of convert] {3.\\Sections are \\ classifed by character\\ See \Cref{fig:classify}};
+		\node(select)[draw, right=of classify] {4.\\User selects\\ sections\\ to keep};
+		\node(create)[draw, right=of select] {5.\\Subsetted\\ ebook\\ is created};
+		\node(download)[draw, right=of create] {6.\\User \\downloads \\ new ebook};
+		
+		\path (start) edge[below] node[above]{original ebook \\ + settings}  (convert);
+		\path (convert) edge[below] node[above]{section\\ content} (classify);
+		\path (classify) edge[below] node[above]{section-character\\list} (select);
+		\path (select) edge[below] node[above]{section\\selection}  (create);
+		\path (create) edge[below] node[above]{new \\ ebook}  (download);	
+		\end{tikzpicture}
+	}
+	\caption{The full process of the using NovelPerspective. Note that step 5 uses the original ebook to subset. \label{fig:fullprocess}
+	}
+\end{figure*}
+
 An online demonstration is available at \url{http://white.ucc.asn.au/tools/np}.
 This is a web-app, made using the CherryPy framework\footnote{\url{http://cherrypy.org/}}.
-The users uploads an ebook, and selects one of the character detection systems we have discussed above.
 
+
+The users uploads an ebook, and selects one of the character detection systems we have discussed above.
 The users is then presented with a page displaying a list of sections,
 with the predicted main character in the left, and an excerpt from the beginning of the section on the right.
 To avoid the user having to wait while the whole book is processed this list is dynamically loaded as it is computed.
