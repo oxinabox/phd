@@ -4,9 +4,9 @@
 \usepackage{newtxtext}
 \usepackage[author={Lyndon}]{pdfcomment}
 
-\usepackage{booktabs}
-\usepackage{pgfplotstable}
-\pgfplotsset{compat=1.14}
+
+
+
 
 \usepackage{url}
 \usepackage[subtle]{savetrees}
@@ -24,9 +24,30 @@
 	every text node part/.style={align=center}, auto,node distance=2.4, ->,
 	every edge/.append style={every node/.style={font=\footnotesize}}
 }
-%%%%%%%%%%%
-
 \usepackage[subpreambles=false]{standalone}
+
+%%%%%%%%%%%
+%  Tables
+\usepackage{booktabs}
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=1.14}
+
+\pgfplotstableset{col sep=comma, header=has colnames,
+	numeric type,
+	precision=3,
+	fixed zerofill=true,
+	%			bf content/.style={postproc cell content/.style={@cell content/.add={1\textbf{##1}}}},
+	stringcol/.style={string type, column type={r}},
+	columns/Testset/.style={stringcol},
+	columns/Dataset/.style={stringcol},
+	columns/Method/.style={stringcol},
+	%		every row 3 column Acc /.style={bf content},
+	every head row/.style={after row = {\toprule}}
+}
+
+
+%%%%%%%%%%%%%%%%%%%
+% Math 
 
 \usepackage{amssymb}
 \usepackage{amsmath}
@@ -35,7 +56,7 @@
 \DeclareMathOperator*{\argmax}{arg\,max}
 
 \newcommand{\compactmath}[1]{\noindent\resizebox{\columnwidth}{!}{$#1$}}
-
+%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage{cleveref}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -108,38 +129,45 @@ We (the first author) can personally attest for some books reading the chapters 
 
 
 
-
-
-
-\section{Character Detection Systems}
+\section{Character Classification Systems}
 \begin{figure*}
 	\resizebox{\textwidth}{!}{
 		\begin{tikzpicture}		
 		\node(start){};
 		\node(enrich)[draw, right=of start] {Tokenization\\POS Tagging\\Named Entity Tagging};
 		\node(features)[draw, right=of enrich] {Feature\\ Extraction};
-		\node(classify)[draw, right=of features] {Main Character\\ Classification};
+		\node(scoring)[draw, right=of features] {Character\\Scoring};				
+		\node(classify)[draw, right=of scoring] {POV Character\\ Classification \\(ArgMax)};
 		\node(end)[right=of classify] {};
 		
 		\path (start) edge node[above]{Raw Text \\ of Section}  (enrich);
 		\path (enrich) edge node[above]{enriched\\text} (features);
-		\path (features) edge node[above]{feature-vector\\character-name\\pairs
-		} (classify);
+		\path (features) edge node[above]{character-name\\feature-vector\\pairs
+		} (scoring);
+		\path (scoring) edge node[above]{character-name\\score pairs
+	} (classify);
 		\path (classify) edge node[above]{character name}  (end);
 		\end{tikzpicture}
 	}
-	\caption{\label{fig:classify}
-	}
+	\caption{The general structure of the character classification systems. This in turn is the classification step of part of the large stem in \Cref{fig:fullprocess}. \label{fig:classify}}
 \end{figure*}
-
+The common structure of all our character classification systems is shown in \Cref{fig:classify}.
+First the raw text is enriched with part of speech and named entity targets,
+from which features are extracted for each named entity.
+Theses are used to score the named entities for the most-likely to be the POV character, and the highest scoring is returned by the system.
+The different systems presented modify the the Feature extraction and Character scoring steps.
 
 
 \subsection{Baseline systems: First and Most Common}
-The obvious way to determine the main character of the section is to select the first named entity. This works well for many examples: ``It was a dark and stormy night. Bill heard a knock at the door.''; however it fails for many others ``'Is that Tom knocking on my door' thought Bill, one storm night.''.
+The obvious way to determine the main character of the section is to select the first named entity.
+In this system feature extraction and scoring is just to give a score of one to the first named entity found, and zero to the others.
+This works well for many examples: ``It was a dark and stormy night. Bill heard a knock at the door.''; however it fails for many others ``'Is that Tom knocking on my door' thought Bill, one storm night.''.
 Sometimes a section  may go several paragraphs describing events before it even mentions the character who is perceiving them.
 This is a varying element of style.
 
 A more robust method is to use the most commonly named entity.
+
+Here the feature extraction and scoring step scores each named entity proportionate to how often it occurred.
 This works well, as once can assume the most commonly named entity is the main character.
 However, it is fooled, for example, by book chapters that are about the main character's relationship with a secondary character.
 In such cases the secondary character may be mentioned more often.
@@ -169,17 +197,21 @@ We chose the highest scoring character.
 It should be noted that the base-line systems, while not using machine learning for the final character classification, they do make extensive use of machine learning based systems during the preprocessing stages (in the same way the machine learning systems to also for preprocessing).
 The POS-tagger, and the Named Entity recogniser are based on machine learning.
 
-\subsection{Classifier}
+\subsubsection{Classifier}
 XGBoost tree ensemble's are used for the machine learning methods \parencite{chen2016xgboost}.
 We use the default hyper-parameters:  100 trees with a max depth of 3,
 using the logistic loss function.
 
-During training, from each chapter in the training dataset,
+During training, from each text in the training dataset,
 we generated a training example for every named entity that occurred.
 All bar one of these was a negative example.
+We then trained it as per normal for a binary classifier, using the logistic loss function.
+
+Theoretically, a better loss function would be a variation on the multi-class hinge-loss \parencite{dogan2016multiclassSVM}, where the objective would be for the true named entity to score higher than any of the other named entities extracted from the same text.
 
 
-\subsection{Feature Extraction}
+
+\subsubsection{Feature Extraction}
 For the models we investigated several feature sets.
 XGBoost is based on decision trees with limited depth.
 It thus performs implicit pruning, so we are not concerned with redundant or useless features.
@@ -192,10 +224,14 @@ The position in the text that the named Entity first occurs, and for symmetry al
 The the number of occurrences, as well as the rank of that score compared to the other named entity in this text.
 This occurrence rank is the only feature which gives direct reference to the other possibly labels.
 It would be possible to create more rank based-features for the other features.
+The other features are based on frequency of each POS tag of the immediately adjacent words.
 This give 100 base features.
 To allow for text length invariance we also provide each as a percentage its maximum possible value, For a total of 200 features.
 
-We define a ``Word Embedding Feature-Set'' using FastText word vectors
+We define a ``Word Embedding Feature-Set'' using FastText word vectors \parencite{bojanowski2016enriching}.
+We concatenate the word embedding for the a 5 word window to either size of the named entity;
+and take the element-wise mean of this concentented vector over all occurrences of the named entity.
+Such averages of word embeddings have been shown to be a rich and useful feature in many tasks \cite{White2015SentVecMeaning,mikolovSkip}.
 
 
 
@@ -203,27 +239,44 @@ We define a ``Word Embedding Feature-Set'' using FastText word vectors
 
 \section{Experimental Setup}\label{sec:experimental-setup}
 \subsection{Datasets}
-We make uses of two series of books selected from our own personal collections.
+We make uses of three series of books selected from our own personal collections.
 The first four books of George R. R. Martin's ``A Song of Ice and Fire'' series (hereafter referred to as ASOIAF);
-and the two books of  Leigh Bardugo's ``Six of Crows'' duology (hereafter referred to as SOC).
-ASOIAF has a total of 256 chapters and 15 point of view characters.
-SOC has a a total of 92 chapters and 7  point of view characters.
+the two books of  Leigh Bardugo's ``Six of Crows'' duology (hereafter referred to as SOC);
+and the first three books of Brandon Sanderson's ``Stormlight Archive'' (hereafter referred to as SA).
 
-The requirements of the books to use in the training and evaluation of the NovelPerspective system is that they provide ground truth for the section's main characters.
-These books do so in the chapter names -- each matching to a character name.
+
+The requirements of the books to use in the training and evaluation of the NovelPerspective system is that they provide ground truth for the section's POV  character.
+ASOIAF and SOC do so in the chapter names.
+SA indicates using an chapter image corresponding to the main character.
+However, each chapter of SA has sections which feature different POV characters -- many of which do not features as ``main POV'' characters at all.
+Thus the ground truth of SA is much weaker.
+Better would be to have the sub-chapter sections individually labelled.
 
 We do not have any datasets with labelled sub-chapter sections,
 though the tool does support such works.
 
+
+\begin{table}
+	\begin{tabular}{rcc}
+		Dataset & Chapters & POV Characters\\
+		\toprule
+		ASOIAF  & 256	&	15\\
+		SOC		& 91	&	9\\
+		SA		& 275	&	6
+	\end{tabular}
+	\caption{Dataset key features. \label{tbl:datasets}}
+\end{table}
+
+The total counts of chapters and characters in the datasets, after preprocessing, is shown in \Cref{tbl:datasets}.
+Preprocessing consisted of  discarding chapters for which the POV character was not identifies (e.g. prologues); and of removing the character names from the chapter titles as required.
+
 \subsection{Evaluation Details}
-In the evaluation, the books chapters are pre-separated into body text and chapter name (character name).
-The detection systems are given the body text and asked to predict the character names.
+In the evaluation, the systems are given the body text and asked to predict the character names.
 To mimic the human users ability to select multiple aliases of a character, before final classification the scores of character's nicknames are merged.
 For example merging \texttt{Ned} into \texttt{Eddard}.
 
 \subsection{Evaluation Metrics}
-We report overall accuracy, and weighted-average precision, recall and F1-score.
-The weighted-average scores are calculated by calculating the macro scores for each true class (as in macro averaging \parencite{SOKOLOVA2009427}), then weighting by the size of the class.
+We report overall accuracy, and the micro-averaged precision, recall and F1-score \parencite{SOKOLOVA2009427}.
 Note that this means the overall accuracy is the same as the recall.
 \pdfcomment{I am  uncertain about the correct metrics to use}.
 
@@ -249,16 +302,7 @@ Scikit-Learn is used to calculate the evaluation metrics and to orchestrate the 
 
 \begin{table*}
 	\begin{adjustbox}{max width=\textwidth}
-		\pgfplotstabletypeset[col sep=comma, header=has colnames,
-			numeric type,
-			precision=3,
-			fixed zerofill=true,
-%			bf content/.style={postproc cell content/.style={@cell content/.add={1\textbf{##1}}}},
-		columns/Testset/.style={string type},
-		columns/Method/.style={string type},
-%		every row 3 column Acc /.style={bf content},
-		every head row/.style={after row = {\toprule}}
-		]{results/maineval.csv}
+		\pgfplotstabletypeset[]{results/maineval.csv}
 	\end{adjustbox}
 	
 	\caption{} \label{tbl:resmain}
@@ -279,7 +323,35 @@ This is actually a surprising good result.
 The word embedding model contains no features about how frequent the named entity occurs.
 Only the average of the word embeddings for its context.
 Yet it is still able to generally perform the task.
-This suggests that the 
+This suggests that word vector 
+\pdfcomment{IDK compare to work embedding feature on cross validation.}
+
+The hybrid results, including both word embedding features, and classical features perform identically to the Classical Features system.
+This can be attributed to during training, the word embedding features being found to be less useful, and thus not used in any of the trees.
+
+The weak ground truth of SA can be seen is the relatively poor performance of the ML systems trained on SA, compared to the other ML systems.
+\pdfcomment{See if this can be attributed to it learning to only trust most common features,  due to the decreased usefulness of other features as they are actually right for subsets of the text that are mis-labelled}
+
+
+
+\subsection{Cross Validation Results}
+
+\begin{table*}
+	\begin{adjustbox}{max width=\textwidth}
+		\pgfplotstabletypeset[]{results/crosseval.csv}
+	\end{adjustbox}
+	
+	\caption{10 fold cross-validation results. The ML systems are trained and tested on distinct slices of the same dataset. \label{tbl:rescross}}
+\end{table*}
+
+To determine the effect of author/book style on the performance of the systems,
+we also evaluated them using 10 fold cross validation.
+By training and testing on different chapters from within the same book we control for variations in the writing style.
+The results are shown in  \Cref{tbl:rescross}.
+It can be seen that they are indeed significantly better for the classical features system than the results in \Cref{tbl:resmain} where the systems trained on different books.
+With the SOC result being a perfect score
+This suggests that indeed the features that indicate a point of view character in one book, do not perfectly transfer to another; but that they are reasonably consistent within a single book.
+
 
 
 
@@ -341,5 +413,4 @@ The user can then manually correct the selection using the check-boxes before do
 
 \clearpage
 \bibliography{master}
-
 \end{document}
