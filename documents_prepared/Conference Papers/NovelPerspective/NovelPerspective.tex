@@ -106,15 +106,27 @@ The surge in popularity of ebooks has opened a new niche for consumer discourse 
 Tools such as the one present here, give the reader new freedoms in controlling how they consume their media.
 
 We focus here on novels written in the limited third-person point of view.
-In these stories, the main character is the point of view (POV) characters.
-Some examples include: 
-Across its 15 books, Robert Jordan's "Wheel of Time" series which has 146 POV characters\footnote{\url{http://wot.wikia.com/w3iki/Statistical_analysis}}). Only about one fifth of the total word count was from the POV of the ``main character''.
-George R.R. Martin's "A Song of Ice and Fire", have over 30 POV characters in the books published so far \footnote{\url{http://awoiaf.westeros.org/index.php/POV_character}}.
-Other well-known books meeting this requirement include:
-Robert Jordan's ``Wheel of Time'' series, all the novels from Brandon Sanderson's ``Cosmere'' universe, Brent Week's ``Nightangel'' and ``Lightbringer'' series,
-Steven Erikson's "Malazan Book of the Fallen" series, and thousands of others.
-This is also of interest for works written in omniscient third person point of view, such as J. R. R. Tolkien's ``Lord of the Rings'',
-which also may feature a focus on different main characters however the correct split is much less clear in these cases.
+In these stories, the main character is, for our purposes, the point of view (POV) character.
+Limited third-person POV is written in the third-person, that is to say the character is referred to by name, but with the observations limited to being from the perspective of that character.
+This is in-contrast to the omniscient third-person POV, where events are described by an external narrator.
+Limited third-person POV is extremely common in modern fiction.
+Well known examples include George R.R. Martin's "A Song of Ice and Fire", 
+Robert Jordan's ``Wheel of Time'', Brandon Sanderson's ``Cosmere'' universe, 
+Steven Erikson's "Malazan Book of the Fallen".
+It preserves the advantages of first person, in allowing the reader to observe inside the head of the character, while also allowing the flexibility to switch to narrate from another character \parencite{booth2010rhetoric}.
+This allows for multiple concurrent storylines around different characters.
+Our tool helps users un-entwine such storylines, giving the option to process them sequentially.
+
+
+
+%Some examples include: 
+%Across its 15 books, Robert Jordan's "Wheel of Time" series which has 146 POV characters\footnote{\url{http://wot.wikia.com/w3iki/Statistical_analysis}}). Only about one fifth of the total word count was from the POV of the ``main character''.
+%George R.R. Martin's "A Song of Ice and Fire", have over 30 POV characters in the books published so far %\footnote{\url{http://awoiaf.westeros.org/index.php/POV_character}}.
+
+%This is also of interest for works written in omniscient third person point of view, such as J. R. R. Tolkien's ``Lord of the Rings'',
+%which also may feature a focus on different main characters however the correct split is much less clear in these cases.
+
+
 
 The utility of dividing a book in this way varies with the book in question.
 Some books will cease to make sense when the core storyline crosses over different character.
@@ -125,8 +137,11 @@ many readers speak of ``skipping the chapters about the boring characters'',
 or ``Only reading the real main character's sections''.
 Particularly on a re-read, or after already having consumed the media in some other form such as watching a movie adaptation, or reading a summary.
 We note that sub-setting the novel once does not prevent the reader going back and reading the intervening chapters if it ceases to make sense, or from sub-setting again to get the chapters for another character who's path the one they are reading intersects.
-We (the first author) can personally attest for some books reading the chapters one character at a time is indeed possible, and indeed pleasant: having read George R.R. Martin's "A Song of Ice and Fire" series in exactly this fashion.
+We can personally attest for some books reading the chapters one character at a time is indeed possible, and indeed pleasant: the first author having read George R.R. Martin's "A Song of Ice and Fire" series in exactly this fashion.
 
+The primary limitation in segmenting ebooks this way is in classifying the sections as to which character they are from the perspective of.
+To solve this, the core of our tool is its character classification systems.
+We investigated several options which the main text of this paper will discuss.
 
 
 \section{Character Classification Systems}
@@ -225,12 +240,13 @@ The the number of occurrences, as well as the rank of that score compared to the
 This occurrence rank is the only feature which gives direct reference to the other possibly labels.
 It would be possible to create more rank based-features for the other features.
 The other features are based on frequency of each POS tag of the immediately adjacent words.
+We theorised that this POS information would be informative, as the it seemed reasonable that the POV character would be described as doing more things, so co-occurring with verbs seemed useful.
 This give 100 base features.
 To allow for text length invariance we also provide each as a percentage its maximum possible value, For a total of 200 features.
 
 We define a ``Word Embedding Feature-Set'' using FastText word vectors \parencite{bojanowski2016enriching}.
 We concatenate the word embedding for the a 5 word window to either size of the named entity;
-and take the element-wise mean of this concentented vector over all occurrences of the named entity.
+and take the element-wise mean of this concentrated vector over all occurrences of the named entity.
 Such averages of word embeddings have been shown to be a rich and useful feature in many tasks \cite{White2015SentVecMeaning,mikolovSkip}.
 
 
@@ -400,7 +416,7 @@ To avoid the user having to wait while the whole book is processed this list is 
 We find that the majority of the time is spend on running the preprocessing to annotate the data before the classification.
 
 The user can select sections to keep.
-This is done via checkboxes to the right of each author
+This is done via check-boxes to the right of each author
 The user can input a regular expression for a character name to have the corresponding check-boxes marked.
 This uses the character name as predicted by the model.
 As none of the models is perfect, some mistakes are likely to be mode.
@@ -410,6 +426,33 @@ The user can then manually correct the selection using the check-boxes before do
 
 
 \section{Conclusion}\label{sec:conclusion}
+We have presented a tool to allow consumers to restructure their ebooks around the characters they find most interesting.
+The system must discover the named entities present in each section of the book,
+and then classify the section as to which character is the Point of View character.
+For named entity detection we make use of standard tools.
+The classification is non-trivial.
+In its design we implemented several systems.
+Simply selecting the most commonly named character proved very successful as a baseline approach.
+It is outperformed by a machine learning based classifier using classical features: primarily occurrence counts of the named entity, and of the different parts of speech that occur adjacent to it.
+While none of the classifiers are perfect,
+they achieve high enough accuracy to be useful.
+
+The results are presented to the user via a web-interface.
+The user can use the results to select the chapters from the point of view of the character/s they are most interested in;
+and correct any errors the system has made.
+The user can then download the selected subset of their book.
+
+
+Further tools along these lines have potential as writing aids for authors.
+To allow them to assess how much ``screentime'' is being given to each character of their work in progress novels.
+With additional discourse processing, it would be possible to display other useful analytics, such as how often characters occur in the same scenes.
+
+Another application of related work would be the automatic indexing of texts, by adding features such as the main character name, the perspective, etc.
+This could be applied to resources such as Wikisource, or Project Gutenberg;
+which have texts, but not annotations such as these.
+
+
+
 
 \clearpage
 \bibliography{master}
