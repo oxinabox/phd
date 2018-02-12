@@ -10,26 +10,23 @@
 Whether one sees the artificial neural network technique described below as learning or as optimization depends largely on one's background and one's theoretical likes and dislikes. I will freely use ``learning'' in the remainder of this section because that term is traditionally used in the neural networks literature, but the reader should feel free to substitute ``optimization'' if (s)he finds the other term offensive. Please contact the author for an Emacs lisp function to enforce the usage of choice.%
 }}
 \chapter{Introduction to neural networks for machine learning}\label{sec:machine-learning-for-representations}
-\aside[Suggested Reading]{ As this is not a comprehensive introduction we recommend the reader look elsewhere for additional reading.
+\aside[Suggested Reading]{ As this is not a comprehensive introduction we recommend the reader to look elsewhere for additional reading.
 In particular we recommend
 the free online web-book: \citetitle{WebBookBackprop} \parencite{WebBookBackprop},
-and the comprehensive: \citetitle{TheDeepLearningBook} \parencite{TheDeepLearningBook}
+and the comprehensive: \citetitle{TheDeepLearningBook} \parencite{TheDeepLearningBook}.
 }
 
 
 \begin{abstract}
 	This chapter covers the crucial machine learning techniques required to understand the remained of the book: namely neural networks.
-	Readers already familiar with neural networks can freely skip over this chapter.
-	It does not cover all aspects of machine learning, or even neural networks, which would be many entire books on their their own.
-	A large portion of this section is dedicated to recurrent neural networks, and these are very important in natural language tasks.
+	Readers already familiar with neural networks can freely skip this chapter.
+	Readers interested in a more comprehensive coverage of all aspects of machine learning are referred to the many textbooks on this subject matter.
 \end{abstract}
 
-Machine learning, particularly neural networks, has become a hot topic of late.
-
-
-The core notion of machine learning is to learn a to perform an function based on examples.
+Machine learning, particularly neural networks, has become a hot topic in recent years.
+The core notion of machine learning is to learn to perform a function based on examples.
 This is in-contrast to ``regular programming'' where code is written to accomplish the function based on the programmer's analysis of the task.
-Machine learning is at its most useful when it is difficult to articulate explicit rules for finding an output for an input; but for which there are many examples of such.
+Machine learning is at its most useful when it is difficult to articulate explicit rules for finding an output from a given input; but for which there are many examples of such.
 For example, the rule of English spelling ``I before E, except after C'', is known to be often incorrect.
 It is hard to write a rule about letter order.
 However, a dictionary (or any other corpus) will have thousands of words showing the correct order.
@@ -38,6 +35,9 @@ a system could learn to determine the correct spelling of words containing \natl
 and inform the users as to if an input word is correct, even if the word never occurred in the training dictionary.
 This is because the machine learning algorithm (ideally) discovers generalisable rules, from the training examples.
 For most machine learning methods, including neural networks, these rules are not in a readily interpretable form, but are stored as numerical parameters of the model.
+It is for this reason they are often called black-box models.
+
+
 
 \section{Neural Networks}
 \aside[Multilayer perceptron or Artificial Neural Network?]{An artificial neural network is sometimes called a multilayer perceptron.
@@ -46,7 +46,7 @@ This term has generally fallen out of favour in newer works,
 with Geoffrey Hinton, who originally coined the term, expressing his own regret at the naming.
 Sometimes the term multilayer perceptron is used to distinguish feed-forward neural networks,
 from other neural network related technologies,
-such as restrict Boltzmann machines, Hopfield networks, self-organizing maps etc.
+such as restricted Boltzmann machines, Hopfield networks, self-organizing maps etc.
 Unless otherwise specified, we use the term neural network to refer to a feed-forward network as discussed in this chapter.
 }
 
@@ -70,31 +70,30 @@ The output is connected to the inputs in the layer above, or is the final output
 Typical object orientated programming teaches one to look for objects.
 A obvious object in a neural network would be a neuron.
 Another object could be the connection (weight).
-Perhaps a different subclass of neuron for each activation function.
-Don't do this.
+Perhaps a different subclass of neuron would be for each activation function.
+Do not do this.
 It will be incredibly slow in almost any programming languages -- where objects are always stored by reference, thus requiring a pointer dereferencing for each operation on each neuron.
 Object orientated is not a good paradigm for this kind of technical computing.
 Instead program in terms of matrix's and vectors.
-Potentially using objects for layers.
+Potentially using objects for layers, or for the entire network.
 This allows one to take advantage of efficient matrix algebra routines such as in BLAS and LAPACK.
 }
 
 
 
 \section{Function Approximation}
-
-The universal approximation theorem (UAT) tells us that a neural network can be used to approximate almost any function \parencite{mhaskar1992uat,leshno1993uat,SONODA2017uat}.
+The Universal Approximation Theorem (UAT) tells us that a neural network can be used to approximate almost any function \parencite{mhaskar1992uat,leshno1993uat,SONODA2017uat}.
 Here a function should be understood in the general sense -- classification is a function from observations to classes, regression is a function from observed values to target values.
 More precisely, for any continuous bounded function,
-the UAT states that there there exists a neural network that can approximate that function, to any given degree of accuracy.
+the UAT states that there exists a neural network that can approximate that function, to any given degree of accuracy.
 Further, it states that the network only needs a single hidden layer.
 In a less rigorous sense, of approximation, such a continuous bounded function can approximate any function, over a restricted sub-domain of input values.
 
-The earliest proofs of this was restricted to bounded activation functions like the sigmoid .
+The earliest proofs of this was restricted to bounded activation functions like the sigmoid.
 More recent work has extended this for unbounded activation functions like ReLU \pcite{SONODA2017uat}.
 
 A network without any hidden layers is only able to approximate linear functions.
-It is equivalent to a perceptron, or a linear SVM. 
+It is equivalent to a perceptron, or a linear SVM \parencite{backprop,minsky2017perceptrons}. 
 
 
 However, the UAT does not tell us the values for those weight parameters,
@@ -113,31 +112,33 @@ nor if deeper is more efficient than wider.
 The key determination in applying neural networks to any problem,
 is the choice of the hyper-parameters.
 Including, the number of hidden layers, and their widths.
-Neural networks can largely be thought-off as black-boxes,
+Neural networks can largely be thought of as black-boxes,
 that can be trained to  accomplish tasks given a set of training examples.
 Beyond recognising how to express the problem,
-the chose of hyper-parameters is the most important decision when employing a neural network based solution.
+the choice of hyper-parameters is the most important decision when employing a neural network based solution.
 
 
 \subsection{Width and Depth}
 While the UAT has shown that a single hidden layer is sufficient,
 it is not necessary optimal in terms of achieving best performance in practice.
 For many problems it is better to have a deeper rather than wider network.
-This realisation and the techniques to overcome issues relating to deeper networks has lead the current deep learning trend.
+This realisation and the techniques to overcome issues relating to deeper networks lead the current deep learning trend.
+
+\aside[What happened to Unsupervised Pretraining?]{
+	\textcite{hinton2006fastDBN,bengio2007greedylayerwise} lead to a new resurgence of interests in neural networks.
+	Pretraining with Deep Belief Networks allowed for deep networks to be trained.
+	It was held for many years that it was necessary to use layer-wise unsupervised pretraining,
+	even when one has only supervised data.
+	\textcite{glorot2011deepRELUsparse} showed that with ReLU units, a deep network could be trained directly and achieve the same performance.
+	As such unsupervised pretraining is now a more niche technique used primarily when there is an excess of unsupervised data.
+}
+
 
 In the last decade, deep nets have come back into fashion.
 In brief the reasoning for this is a combination of a better techniques (e.g. ReLU, unsupervised pretraining),
 better hardware (e.g. GPUs and Xeon Phi), and more labelled data (e.g. from crowd-sourcing platforms such as Amazon Mechanical Turk.)
 This has allowed problems that were previously considered unsolvable with earlier shallow networks to be solved with deep networks achieving state of the art results.
 
-\aside[What happened to Deep Belief Network Pretraining?]{
-	\textcite{hinton2006fastDBN,bengio2007greedylayerwise} lead to a new resurgence of interest in neural networks.
-	Pretraining with Deep Belief Networks allowed for deep networks to be trained.
-	It was held for many years that it was necessary to use layer-wise unsupervised pretraining,
-	even when one has only supervised data. 
-	\textcite{glorot2011deepRELUsparse} showed that with ReLU units, a deep network could be trained directly and achieve the same performance.
-	As such unsupervised pretraining is now a more niche technique used primarily when there is an excess of unsupervised data.
-}
 
 The choice of the number of hidden layers (depth),
 and the sizes (width) is a key parameter in designing a neural network.
@@ -146,50 +147,72 @@ It can be assessed using a hyper-parameter sweep on a validation or development 
 It is a particularly relevant parameter for our purposes, as hidden layers normally are directly linked to our representations of natural language.
 
 
+%\subsection{Connectivity}
+
+
 
 \subsection{Activation functions}
 
 \aside[Notation: Generic Activation Function $\varphi$:]{Though-out this book, when the activation function is not significant to the problem at hand, we will represent it with the \mbox{symbol $\varphi(\cdot)$.}}
 
-The universal approximation theorem places a number of requirements on the activation function.
+The universal approximation theorem places a number of requirements on the choice of activation function.
 These requirements have been progressively relaxed by works such as \textcite{leshno1993uat, SONODA2017uat}.
-This section discusses a number that are in common use today.
+This section discusses the activation functions in common use today.
 
-The choice of activation function determined the range of output of a neuron.
+The choice of activation function determines the range of output of a neuron.
 For the hidden layers these generally perform relatively similarly.
 Sigmoid, tanh, and ReLU are the most common activation functions used for hidden layers.
 The range of output of a hidden layer does not normally matter, as it is by definition hidden.
 More significantly, the final activation function or the output function does always matter.
 The output function should be chosen for the task at hand.
-As will be discussed in \Cref{sec:rnn} this also has significance when designing gating neural network structures.
+As will be discussed in \Cref{sec:rnn} this also has significance when designing gated neural network structures.
+
+\aside[Activation functions summary:]{
+\emph{identity}: \hfill range {$(\infty,\infty)$}\\
+\emph{sigmoid}:  \hfill range {$(0,1)$}\\
+\emph{softmax}:  \hfill range {$(0,1)$}\\
+\emph{tanh}:     \hfill range {$(-1,1)$}\\
+\emph{ReLU}:     \hfill range {$(0,\infty)$}\\
+\emph{ReLU6}:    \hfill range {$(0,6)$}
+}
 
 Beyond determining the range of the output, its derivative also determines the behaviour during training via gradient descent based training methods.
-This is significant for activation functions like ReLU and ReLU6 discussed below.
+This is significant for activation functions like ReLU and ReLU6 discussed in the following sections.
 
-The activation functions, other than the linear layer, and the softmax layer, are applied element-wise to vector inputs,
-as such the scalar definitions are given below.
+The activation functions, other than the softmax layer, are applied element-wise to vector inputs.
+As such the scalar definitions are given here.
+We write $y = \varphi(z)$, for $y$ being the output, and $z$ being the weighted input from the layer below.
+To represent the whole layer including weights and biases we write:
+\begin{equation}
+\v y =\varphi(z) = \varphi(W \v x + \v b)
+\end{equation}
 
-\subsubsection{Linear}
-A linear layer is the most basic activation function.
-Arguably not truly an activation function at all, the true activation function associated with it would be the identity function.
-It is commonly used as an output function for regression tasks.
-
-It is also known as an affine layer as it corresponds to an affine transformation of its input; as a dense layer, as it corresponds to dense graph of connections between neurons; and as an inner product layer, as it is this described the matrix product used.
+\subsubsection{Identity (Affine/Linear)}
+The most basic activation function is the identity.
+To simply output the weighted sum of the inputs, without applying a non-linearity.
+It is commonly used as an output function for regression tasks,
+as it imposes no (additional) bounds.
 
 \begin{equation}
-\v y=W \v z + \v b
+\v y= \v z
 \end{equation}
-In this equation $W$ and $\v b$ are a trained weight matrix and bias vector respectively.
-This allows the output to be any value, within some set of bounds learned during training.
+
+Often the use of the identity activation function will be described in terms of the whole layer, including the weight and bias.
+The layer is often called an affine layer as it corresponds to an affine transformation of its input.
+When the bias is fixed at zero, this is a linear transformation of the input.
+
+\begin{equation}
+\v y=W \v x + \v b
+\end{equation}
+In this equation $W$ and $\v b$ are a trained weight matrix and bias vector respectively,
+and $\v x$ is the output of the layer below.
+
+Using an affine output layer on-top of the hidden layers
+allows the learned scaling and shifting of any of the other activation functions.
 However, when this is not needed it increases the difficulty of training for no benefit.
 
-It is normal to have such a transform on every layer.
-This defined the layers as fully connected.
-As it allows the scaling and shifting of any of the other activation functions.
-
-
-Linear layers, cannot on their own, be used as hidden layer activation functions.
-A stack of linear layers simplifies to be equivalent to a single linear layer, which means that the network can only approximate linear functions.
+Identity functions cannot be used as hidden layer activation functions.
+A stack of affine layers simplifies to be equivalent to a single affine layer, which means that the network can only approximate linear functions.
 A non-linearity is required.
 This is what the other activation functions provide.
 
@@ -204,45 +227,58 @@ This is what the other activation functions provide.
 \end{tikzpicture}
 }
 
-This is the classic neural network activation function.
+Sigmoid is the classic neural network activation function.
 \begin{equation}
 y=\sigma(z)=\frac{1}{1+\exp{-z}}
 \end{equation}
-Sigmoid output values are between zero and one.
+Sigmoid outputs values between zero and one.
 If the network has a single output then this is a fuzzy boolean.
 It can be used to classify into two categories.
-It is sometimes called a logistic output function.
+It is sometimes referred to the logistic output function as it forms the basis of logistic regression.
+(Conversely, sometimes the word sigmoid is used to refer to all functions of such an S shape.)
 
 Note that this function has the property that, $\sigma(-z)=1-\sigma(z)$.
 This means negating the input to the final sigmoid in a binary classification network,
-is the same as switching the classes, that it is define in terms of.
+is the same as switching which class is considered as true.
 
-\subsubsection{Softmax}
-\aside[multinomial logistic regression]{A neural network classifier with a softmax output layer is sometimes called a multinomial logistic regression network (especially if there are no hidden layers).
+
+\aside[Multinomial logistic regression]{A neural network classifier with a softmax output layer is sometimes called a multinomial logistic regression network (especially if there are no hidden layers), or even just a logistic regression network.
 	This can lead to some confusion with a sigmoid outputting network.
 	However, the similarity can be understood by considering a softmax output layer with 2 classes.
-	For $v=\i{\v z}_2 - \i{\v z}_1$
-	This reduces to $\softmax(\v z)= \left[ \sigma({v});  1-\sigma(v) \right]$.
+	For $\v z = \left[\iv z_1, \iv z_2\right]$
+	defining $v=\iv z_1 - \iv z_2$ \\
+	A (binary) logistic classification using the same inputs can be written:
+	$P(Y{=}1)=\sigma(v) = \frac{1}{1+\exp{\iv z_2 - \iv z_1}}$.
+	
+	The 2 class softmax formulation is:\\
+	$\softmax(\v z)$\\
+	\scalebox{0.95}{$=\left[\frac{\exp{\iv z_1}}{\exp{\iv z_1}+\exp{\iv z_2}},  \frac{\exp{\iv z_2}}{\exp{\iv z_1}+\exp{\iv z_2}} \right]$} \\
+		$=\left[\frac{1}{1+\exp{\iv z_2 - \iv z_1}},  \frac{1}{\exp{\iv z_1 - \iv z_2}+1} \right]$\\
+		$=\left[ \sigma(v),  \sigma(-v) \right]$\\
+		$=\left[ \sigma(v),  1-\sigma(v) \right]$\\
+		$=\left[P(Y{=}1), P(Y{=}2) \right]$
 }
 
-Softmax is the standard output layer for categorical classification.
-Formally, one should say that it is a regression to a class probability, rather than a true classifier as it does not return the class.
+\subsubsection{Softmax}
+The standard output activation function for multiclass classification is softmax.
+Formally, training a so-called softmax classifier is regression to a class probability, rather than a true classifier as it does not return the class but rather a prediction of each class's likelihood.
 We will use the terms interchangeably.
 
-Defining the layer $\v y$ in terms of its elements:
+Defining the layer $\v y$ in terms of its elements,
+recall that by our notation convention $\iv y_i$ is the $i$th element of the vector $\v y=\left[\iv y_1,\,\iv y_2,\,\ldots \iv y_n\right]$:
 \begin{equation}
 \iv y_i=\i {\left(\softmax(\v z)\right)}_i= \frac{\exp{\iv z_i}}{\sum_{j=1}^{j=N} \exp{\iv z_j}}
 \end{equation}
-For $N$ the number of outputs equal to the number of categories in the classification.
+$\v y$ is a vector of length $n$, where $n$ the number of classes in the classification.
+\pdfcomment{Diagram might be nice here}
 
-These elements have  values are between zero and one, and sum to one.
+These elements have  values between zero and one, and sum to one.
 They thus define a discrete probability mass function.
 
 When used for classification $\v y_i$ gives the probability of being in class $i$.
 \begin{equation}
 P(Y=i\mid \v z) = \i {\left(\softmax(\v z)\right)}_i  = \iv y_i
 \end{equation}
-
 
 
 Softmax is a \emph{soft}, i.e. differentiable,  version of what could be called \emph{hard-max}.
@@ -263,12 +299,12 @@ Further consideration of the softmax is given in \Cref{sec:softmax-and-bayes-the
 }
 
 The hyperbolic tangent function is a  scaled and shifted sigmoid function.
+Such that the outputs are restricted to be between $-1$ and $+1$.
 
 \begin{equation}
 y=\tanh(z)=\frac{\exp{2z}-1}{\exp{2z}+1}=2\sigma(2z)+1
 \end{equation}
 
-The notable difference from sigmoid is that the outputs are restricted to be between $-1$ and $+1$.
 
 \subsubsection{ReLU}
 \asidefig[The ReLU function]{
@@ -289,13 +325,13 @@ z & 0\le z\\
 \end{equation}
 Values are restricted to be at non-negative.
 As this function has derivative zero for $z<0$, once a unit is turned off, it is not turned back-on.
-As during gradient descent the derivative to modify weights in its inputs will always be zero.
+During gradient descent (see \Cref{sec:gradient-descent-and-back-propagation}) the derivative is used to modify the weights, as it is zero it the weights will never change once turned off.
 This is commonly called the neuron dying.
-Further to this, using random initialization this ensures that half of all neurons in the layer will be never turned on.
-Thus resulting in sparse connections between the layers.
+Further to this, using (zero mean) random initialization this ensures that approximately half of all neurons in the layer will initially be dead due to being randomly initialised to output a negative value.
+This results in sparse connections between the layers.
 This has been found to be a good thing \pcite{glorot2011deepRELUsparse}.
 ReLU is very commonly used as a hidden layer activation function for deep networks.
-It also helps with the gradient vanishing and gradient exploding problems that occur in deep networks.
+It also helps with the gradient vanishing and gradient exploding problems that occur in deep networks \parencite{glorot2011deepRELUsparse}.
 \pdfcomment{I think maybe this whole section needs to be moved to after I have explained gradient descent?}
 
 
@@ -318,13 +354,13 @@ z & 0\le z\le6\\
 0 & z<0
 \end{cases}
 \end{equation}
-\aside[Why are we bringing up ReLU6?]{ReLU6 is one of the more obscure activation functions. As such it may seem a bizarre inclusion in this shorter introduction. However, we have found it surprisingly successful as an activation function, e.g. in the auto-encoder example which follows in \Cref{sec:bottle-necking-autoencoder}. It also nicely illustrates the flexibility and indeed arbitrariness in how acti}
+\aside[Why are we bringing up ReLU6?]{ReLU6 is one of the more obscure activation functions. As such it may seem a bizarre inclusion in this shorter introduction. However, we have found it surprisingly successful as an activation function, e.g. in the auto-encoder example which follows in \Cref{sec:bottle-necking-autoencoder}. It also nicely illustrates the flexibility and indeed arbitrariness in how activation functions can be defined.}
 
 This has similar advantages to ReLU.
 However, as well as units being able to die to zero, it can also die to positive.
 The bounding at 6, rather than any other number is rather arbitrary -- particularly given scaling with the intervening affine layers.
 The important point is that it is bound both above and below.
-This greatly simplifies any proving of capacities for proving theoretical capabilities of variant networks as it hugely simplifies the proofs.
+This greatly simplifies any proofs of theoretical capabilities of various networks.
 
 
 
@@ -345,47 +381,52 @@ The process of training the network is the process of solving a very high dimens
 	As the evaluation is often not differentiable, a proxy for it which we call the \textbf{loss function} is used in training.
 	For example, squared error for regression, or cross-entropy for classification.
 	The loss function is applied to the output of the network during training to calculate the error between the network output for a given input, and the target output from the training example.
-	The loss function is such that minimising the loss function also (ideally) results in the true evaluation function being optimised.
+	The loss function is designed such that minimising the loss function also (ideally) results in the true evaluation function being optimised.
 }
 
-Finding the globally optimal solution to such a problem would is a very difficult problem.
-Nonlinear and non-convex problems can have local minima that are not global minima.
-This means they can not be guaranteed to be solved  a global optima by gradient descent.
-However, this does not pose an issue for more neural networks as finding the true global optima is not required, merely finding a \emph{good enough} set of weights to get a \emph{good enough} result.
+Finding the globally optimal solution to such a function is itself a very difficult problem.
+Nonlinear and non-convex problems can have local minima that are not global optima.
+This means they cannot guarantee to reach a global optima by gradient descent.
+However, this does not pose an issue for most neural networks as finding the true global optima is not required, merely finding a \emph{good enough} set of weights to get a \emph{good enough} result.
 
-To train the network one must find the values for the networks weight and bias parameters, such that that total loss function is minimized over the training set.
+To train the network one must find the values for the networks weight and bias parameters, such that the total loss function is minimized over the training set.
 
 To define the training problems as an optimisation problem one first considers the loss function for a single training case.
 For a target output $y$ and an actual output $\hat{y}$, (considering the scalar case) a loss function is defined $loss(y, \hat{y})$.
 For example the squared error loss (sometimes called L2 loss, though that risks confusion with L2 weight penalty for regularisation) used in regression is defined by
 \begin{equation}
-SE(y, \hat{y})=(y-\hat{y})(y-\hat{y})
+SE(y, \hat{y})=(y-\hat{y})^2
 \end{equation}
 The cross-entropy loss used in binary classification is defined by
 \begin{equation}
-	CE(y, \hat{y})=-\left((1-y)(\log (1-\hat{y})) + y(\log (\hat{y}))\right)
+	CE(y, \hat{y})=-\left((1-y)\log (1-\hat{y}) + y\log (\hat{y})\right)
 \end{equation}
 The choice of loss function depends on the purpose of the network.
 
-The network function ($f$) is composed into the loss function.
-This give a per training case loss of $loss(\v y, \v f(\v x,\tilde{P}))$.
-For $\v f(\v x,\tilde{P})$ being the function that executes some neural network, with weight and bias parameters all grouped into given by $\tilde{P}$, upon an input $\v x$ where the target output is $\v y$.
+When network function ($f$) is composed into the loss function
+the per training case loss is given by $loss(\v y, \v f(\v x,\tilde{P}))$.
+$\v f(\v x,\tilde{P})$ is the function that executes some neural network, with weight and bias parameters all grouped into $\tilde{P}$, upon an input $\v x$ where the target output is $\v y$.
 
 The total loss ($Loss$) is defined by taking the sum over the whole training set ($\seq{X}$) of input output pairs.
 \begin{equation}
-Loss(\tilde{P}, \seq X) = \sum_{\forall (\v x, \v y)\in\seq{X}} loss(\v y, \v f(\v x),\tilde{P}))
+Loss(\tilde{P}, \seq X) = \sum_{\forall (\v x, \v y)\in\seq{X}} loss(\v y, \v f(\v x,\tilde{P}))
+\label{equ:totalloss}
 \end{equation}
-This is now nothing but a nonlinear function to be minimised by adjusting the values of the weights and biases in $\tilde{P}$.
+\Cref{equ:totalloss} nothing but a nonlinear function to be minimised by adjusting the values of the weights and biases in $\tilde{P}$.
 \pdfcomment{P is not in the notation section, maybe change to W}
 
 This can be given to off-the-shelf  unconstrained nonlinear optimisation algorithms \pcite{Ngiam2011} such as L-BFGS  \parencite{nocedal1980updating}.
-Alternatively, and more commonly, the loss and updated can be processed iteratively on sub-sets (minibatches) of the training data at a time -- often using optimisation algorithms specifically targeted at machine learning applications such as Adam \parencite{kingma2014adam}.
+Alternatively, and more commonly, the loss and updated can be processed iteratively on sub-sets, called minibatches, of the training data at a time.
+The extreme case of this is to update for every single training example -- this is called online training.
+Updating on minibatches is generally preferred over updating per example as it results in less small ``noisy'' weight fluctuations which may prevent reaching local minima.
+It is preferred over full-batch (on the whole training set) as the more frequent updates allow for faster learning \pcite{lecun2012efficient}.
+Minibatch optimisation is often performed using algorithms specifically targeted at machine learning applications such as Adam \parencite{kingma2014adam}.
 In either case, almost all optimizers used for neural networks rely on gradient descent.
 
 \aside[AdaGrad, AdaDelta, and Adam]{
 AdaGrad \parencite{AdaGrad}, AdaDelta \parencite{DBLP:journals/corr/abs-1212-5701} and Adam \parencite{kingma2014adam}
- are effectively successive versions of an optimisation algorithm specifically targeted at the machine learning case.
-In these algorithms dynamically adapt the learning rate during training.
+ are effectively successive versions of an optimisation algorithm, specifically targeted at the machine learning case.
+These algorithms dynamically adapt the learning rate during training.
 There are several other algorithms in the family, for example RMSprop.
 In recent works, Adam is the most commonly used optimiser.
 \textcite{DBLP:journals/corr/DauphinVCB15} presents another algorithm from this family,
@@ -394,7 +435,7 @@ which is the fundamental innovation in more traditional quasi-Newtonian methods 
 }
 
 
-\subsubsection{Gradient Descent and Back-propagation}
+\subsubsection{Gradient Descent and Back-propagation}\label{sec:gradient-descent-and-back-propagation}
 \aside[Back-propagation vs Gradient Descent?]{%
 	Formally speaking, back-propagation finds the gradients, and Gradient Descent uses those gradients to update the network parameters.
 	However, the terms are often used interchangeably.
@@ -407,24 +448,46 @@ The parameters in this case are the network weights and biases.
 To calculate the gradients the back-propagation algorithm is used.
 
 Back-propagation is simply a method of applying the well-known chain-rule of calculus to the neural network loss functions \pcite{backprop}.
-It one to calculate:  $\frac{\partial Loss}{\partial{\i W_{i,j}}}$
+It allows one to calculate:  $\frac{\partial Loss}{\partial{\i W_{i,j}}}$
 for any weight (or bias) parameter $\i W_{i,j}$ in the network.
-These can always be found as the overall loss function, including the network, is differentiable \footnote{Technically most networks are differentiable almost everywhere. For some functions like ReLU they have some single points of where the derivative is not defined. But the derivatives here can be forced to a known value.} (when using typical activation functions and loss functions).
+These partial derivatives can always be found as the overall loss function, including the network, is differentiable \footnote{Technically most networks are differentiable almost everywhere. For some functions like ReLU they have some single points of where the derivative is not defined. But the derivatives here can be forced to a known value.} (when using typical activation functions and loss functions).
 
-Using this gradient the network parameters can thus be updated.
+Using these gradients the network parameters can thus be updated.
 Updating the parameters to a new value in the direction of the gradient decreases the loss (for the right step size).
 This means for each $W_{i,j} \in \tilde{P}$ updating its value according to the local gradient.
 \begin{equation}
 \i W_{i,j} \leftarrow \i W_{i,j} - \alpha \frac{\partial Loss}{\partial{\i W_{i,j}}}
 \end{equation}
-Where $\alpha$ is a update step size, commonly called the learning rate.
-The more advance methods discussed earlier, such as Adam, and L-BFGS, are extensions along this core principle.
+where $\alpha$ is an update step size, commonly called the learning rate.
+The more advanced methods discussed earlier, such as Adam, and L-BFGS, are extensions along this core principle.
+
+\def\errorsurface(#1,#2){(0.5*#1 + 0.7*#2 + sin(deg(1.5*#1 + #2^2)))^2}
+\asidefig[A visualisation of a possible error (loss) surface. The arrow indicates a possible step from one set of parameters (weights) down to another set of parameters with lower loss, via gradient descent.\label{fig:errorsurface}]{
+\begin{tikzpicture}
+\begin{axis}
+[width=0.85\notescolwidth,
+enlargelimits,
+tick align=inside,
+domain=-1:3,
+samples=25,
+xlabel=$\i W_{1,1}$,
+ylabel=$\i W_{2,1}$,
+zlabel=$Loss$
+]
+\addplot3[surf]{\errorsurface(x,y)};
+\pgfmathsetmacro{\startstep}{\errorsurface(0.5,0.5)}
+\pgfmathsetmacro{\endstep}{\errorsurface(0.15,0.15)}
+\draw[->, thick] (axis cs:0.5,0.5,\startstep) -- (axis cs:0.15,0.15,\endstep);
+\end{axis}
+\end{tikzpicture}
+}
 
 
 If one considers a plot with the loss given on the vertical axis,
 and the values of the parameters as describing a position on the horizontal axes,
 then gradient descent is moving that the parameter-point downward on that surface based on local estimate of the slope.
-\pdfcomment{Insert Plot Here}
+Such a plot is shown in \Cref{fig:errorsurface}
+Most real networks have far more than 2 parameters, of-course, however the process of gradient decent remains the same.
 
 
 
@@ -432,7 +495,7 @@ then gradient descent is moving that the parameter-point downward on that surfac
 
 \section{Some Examples of Common Neural Network Architectures}
 \aside[These examples are available online]{For a practical introduction to the networks discussed here, worked examples of these network are available in the accompanying blog post at \url{http://white.ucc.asn.au/NNforNLPBook/NNexamples}.
-	They are written in are in the Julia programming language, making use of the TensorFlow.jl package.
+	They are written in the Julia programming language, making use of the TensorFlow.jl package.
 }
 
 We will discuss more linguistically relevant neural networks in the following chapters.
@@ -443,9 +506,9 @@ However, to introduce the topic, we will give some basic examples.
 \aside[FashionMNIST]{is a new image classification benchmarking dataset \parencite{xiao2017/online}.
 It is a task to classify images of shirts, shoes and bags etc.
 It is an exact drop-in replacement for MNIST.
-It was created to allow the same brenchmarking scripts to be used;
+It was created to allow the same benchmarking scripts to be used;
 while using a different data set.
-This combats extremely high use of MNIST leading to implicit test set information leakage in the design of ML systems;
+This combats extremely high use of MNIST leading to implicit test set information leakage in the design of ML systems (where systems are base on systems which perform well on MNIST due to more of such systems being published.);
 as well as being a more difficult task, thus allowing better discrimination between systems.
 }
 
@@ -623,8 +686,8 @@ The effect of this to be that only the bias information of the final layer matte
 The normal solution to this in deep networks is ReLU or ReLU6 units.
 
 However, a ReLU, or ReLU6 unit is not ideal either,
-as these units turn-off, and can not turn back on again.
-If one of the just 2 neurons in the code layer turn-off then they can not turn back on again -- thus forcing it down to just one neuron, or none if that neural also dies.
+as these units turn-off, and cannot turn back on again.
+If one of the just 2 neurons in the code layer turn-off then they cannot turn back on again -- thus forcing it down to just one neuron, or none if that neural also dies.
 In trialling this network structure, this was found to occur quiet very often.
 
 The solution was to add a ``leak'' to the unit.
