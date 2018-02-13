@@ -15,24 +15,28 @@
 \RequirePackage{xcolor}
 \definecolor{blue}{rgb}{0.2, 0.2, 1.0}
 
+
+\LoadClass[
+a4paper,
+twoside,
+titlepage,
+fontsize = 14pt,
+parskip = full,
+%headings = small,
+index = totoc,
+listof = totoc,
+bibliography = totoc,
+numbers = noenddot,
+appendixprefix = true,
+captions = nooneline
+]{scrbook}
+
 %%%%%%%%%%%%%%%
 % Page Layout
 
 
-\LoadClass[
-  a4paper,
-  twoside,
-  titlepage,
-  fontsize = 14pt,
-  parskip = full,
-  headings = small,
-  index = totoc,
-  listof = totoc,
-  bibliography = totoc,
-  numbers = noenddot,
-  appendixprefix = true,
-  captions = nooneline
-]{scrbook}
+
+
 
 \newcommand\pagedivisions{14}
 \newlength{\completemargin}
@@ -139,6 +143,7 @@
 
 \NewDocumentCommand{\asidefig}{o +m}{%
 	\makenote*{%
+		\centering%
 		#2%
 		\clearcaptionsetup{figure}%
 		\captionof{figure}{\color{blue} #1}%

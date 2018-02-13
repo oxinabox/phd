@@ -58,7 +58,7 @@ but many others have come from statistical methods or elsewhere.
 A neural network is no more similar to a brain, than it is to a Fourier transform.
 
 The core idea behind a neural network is to represent the transformation of the input to the output as links between neurons in a sequence of layers.
-Each neuron has a weighted connection the the neurons in the layer below,
+Each neuron has a weighted connection to the neurons in the layer below,
 and it applies a nonlinear function to this weighted sum, 
 to determine its own output.
 The output is connected to the inputs in the layer above, or is the final output.
@@ -525,12 +525,12 @@ A basic network to complete this task is is shown in \Cref{fig:mnistnetwork}.
 
 The network is defined by the equations:
 \begin{align}
-\v z=\varphi(\d W_1 x + \dv b_1) \\
-\hat{y}=\softmax(\d W_2 z + \dv b_2) \\
-P(Y=i\mid X=\v x) &= \hat{y}_i \\
+\v z&=\varphi(\d W_1 x + \dv b_1) \\
+\hat{y}&=\softmax(\d W_2 z + \dv b_2) \\
+P(Y{=}i{\mid}X{=}\v x) &= \hat{y}_i \\
 &= \left[\softmax(\d W_2 \varphi(\d W_1 \v x + \dv b_1)+\dv b_2)\right]_i
 \end{align}
-For $X$ the input variable of grey-scale pixels intensities, and $Y$ the output as a class.
+for $X$ the input variable of grey-scale pixels intensities, and $Y$ the output as a class.
 The output is represented with 1 hot encoding, where the index corresponding to the class is 1, and the others zero.
 
 
@@ -545,11 +545,11 @@ The input is given by the grey scale pixel intensities in the original $28\times
 This is flattened giving a $784$ element sized vector ($\v x$).
 The first weight matrix projects that up onto a hidden layer  of width $1024$.
 Thus $\d W_1$ is a $1024\times 784$ matrix.
-The bias $\d {\v b}_1$ is for that hidden layer, and so is a vector of length $1024$.
+The bias $\d {\v b}_1$ is for that hidden layer, so is a vector of length $1024$.
 The hidden layer's actual activation values ($\v z$) for any input can be considered as being the values taken by 1024 different latent variables describing that input.
-Variables that are chosen  from a continuous abstract space of variables (via training) o be useful in discriminating the correct class in the next layer.
+These are chosen  from a continuous abstract space of variables (via training) to effectively discriminate the correct class in the next layer (the output layer).
 
-As this is a shallow network, without one hidden layer, the next layer is the output layer.
+This is a shallow network, with only one hidden layer.
 A deep network would have more hidden layers, for additional latent variables describing relations.
 For the output layer we must project down to 10 dimensions, as there are 10 classes to choose from: the numbers from 0 to 9.
 thus $\d W_2$ is a $10 \times 1024$ matrix,
@@ -563,8 +563,8 @@ This will become important for understanding output embeddings, and hierarchical
 
 The conditional probability of a classification given the value of some observed variable is defined by $P(Y=y\mid Z=\v z)$.
 For $Y$ being the class taking value $i$;
-and $Z$ being the variable being conditioned upon, taking value $\v z$.
-Here $\v z$  is some features vector, this could be the output of a hidden layer below, or it could be a direct input.
+and $Z$ the variable being conditioned upon, taking value $\v z$.
+Here $\v z$  is some feature vector, this could be the output of a hidden layer below, or it could be a direct input.
 Using softmax the estimated probability is given by
 \begin{align} 
 P(Y{=}i\mid Z{=}\v z) &= \i {\softmax(\v z)}_i\\
@@ -587,7 +587,7 @@ By considering this for each index $i$ (class value) that $Y$ might take then we
 \end{equation}
 
 Given one is considering the case for a particular class $Y=i$,
-then it can be seen that the row vector $\i W_{i,:}$ as a weighting map for features possessed by $\v z$
+then it can be seen that the row vector $\i W_{i,:}$ as a weighting map for features possessed by $\v z$,
 i.e. for input ($Z$) feature $j$, $\i W_{i,j}$ determines the relative weighting for that feature vs the other features of $Z$,
 when the class is $i$.
 When trained, the weight values should be such that it scores how likely the features are to occur for a given output class.
@@ -598,13 +598,13 @@ We can say that our scoring function $R$, has a likelihood term:
 R(Z{=}\v z\mid Y{=}i)=\exp{\i \left(W \v z \right)_{i}}
 \end{equation}
 
-We will return to this these row vectors  $\i W_{i,:}$ when we discuss as output embeddings in \Cref{sec:word-representations}.
-$\i W_{i,:}$ must characterise the output class $i$, since difference classes would assign have different importance to different features in the $Z$.
+We will return to these row vectors  $\i W_{i,:}$ when we discuss as output embeddings in \Cref{sec:word-representations}.
+$\i W_{i,:}$ must characterise the output class $i$, since difference classes would assign different importance to different features in the $Z$.
 Furthermore, to some degree similar classes, i.e. classes triggered by similar features, would thus have more similar weights.
 
 
 %
-We can combine the unnormalised score factors to reformulated the original statement:
+We can combine the unnormalised score factors to reformulate the original statement:
 \begin{equation}
 P(Y{=}i\mid Z{=}\v z)=\frac{R(Z{=}\v z\mid Y{=}i)\,R(Y{=}i)}{\sum_{\forall j}R(Z{=}\v z\mid Y{=}j)\,R(Y{=}j)}
 \end{equation}
@@ -622,10 +622,10 @@ P(Y{=}i\mid Z{=}\v z)&=\frac{P(Z{=}\v z\mid Y{=}i)\,P(Y{=}i)}{P(Z{=}\v z)}\\
 
 
 The similarities can be seen.
-The bias effectively determines a prior probability like term.
+The bias effectively determines a prior probability-like term.
 The weights defines the posterior probability: that is the chance of a particular class having a particular set of features.
 The rows of the weight matrix mark how important each hidden feature is to each class. \pdfcomment{check rows vs cols}
-We can this consider that each row of the weight matrix is itself a representation itself of the class, as characterised by the importance of those latent features.
+We can consider that each row of the weight matrix is itself a representation of the class, as characterised by the importance of those latent features.
 In the next chapter we will consider this as an output embedding.
 
 A more traditional way of finding a representation of an input (rather than an output class) is to use an autoencoder.
@@ -634,7 +634,7 @@ A more traditional way of finding a representation of an input (rather than an o
 
 An autoencoder is a tool primarily used for finding a representation of their input.
 There are many varieties of autoencoder based on neural network related techniques, including the works of \textcite{hinton2002RBM,hinton2006reducing,hinton2006fastDBN,vincent2010stacked,ICML2012Chen_416,2014VAE}.
-This is itself a whole sub-field of machine learning.
+This itself is a whole sub-field of machine learning.
 Here we look at a simple bottlenecking autoencoder
 \parencite{bourlard1988auto,japkowicz2000nonlinear}.
 It has been used in a variety of tasks to attempt to find an optimal representation for an input e.g. as in \tcite{Usui:92}.
@@ -644,7 +644,7 @@ It has been used in a variety of tasks to attempt to find an optimal representat
 	\includegraphics[width=\textwidth]{figs/chapterintromachinelearning/mnist-encoding.png}
 \end{figure}
 An autoencoder is a neural network tasked with outputting its input.
-This in and of itself is a pointless task -- one already has the perfect reproduction of the input, in the input itself.
+This seemingly is a pointless task -- one already has the perfect reproduction of the input, in the input itself.
 However, the true use of an autoencoder is to extract the output of one of the intermediary layers.
 We call the intermediary layer the code layer.
 To force this coded representation to have useful interesting properties,
@@ -664,7 +664,7 @@ We compress it down to just 2 dimensions using the network shown in \Cref{fig-au
 	\resizebox{\textwidth}{!}{\input{figs/chapterintromachinelearning/autoencoder.tikz}}
 \end{figure}
 
-
+\FloatBarrier
 In this particular network $\varphi$ is a leaky RELU6 unit.
 \asidefig[The Leaky ReLU6 function. The leak level on this plot is exaggerated for purposes of visualisation.]{
 	\begin{tikzpicture}
@@ -682,17 +682,17 @@ In this particular network $\varphi$ is a leaky RELU6 unit.
 \end{equation}
 
 The reason for this is that a sigmoidal unit does not perform well in a deep network because of the gradient-vanishing/exploding effects.
-The effect of this to be that only the bias information of the final layer mattered -- effectively making all outputs just the average of all inputs.
+As a result, only the bias information of the final layer mattered, effectively making all outputs just the average of all inputs.
 The normal solution to this in deep networks is ReLU or ReLU6 units.
 
 However, a ReLU, or ReLU6 unit is not ideal either,
 as these units turn-off, and cannot turn back on again.
-If one of the just 2 neurons in the code layer turn-off then they cannot turn back on again -- thus forcing it down to just one neuron, or none if that neural also dies.
+If one of the only 2 neurons in the code layer turn-off then they cannot turn back on again -- thus forcing it down to just one neuron, or none if that neuron also dies.
 In trialling this network structure, this was found to occur quiet very often.
 
 The solution was to add a ``leak'' to the unit.
 A small constant gradient even in the saturated position.
-Making such a neuron possible, if difficult, to turn back on once turned off.
+Making such a neuron possible, even if difficult, to turn back on once turned off.
 With this change the network always produces quality results.
 An example of the recreation of an input from the test set can be seen in 
  \Cref{fig-ae-recreation}. 
@@ -703,14 +703,14 @@ It can be seen that the blur suggests that the input is a 7 or 9 like shape -- t
 
 
 More significantly, a sampling of the code layer is visually shown in \Cref{mnist-encoding}.
-In this image, the positions on the X and Y axis of the input images, are given by the values on the coded layer said images correspond to.
-It can be seen the the code is capturing key information about the appearance.
+In this image, the positions on the X and Y axis for each input image is given by the values from the code layer for the representation of that image.
+It can be seen that the code is capturing key information about the appearance.
 The 0s appear near to the similarly rounded 6s,
 the 8s near the 3s, etc.
-In particular the 1s are arrayed according to the their slope.
+In particular the 1s are arrayed according to their slope.
 The autoencoder has captured very useful information about the inputs, that would be hard to define with any hand-written feature extractor.
 
-It is this property of networks, to implicitly discover and define the most important latent variables and relationships to the task at hand that also makes the valuable for natural language processing.
+It is this property of networks, to implicitly discover and define the most important latent variables and relationships to the task at hand that also makes it valuable for natural language processing.
 
 
 \end{document}

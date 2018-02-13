@@ -10,52 +10,37 @@
 \node(w1) at (0,0) {$w_{i}$};
 
 
-\node(Cn)[lookupbox] at (-4,1) {$\vdots$};
-\def\tblmax{6}
-\foreach \ii in {1,...,\tblmax} {
-	\pgfmathsetmacro\pos{(\ii - 1) * 3 };
-	\pgfmathtruncatemacro\jj{(\tblmax -\ii)};
-	
-	\node(C\ii)[lookupbox, above = \pos mm of Cn]{$\bullet\bullet\bullet\bullet\bullet\bullet$};
-	\node(Clbl\ii)[left = 0mm of C\ii]{\footnotesize $C_\jj$:};
-};
-\node(C)[above = 0mm of C\tblmax.north, text width=40] {\small \textsc{Input \\Embedding Table}};
+\coordinate[above left=of w1, xshift=-3cm] (CC0);% at (Cn);
+\embtable{C}{CC0}{Input Embedding Table}
 
-
-\draw[->] (w1) edge (C3.east);
+\draw[->] (w1) edge ({C}3.east);
 
 
 \node(L2)[layer, above = 8 of w1,
 	%label={[label distance=0] 0: i.e. \\ $\i \softmax(\ldots)_{\n w_j}$}
 	]{
-$\frac{\exp{\i V_{\n w_j, :} \i C_{w_i} + \iv b_{\n w_j}}}%
-{\sum_{\forall k} \exp{\i V_{k, :} \i C_{w_i} + \iv b_k }}$
+$\frac{\exp{\i V_{\n w_j, :} \i C_{w_i}}}%
+{\sum_{\forall v \in \set V} \exp{\i V_{v, :} \i C_{w_i}}}$
 };
-\draw[->]  (C3.east) edge node[labe]{$\i C_{\n w_i}$} (L2);
+
+\draw[->]  ({C}3.east) edge node[labe]{$\i C_{\n w_i}$} (L2);
 
 
-\node(out)[above = of L2]{$P(\n w_j \mid \n w_i)$};
+\node(out)[above = 2 of L2]{$P(\n w_j \mid \n w_i)$};
 \draw[->] (L2) edge (out);
 
-\node(Vn)[lookupbox, above = 5 of Cn] {$\vdots$};
-\def\tblmax{6}
-\foreach \ii in {1,...,\tblmax} {
-	\pgfmathsetmacro\pos{(\ii - 1) * 3 };
-	\pgfmathtruncatemacro\jj{(\tblmax -\ii)};
-	
-	\node(V\ii)[lookupbox, above = \pos mm of Vn]{$\bullet\bullet\bullet\bullet\bullet\bullet$};
-	\node(Vlbl\ii)[left = 0mm of V\ii]{\footnotesize $\i V_{\jj,:}$:};
-	
-	\pgfmathsetmacro\ang{(\ii * -2 + -180+20 };
-	\draw[->] (V\ii.east) -- (L2.\ang);
-};
 
-\draw[->] (Vn.east) -- (L2.south west);
-\node(C)[above = 0mm of V\tblmax.north, text width=40] {\small \textsc{Output \\Embedding Table}};
+\coordinate[above = 8 of {C}n] (VV0);
+\embtable[T]{V}{VV0}{Output Embedding Table}
 
 
-\draw[->] (out.204) -- (V6.east);
-\draw[->] (V6.east)-- node[labe]{$\i V_{\n w_j,:}$} (L2.170);
+%	\pgfmathsetmacro\ang{(\ii * -2 + -180+20 };
+%	\draw[->] (V\ii.east) -- (L2.\ang);
+%\draw[->] ({V}n.east) -- (L2.south west);
+
+
+\draw[->] (out.204) -- ({V}6.east);
+\draw[->] ({V}6.east)-- node[labe]{$\i V_{\n w_j,:}$} (L2.170);
 
 \end{tikzpicture}
 

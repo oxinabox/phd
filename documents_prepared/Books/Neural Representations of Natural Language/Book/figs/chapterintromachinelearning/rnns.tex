@@ -13,8 +13,42 @@
 
 \begin{tikzpicture}[]
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Matched sequence
+
 \begin{scope}
-	\node(lblEncoder)[text width= \labelwidth] {\textbf{RNN Encoder:}\\%
+	\node(lblMatchSeq)[text width= \labelwidth] {\textbf{(a) RNN Matched-Sequence:}\\%
+		Variable $n$ inputs: $\nv x_t$\\%
+		Variable $n$ outputs: $\n \hat{y}_t$\\%
+	};
+	
+	\coordinate (L0) at (lblMatchSeq.east);
+	
+	\foreach \I[count=\j from 0] in {1,...,\N}{
+		\ifnumequal{\I}{\N - 1}{%
+			\node(L\I)[dashed, layer, right = of L\j] {...};
+			\node(w\I)[below = of L\I]{...};
+			\node(out\I)[above = of L\I]{...};
+		}%
+		{	
+			\node(L\I)[layer, right = of L\j] {RU};
+			\node(w\I)[below = of L\I]{\ifnumequal{\I}{\N}{$\nv x_n$}{$\nv x_\I$}};
+			\node(out\I)[above = of L\I]{\ifnumequal{\I}{\N}{$\n \hat{y}_n$}{$\n \hat{y}_\I$}};
+			\draw[->](w\I) -- (L\I);
+			\draw[->](L\I) -- (out\I);
+		}
+	}
+	\foreach \I[count=\j from 1] in {2,...,\N} {
+		\draw[->] (L\j) edge node[labe]{state} (L\I);
+	}
+	\draw[very thick] (-1.5,-2.4cm) -- (19.5,-2.4cm);	
+\end{scope}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Encoder
+\begin{scope}[yshift=-5cm] 
+	\node(lblEncoder)[text width= \labelwidth] {\textbf{(b) RNN Encoder:}\\%
 	Variable $n$ inputs: $\nv x_t$\\%
 	1 output: $\hat{y}$ \\%
 	};
@@ -38,53 +72,57 @@
 	
 	\node(out) [above = of L\N]{$\hat{y}$};
 	\draw[->] (L\N) -- (out);
+	\draw[very thick] (-1.5,-2.4cm) -- (19.5,-2.4cm);	
 \end{scope}
+
 
 %%%%%%%%%%%%%%%%
 % Decoder
-\begin{scope}[yshift=-5cm] 
-\node(lbl)[text width= \labelwidth] {\textbf{RNN Decoder:}\\%
-1 input: $x$\\%
-variable $m$ outputs: $\n \hat{y}_t$ \\%
-with prompts: $\nv r_t$ (often $\nv y_{t-1}$)
-};
-
-\coordinate (L0) at (lbl.east);
-\coordinate (L1c)[right = of L0];
-\node(x)[below right = 4 of L1c]{$x$};
-
-\foreach \I[count=\j from 0] in {1,...,\N}{
-	\ifnumequal{\I}{\N - 1}{%
-		\node(L\I)[dashed, layer, right = of L\j] {...};
-		\node(w\I)[above = of L\I]{...};
-		\node(y\I)[below = of L\I]{...};
-	}%
-	{	
-		\node(L\I)[layer, right = of L\j] {RU};
-		\node(v\I)[above = of L\I]{\ifnumequal{\I}{\N}{$\n \hat{y}_m$}{$\n \hat{y}_\I$}};
-		\node(w\I)[below = of L\I]{$[\nv r_\I; \v x]$};
-		\draw[->](w\I) -- (L\I);
-		\draw[->](L\I) -- (v\I);
-		\draw[->](x) to[bend right = 5] (w\I.300);
+\begin{scope}[yshift=-10cm] 
+	\node(lbl)[text width= \labelwidth] {\textbf{(c) RNN Decoder:}\\%
+	1 input: $x$\\%
+	variable $m$ outputs: $\n \hat{y}_t$ \\%
+	with prompts: $\nv r_t$ (often $\nv y_{t-1}$)
+	};
+	
+	\coordinate (L0) at (lbl.east);
+	\coordinate (L1c)[right = of L0];
+	\node(x)[below right = 4 of L1c]{$x$};
+	
+	\foreach \I[count=\j from 0] in {1,...,\N}{
+		\ifnumequal{\I}{\N - 1}{%
+			\node(L\I)[dashed, layer, right = of L\j] {...};
+			\node(w\I)[above = of L\I]{...};
+			\node(y\I)[below = of L\I]{...};
+		}%
+		{	
+			\node(L\I)[layer, right = of L\j] {RU};
+			\node(v\I)[above = of L\I]{\ifnumequal{\I}{\N}{$\n \hat{y}_m$}{$\n \hat{y}_\I$}};
+			\node(w\I)[below = of L\I]{$[\nv r_\I; \v x]$};
+			\draw[->](w\I) -- (L\I);
+			\draw[->](L\I) -- (v\I);
+			\draw[->](x) to[bend right = 5] (w\I.300);
+		}
 	}
-}
-\foreach \I[count=\j from 1] in {2,...,\N} {
-	\draw[->] (L\j) edge node[labe]{state} (L\I);
-}
+	\foreach \I[count=\j from 1] in {2,...,\N} {
+		\draw[->] (L\j) edge node[labe]{state} (L\I);
+	}
+
+	\draw[very thick] (-1.5,-3.8cm) -- (19.5,-3.8cm);	
 
 \end{scope}
 %
 %%%%%%%%%%%%%%%%%%
 % Encoder Decoder
 %
-\begin{scope}[yshift=-14cm]
-\node(lbl)[text width= \labelwidth] {\textbf{RNN Encoder-Decoder:}\\%
+\begin{scope}[yshift=-16.5cm]
+\node(lbl)[text width= \labelwidth] {(d) \textbf{RNN Encoder-Decoder:}\\%
 Variable $n$ inputs: $\nv x_t$\\%
 Variable $m$ outputs $\n \hat{y}_t$\\%
 Prompts: $\nv r_t$ (often $y_{t-1}$)
 };
 
-\coordinate (L0) at (lbl.east);
+\coordinate[yshift = -3.5cm] (L0) at (lbl.east);
 \numdef{\NN}{4}
 \foreach \I[count=\j from 0] in {1,...,\NN}{
 	\ifnumequal{\I}{\NN - 1}{%

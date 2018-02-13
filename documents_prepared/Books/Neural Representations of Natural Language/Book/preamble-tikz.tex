@@ -4,6 +4,32 @@
 \usepackage{etoolbox}
 
 \usepackage{tikz-qtree}
+% settings for trees
+\tikzset{every internal node/.style={draw, circle, tight}}
+
+
+
+% Makes embedding look-up tables	
+% Arg1=base-name, Arg2=position, Arg3=Table caption
+% Optional Arg T if to transpose
+% Eg:
+%\coordinate[above left=of w1, xshift=-2cm] (CC0);% at (Cn);
+%\embtable{C}{CC0}{Embedding Table}
+%
+\newcommand{\embtable}[4][F]{
+	\coordinate ({#2}0) at (#3);
+	\node({#2}n)[draw,tight, below = 0mm of {#2}0, minimum width=4.2em] {\footnotesize $\vdots$};
+	\def\tblmax{6}
+	\foreach \ii in {1,...,\tblmax} {
+		\pgfmathtruncatemacro\prev{(\ii - 1)};
+		\pgfmathtruncatemacro\jj{(\tblmax -\ii)};
+		%
+		\node({#2}\ii)[draw, tight, minimum width=4.2em, above = 0 mm of {{#2}\prev}.north]{\footnotesize$\varoast\varoast\varoast\varoast\varoast$};
+		\node({#2}lbl\ii)[left = 0mm of {#2}\ii]{\footnotesize 
+			\ifthenelse{\equal{#1}{T}}{$\i {#2}_{\jj,:}$}{$\i {#2}_\jj$}};
+	};
+	\node({#2})[above = 0mm of {#2}\tblmax, text width=5em] {\small \textsc{#4}};
+}
 
 \tikzset{
 	backgroundcolor/.style ={fill=white},
@@ -26,6 +52,7 @@
 	},
 	tight/.append style={
 		inner sep=0.2mm,
+		minimum height=0mm,
 	},
 	lookupbox/.append style={
 		draw=none,
