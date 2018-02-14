@@ -94,35 +94,6 @@ captions = nooneline
 }
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Make chapter titles not restricted by main width
-\renewcommand*{\chapterlinesformat}[3]{%
-	\makebox[\textwidth][l]{% avoid overfull \hbox
-		\parbox[t]{\dimexpr\textwidth+\marginparsep+\marginparwidth}{% use more width
-			\raggedchapter
-			\@hangfrom{#2}{#3}%
-		}%
-	}%
-}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%
-% customize dictum format:
-\setkomafont{dictumtext}{\itshape\small\sffamily}
-\setkomafont{dictumauthor}{\normalfont\small\sffamily}
-\renewcommand*\dictumwidth{0.8\textwidth}
-\renewcommand*\dictumauthorformat[1]{--- #1}
-\renewcommand*\dictumrule{}
-
-
-%%%%%%%%%%%%%%%%%%%%%%
-% A Chapter abstract
-\RequirePackage{environ}
-
-\NewEnviron{abstract}{%
-	\addtocontents{toc}{\small\BODY\par}%
-	\rightskip1in{\BODY}%
-}
 
 
 
@@ -146,9 +117,11 @@ captions = nooneline
 		\centering%
 		#2%
 		\clearcaptionsetup{figure}%
-		\captionof{figure}{\color{blue} #1}%
+%		\captionsetup{style=goodstyle}%
+		\captionof{figure}{ #1}%
 		\bigskip%
 	}%
+
 }
 
 
@@ -183,9 +156,7 @@ captions = nooneline
 
 
 \newcommand{\sidecite}[1]{%
-	%\ifentryseen{#1}
 	{\aside{\textcite{#1}, \citetitle{#1}}}%
-	%{}%do nothing if already shown this chapter	
 }
 
 \newcommand{\pcite}[1]{%
@@ -197,3 +168,33 @@ captions = nooneline
 	\sidecite{#1}%
 }
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Make chapter titles not restricted by main width
+\renewcommand*{\chapterlinesformat}[3]{%
+	\makebox[\textwidth][l]{% avoid overfull \hbox
+		\parbox[t]{\dimexpr\textwidth+\marginparsep+\marginparwidth}{% use more width
+			\raggedchapter
+			\@hangfrom{#2}{#3}%
+		}%
+	}%
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% customize dictum format:
+\setkomafont{dictumtext}{\itshape\small\sffamily}
+\setkomafont{dictumauthor}{\normalfont\small\sffamily}
+\renewcommand*\dictumwidth{0.8\textwidth}
+\renewcommand*\dictumauthorformat[1]{--- #1}
+\renewcommand*\dictumrule{}
+
+
+%%%%%%%%%%%%%%%%%%%%%%
+% A Chapter abstract
+\RequirePackage{environ}
+
+\NewEnviron{abstract}{%
+	\addtocontents{toc}{\small\BODY\par}%
+	\rightskip1in{\BODY}%
+}

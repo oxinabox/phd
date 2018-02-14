@@ -135,7 +135,7 @@ This realisation and the techniques to overcome issues relating to deeper networ
 
 
 In the last decade, deep nets have come back into fashion.
-In brief the reasoning for this is a combination of a better techniques (e.g. ReLU, unsupervised pretraining),
+In brief the reasoning for this is a combination of better techniques (e.g. ReLU, unsupervised pretraining),
 better hardware (e.g. GPUs and Xeon Phi), and more labelled data (e.g. from crowd-sourcing platforms such as Amazon Mechanical Turk.)
 This has allowed problems that were previously considered unsolvable with earlier shallow networks to be solved with deep networks achieving state of the art results.
 
@@ -213,8 +213,7 @@ However, when this is not needed it increases the difficulty of training for no 
 
 Identity functions cannot be used as hidden layer activation functions.
 A stack of affine layers simplifies to be equivalent to a single affine layer, which means that the network can only approximate linear functions.
-A non-linearity is required.
-This is what the other activation functions provide.
+A non-linearity is required, as is provided by most activation functions.
 
 
 \subsubsection{Sigmoid}
@@ -264,6 +263,17 @@ The standard output activation function for multiclass classification is softmax
 Formally, training a so-called softmax classifier is regression to a class probability, rather than a true classifier as it does not return the class but rather a prediction of each class's likelihood.
 We will use the terms interchangeably.
 
+\asidefig[An example of a softmax activation in use for with 3 classes for \mbox{$z\mapsto\softmax([z; \frac{z}{10}; {-}2z)]$}. Notice at all points the 3 outputs sum to 1.]{
+	\begin{tikzpicture}
+	\begin{axis}[sideplot, enlargelimits={rel=0.25}, 	domain=-5:5,]
+	\addplot+[mark=none, thick, color=blue] {exp(x)/(exp(x)+exp(0.1*x)+exp(-2*x))} node[pos=1, below]{$\i \hat{y}_1$};
+	\addplot+[mark=none, thick, color=red!80!black] {exp(0.1*x)/(exp(x)+exp(0.1*x)+exp(-2*x))} node[pos=0, above]{$\i \hat{y}_2$};
+	\addplot+[mark=none, thick, color=green!80!black] {exp(-2*x)/(exp(x)+exp(0.1*x)+exp(-2*x))} node[pos=0, below]{$\i \hat{y}_3$};
+	\end{axis}
+	\end{tikzpicture}
+}
+
+
 Defining the layer $\v y$ in terms of its elements,
 recall that by our notation convention $\iv y_i$ is the $i$th element of the vector $\v y=\left[\iv y_1,\,\iv y_2,\,\ldots \iv y_n\right]$:
 \begin{equation}
@@ -284,8 +294,8 @@ P(Y=i\mid \v z) = \i {\left(\softmax(\v z)\right)}_i  = \iv y_i
 Softmax is a \emph{soft}, i.e. differentiable,  version of what could be called \emph{hard-max}.
 In this conceptual hard-max function, the largest output is set to one, and the others set to zero.
 It is non-differentiable and thus not suitable for use in a neural network.
-In softmax the largest values is proportionally increased to be closest to one,
-and the smallest to be closest to zero.
+In softmax the larger values is proportionally increased to be closest to one,
+and the smaller to be closest to zero.
 
 Further consideration of the softmax is given in \Cref{sec:softmax-and-bayes-theorem}.
 
@@ -327,7 +337,7 @@ Values are restricted to be at non-negative.
 As this function has derivative zero for $z<0$, once a unit is turned off, it is not turned back-on.
 During gradient descent (see \Cref{sec:gradient-descent-and-back-propagation}) the derivative is used to modify the weights, as it is zero it the weights will never change once turned off.
 This is commonly called the neuron dying.
-Further to this, using (zero mean) random initialization this ensures that approximately half of all neurons in the layer will initially be dead due to being randomly initialised to output a negative value.
+Further to this, using (zero mean) random initialization ensures that a significant portion of all neurons will initially be dead.
 This results in sparse connections between the layers.
 This has been found to be a good thing \pcite{glorot2011deepRELUsparse}.
 ReLU is very commonly used as a hidden layer activation function for deep networks.
@@ -395,7 +405,7 @@ To define the training problems as an optimisation problem one first considers t
 For a target output $y$ and an actual output $\hat{y}$, (considering the scalar case) a loss function is defined $loss(y, \hat{y})$.
 For example the squared error loss (sometimes called L2 loss, though that risks confusion with L2 weight penalty for regularisation) used in regression is defined by
 \begin{equation}
-SE(y, \hat{y})=(y-\hat{y})^2
+	SE(y, \hat{y})=(y-\hat{y})^2
 \end{equation}
 The cross-entropy loss used in binary classification is defined by
 \begin{equation}
@@ -403,17 +413,17 @@ The cross-entropy loss used in binary classification is defined by
 \end{equation}
 The choice of loss function depends on the purpose of the network.
 
-When network function ($f$) is composed into the loss function
-the per training case loss is given by $loss(\v y, \v f(\v x,\tilde{P}))$.
-$\v f(\v x,\tilde{P})$ is the function that executes some neural network, with weight and bias parameters all grouped into $\tilde{P}$, upon an input $\v x$ where the target output is $\v y$.
+When network (represented by the function $f$) is composed into the loss function
+the per training case loss is given by $loss(\v y, \v f(\v x,\theta))$.
+$\v f(\v x,\theta)$ is the function that executes some neural network, with weight and bias parameters all grouped into $\theta$, upon an input $\v x$ where the target output is $\v y$.
 
 The total loss ($Loss$) is defined by taking the sum over the whole training set ($\seq{X}$) of input output pairs.
 \begin{equation}
-Loss(\tilde{P}, \seq X) = \sum_{\forall (\v x, \v y)\in\seq{X}} loss(\v y, \v f(\v x,\tilde{P}))
+Loss(\theta, \seq X) = \sum_{\forall (\v x, \v y)\in\seq{X}} loss(\v y, \v f(\v x,\theta))
 \label{equ:totalloss}
 \end{equation}
-\Cref{equ:totalloss} nothing but a nonlinear function to be minimised by adjusting the values of the weights and biases in $\tilde{P}$.
-\pdfcomment{P is not in the notation section, maybe change to W}
+\Cref{equ:totalloss} nothing but a nonlinear function to be minimised by adjusting the values of the weights and biases in $\theta$.
+
 
 This can be given to off-the-shelf  unconstrained nonlinear optimisation algorithms \pcite{Ngiam2011} such as L-BFGS  \parencite{nocedal1980updating}.
 Alternatively, and more commonly, the loss and updated can be processed iteratively on sub-sets, called minibatches, of the training data at a time.
@@ -437,7 +447,7 @@ which is the fundamental innovation in more traditional quasi-Newtonian methods 
 
 \subsubsection{Gradient Descent and Back-propagation}\label{sec:gradient-descent-and-back-propagation}
 \aside[Back-propagation vs Gradient Descent?]{%
-	Formally speaking, back-propagation finds the gradients, and Gradient Descent uses those gradients to update the network parameters.
+	Formally speaking, back-propagation finds the gradients, and gradient descent uses those gradients to update the network parameters.
 	However, the terms are often used interchangeably.
 }
 
@@ -454,14 +464,15 @@ These partial derivatives can always be found as the overall loss function, incl
 
 Using these gradients the network parameters can thus be updated.
 Updating the parameters to a new value in the direction of the gradient decreases the loss (for the right step size).
-This means for each $W_{i,j} \in \tilde{P}$ updating its value according to the local gradient.
+This means for each $W_{i,j} \in \theta$ updating its value according to the local gradient.
 \begin{equation}
 \i W_{i,j} \leftarrow \i W_{i,j} - \alpha \frac{\partial Loss}{\partial{\i W_{i,j}}}
 \end{equation}
 where $\alpha$ is an update step size, commonly called the learning rate.
 The more advanced methods discussed earlier, such as Adam, and L-BFGS, are extensions along this core principle.
 
-\def\errorsurface(#1,#2){(0.5*#1 + 0.7*#2 + sin(deg(1.5*#1 + #2^2)))^2}
+% Below line is declared in preamble.tex for reasons of how \makenote* works
+%\def\errorsurface(#1,#2){(0.5*#1 + 0.7*#2 + sin(deg(1.5*#1 + #2^2)))^2}
 \asidefig[A visualisation of a possible error (loss) surface. The arrow indicates a possible step from one set of parameters (weights) down to another set of parameters with lower loss, via gradient descent.\label{fig:errorsurface}]{
 \begin{tikzpicture}
 \begin{axis}
