@@ -1,7 +1,6 @@
 \documentclass[11pt,a4paper]{article}
 \usepackage[hyperref]{acl2018}
-
-\usepackage{newtxtext}
+\usepackage{times}
 %\usepackage[author={Lyndon}]{pdfcomment}
 
 \usepackage{booktabs}
@@ -9,7 +8,6 @@
 \pgfplotsset{compat=1.14}
 
 \usepackage{url}
-\usepackage[subtle]{savetrees}
 
 
 \usepackage{tikz}
@@ -32,6 +30,7 @@
 \DeclareMathOperator*{\argmin}{arg\,min}
 \DeclareMathOperator*{\argmax}{arg\,max}
 
+\usepackage[subtle]{savetrees}
 \setlength{\abovedisplayskip}{0pt}
 \setlength{\belowdisplayskip}{0pt}
 \newcommand{\compactmath}[1]{\noindent\resizebox{\columnwidth}{!}{$#1$}}
@@ -40,7 +39,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage{natbib}
-\bibliographystyle{apalike}
+\bibliographystyle{acl_natbib}
 
 \newcommand{\parencite}{\citep}
 \newcommand{\textcite}{\cite}
@@ -61,75 +60,121 @@
 
 \begin{abstract}
 When a speaker says the name of a color, the color that they picture is not necessarily the same as the listener imagines.
-Color is a grounded semantic task, but that grounding is not a mapping of a single word (or phrase) to a single point in color space,
-Proper understanding of color language requires the capacity to map a sequence of words is to a probability distribution in color space.
+Color is a grounded semantic task, but that grounding is not a mapping of a single word (or phrase) to a single point in color-space.
+Proper understanding of color language requires the capacity to map a sequence of words to a probability distribution in color-space.
 A distribution is required as there is no clear agreement between people as to what a particular color describes -- different people have a different idea of what it means to be \texttt{``very dark orange''}.
-Further such a model must learn an understanding of how each word in the sequence contributes to the color being described.
+Further, such a model must learn an understanding of how each word in the sequence contributes to the color being described.
 It is impossible to collect data for every possible sequence of color words.
 A system is required that solves both these issues.
-To achieve this, we propose a novel GRU based model which when given such a color description produces an estimated probability distribution across HSV color space.
+To achieve this, we propose a novel GRU-based model, which when given such a color description produces an estimated probability distribution across HSV color-space.
 This model learns how each term in the colour name comes together to determine the shape of the distribution.
 This allows the prediction of distributions for color description phrases never seen in training.
 \end{abstract}
 
-\section{Introduction}
+\section{Introduction}\label{sec:intro}
 
 Color understanding is an important subtask in natural language understanding.
 The color language sub-domain displays many of the same features and difficulties as in the full domain.
-Due to this difficulty, recent state of the art systems for image generation has demonstrated their capacity by generating from texts containing complex color descriptions such as ``the flower has petals that are bright pinkish purple with white stigma'' \parencite{reed2016generative, 2015arXiv151102793M}.
+Due to this difficulty, recent state of the art systems for image generation have demonstrated their capacity by generating from texts containing color descriptions such as ``the flower has petals that are bright pinkish purple with white stigma'' \parencite{reed2016generative, 2015arXiv151102793M}.
 It is a challenging domain, due to ambiguity, multiple roles taken by the same words, the many modifiers, and shades of meaning.
-The core focus of the work we present here is on these linguistic phenomena around the descriptions of the color of a single patch as characterized by a color space such as HSV \parencite{smith1978color}.
+The core focus of the work we present here is on these linguistic phenomena around the descriptions of the color of a single patch as characterized by a color-space such as HSV \parencite{smith1978color}.
 Issues of illumination and perceived color based on visual context are considered out of the scope.
 
 
 Consider that the word \texttt{``tan''} may mean one of a number of colors for different people in different circumstances ranging from the bronze of a tanned sunbather, to the brown of tanned leather;
 \texttt{``green''} may mean anything from \texttt{``aquamarine''} to \texttt{``forest green''};
- and even \texttt{``forest green''} may mean the shades of a rain-forest, or of a fir-wood.
+ and even \texttt{``forest green''} may mean the rich shades of a rain-forest, or the near grey of the Australian bush.
 Thus the color intended cannot be uniquely inferred from the color name.
 However, based on knowledge of the population's use of the words it is possible to estimate probabilities for the colors that might be intended.
-The primary aim of this work is to map a sequence of color description words to a probability distribution in a color space such as HSV.
+The primary aim of this work is to map a sequence of color description words to a probability distribution in a color-space such as HSV.
 This is required for a proper understanding of color language.
-This is in contrast to most recent work mapping terms to a single point color space \parencite{DBLP:journals/corr/KawakamiDRS16}.
+This is in contrast to other recent work where terms are mapped to a single point in color-space \parencite{DBLP:journals/corr/KawakamiDRS16}.
 
 
 Estimating color distributions has a clear use as a subsystem in many systems.
-For example, in a human-interfacing image-processing system, when asked to select the \texttt{``dark bluish green''} object, each object can be ranked based on how likely it's color is according to the distribution.
+For example, in a human-interfacing image-processing system, when asked to select the \texttt{``dark bluish green''} object, each object can be ranked based on how likely its color is according to the distribution.
 This way if extra information eliminates the most-likely object, the second most likely object can immediately be determined.
-Further, as the probability of the color of the object being described by the user input is known, a threshold can be given to report no object found, or to ask for additional confirmation.
+Further, as the probability of the color of the object being described by the user input is known, a threshold can be given to report that no object is found, or to ask for additional confirmation.
 
 
 Proper understanding requires considering the color intended as a random variable.
-One cannot simply map from a name to a single point or region in the color space, but rather one must map to a distribution.
-For a given color name, any number of points in color space could be intended, with some being more or less likely than others.
+One cannot simply map from a name to a single point or region in the color-space, but rather one must map to a distribution.
+For a given color name, any number of points in the color-space could be intended, with some being more or less likely than others.
 Or equivalently, up to interpretation, it may intend a region but the likelihood of what points are covered is variable and uncertain.
-Thus we must estimate a probability distribution for all of color space.
-This distribution is often multimodal and non-symmetric, with wide variance.
-To qualify our estimate of the distribution we discretize the color space into a large number of patches, and produce an output much like a histogram.
+This distribution is often multimodal and non-symmetric with wide variance, which further renders regression to a single point unsuitable.
+We estimate a probability distribution over the color-space.
+To qualify our estimate of the distribution we discretize the color-space into a large number of patches, and produce an output much like a histogram.
 This allows us to take advantage of the well known methods for estimating a probability mass distribution.
 
 
 This understanding of color language also requires a model capable of understanding linguistic compositionality.
 It must understand how modifiers such as \texttt{``dark''} modify basic colors; and  how other modifiers such as \texttt{``very''} would interact as a modifier to modifiers.
 It also must understand the functioning of affixes such as \texttt{``-ish''} in \texttt{``greenish''}.
-This compositional understanding is needed both as a point of theory: a model without it is not sufficiently powerful; and practically: the generalisation ability from a compositional model allows it to handle color descriptions not seen in training.
-Due to the combinatorial nature of language a data-sparsity problem exists:
+This compositional understanding is needed both as a point of theory and practically.
+Practically, the generalisation ability from a compositional model allows it to handle color descriptions not seen in training.
+Due to the combinatorial nature of language a data-sparsity problem exists that
 for a large number of word combinations there are few examples in any given corpus.
 This is a well known problem in n-gram language modelling \parencite{kneser1995improved,chen1996empirical,rosenfeld2000two}.
 To handle this we take inspiration from a solution used in that area: the use of a recurrent neural network \parencite{mikolov2010recurrent,mikolov2011RnnLM} to process each color description as a compositional sequence of terms.
 This allows the compositional understanding that is required for color understanding.
 
 
-The core contribution of this work is a method for estimating probability distributions in color space given a color name,
+The core contribution of this work is a method for estimating probability distributions in color-space, given a color name,
  which is able to handle color descriptions that are never seen during training.
 To handle distribution estimation we employ a novel discretization and blurring procedure.
 To allow for the capacity to predict distributions for colors never seen in training we define a GRU-based neural network to learn the compositional relationship from the term sequences describing the colors.
 We call this model the Color Distribution Estimation from Sequences of Terms (CDEST) model.
 
+
+\section{Related Work}\label{sec:related-work}
+The understanding of color names has long been a concern of psycholinguistics and anthropology  \parencite{berlin1969basic,heider1972universals,HEIDER1972337,mylonas2015use}.
+It is thus no surprise that there should be a corresponds field of research in natural language processing.
+
+The earliest works revolve around explicit color dictionaries.
+This includes the ISCC-NBS color system \parencite{kelly1955iscc} of 26 words, including modifiers, that are composed according to a context free grammar such that phrases are mapped to single points in the color-space;
+and the simpler, non-compositional, 11 basic colors of \textcite{berlin1969basic}.
+Works including \textcite{Berk:1982:HFS:358589.358606,conway1992experimental, mojsilovic2005computational, ele1994computational, menegaz2007discrete,van2009learning} which propose methods for the automatic mapping of colors to and from these small manually defined sets of colors.
+We note that \textcite{menegaz2007discrete,van2009learning} both propose systems that discretize the color-space, though to a much courser level than we consider in this work.
+
+
+More recent works, including the work presented here, function with much larger number of colors, larger vocabularies, and larger pools of respondents.
+In particular making uses of the large Munroe dataset \textcite{Munroe2010XKCDdataset}, as we do here.
+This allows a data driven approach towards the modelling.
+
+\textcite{mcmahan2015bayesian} and \textcite{meomcmahanstone:color} present color naming methods.
+These works are based on defining fuzzy rectangular distributions in the color-space to cover the distribution estimated from the data, which are used in a Bayesian system to non-compositionally determine the color name.
+%
+%\pdfcomment{During the similar time-period another online color naming survey was conducted.
+%\textcite{mylonas2010online,mylonas2012colour} collected a total of 50,000 observations from 2500 respondents in 7 languages.
+%In this work we use the larger, more publically available, Munroe dataset.}
+%
+\textcite{2016arXiv160603821M} maps a point in the color-space, to a sequence of distributions over color terms.
+They extends beyond, all prior color naming systems to produce a compositional color namer based on the Munroe dataset.
+Their method uses a recurrent neural network (RNN), which takes as input a color-space point, and the previous output word, and gives a probability of the next word to be output -- this is a conditional language model.
+Our proposed CDEST model is the inverse of their conditional language model.
+CDEST accomplished the reversed task: to map a sequence of color terms to a distribution over colors.
+
+
+\textcite{DBLP:journals/corr/KawakamiDRS16} also propose a compositional color naming model.
+They use a per-character RNN and a variational autoencoder approach.
+It is in principle very similar to \textcite{2016arXiv160603821M}, but functioning on a character, rather than a word level.
+The work by Kawakami et al. also includes a method for generating colors.
+However it generates just single points, rather than distributions.
+This has significant limitations as discussed in \Cref{sec:intro}, which our work attempts to overcome by modeling the distributions.
+
+\textcite{DBLP:journals/corr/MonroeHGP17} presents a neural network solution to a communication game, where a speaker is presented with three colors and asked to describe one of them, and the listener is to work out which is being described.
+Speaker and listener models are trained, using LSTM-based decoders and encoders respectively.
+The final time-step of their model produces a 100 dimensional representation of the description provided.
+From this, a Gaussian distributed score function is calculated, over a high dimensional color-space from \textcite{2016arXiv160603821M}, which is then used to score each of the three options.
+While this method does work with a probability distribution, as a step in its goal,
+this probability distribution is always both symmetric and unimodal -- albeit in a high-dimensional color-space.
+To the best of our knowledge no current work proposes as a distribution estimation system such as we describe in this paper.
+
 \section{Color~Distribution~Estimation Framework}\label{sec:method}
 We define two models for the estimation of colors descriptions from textual descriptions.
-A Baseline histogram-based model and the GRU-based CDEST model.
+A baseline histogram-based model and the GRU-based CDEST model.
 The baseline model estimates the distribution based on averaging the discretized observations of colors in the training set for each input color description.
-It can not handle combinations of terms not seen during training since there is no data to average for them.
+It cannot handle combinations of terms not seen during training since there is no data to average.
 The CDEST model relies on using machine learning to learn the relationship between words and the color distribution; and is trained on the same discretized observation used in the baseline model.
 As it is learning a relationship between words and the color-space probability output, it can handle inputs made up of any words that were seen during training, even if the whole color description has never been used before.
 Both models rely on the same assumption of conditional independence, and the same method for discretization.
@@ -137,37 +182,31 @@ Both models rely on the same assumption of conditional independence, and the sam
 
 \subsection{Conditional Independence Assumption}\label{sec:conditional-independence-assumption}
 We make the assumption that given the name of the color, then the distribution of the H, S and V channels are independent.
-That is to say, it is assumed if the color name is known, then  knowing the value of one channel would not provide any additional information as to the value  of the other channels.
+That is to say, it is assumed if the color name is known, then  knowing the value of one channel would not provide any additional information as to the value of the other two channels.
 This assumption is made, though not remarked upon, in \textcite{meomcmahanstone:color} and \textcite{mcmahan2015bayesian}.
 The assumption of conditional independence allows considerable saving in computational resources.
 Approximating the 3D joint distribution as the product of three 1D distributions decreases the space complexity from $O(n^3)$ to $O(n)$ in the discretized step that follows.
 
-
 Superficial checks were carried out on the accuracy of this assumption.
 Spearman's correlation on the training data suggests that for over three quarters of all color names, there is only weak to zero maximum pairwise absolute correlation between the channels (\mbox{Q3 = 0.187}).
 However, this measure underestimates correlation for values that have circular relative value, such as hue.
-When this correlation measure was compared amongst 16 color spaces HSV was found to be the lowest by a large margin.
-Full details, including the full table of correlations, are available in the \Cref{sec:corrind}.
-These results are suggestive, rather than solidly indicative of the degree of correctness of the conditional independence assumption.
+HSV had the lowest correlation by a large margin of the 16 color-spaces evaluated.
+Full details, including the table of correlations, are available in \Cref{sec:corrind}.
+These results are suggestive, rather than solidly indicative, of the degree of correctness of the conditional independence assumption.
 We consider the assumption sufficient for this investigation.
-
 The evaluation metrics chosen do not assume conditional independence.
-Both models considered make use of it, by outputting three 1D distributions
-Better results may be obtained by outputting a 3D joint distribution.
-Implementation-wise this is a is a trivial extension of our models, 
-though practically the increased memory use renders it computationally difficult.
 
 
 \subsection{Discretization and Blurring}\label{sec:discretization-and-blurring}
-The core problem is estimating a continuous  probability distribution, conditional on the color name.
-Estimating discrete conditional distribution is a significantly more studied application of neural networks
+The core problem is to estimate a continuous  probability distributions, conditional on the color name.
+Estimating a discrete conditional distributions is a significantly more studied application of neural networks
 -- this is the basic function of any softmax classifier.
-To simplify the problem we thus transform it to be a discrete distribution estimation task, by discretizing the color space.
+To simplify the problem, we therefore transform it to be a discrete distribution estimation task, by discretizing the color-space.
 Discretization to a resolution of 64 and 256 bins per channel is considered.
 
 
 Discretization to resolution $n$ is the process by which a scalar observation%
-\footnote{In the Munroe dataset, the provided HSV values are scaled to be between 0 and 1 in all channels. This simplifies the math in this section.}
+\footnote{In the Munroe dataset, the provided HSV values are scaled to between 0 and 1 in all channels. We make use of this convention throughout this paper, and in our implementation.}
  $x$
 from one of the continuous color channels (hue, saturation or value) is converted into an $n$-vector with the properties expected of a probability mass function.
 A na{\"i}ve approach is one-hot binning:
@@ -176,22 +215,22 @@ A na{\"i}ve approach is one-hot binning:
 0 & \:\:\:\:\:\:\mathrm{otherwise}
 \end{cases}\right)_{i=1}^{i=n}
 \]
-This gives a $n$-vector that is zero everywhere, except for in the element corresponding to the patch of color space that the value $x$ lies with-in.
-Discretization in this way loses all notion of continuousness of the color space.
-
-However, the distribution in color space is intrinsically continuous.
-Points near each other in color space have similar probabilities of being the intended color for a color name.
+This gives an $n$-vector that is zero everywhere, except for the element corresponding to the patch of color-space that the value $x$ lies within.
+Discretization in this way loses all notion of continuousness of the color-space.
+%
+In truth the distribution in color-space is intrinsically continuous.
+Points near each other in the color-space have similar probabilities of being the intended color for a color name.
 While discretization inevitably renders the space discrete, it is desirable to bring back this notion of smoothness as prior knowledge.
 
-We enhance training data by adding a blur during discretization.
-Consider $\mathcal{D}(\mu,\sigma^{2})$ some unimodal distribution, characterised by having expected value $\mu$ and variance parameter $\sigma^{2}$.
+We enhance the training data by adding a blur during discretization.
+Consider $\mathcal{D}(\mu,\sigma^{2})$ some unimodal distribution, characterised by having an expected value $\mu$ and a variance parameter $\sigma^{2}$.
 For saturation and value this is a truncated Gaussian.
-Hue can elegantly be handled using a wrap-around Gaussian%
-We write $P_{\mathcal{D}}(y_{1}<Y\le y_{2}\mid M=\mu,\,\Sigma=\sigma)$ to mean the probability of a value distributed according to $\mathcal{D}(\mu,\sigma^{2})$ being in the patch bordered by $y_1$ and $y_2$.
-Using this the blurred-binning function is defined: 
+Hue can elegantly be handled using a wrap-around Gaussian.
+We write $P_{\mathcal{D}}(y_{1}{<}Y{\le} y_{2}\mid M{=}\mu,\,\Sigma=\sigma)$ to mean the probability of a value distributed according to $\mathcal{D}(\mu,\sigma^{2})$ being in the patch bordered by $y_1$ and $y_2$.
+Using this, the blurred-binning function is defined: 
 
 \compactmath{\Omega_{n}^{blur}(x,\mathcal{D},\sigma)=\left(P_{\mathcal{D}}\left(\dfrac{i-1}{n}<Y\le\dfrac{i}{n}\mid M=x,\,\Sigma=\sigma\right)\right)_{i=1}^{i=n}}
-This function maps points $x$ in the continuous color space, to probability mass vectors of length $n$.
+This function maps points $x$ in the continuous color-space, to probability mass vectors of length $n$.
 The majority of the mass will be in the bin that the value $x$ would be in,
 but some will be shared with the bins either side, and further.
 
@@ -199,36 +238,38 @@ By using more or less blurring applied to the training data, the priority of smo
 Considering the limits:
 for all $\mathcal{D}$ and values $x$: 
 \mbox{$\lim_{\sigma \to 0}\, \Omega_n^{blur}(x, \mathcal{D}, \sigma) = \Omega_n^{1hot}(x)$},
-and \mbox{$\lim_{\sigma \to \infty}\, \Omega_n^{blur}(x, \mathcal{D}, \sigma) =  \left(\frac{1}{n}\right)_{i=1}^{i=n}$}.
+and \mbox{$\lim_{\sigma \to \infty}\, \Omega_n^{blur}(x, \mathcal{D}, \sigma) =  \left(\frac{1}{n}\right)_{i=1}^{i=n}$} (uniform).
 A coarse parameter sweep on the value of $\sigma$ was carried out using the development portion of the dataset (see \Cref{sec:data-preparation}).
 Best results were found for $\sigma = \frac{1}{2n}$.
 For a training point that would be at the center of a bin, this roughly corresponds to 68.3\% of the probably mass assigned to the central bin, 15.7\% assigned to adjacent bins, and the remaining 0.3\% distributed to the remaining bins.
 All results presented here are for this level of blurring.
-Further tuning of this parameter might enable better performance -- such-as using different blurring levels for each channel.
+%Further tuning of this parameter might enable better performance -- such-as using different blurring levels for each channel.
 
-While discretizing the data is not theoretically ideal, it is a pragmatic solution used in several other machine learning systems.
-Without the blurring step it was shown to be effective on RGB color space probabilities by \textcite{oord2016pixel} in their work on image distribution modelling, out performing the more complex continuous distribution outputs. 
-It was also used in the WaveNet model \parencite{DBLP:journals/corr/OordDZSVGKSK16} for audio sampling values, with a nonlinear quantization scheme.
-A nonlinear quantization scheme could also be used in our work,
-however it is unnecessary as 24-bit color (as was used in the survey) can have all information captured by a na\"ive 256 bin quantization per channel, which is still performant.
-24 bit color allows for a total of $2^{24}$ colors to be represented, and 1 hot encoding for each of the 256 bin quantized channels allows for the same, though the transition from RGB to HSV could losing information, we suggest that it is vanishingly small compared to the differences in monitor calibration and the limitations of human perception.
+While discretizing the data is not theoretically ideal, it is a useful solution used in several other machine learning systems.
+\textcite{oord2016pixel, DBLP:journals/corr/OordDZSVGKSK16} apply a similar discretization step and found their method to outperforming the more complex continuous distribution outputs.
+These works did not employ a blurring-step.
+We found the blurring step to consistently improve results for all models during preliminary investigation using the development dataset.
+This is expected as a blurred discrete distribution captures some of the notions of continuity that a truly continuous output distribution would intrinsically feature.
+
+We note that a truly continuous output is pragmatically unnecessary as 24-bit color (as was used in the survey) can have all information captured by a 256 bin quantization per channel.
+24 bit color allows for a total of $2^{24}$ colors to be represented, and even 1 hot encoding for each of the 256 bin quantized channels allows for the same. Though the transition from RGB to HSV could lose information, we suggest that it is vanishingly small compared to the differences in monitor calibration and the limitations of human perception.
 
 
-\subsection{Baseline Model}\label{sec:Baseline-model}
+\subsection{Baseline Model}\label{sec:baseline-model}
 While the main interest in this work is in compositionally modelling the color language,
-we also define a new non-compositional Baseline model to allow for comparison.
+we also define a new non-compositional baseline model to allow for comparison.
 This model loosely resembles the histogram model discussed in \textcite{meomcmahanstone:color} and \textcite{mcmahan2015bayesian}.
-Existing works do not aim to estimate a general distribution so are unsuitable for comparison.
-Our Baseline must be able to estimate multimodal and asymmetric color distributions.
+Existing works do not aim to estimate a general distribution, and they are therefore unsuitable for comparison.
+Our baseline must be able to estimate multimodal and asymmetric color distributions.
 
-The Baseline is defined using the the element-wise mean of discretized  training observations, with add-one smoothing.
-During our investigations we found that without the add-one smoothing the Baseline would predicted a probability of zero for some of observations in the development dataset.
+The baseline is defined using the the element-wise mean of discretized  training observations, with add-one smoothing.
+During our investigations we found that without the add-one smoothing the baseline would predict a probability of zero for some observations in the development dataset.
 Applying add-one smoothing to each output distribution solves this.
 
-For training data $V \subset \left[ 0,1 \right] ^{3}\times T$, where $\left[ 0,1 \right] ^{3} \subset \mathbb{R}^{3}$ is the scaled HSV color space,\footnote{The 0-1 scaled HSV color space is as provided in the dataset from \textcite{mcmahan2015bayesian} see \Cref{sec:data-preparation}.} and $T$ is the natural language space.
-The subset of training data for the description $t \in T$ is given by
+For the training data $V \subset \left[ 0,1 \right] ^{3}\times T$, where $\left[ 0,1 \right] ^{3} \subset \mathbb{R}^{3}$ is the scaled HSV color-space, and $T$ is the natural language space.
+The subset of the training data for the description $t \in T$ is given by
 $V_{|t}=\{(\tilde{v}_i,\,t_i) \in V \: \mid \: t_{i}=t\}$.
-Per channel $c$ the Baseline model is defined by: 
+Per channel $c$ the baseline model is defined by: 
 
 \compactmath{
 	q_{c}(x_{c}\mid t)=\frac{\displaystyle
@@ -240,16 +281,18 @@ Per channel $c$ the Baseline model is defined by:
 		{\left|V_{|t}\right|+n}
 }
 %
-In this equation taking the dot-product with $\Omega_n^{1hot}(x_{c})$ is simply selecting the bin containing $x_c$.
+In this equation taking the dot-product with $\Omega_n^{1hot}(x_{c})$ is selecting the bin containing $x_c$.
 Note the distinction between $x_c$ and $v_c$: $x_c$ is the point being queried, and $v_c$ is a point from the training set.
-In implementation of-course the training set is not re-evaluated for every query.
-By the conditional independence assumption the overall Baseline model is given by: $q(x_H,x_S,x_V\mid t) = \prod_{c\in {\{H,S,V\}}} q_c(x_c\mid t)$
+By the conditional independence assumption the overall baseline model is given by: $q(x_H,x_S,x_V\mid t) = \prod_{c\in {\{H,S,V\}}} q_c(x_c\mid t)$
 
 
-The Baseline model can be used to predict distributions for all color descriptions in the training set.
+The baseline model can be used to predict distributions for all color descriptions in the training set.
 This is inferior in generalisability to the CDEST model, which can handle any combination of tokens from the training set.
-Without the requirement to learn the how the compositional structure of the terms in the color name function, it is a much simpler modelling problem, as such we suggest it is a strong Baseline for evaluational.
-If the compositional model can match its performance, that would show that it was capturing the information from the training data.
+We suggest the this baseline method is a strong and reasonable baseline for this task.
+As it does not have a requirement to learn the how the compositional structure of the terms in the color name function, it is a much simpler modelling problem.
+It directly captures the information from the training set.
+If the CDEST model can match its performance, that would show that it was capturing the information from the training data.
+If the CDEST model can go one and also have similar performance for cases that do require compositional understanding (see \Cref{sec:extrapodataset}) that that would show that it is indeed achieving the goal of properly modelling the language use.
 
 \subsection{CDEST Model}
 
@@ -257,15 +300,14 @@ If the compositional model can match its performance, that would show that it wa
 	\resizebox{\columnwidth}{!}{\input{./figs/neuralnet}}
 	
 	\caption{\label{network}
-		The CDEST model for predicting the color space probability distributions of color.
+		The CDEST model for predicting the color-space probability distributions of color.
 		The section in the dotted-boxes is repeated for each time step.
 	}
 \end{figure}
 
-The CDEST Model is the main focus of this work.
-It is an RNN based model which learns the compositional interactions of the terms making up a color description and outputs a distribution estimate in color space.
+The CDEST Model is an RNN based model which learns the compositional interactions of the terms making up a color description, to output a distribution estimate in color-space.
 The general structure of this network, shown in \Cref{network} is similar to \textcite{2016arXiv160603821M}, or indeed to most other word sequence learning models.
-Each word first is transformed to an embedding representation.
+Each word is first transformed to an embedding representation.
 This representation is trained with the rest of the network allowing per word information to be efficiently learned.
 The embedding is used as the input for a Gated Recurrent Unit (GRU)  \parencite{cho2014properties}.
 The output of the final time-step is fed to a Rectified Linear Unit (ReLU)  \parencite{dahl2013reludropout}.
@@ -277,7 +319,7 @@ Using the conditional independence assumption the probability estimate is given 
 		\mathclap{c\in {\{H,S,V\}}}}
 	 \hat{y}_{c}(t)\cdot \Omega_{n}^{1hot}(x_c))
 \]
-As in the Baseline model, the dot-product with $\Omega_{n}^{1hot}(x_c)$ serves to select the bin containing $x_c$.
+As in the baseline model, the dot-product with $\Omega_{n}^{1hot}(x_c)$ serves to select the bin containing $x_c$.
 
 The distinguishing features of this model compared to other word sequence learning models, is the use of GRU, rather than Long Short Term Memory (LSTM), and the split into three output layers.
 
@@ -287,39 +329,38 @@ It has generally been found to preform similarly well to LSTM \parencite{chung20
 including on the color naming problem \parencite{2016arXiv160603821M}.
 A component for processing per-term such as the GRU, is essential in allowing the model to learn the compositional function of each term,  and thus to learn to handle color descriptions from outside the training set.
 
-The three output layers are used to predict the distributions for the three channels.
+The three output layers are used to predict the discretized distributions for the three channels.
 Separating them like this requires a conditional independence assumption (see \Cref{sec:conditional-independence-assumption}).
 The network is trained to minimize to sum of the three cross-entropy losses for these output layers.
-The targets for training are the color space observations from the training set discretized using $\Omega_n^{blur}$ -- thus encouraging the model to learn smooth distributions.
-The multiple output layers commonly occur in multitask learning \parencite{caruana1997multitask,collobert2008unified}.
+Similar multiple output layers as used in multitask learning \parencite{caruana1997multitask,collobert2008unified}.
 The layers prior to the output are shared, allowing common knowledge to be shared.
 
 
 \section{Experimental Setup}\label{sec:experimental-setup}
 \subsection{Data Preparation and Tokenization}\label{sec:data-preparation}
-We make use of the  Munroe Dataset as prepared by \textcite{mcmahan2015bayesian} from the results of the XKCD color survey.
+We make use of the  Munroe dataset as prepared by \textcite{mcmahan2015bayesian} from the results of the XKCD color survey.
 The XKCD color survey \parencite{Munroe2010XKCDdataset}, collected over 3.4 million observations from over 222,500 respondents.
-McMahan and Stone subset this by restricting to the responses to be from native English speakers, 
+McMahan and Stone take a subset from Munroe's full survey, by restricting it to the responses from native English speakers, 
 and removing rare color names with less than 100 uses.
 This gives a total of 2,176,417 observations and 829 color names. 
-McMahan and Stone also define a standard test, development and train split.
+They also define a standard test, development and train split.
 
 
-In the dataset each observation is a textual color description, paired with a point in HSV color space.
+In the dataset each observation is a textual color description, paired with a point in HSV color-space.
 We tokenized the textual color descriptions into separate words and affixes, using a short list of word replacement rules.
 Beyond simply breaking up a description \texttt{``greenish blue''} into words: \texttt{``greenish''} and \texttt{``blue''}, the suffixes \texttt{``-ish''} and \texttt{``-y''} are also separated at their own tokens: \texttt{``green''}, \texttt{``ish''}, \texttt{``blue''}.
 Hyphens are also treated as their own tokens: \texttt{``blue-green''} becomes \texttt{``blue''}, \texttt{``-''}, \texttt{``green''}.
 The beginning and end of the color description is not demarcated with any form of marker token.
-Using this tokenization, each description is split into between one and four terms.
+Using this tokenization, each description is split into up to four tokens.
 This results in a total of 311 unique tokens used by the CDEST model.
-The Baseline model does not function per term, so uses the original 829 descriptions directly.
+The baseline model does not function per term, so it uses the original 829 descriptions directly.
 
-\subsection{Extrapolation Sub-Dataset}
-The key advantage of CDEST over the Baseline model is its ability to predict the distribution for never before seen descriptions of colors.
-For example, based on the learned understanding of \texttt{``salmon''} and of \texttt{``bright''}, from examples like \texttt{``bright green''} and \texttt{``bright red''}, our system can suggest the distribution in the color space of \texttt{``bright salmon''}, even though that description never occurs in the training data.
+\subsection{Extrapolation Sub-Dataset} \label{sec:extrapodataset}
+The key advantage of CDEST over the baseline model is its ability to predict the distribution for never before seen descriptions of colors.
+For example, based on the learned understanding of \texttt{``salmon''} and of \texttt{``bright''}, from examples like \texttt{``bright green''} and \texttt{``bright red''}, our system can suggest the distribution in the color-space of \texttt{``bright salmon''}, even though that description never occurs in the training data.
 Thus demonstrating proper compositional learning.
-
-To evaluate this capacity we defined a sub-dataset which we call the extrapolation sub-dataset.
+%
+To evaluate this capacity, we define the extrapolation sub-dataset.
 This is defined by selecting the rarest 100 color descriptions from the dataset,
 with the restriction that every token in a selected description must still have at least 8 uses in other descriptions.
 The selected examples include multi-token descriptions such as: \texttt{``bright yellow green''} and also single tokens that occur more commonly as modifiers than as stand-alone descriptions such as \texttt{``pale''}.
@@ -329,19 +370,19 @@ This produces a dataset suitable for evaluating the capacity of our model to est
 A similar approach was used in \textcite{DBLP:journals/corr/AtzmonBKGC16}.
 
 \subsection{CDEST Model Parameters}
-All hidden layers have width 128, except the embedding layer with width 16.
-These values were found on a coarse search of the hyper-parameters using the development dataset with the output resolution being 64 bins.
-These parameters were also used for the 256 bin output resolution, to simplify comparison, though we suggest increasing the hidden layer size which would give additional benefit for the higher output resolution case.
-During the hyper-parameter search, it was noted that the accuracy continued to improve as the hidden layer width was increased,
-however significantly diminishing returns in terms of training time v.s. accuracy lead us to limit the hidden layer sizes.
+All hidden layers have width 128, except the embedding layer which has width 16.
+These values were found by a coarse search of the hyper-parameters using the development dataset with the output resolution being 64 bins.
+These parameters were also used for the 256 bin output resolution, though we suggest increasing the hidden layer size which would give additional benefit for the higher output resolution case.
+During the hyper-parameter search, it was noted that the accuracy continued to improve as the hidden layer width was increased.
+However significantly diminishing returns in terms of training time v.s. accuracy lead us to limit the hidden layer sizes.
 Dropout \parencite{srivastava2014dropout} with a probability of 0.5 was used during training, on all hidden layers, except the embedding layer.
 
 \subsection{Perplexity in Color-Space}
 The perplexity allows us to evaluate how well our estimated distribution matches the distribution of the observations in the test set.
-Perplexity is commonly used for evaluating language models, however here it is being used to evaluate the discretized distribution estimate.
+Perplexity is commonly used for evaluating language models. However here it is being used to evaluate the discretized distribution estimate.
 It can loosely be thought of as to how well the model's distribution does in terms of the size of a equivalent uniform distribution.
 
-For $\tau$ the test-set made up of pairs consisting of a color names $t$, and color space points $\tilde{x}$;
+For $\tau$ the test-set made up of pairs consisting of a color name $t$, and color-space point $\tilde{x}$;
 and for $p(\tilde{x}\mid t)$ as the output of the evaluated model.
 Perplexity is defined in the normal way:
 \[
@@ -352,16 +393,16 @@ Perplexity is defined in the normal way:
  	 \log_2 p(\tilde{x}\mid t)\right)}
 \]
 As this varies depending on the output resolution,
-we also define a standardized perplexity $\frac{PP(\tau)}{n^3}$, where $n$ is the per channel output resolution of the model.
-This standardised perplexity allows us to compare models of different output resolution.
+we define a standardized perplexity $\frac{PP(\tau)}{n^3}$, where $n$ is the per channel output resolution of the model.
+The standardised perplexity allows us to compare models of different output resolutions.
 It is equivalent to comparing the relative performance of the model to that of a uniform distribution $PP_{uniform}=n^3$.
-Perplexity is a measure of how well the distribution estimated by the model matches reality according to the observations in the test set.
+Perplexity is a measure of how well the distribution, estimated by the model, matches reality according to the observations in the test set.
 
 \subsection{Implementation}
-The implementation of the CDEST and Baseline models was in the julia programming language \parencite{Julia}.
-The full implementation and the experiment details can be downloaded from the source repository\footnote{Implementation source is at %\url{https://github.com/oxinabox/ColoringNames.jl}
+The implementation of the CDEST and baseline models was in the Julia programming language \parencite{Julia}.
+The full implementation and the experiment details can be downloaded from the GitHub repository\footnote{Implementation source is at %\url{https://github.com/oxinabox/ColoringNames.jl}
 [[URL Blinded]]}.
-This implementation makes heavy use of use of the MLDataUtils.jl\footnote{MLDataUtils.jl is available from \url{https://github.com/JuliaML/MLDataUtils.jl}} and TensorFlow.jl\footnote{TensorFlow.jl is available from \url{https://github.com/malmaud/TensorFlow.jl}} packages.
+It makes heavy use of the MLDataUtils.jl\footnote{MLDataUtils.jl is available from \url{https://github.com/JuliaML/MLDataUtils.jl}} and TensorFlow.jl\footnote{TensorFlow.jl is available from \url{https://github.com/malmaud/TensorFlow.jl}} packages.
 %, the latter of which we enhanced significantly to allow for this work to be carried out.
 
 
@@ -375,7 +416,7 @@ This implementation makes heavy use of use of the MLDataUtils.jl\footnote{MLData
 		\vspace{3mm}
 		
 		\includegraphics[width=\columnwidth]{multimodal/gru256#1}	
-		\caption{\label{fig#1} Distribution estimate for \mbox{\texttt{``#2''}}}
+		\caption{\label{fig#1} Distribution estimate for \\ \mbox{\texttt{``#2''}}}
 	\end{figure}
 }
 
@@ -384,27 +425,27 @@ This implementation makes heavy use of use of the MLDataUtils.jl\footnote{MLData
 \multimodalfig{purplishgrey}{purplish grey}
 
 
-Shown in \Cref{figindigo,figgreenish,figpurplishgrey} are side-by-side comparisons of the output of the CDEST and the Baseline models.
-Overall, it can be seen the Baseline model is a lot sharper, with more spikes,
+Shown in \Cref{figindigo,figgreenish,figpurplishgrey} are side-by-side comparisons of the output of the CDEST and the baseline models.
+Overall, it can be seen that the baseline model is a lot sharper, with more spikes,
 whereas the CDEST model tends to be much smoother, even though both use the same blurring during discretization.
 This smoothness is in line with the desired results from the model.
-As the bin boundaries are artificial and the bins very narrow, it is not reasonable to expect that in reality viewers have very narrow bands of colors that they think of as more connected to the color name than their neighbours.
-We expect  (as discussed in \Cref{sec:discretization-and-blurring}) this continuousness, where adjacent points in color space have similar probability values.
+As the bin boundaries are artificial and the bins are very narrow, it is not reasonable to expect that in reality viewers have such bands of colors that they think of as more connected to the color name than their neighbours.
+We expect  (as discussed in \Cref{sec:discretization-and-blurring}) this continuity, where adjacent points in color-space have similar probability values.
 
 This smoothness can however be taken too far, when it results in the filling-in of the area between peaks for multimodal colors.
 It can be seen that the CDEST model fails for some multimodal colors -- such as the hue \texttt{``greenish''} (\Cref{figgreenish}) where the concave section is filled in;
 but succeeds for others such as \texttt{``purplish grey''} (\Cref{figpurplishgrey}).
 
 
-The horizontal bands in the Baseline model outputs are the result of the add-one smoothing process.
-Notice they are larger for colors with fewer examples -- such as \texttt{``purplish grey''}.
+The horizontal bands in the baseline model outputs are the result of the add-one smoothing process.
+Notice that they are larger for colors with fewer examples -- such as \texttt{``purplish grey''}.
 In the seminal work of \textcite{NPLM} one of the motivations for employing neural networks in natural language processing was to better handle cases that do not occur in the training data, by sharing information between terms.
 CDEST efficiently applies the same core idea here for distribution estimation.
-The neural model of CDEST can, by knowledge sharing, better estimate the values for the unseen points in color space, as compaired to using smoothing.
-This is district from, but related to, its key capacity as a compositional model to handle unseen cases in the natural language space. 
+The neural model of CDEST can, by knowledge sharing, better estimate the values for the unseen points in color-space, as compared to using smoothing.
+This is distinct from, but related to, its key capacity as a compositional model to handle unseen cases in the natural language space. 
 
 
-\subsection{Distribution Estimation}
+\subsection{Direct Distribution Estimation}
 \pgfkeys{/pgf/number format/.cd, fixed relative,precision=4}
 \pgfplotstableset{resultsstyle/.append style={%
 	col sep=tab,
@@ -436,18 +477,19 @@ This is district from, but related to, its key capacity as a compositional model
 	\caption{\label{tblresfull} The results of evaluation on the full Munroe  dataset. Here $n$ is the output resolution of the model in each channel, $PP$ is the perplexity.}
 \end{table}
 
-Before we can evaluate the models capacity to learn the compositional functioning of color terms, by the extrapolation dataset, we must first test that it can learn when given examples from the full dataset where training and test set both use the same terms.
+We first test the capacity of the model to estimate the distributions on the standard test dataset, using the standard training dataset.
+We perform this evaluation before the more difficult (and important) evaluation on the extrapolation task, to confirm that the models are capable of estimating distributions.
 The results are shown in \Cref{tblresfull}.
-It can be seen that all models perform similarly.
-The CDEST model based on sequence of color tokens, reflects real use of the color descriptions in the test set; 
-equally well as the non-compositional Baseline, that counts the exact uses of whole descriptions.
-Thus confirming that the CDEST model is able to learn to estimate a color distribution, and that the tokenization did not remove the ability of the model to function.
+It can be seen that all models perform similarly, giving a 
+The CDEST model based on sequence of color tokens, reflects the real use of the color descriptions in the test set 
+just well as the non-compositional baseline, that counts the exact uses of whole descriptions.
+Thus confirming that the CDEST model is able to learn to estimate a color distribution, and that the tokenization and sequentially processing did not remove the ability of the model to function.
 
-The CDEST model matches Baseline performance, when trained on a full set of color terms with all combinations of terms present in the training data.
-There is little reason to use the CDEST model in this case however, since the Baseline model is simpler.
-The key advantage of the CDEST model is its ability to predict a distribution for an unseen combination of colors, this is evaluated using the extrapolation task.
+The CDEST model matches baseline performance, when trained on a full set of color terms with all combinations of terms present in the training data.
+There is little reason to use the CDEST model in this case however, since the baseline model is simpler.
+The key advantage of the CDEST model is its ability to predict a distribution for an unseen combination of colors. This is evaluated using the extrapolation task.
 
-\subsection{Extrapolation}
+\subsection{Extrapolation of the Distribution}
 
 \begin{table}
 	\centering
@@ -463,93 +505,52 @@ The key advantage of the CDEST model is its ability to predict a distribution fo
 \end{table}
 
 
-A core motivation of using the CDEST model, over the Baseline, is its ability to learn to combine tokens in a description in ways not seen in training.
+A core motivation of using the CDEST model, over the baseline, is its ability to learn to combine tokens in a description in ways not seen in training.
 This demonstrates that the CDEST model is capable of learning the compositional effects of the tokens in the color name.
-That is to say learning how each influences the final distribution -- rather than simply memorising the training data as is done in the Baseline.
+That is to say learning how each influences the final distribution -- rather than simply memorising the training data, as is done in the case of the baseline.
 
-When it comes to the extrapolation task, the best the Baseline model can do is an uniform distribution as the color descriptions in the test set do not occur in the training set.
+When it comes to the extrapolation task, the best the baseline model can do is an uniform distribution as the color descriptions in the test set do not occur in the training set.
 This is an uninteresting comparison as it is always $\frac{PP}{n^3}=1.0$ (and as such is not included in \Cref{tblresextrapo}).
 Thus we look to comparing the results for extrapolation to the models when they are trained without the need for extrapolation.
 
 We compare a CDEST model trained on the extrapolation sub-dataset, to the models trained on the full dataset.
-These non-extrapolating models have a distinct advantage, having being trained on data uses the rare color descriptions.
-Both the non-extrapolating, and extrapolating models are evaluated on the same set of rare color descriptions,
+Both the non-extrapolating, and extrapolating models are evaluated on the same test set of rare color descriptions,
 but the non-extrapolating models are also shown these rare descriptions during training.
 The extrapolating model has never been trained on these combinations of color terms,
 and instead must use the knowledge of how those color terms influence the color distribution in the other cases.
+The non-extrapolating models are expected to perform better given they have direct information on the rare color descriptions' distributions.
 
 The results for this evaluation are shown in \Cref{tblresextrapo}.
-As expected the non-extrapolating CDEST out performs extrapolating model.
-This is as expected as the non-extrapolating models have training data for the rare color descriptions that occur in the extrapolation test set.
-However the loss in performance when forced to extrapolate is relatively small. The extrapolation results as similar to the overall results from \Cref{tblresfull}.
+As expected, the non-extrapolating CDEST outperforms the extrapolating CDEST.
+However, the decrease in performance when forced to extrapolate is relatively small.
+The extrapolation results are similar to the overall results from \Cref{tblresfull}.
 These are good results, indicative that the model has learnt how the terms interact to define the color distribution.
-By training on uses of color terms in other descriptions the model learns these useful relationships and encodes them into the networks weights, such that when the terms are used in other never before seen descriptions the network can still estimate the distribution.
+By training on uses of color terms in other descriptions the model learns these useful relationships and encodes them into the networks weights, such that when the terms are used in other never before seen descriptions, the network can still estimate the distribution.
 This learning allows knowledge sharing between color descriptions.
 
 
-The non-extrapolating CDEST also benefits from the same knowledge sharing that allows the extrapolating CDEST model to function at all, thus outperforming it.
-This knowledge sharing also allows it to out perform the Baseline model, as the relationship between terms provides extra-data to better estimate the shape of the low-data curves.
-The Baseline model cannot benefit from knowledge sharing based on term use for estimating the curve of the rare descriptions.
+The non-extrapolating CDEST also benefits from the same knowledge sharing, that allows the extrapolating CDEST model to function at all.
+This knowledge sharing allows it to outperform the baseline model, as the relationship between terms provides extra-data to better estimate the shape of the low-data curves.
+The baseline model cannot benefit from knowledge sharing, based on term use, for estimating the curve of the rare descriptions.
 This is notable in the high resolution case (256 bin),
-where the sparsity of training data is such that the extrapolating CDEST model out performs the non-extrapolating Baseline.
+where the sparsity of the training data is such that the extrapolating CDEST model outperforms the non-extrapolating baseline.
 
 
-\section{Related Work}\label{sec:related-work}
-The understanding of color names has long been a concern of psycholinguistics and anthropology  \parencite{berlin1969basic,heider1972universals,HEIDER1972337,mylonas2015use}.
-From this has come the corresponding area in natural language processing.
-
-The earliest works revolve around manually defined systems.
-This includes the ISCC-NBS color system \parencite{kelly1955iscc} of 26 words, including modifiers, that are composed according to a context free grammar such that phrases are mapped to single points in color space.
-This was used in \textcite{Berk:1982:HFS:358589.358606, conway1992experimental, mojsilovic2005computational}.
-Similar works for the simpler, non-compositional, 11 basic colors of \textcite{berlin1969basic}.
-This includes \textcite{ele1994computational,menegaz2007discrete,van2009learning}.
-We note that \textcite{menegaz2007discrete,van2009learning} both propose systems that discretize the color-space.
-
-
-More recent works, including our own, function with much larger number of colors, larger vocabularies, and larger pools of respondents.
-This allows a data driven approach towards the modelling.
-
-Similarly to this work, \textcite{mcmahan2015bayesian} and \textcite{meomcmahanstone:color} use the Munroe dataset to evaluate their color naming methods.
-These works are based on defining fuzzy rectangular distributions in the color space to cover the distribution estimated from the data, which are used in a Bayesian system to non-compositionally determine the color name.
-
-%\pdfcomment{During the similar time-period another online color naming survey was conducted.
-%\textcite{mylonas2010online,mylonas2012colour} collected a total of 50,000 observations from 2500 respondents in 7 languages.
-%In this work we use the larger, more publically available, Munroe dataset.}
-
-\textcite{2016arXiv160603821M} maps a point in color space, to a sequence of distributions over color terms.
-They extends beyond all prior discussed color naming systems to produce a compositional color namer based on the Munroe dataset.
-Their method uses a recurrent neural network (RNN), which takes as input a point in color space, and the previous output word, and gives a probability of the next word to be output -- this is a conditional language model.
-Our proposed CDEST model can be considered as the inverse of their conditional language model -- we map a sequence of color terms to a distribution over colors.
-
-
-\textcite{DBLP:journals/corr/KawakamiDRS16} also produces compositional color naming model.
-They use a per-character RNN and variational autoencoder approach.
-It is in principle very similar to \textcite{2016arXiv160603821M}, but functioning on a character, rather than a word level.
-The work by Kawakami et al, also includes a method for generating colors; however unlike our work it generates just single points, rather than distributions.
-This has significant limitations as discussed prior.
-
-\textcite{DBLP:journals/corr/MonroeHGP17} presents a neural network solution to a communication game, where a speaker is presented with three colors and ask to describe one of them, and the listener is to work out which is being described.
-Speaker and listener models are trained, using LSTM based decoders and encoders respectively.
-The final time-step of their model produces a 100 dimensional representation of the description provided.
-From this, a Gaussian distributed score function is calculated, over a high dimensional color space from \textcite{2016arXiv160603821M}, which is then used to score each of the three options.
-While this method does work with a probability distribution, as a step in its goal,
-this probability distribution is always both symmetric and unimodal -- albeit in a high-dimensional color space.
-To our knowledge no current work produces as a direct distribution estimation system as we described above.
 
 
 \section{Conclusion}\label{sec:conclusion}
 We have presented a method for estimating the probably distribution of colors that may be ascribed to an input name.
-For each input color name model outputs a probability distribution over discrete regions of the color space.
-Outputting a probability distributions, rather than a single point in color space, allows for better handling of colors with observed distributions that are asymmetric, wide variance or multimodal in the color space -- most colors.
+For each input color name our model outputs a probability distribution over discrete regions of the color-space.
+Outputting a probability distribution, rather than a single point, allows for better handling of colors with observed distributions that are asymmetric, feature wide variance or are multimodal in the color-space -- i.e. most colors.
 
-The model learns the compositional structure of a color name, which allows it to predict distributions for color names not seen given during training.
-For example: the color \texttt{``bright salmon''} does not occur in the training data, but there are many uses of \texttt{``bright''}, and \texttt{``salmon''} in other combinations.
-As the CDEST model learns how each term influences the shape of the distribution it can thus extrapolate a distribution for \texttt{``bright salmon''} based on the learnt understanding of the \texttt{``bright''} and the \texttt{``salmon''} tokens.
+The model learns the compositional structure of a color name, which allows it to predict distributions for color names which are not seen during training.
+%For example: the color \texttt{``bright salmon''} does not occur in the training data, but there are many uses of \texttt{``bright''}, and \texttt{``salmon''} in other combinations.
+As the CDEST model learns how each term influences the shape of the distribution, it can thus extrapolate a distribution for
+ an arbitrary compound color names, based on the learnt understanding of the individual terms.
+ %\texttt{``bright salmon''} based on the learnt understanding of the \texttt{``bright''} and the \texttt{``salmon''} tokens.
 
-Tagging each token with a linguistic role may enhance the modelling of words with multiple uses. E.g. \texttt{``greenish''} which is used both as a modifier, and as a color category.
-
-The discretization process for representing the a continuous probability distribution is pragmatically effective, but unsatisfying.
-We suggest there are avenues for advancement here by the extensions of work such as \textcite{1998NNpdfDiffCdf}, \textcite{likas2001probability} and others to handle conditional distributions.
+We find that the discretization process for representing the continuous probability distribution is pragmatically effective, but unsatisfying.
+We suggest there are avenues for advancement here by the extensions of works such as \textcite{1998NNpdfDiffCdf, likas2001probability, 2017arXivKernalMixtureNetworks} and others to handle conditional distributions.
 
 %\subsection{Acknowledgements}
 %The computational resources required for this work were generously provided by the Australian National eResearch Collaboration Tools and Resources project (Nectar),
