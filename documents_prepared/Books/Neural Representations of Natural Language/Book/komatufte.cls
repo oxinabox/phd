@@ -75,13 +75,14 @@ captions = nooneline
 ]{scrlayer-scrpage}
 
 
-
-
 \newlength{\notescolwidth}
 \setlength{\notescolwidth}{\completemargin - \marginparsep}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Basis of asides
 
 % Font Style for note column
+\let\ocolor\color % Protect it, see: https://tex.stackexchange.com/a/415272/5834
 \NewDocumentCommand{\asidefont}{}{\small\sffamily\color{blue}}
 
 % Set up the note column
@@ -117,7 +118,7 @@ captions = nooneline
 		\centering%
 		#2%
 		\clearcaptionsetup{figure}%
-%		\captionsetup{style=goodstyle}%
+		\let\normalcolor\relax
 		\captionof{figure}{ #1}%
 		\bigskip%
 	}%

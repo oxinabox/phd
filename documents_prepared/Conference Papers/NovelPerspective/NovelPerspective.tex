@@ -226,8 +226,16 @@ During training, from each text in the training dataset,
 we generated a training example for every named entity that occurred.
 All bar one of these was a negative example.
 We then trained it as per normal for a binary classifier, using the logistic loss function.
+This predicted probability of that feature vector being for POV character was used as the score for that character.
 
-Theoretically, a better loss function would be a variation on the multi-class hinge-loss \parencite{dogan2016multiclassSVM}, where the objective would be for the true named entity to score higher than any of the other named entities extracted from the same text.
+This may seem similar to an one-vs-rest approach to using binary classifiers for multiclass classification.
+However, there is an important difference.
+Our system only uses a single binary classifier; not one classifier per class,
+as the classes in our case vary with every item to be classified.
+The problem is truly one of information extraction, and the classifier is a tool for the scoring.
+
+
+\pdfcomment{Theoretically, a better loss function would be a variation on the multi-class hinge-loss \parencite{dogan2016multiclassSVM}, where the objective would be for the true named entity to score higher than any of the other named entities extracted from the same text.}
 
 
 
@@ -264,17 +272,18 @@ We make uses of three series of books selected from our own personal collections
 The first four books of George R. R. Martin's ``A Song of Ice and Fire'' series (hereafter referred to as ASOIAF);
 the two books of  Leigh Bardugo's ``Six of Crows'' duology (hereafter referred to as SOC);
 and the first three books of Brandon Sanderson's ``Stormlight Archive'' (hereafter referred to as SA).
-
-
 The requirements of the books to use in the training and evaluation of the NovelPerspective system is that they provide ground truth for the section's POV  character.
-ASOIAF and SOC do so in the chapter names.
-SA indicates using an chapter image corresponding to the main character.
-However, each chapter of SA has sections which feature different POV characters -- many of which do not features as ``main POV'' characters at all.
-Thus the ground truth of SA is much weaker.
-Better would be to have the sub-chapter sections individually labelled.
 
-We do not have any datasets with labelled sub-chapter sections,
-though the tool does support such works.
+ASOIAF and SOC provide ground truth for the main character in the chapter names.
+Every chapter only uses the POV of that named character.
+SA indicates using an chapter image corresponding to the main character.
+Problematically, each chapter of SA has sections which feature different POV characters, though the indicated character is normally the most prevalent.
+Ideally, the sub-chapter sections individually labelled, however they are not.
+For this reason the ground truth of SA is much weaker.
+As such we do not use it for the testing of the main results,
+but consider it as supplementary training data in \Cref{sec:results-extradata}.
+
+We do not have any datasets with labelled sub-chapter sections, though the tool does support such works.
 
 
 \begin{table}
