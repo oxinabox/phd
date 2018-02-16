@@ -1,5 +1,5 @@
 \documentclass[11pt,a4paper]{article}
-\usepackage[hyperref]{acl2018}
+\usepackage{acl2018}
 \usepackage{times}
 %\usepackage[author={Lyndon}]{pdfcomment}
 
@@ -38,11 +38,12 @@
 \usepackage{cleveref}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{url}
 \usepackage{natbib}
 \bibliographystyle{acl_natbib}
 
 \newcommand{\parencite}{\citep}
-\newcommand{\textcite}{\cite}
+\newcommand{\textcite}{\citet}
 
 
 %opening
@@ -115,7 +116,7 @@ Practically, the generalisation ability from a compositional model allows it to 
 Due to the combinatorial nature of language a data-sparsity problem exists that
 for a large number of word combinations there are few examples in any given corpus.
 This is a well known problem in n-gram language modelling \parencite{kneser1995improved,chen1996empirical,rosenfeld2000two}.
-To handle this we take inspiration from a solution used in that area: the use of a recurrent neural network \parencite{mikolov2010recurrent,mikolov2011RnnLM} to process each color description as a compositional sequence of terms.
+To handle this we take inspiration from a solution used in that area: the use of a recurrent neural network \parencite{mikolov2011RnnLM} to process each color description as a compositional sequence of terms.
 This allows the compositional understanding that is required for color understanding.
 
 
@@ -218,8 +219,8 @@ A na{\"i}ve approach is one-hot binning:
 This gives an $n$-vector that is zero everywhere, except for the element corresponding to the patch of color-space that the value $x$ lies within.
 Discretization in this way loses all notion of continuousness of the color-space.
 %
-In truth the distribution in color-space is intrinsically continuous.
-Points near each other in the color-space have similar probabilities of being the intended color for a color name.
+In truth the distribution in color-space is intrinsically continuous -- this comes as a logical consequence of human color sensitivity being continuous \parencite{STOCKMAN1999perception}.
+Points near each other in the color-space should have similar probabilities of being the intended color for a color name.
 While discretization inevitably renders the space discrete, it is desirable to bring back this notion of smoothness as prior knowledge.
 
 We enhance the training data by adding a blur during discretization.
@@ -252,7 +253,7 @@ We found the blurring step to consistently improve results for all models during
 This is expected as a blurred discrete distribution captures some of the notions of continuity that a truly continuous output distribution would intrinsically feature.
 
 We note that a truly continuous output is pragmatically unnecessary as 24-bit color (as was used in the survey) can have all information captured by a 256 bin quantization per channel.
-24 bit color allows for a total of $2^{24}$ colors to be represented, and even 1 hot encoding for each of the 256 bin quantized channels allows for the same. Though the transition from RGB to HSV could lose information, we suggest that it is vanishingly small compared to the differences in monitor calibration and the limitations of human perception.
+24 bit color allows for a total of $2^{24}$ colors to be represented, and even 1 hot encoding for each of the 256 bin quantized channels allows for the same. Though the transition from RGB to HSV could lose information, we assume that it is vanishingly small compared to the differences in monitor calibration and the limitations of human perception.
 
 
 \subsection{Baseline Model}\label{sec:baseline-model}
@@ -288,11 +289,11 @@ By the conditional independence assumption the overall baseline model is given b
 
 The baseline model can be used to predict distributions for all color descriptions in the training set.
 This is inferior in generalisability to the CDEST model, which can handle any combination of tokens from the training set.
-We suggest the this baseline method is a strong and reasonable baseline for this task.
-As it does not have a requirement to learn the how the compositional structure of the terms in the color name function, it is a much simpler modelling problem.
+We suggest that the baseline model is strong and reasonable.
+It is a much simpler modelling problem as it does not have a requirement to learn the how the compositional structure of the terms in the color name function.
 It directly captures the information from the training set.
 If the CDEST model can match its performance, that would show that it was capturing the information from the training data.
-If the CDEST model can go one and also have similar performance for cases that do require compositional understanding (see \Cref{sec:extrapodataset}) that that would show that it is indeed achieving the goal of properly modelling the language use.
+If it can also have similar performance for cases that do require compositional understanding (see \Cref{sec:extrapodataset}) that that would show that it is indeed achieving the goal of properly modelling the language use.
 
 \subsection{CDEST Model}
 
@@ -384,7 +385,7 @@ It can loosely be thought of as to how well the model's distribution does in ter
 
 For $\tau$ the test-set made up of pairs consisting of a color name $t$, and color-space point $\tilde{x}$;
 and for $p(\tilde{x}\mid t)$ as the output of the evaluated model.
-Perplexity is defined in the normal way:
+Perplexity is defined:
 \[
  PP(\tau) = 2^-{\left(
  	\frac{1}{|\tau|} 
@@ -402,7 +403,8 @@ Perplexity is a measure of how well the distribution, estimated by the model, ma
 The implementation of the CDEST and baseline models was in the Julia programming language \parencite{Julia}.
 The full implementation and the experiment details can be downloaded from the GitHub repository\footnote{Implementation source is at %\url{https://github.com/oxinabox/ColoringNames.jl}
 [[URL Blinded]]}.
-It makes heavy use of the MLDataUtils.jl\footnote{MLDataUtils.jl is available from \url{https://github.com/JuliaML/MLDataUtils.jl}} and TensorFlow.jl\footnote{TensorFlow.jl is available from \url{https://github.com/malmaud/TensorFlow.jl}} packages.
+%TO DO Unblind this
+%It makes heavy use of the MLDataUtils.jl\footnote{MLDataUtils.jl is available from \url{https://github.com/JuliaML/MLDataUtils.jl}} and TensorFlow.jl\footnote{TensorFlow.jl is available from \url{https://github.com/malmaud/TensorFlow.jl}} packages.
 %, the latter of which we enhanced significantly to allow for this work to be carried out.
 
 
