@@ -17,7 +17,7 @@
 \chapter{Word Representations}\label{sec:word-representations}
 
 \aside[Word Vector or Word Embedding?]{Some literature uses the term \emph{word~vector}, or \emph{vector-space model} to refer to representations from LDA and LSA etc.
-	Other works use the terms is used synonymously with \emph{word~embedding}.
+	Other works use the terms are used synonymously with \emph{word~embedding}.
 	Word embeddings are vectors, in any case.
 }
 
@@ -34,7 +34,7 @@ It concludes with a brief look at some other applications and related techniques
 
 We begin the consideration of the representation of words using neural networks with the work on language modeling.
 This is not the only place one could begin the consideration: the information retrieval models, such as LSI \pcite{dumais1988using} and LDA \pcite{blei2003latent}, based on word co-location with documents would be the other obvious starting point.
-However, these models are closer to the end point of of the chapter, and of word-representation techniques, than they are to the beginning.
+However, these models are closer to the end point, than they are to the beginning, both chronologically, and in this chapter's layout.
 From the language modeling work, comes the contextual (or acausal) language model works such as skip-gram, which in turn lead to the post-neural network co-occurrence based works.
 These co-occurrence works are more similar to the information retrieval co-location based methods than the probabilistic language modeling methods for word embeddings from which we begin this discussion.
 
@@ -67,10 +67,10 @@ This is a common abridged (abuse-of) notation.
 The random variable in question is implicitly given by the name of its value.
 }
 
-The language modeling task it to predict the next word given the prior words \pcite{rosenfeld2000two}.
+The language modeling task is to predict the next word given the prior words \pcite{rosenfeld2000two}.
 For example, if a sentence begins \natlang{For lunch I will have a hot}, then there is a high probability that the next word will be \natlang{dog} or \natlang{meal},
 and lower probabilities of words such as \natlang{day} or \natlang{are}.
-Mathematically it is formulated: 
+Mathematically it is formulated as: 
 \begin{equation}\label{equ:langmodel}
 	P(\n W_i{=}\n w_i \mid \n W_{i-1}{=}\n w_{i-1}, \ldots, \n W_1{=}\n w_1)
 \end{equation}
@@ -94,7 +94,7 @@ The classical approach is trigram statistical language modeling.
 In this, the number of occurrences of word triples in a corpus is counted.
 From this joint probability of triples, one can condition upon the first two words,
 to get a conditional probability of the third.
-This is making the Markov assumption that the next state depends only on the current state,
+This makes the Markov assumption that the next state depends only on the current state,
 and that that state can be described by the previous two words.
 Under this assumption \Cref{equ:langmodelcompact} becomes:
 \begin{equation}\label{equ:trigramlangmodel}
@@ -104,7 +104,7 @@ More generally, one can use an $n$-gram language model where for any value of $n
 this is simply a matter of defining the Markov state to contain different numbers of words.
 
 This Markov assumption is, of-course, an approximation.
-In the previous example, a trigram language model is finding $P(\n w_i \mid \natlang{hot}, \natlang{a})$.
+In the previous example, a trigram language model finds $P(\n w_i \mid \natlang{hot}, \natlang{a})$.
 It can be seen that the approximation has lost key information.
 Based only on the previous 2 words the next word $\n w_i$ could now reasonably be \natlang{day}, but the sentence: \natlang{For lunch I will have a hot day} makes no sense.
 However, the Markov assumption in using $n$-grams is required in order to make the problem tractable -- otherwise an unbounded amount of information would need to be stored. 
@@ -122,7 +122,7 @@ In common use are various back-off methods \pcite{katz1987estimation,kneser1995i
 \aside{An extended look at classical techniques in statistical language modelling can be found in \textcite{DBLP:journals/corr/cs-CL-0108005}}
 %
 However, these methods are merely clever statistical tricks -- ways to reassign probability mass  to leave some left-over for unseen cases.
-Back-off is smarter than add-one smoothing, as it portions the probability fairly based on the $n{-}1$-gram probability.
+Back-off is smarter than add-one smoothing, as it portions the probability fairly based on the $(n{-}1)$-gram probability.
 Better still would be a method which can learn to see the common-role of words \pcite{brown1992class}.
 By looking at the fragment: \natlang{For lunch I want a hot}, any reader knows that the next word is most likely going to be a food.
 We know this for the same reason we know the next word in \natlang{For elevenses  I had a cold \ldots} is also going to be a food.
@@ -144,10 +144,10 @@ The core mechanism that allowed this was using an embedding or loop-up layer for
 
 \aside[Lookup word embeddings: Hashmap or Array?]{
 	The question is purely one of implementation.
-	Theoretically we do not care if the implementation using a String to Vector dictionary (e.g. a hashmap), or a 2D array from which a column is indexed-out (sliced-from) via an integer index representing the word.
+	For purposes of the theory, it does not matter if the implementation is using a String to Vector dictionary (e.g. a hashmap), or a 2D array from which a column is indexed-out (sliced-from) via an integer index representing the word.
 	In the tokenization of the source text, it is common to transform all the words into integers, so as to save memory, especially if string interning is not in use.
 	At that point it makes sense to work with an array.
-	For our purposes we will treat the word $\n w_i$ as if it were an integer index, though thinking of it as a string index into a hashmap changes little in the logic.
+	For our notational purposes in this book, we will treat the word $\n w_i$ as if it were an integer index, though thinking of it as a string index into a hashmap changes little in the logic.
 }
 
 
@@ -207,13 +207,13 @@ $\n w_i = \n w_j \implies \i C_{\n w_i} =  \i C_{\n w_j}$.
 
 In the neural trigram language model, each of the previous two words is used to look-up a vector from the embedding matrix.
 These are then concatenated to give a dense, continuous-space input to the above hidden layer.
-The output layer is a softmax layer, it gives the probabilities for each word in the vocabulary.
-Such that $\i \hat{y}_{\n w_i} = P(\n w_i \mid \n w_{i-1}, \n w_{i-2})$.
+The output layer is a softmax layer, it gives the probabilities for each word in the vocabulary,
+such that $\i \hat{y}_{\n w_i} = P(\n w_i \mid \n w_{i-1}, \n w_{i-2})$.
 Thus producing a useful language model.
 
 The word embeddings are trained, just like any other parameter of the network (i.e. the other weights and biases) via gradient descent.
 An effect of this is that the embeddings of words which predict the same future word will be adjusted to be nearer to each other in the vector space.
-The hidden learns to associate information with regions of the embedding space, as the whole network (and every layer) is a continuous function.
+The hidden layer learns to associate information with regions of the embedding space, as the whole network (and every layer) is a continuous function.
 This effectively allows for information sharing between words.
 If two word's vectors are close together because they mostly predict the same future words, then that area of the embedding space is associated with predicting those words.
 If words $a$ and $b$  often occur as the word prior to some similar set of words ($w,x,y,\ldots$) in the training set
@@ -295,7 +295,7 @@ As a speed-up technique this is now eclipsed by hierarchical softmax and negativ
 The notion of a different input and output vocabulary though remains important for word-sense embeddings as will be discussed in \Cref{sec:word-sense-representations}.
 }
 %
-Bengio et al. investigated values for 2, 4 and 5 prior words (i.e. a trigram, 5-gram and 6-gram model).
+\textcite{NPLM} investigated values for 2, 4 and 5 prior words (i.e. a trigram, 5-gram and 6-gram model).
 The network used in their work was marginally more complex than the trigram neural language model.
 As shown in \Cref{fig:neural-language-model}, it features a layer-bypass connection.
 For $n$ prior words, the model is described by:
@@ -342,7 +342,7 @@ They very briefly mention that an RNN could be used in its place.
 
 In \tcite{mikolov2010recurrent} an RNN is used for language modelling.
 Using the terminology of \Cref{sec:rnn}, this is an encoder RNN, made using Basic Recurrent Units.
-Using an RNN eliminates the Markov assumption of a finite window of prior word forming the state.
+Using an RNN eliminates the Markov assumption of a finite window of prior words forming the state.
 Instead, the state is learned, and stored in the state component of the RUs. 
 
 \aside[No Bias?]{It should be noticed that \Cref{equ:rnnlm1,equ:rnnlm2} are missing the bias terms.
@@ -373,11 +373,9 @@ As usual this hidden layer was an input to the hidden-layer at the next time-ste
 \end{align}
 
 
-Rather than using a basic RU, a more advanced RNN such as LSTM or GRU based network can be used.
+Rather than using a basic RU, a more advanced RNN such as a LSTM or GRU-based network can be used.
 This was done by \tcite{sundermeyer2012lstm} and \tcite{jozefowicz2015empirical},
-who found that the more advanced networks gave significantly better results.
-
-This ends our discussion of standard language models.
+both of whom found that the more advanced networks gave significantly better results.
 
 \section{Acausal Language Modeling}\label{sec:acausal-language-modeling}
 The step beyond a normal language model,
@@ -401,9 +399,9 @@ Though it does lack a non-linear activation function.
 }
 
 
-The works discussed in this section also feature Hierarchical Softmax and Negative Sampling methods as alternative output methods.
-As these are complicated and often misunderstood topics, in their own right, they are discussed in a more tutorial fashion in \Cref{sec:hierachical-softmax-and-negative-sampling}.
-This section will focus just on the model logic; and assume the output is a normal softmax layer.
+The several of the works discussed in this section also feature hierarchical softmax and negative sampling methods as alternative output methods.
+As these are complicated and easily misunderstood topics they are discussed in a more tutorial fashion in \Cref{sec:hierachical-softmax-and-negative-sampling}.
+This section will focus just on the language model logic; and assume the output is a normal softmax layer.
 
 \subsection{Continuous Bag of Words}\label{sec:cbow}
 \begin{figure}
@@ -424,7 +422,6 @@ and the only hidden layer is the embedding layer.
 
 For a context window of width $n$ words -- i.e. $\frac{n}{2}$ words to either side, of the target word $\n w_i$,
 the CBOW model is defined by:
-\pdfcomment{Maybe assign the context windows words to a sequence, like in the sense embedding chapter, to simplify notation}
 \begin{align}
 P(\n w_i & \mid \n w_{i-\frac{n}{2}},\ldots, \n w_{i-1}, \n w_{i+1},\ldots, \n w_{i+\frac{n}{2}})  \nonumber
 \\  & = \i {\softmax \left(V \sum_{j=i+1}^{j=\frac{n}{2}} \left( \i C_{\n w_{i-j}}+\i C_{\n w_{i+j}} \right)\right)}_{\n w_i}
@@ -511,7 +508,7 @@ It has been observed that machine learning can be a very good mirror upon societ
 	\node(d)[above right = of c] {$\i C_d$};
 	
 	\draw[->] (b) -- (a) node[labe,midway]{$\i C_a-\i C_b$};
-	\draw[->] (d) -- (c) node[labe,midway]{$\i C_d- \i C_c$};
+	\draw[->] (d) -- (c) node[labe,midway]{$\i C_c- \i C_d$};
 	\end{tikzpicture}}
 }
 
@@ -650,7 +647,7 @@ Training a neural network, such as skip-gram, is indeed just such an iterative o
 
 
 \section{Hierarchical Softmax and Negative Sampling}\label{sec:hierachical-softmax-and-negative-sampling}
-Hierarchical softmax, and negative sampling are effectively alternative output layer that are computationally cheaper to evaluate than regular softmax.
+Hierarchical softmax, and negative sampling are effectively alternative output layers which are computationally cheaper to evaluate than regular softmax.
 They are powerful methods which pragmatically allow for large speed-up in any task which involves outputting very large classification probabilities -- such as language modelling.
 
 
@@ -666,33 +663,33 @@ Its recent use was popularised by \tcite{mikolov2013efficient}, where words are 
 	This is similar to the original method used by \parencite{morin2005hierarchical},
 	but only using the similarity measure for reordering nodes at the same depth, after the depth is decided by Huffman encoding.
 	In our own experimentation, when applying it to other tasks, we did not see large improvements.
-	It is never-the-less a very interesting idea,
+	It is nevertheless a very interesting idea,
 	and quite fun to implement and observe the results.
 }
 
 One of the most expensive parts of training and using a neural language model is  to calculate the final softmax layer output.
 This is because the softmax denominator includes terms for each word in the vocabulary.
-Even if only one words probability is to be calculated, one denominator term per word in the vocabulary must be evaluated.
+Even if only one word's probability is to be calculated, one denominator term per word in the vocabulary must be evaluated.
 In hierarchical softmax, each word (output choice), is considered as a leaf on a binary tree.
 Each level of the tree roughly halves the space of the output words to be considered.
-The final level is the one in which the word-leaf is roughly equal in likelihood to all the words on the other branch.
+The final level to be evaluated for a given word contains the word's leaf-node and another branch, which may be a leaf-node for another word, or a deeper sub-tree
 
 The tree is normally a Huffman tree \pcite{huffman1952method}, as was found to be effective by \textcite{mikolov2013efficient}.
 This means that for each word $\n w_i$, the word's depth (i.e its code's length) $l(\n w_i)$ is such that over all words:
  $\sum_{\forall \n w_j \in \set{V}} P(\n w_j)\times l(\n w_j)$ is minimised.
 Where $P(\n w_i)$ is word $\n w_i$'s unigram probability, and $\set{V}$ is the vocabulary.
 The approximate solution to this is that $l(\n w_i) \approx -\log_2(P(\n w_i))$.
-From the tree, each word can be assign as code in the usual way, with 0 for example representing taking one branch, and 1 representing the other.
+From the tree, each word can be assign a code in the usual way, with 0 for example representing taking one branch, and 1 representing the other.
 Each point in the code corresponds to a node in the binary tree, which has decision tied to it.
 This code is used to transform the large  multinomial softmax classification into a series of binary logistic classifications.
 It is important to understand that the layers in the tree are not layers of the neural network in the normal sense -- the layers of the tree do not have an output that is used as the input to another.
 The layers of the tree are rather subsets of the neurons on the output layer, with a relationship imparted on them.
 
-Tt was noted by \textcite{mikolov2013efficient}, the for vocabulary $\set{V}$, that:
+It was noted by \textcite{mikolov2013efficient}, that for vocabulary $\set{V}$:
 \begin{itemize}
 	\item Using normal softmax would require each evaluation to perform $|\set{V}|$ operations.
 	\item Using hierarchical softmax with a balanced tree, would mean the expected number of operations across all words would be $\log_2(|\set{V}|)$.
-	\item Using a Huffman tree gives expected number of operations $\sum_{\forall \n w_j \in \set{V}} -P(\n w_j)\log_2(P(\n w_i)) = H(\set{V})$, where $H(\set{V})$ is the unigram entropy of words in the training corpus.
+	\item Using a Huffman tree gives the expected number of operations $\sum_{\forall \n w_j \in \set{V}} -P(\n w_j)\log_2(P(\n w_i)) = H(\set{V})$, where $H(\set{V})$ is the unigram entropy of words in the training corpus.
 \end{itemize}
 The worse case value for the entropy is $\log_2(|\set{V}|)$.
 In-fact Huffman encoding is provably optimal in this way.
@@ -710,7 +707,7 @@ in hierarchical softmax, when used with the common Huffman encoding, its the tre
 
 
 \paragraph{First consider a binary tree with just 1 layer and 2 leaves}
-The leaves are $\n n_{00}$ and $\n n_{01}$, each of these leaf nodes corresponds to a word from the vocabulary, which must have size 2, for this toy example.
+The leaves are $\n n_{00}$ and $\n n_{01}$, each of these leaf nodes corresponds to a word from the vocabulary, which has size two, for this toy example.
 
 \asidefig[Tree for 2 words]{\begin{tikzpicture}
 	\Tree [.$\n n_0$ 
@@ -718,7 +715,7 @@ The leaves are $\n n_{00}$ and $\n n_{01}$, each of these leaf nodes corresponds
 		$\n n_{01}$ ]
 \end{tikzpicture}}
 	
-From the initial root which we call $\n n_{0}$, and we can go to
+From the initial root which we call $\n n_{0}$, we can go to
 either node $\n n_{00}$ or node $\n n_{01}$, based on the input from the
 layer below which we will call $\v z$.
 
@@ -734,7 +731,7 @@ Note that $P(\n n_{0})=1$, as all words include the root-node on their path.
 
 We wish to know the probability of the next node being the left node (i.e.
 $P(\n n_{00}\mid \v z)$ ) or the right-node (i.e. $P(\n n_{01}\mid \v z)$).
-As these are leaf nodes, the prediction one or of the other is the same as the prediction of one or the other of the 2 words in our vocabulary.
+As these are leaf nodes, the prediction either equivalent to the prediction of one or the other of the two words in our vocabulary.
 
 We could represent the decision with a softmax with two outputs.
 However, since it is a binary decision, we do not need a softmax, we
@@ -828,7 +825,7 @@ P(\n n_{0\n t_{1},\n t_{2}}\mid \v z,\,\n n_{0\n t_{1}})&=\sigma\left((-1)^{\n t
 P(\n n_{0\n t_{1}\ldots\n t_{i}}\mid \v z,\,\n n_{0\n t_{1}\ldots\n t_{i-1}})&=\sigma\left((-1)^{\n t_{i}} \i V_{0\n t_{1}\ldots\n t_{i-1}, :} \v z\right)
 \end{align}
 
-Applying the conditional probability chain rule, we get:
+The conditional probability chain rule, is applied to get:
 \begin{equation}
 P(\n n_{0\n t_{1}\ldots\n t_{L}}\mid \v z)=\prod_{i=1}^{i=L}\sigma\left((-1)^{\n t_{i}} \i V_{0\n t_{1}\ldots\n t_{i-1},:} \v z\right)
 \end{equation}
@@ -862,10 +859,10 @@ P(\n n_{0\n t_{1}\ldots\n t_{L}}\mid \v z)=\prod_{i=1}^{i=L}\sigma\left((-1)^{\n
 	as on most hardware (and BLAS systems) matrix products with $n$ columns, takes a similar amount of time to $n$ vector dot products.
 	As such storing the row vectors of $V$ in a hashmap indexed by node-path, and looping over them as required may be more practical.
 	
-	In languages/frameworks with slow looping constructs (numpy, R, octave), where calling into suitable library routines is much faster, this may give speed-up;
-	even here it is likely to be minor;
-	the time may be better spend writing a C extension library to do this part of the program.
-	Or learning to use a language with fast for loops (e.g. julia \parencite{Julia}).
+	In languages/libraries with slow looping constructs (numpy, R, octave), where calling into suitable library routines is much faster, this may give some speed-up;
+	but even here it is likely to be minor.
+	The time may be better spent writing a C extension library to do this part of the program.
+	Or learning to use a language with fast for loops (e.g. Julia \parencite{Julia}).
 }
 
 The formulation above is not the same as in other works.
@@ -888,14 +885,14 @@ and use an indicator function $\left\llbracket a=b\right\rrbracket =\begin{cases
 
 \aside[How does this relate to word vectors?]{
 After the length of this section, one may have forgotten why we are doing this in the first place.
-Recall that CBOW, skip-gram and all other language modelling based word embedding methods are based around about predicting
+Recall that CBOW, skip-gram and all other language modelling based word embedding methods are based around predicting
  $P(\n w_o \mid \n w_i,\ldots, \n w_{j})$ for some words.
 For skip-gram that is just $P(\n w_o\mid \n w_i)$.
 The term $\n n_{0\n t_{1}\ldots\n t_{L}}$ 
 in  $P(\n n_{0\n t_{1}\ldots\n t_{L}}\mid z)$, 
-just represents as  path through the tree to its leave node which represent the word 
+just represents as a path through the tree to the leaf node which represents the word 
 $\n w_o$. i.e $P(\n n_{0\n t_{1}\ldots\n t_{L}}\mid z)=P(\n w_o\mid z)$.
-And $z$ is the final pre-output layer of the model.
+The output of the final hidden layer is $z$  (i.e. the $z$ is the input to the output layer)
 In normal language models $z$ encodes all the information about what the model knows of predictions based on $\n w_i\ldots,\n w_{j}$. $z$ is thus a proxy term in the conditional probability for those words.
 In skip-gram there is no hidden layer, and it is just $z = \i C_{\n w_i}$ proxying only for $w_i$,
 and the model defines its probability output by $P(\n w_o\mid \n w_i) = P(\n w_o\mid \i C_{\n w_i})$.
@@ -923,7 +920,7 @@ Though the final one is perhaps a key reason for the difficulties in understandi
 
 \aside[The gradient calculations]{They are not fun. They never are for back-propagation. We recommend using a framework with automated differentiation, and/or performing gradient checks against a numerical differentiation tool (simple finite-differencing will do in a pinch).}
 
-Using normal softmax, during the training, the cross-entropy between the model outputs predictions and the ground truth as given in the training set is minimised.
+Using normal softmax, during the training, the cross-entropy between the model's predictions and the ground truth as given in the training set is minimised.
 Cross entropy is given by
  \pdfcomment{Really check this}
 \begin{equation}
@@ -973,10 +970,10 @@ P(\n w_j \mid \n w_i) & = \frac{\exp{\i V_{\n w_j,:} \i C_{\n w_i}}}{\sum_{k=1}^
 
 \aside[Why is not using softmax wrong?]{The notation abuse may be hiding just how bad it is to not use softmax.
 Recall that the true meaning of %\\
-$P(\n w_j \mid \n w_i)$  is actually  %\\
-$P(\n W_j{=}\n w_j \mid \n W_i{=}\n w_i)$.
+\mbox{$P(\n w_j \mid \n w_i)$} is actually  %\\
+\mbox{$P(\n W_j{=}\n w_j \mid \n W_i{=}\n w_i)$}.
 By not using softmax, with its normalising denominator this means that:
-$\sum_{\forall \n w_j \in \set{V}} P(\n w_j \mid \n w_i) \neq 1$ \\(except by coincidence).
+\mbox{$\sum_{\forall \n w_j \in \set{V}} P(\n w_j \mid \n w_i) \neq 1$} \\(except by coincidence).
 }
 
 
@@ -984,7 +981,7 @@ This is not the only valid representation.
 One could use a sigmoid neuron for a direct answer to the co-location probability of $\n w_j$ occurring near $\n w_i$.
 Though this would throw away the promise of the probability distribution to sum to one across all possible words that could be co-located with $\n w_i$.
 That promise could be enforced by other constraints during training, but in this case it will not be.
-It is a legal probability if one does not consider it as a single categorical prediction, but rather as independent predictions.
+It is a valid probability if one does not consider it as a single categorical prediction, but rather as independent predictions.
 
 \begin{align}
 &P(\n w_j \mid \n w_i) & = \i \sigma(V\,\i C_{\n w_i})_{\n w_j} \\
