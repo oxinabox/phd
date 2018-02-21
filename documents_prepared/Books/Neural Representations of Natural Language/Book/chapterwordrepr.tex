@@ -990,7 +990,7 @@ It is a valid probability if one does not consider it as a single categorical pr
 
 
 Lets start from the cross-entropy loss.%
-\aside[Loss Function]{Readers may want to reread \Cref{sec:softmax-loss-function} to brush up on how we use the training dataset as a ground truth probability estimate implicitly when using cross-entropy loss. Noting that the conditioning term for skip-grams is the co-located words as there is no hidden layer.}
+\aside[Loss Function]{Readers may want to reread \Cref{sec:softmax-loss-function} to brush up on how we use the training dataset as a ground truth probability estimate implicitly when using cross-entropy loss. When doing so one should remember that that the conditioning term, $z$, for skip-grams is the co-located words as there is no hidden layer.}
 %
 In training word $\n w_j$ does occur near $\n w_i$, we know this because they are a training pair presented from the training dataset $\seq{X}$.
 Therefore, since it occurs, we could make a loss function based on minimising the negative log-likelihood of all observations.
@@ -999,7 +999,7 @@ Loss = \sum_{\mathclap{\forall (\n w_i,\n w_j)\in \seq{X}}} -\log P(\n w_j\mid \
 \end{equation}
 This is the cross-entropy loss, excluding the scaling factor for how often it occurs.
 
-However, as we are not using softmax in the model output,
+However, we are not using softmax in the model output,
 which means that there is no trade off for increasing (for example) $P(\n w_1\mid \n w_i)$ vs $P(\n w_2\mid \n w_i)$.
 This thus admits the trivially optimal solution $\forall \n w_j\in \set{V}$ $P(\n w_j \mid \n w_i) = 1$.
 This is obviously wrong -- even beyond not being a proper distribution -- some words are more commonly co-occurring than others.
@@ -1033,7 +1033,6 @@ We could take many, and do several at a time,
 and get more confidence that $P(\n w_j\mid \n w_i)$ is indeed greater than other (non-existent) co-occurrence probabilities.
 This gives the improved loss function of 
 
-\pdfcomment{should there be an averagesing across all negative samples?}
 \begin{equation}
 loss(\n w_j,\n w_i) = 
 \left(\sum_{\mathrlap{\!\!\!\!\!\!\forall \n w_k \in \mathrm{samples}(\d D_{1g})}}
@@ -1041,8 +1040,8 @@ loss(\n w_j,\n w_i) =
 - \log P(\n w_j\mid \n w_i)
 \label{equ:samplesloss}
 \end{equation}
-where $\d D_{1g}$ stands for the unigram distribution of the vocabulary.
-And $\mathrm{samples}(\d D_{1g})$ a function that returns some number of samples from it.
+where $\d D_{1g}$ stands for the unigram distribution of the vocabulary
+and $\mathrm{samples}(\d D_{1g})$ is a function that returns some number of samples from it.
 
 Consider, though is this fair to the samples?
 We are taking them as representatives of all words that do not co-occur.
@@ -1078,9 +1077,9 @@ loss(\n w_j,\n w_i) = \\
 \end{multline}
 
 Consider that the choice of unigram distribution for the negative samples is not the only choice.
-For example, we might wish to increase the relative occurrence of rare words in the negative samples, to help them fit better from limited training data
-(something that is done via subsampling in the positive samples (i.e. the training cases)).
-So replace $\d D_{1g}$ with $\d D_{ns}$ being the distribution of negative samples from the vocabulary,
+For example, we might wish to increase the relative occurrence of rare words in the negative samples, to help them fit better from limited training data.
+This is commonly done via subsampling in the positive samples (i.e. the training cases)).
+So we replace $\d D_{1g}$ with $\d D_{ns}$ being the distribution of negative samples from the vocabulary,
 to be specified as a hyper-parameter of training.
 
 \textcite{mikolovSkip} uses a distribution such that 
@@ -1121,13 +1120,13 @@ Loss = \quad -\sum_{\mathclap{\forall (\n w_i,\n w_j)\in \seq{X}}}\\
 \right)
 \end{multline}
 
-Which is the negative sampling loss function used in  \textcite{mikolovSkip}.
+This is the negative sampling loss function used in  \textcite{mikolovSkip}.
 Perhaps the most confusing part of this is the notation.
 Without the abuses around expected value, this is written:
 \begin{multline}
 Loss = \quad -\sum_{\mathclap{\forall (\n w_i,\n w_j)\in \seq{X}}}\\
 \biggl( \log \sigma(\i V_{\n w_j,:} \i C_{\n w_i}) 
-+ \sum_{\mathclap{\forall \n w_k \in \text{samples}(\d D_{1g})}}
++ \sum_{\mathclap{\forall \n w_k \in \text{samples}(\d D_{ns})}}
 \d P_{\d D_{ns}}(\n w_k) \log \sigma(- \i V_{\n w_k,:} \i C_{\n w_i})
 \biggr)
 \end{multline}
@@ -1136,7 +1135,7 @@ Loss = \quad -\sum_{\mathclap{\forall (\n w_i,\n w_j)\in \seq{X}}}\\
 
 \section{Natural Language Applications -- beyond language modeling}
 While statistical language models are useful, they are of-course in no way the be-all and end-all of natural language processing.
-Simultaneously with the developments around representations for the language modelling tasks, work was being done on solving other NLP problems using similar techniques \pcite{co-lobert2008unified}.
+Simultaneously with the developments around representations for the language modelling tasks, work was being done on solving other NLP problems using similar techniques \pcite{collobert2008unified}.
 
 
 \subsection{Using Word Embeddings as Features}
@@ -1170,7 +1169,7 @@ The inputs to CCA, are two sets of vectors, normally expressed as matrices.
 We will call these:
 $C \in \mathbb{R}^{\d n_C \times \d m_C}$ and $V \in \mathbb{R}^{\d n_V \times \d m_V}$.
 These are both some set of vector representations for words, not necessarily of the same dimensionality.
-These could be the output of any of the embedding model discussed earlier,
+These could be the output of any of the embedding models discussed earlier,
 or even a sparse (non-embedding) representations such as the point-wise mutual information of the co-occurrence counts.
 The other input is a subset of pairs from those sets that are to be aligned, which we will call, $\d C_\star \times \d V_\star$.
 This subset contains only pairs with known translations -- this does not have to be the whole vocabulary of either language.
@@ -1179,7 +1178,7 @@ This subset contains only pairs with known translations -- this does not have to
 %
 By performing CCA one solves to find a series of vectors (also expressed as a matrix), $S=\left[ \dv s_1 \ldots \dv s_d \right]$ and $T= \left[ \dv t_1 \ldots \dv t_d \right]$,
 such that the correlation between $\d C_\star \dv s_i$ and $\d V_\star \dv t_i$ is maximised,
-while constraining with the requirement for all $j<i$ that $\d C_\star \dv s_i$ is uncorrelated with $\d C_\star \dv s_j$  and that  $ \d V_\star \dv t_i$ is uncorrelated with $\d V_\star \dv t_j$.
+with the constraint that for all $j<i$ that $\d C_\star \dv s_i$ is uncorrelated with $\d C_\star \dv s_j$  and that  $ \d V_\star \dv t_i$ is uncorrelated with $\d V_\star \dv t_j$.
 This is very similar to principal component analysis (PCA), and like PCA the number of components to use ($d$) is a variable which can be decreased to achieve dimensionality reduction.
 When complete, taking $S$ and $T$ as matrices gives projection matrices which project $C$ and $V$ to a space where aligned elements are as correlated as possible.
 The new common vector space embeddings are given by:

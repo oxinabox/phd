@@ -281,8 +281,8 @@ They train it on the partially disambiguated corpus produces in phase one.
 The original sense vectors are discarded.
 Rather than the model being tasked only to predict the surrounding words, it is tasked to predict surrounding words and their sense-tags (where present).
 In the loss function the prediction of tags and words is weighted equally.
-Note that the input the the skip-gram is the central word, not the central word and sense-tag.
-In this method the word-sense embeddings are output embeddings, only.
+Note that the input the skip-gram is the central word, not the central word and sense-tag.
+In this method the word-sense embeddings are output embeddings.
 
 The phase one sense vectors have not been assessed on their representational quality.
 It could be assumed that as results for these were not reported that it was worse than those found in phase two.
@@ -320,8 +320,8 @@ This allows the data to inform on what word-senses exist.
 	SCWS is a corpus designed for evaluating word sense embeddings.
 	Single sense embeddings (e.g. skipgrams) can not take advantage of the context information in the SCWS, however, they do often perform comparably to the word-sense embeddings.
 	Sometimes even outperforming them.
-	It is unclear as to if this highlights the difficulty of the task -- that the impact of context is hard to gauge.
-	Or if it merely shows just how well tuned the more mature single sense embedding methods are.
+	It is unclear if this highlights the difficulty of the task (i.e. that the impact of context is hard to gauge).
+	Or if it merely shows just how well tuned the more mature single-sense embedding methods are.
 }
 
 Most vector WSI and WSR approaches are evaluated on similarity tests.
@@ -330,9 +330,9 @@ This evaluation is also suitable for evaluating single sense word-embeddings, e.
 
 
 We can divide these into context clustering based approaches,
-and collocation prediction based approaches.
-This division is similar to the separation of collocation matrix factorisation,
-and collocation prediction based approaches discussed in \Cref{sec:word-representations}.
+and co-location prediction based approaches.
+This division is similar to the separation of co-location matrix factorisation,
+and co-location prediction based approaches discussed in \Cref{sec:word-representations}.
 It can be assumed thus that at their heart, like for word embeddings,
 they are fundamentally very similar.
 One could think of prediction of collocated words as a soft indirect clustering of contexts that can have those words.
@@ -352,14 +352,14 @@ That original work is not a neural word-sense embedding, however the approach re
 
 
 \aside[On context representations]{
-These collocation clustering methods require finding a representation for the the context, which can then by combined with cosine similarity (or another metric), to give the similarities for clustering.
+These co-location clustering methods require finding a representation for the context, which can then by combined with cosine similarity (or another metric), to give the similarities for clustering.
 More generally, this can be related to the next chapter: \Cref{sec:sentence-representations-and-beyond}, as any of these methods could be used to derive a vector representation of a context, which could be used with cosine distance to define a usage similarity.
-In most works discussed here comparatively simple representations of the contexts are used.
+In most works (and all the works discussed here) a comparatively simple representations of the contexts are used.
 }
 
 The clustering process is done by considering all word uses, with their contexts.
-The contexts can a window words (like in many word-embedding models), the sentence, or defined using some other rules.
-Given a pair of contexts, some method of measuring their similarity must be defined
+The contexts can be a fixed-sized window of words (like in many word-embedding models), the sentence, or defined using some other rules.
+Given a pair of contexts, some method of measuring their similarity must be defined.
 In vector representational works, this is ubiquitously done by assigning each context a vector, and then using cosine similarity between those vectors.
 Different methods define the context vectors differently
 \begin{itemize}
@@ -374,19 +374,19 @@ Different methods define the context vectors differently
 It is interesting to note that idf, td-idf, mutual information, skip-gram co-occurrence probabilities (being a proxy for point-wise mutual information \parencite{levy2014neural}), are all closely related measures.
 
 \aside[On clustering]{
-	Clustering can be defined as a (mixed integer) optimisation task, of assigning points to clusters so as satisfy some loss function based e.g. on minimising intra-cluster variance while maximising inter-cluster variance.
+	Clustering can be defined as a (mixed integer) optimisation task, of assigning points to clusters so as to satisfy some loss function based around some notion of minimising intra-cluster variance while maximising inter-cluster variance (or similar).
 	As this is NP-hard, most clustering methods are approximate.
-	k-means is very popular because of its simplicity,
+	K-means is very popular because of its simplicity,
 	however it easily falls into local minima,
-	and so normally is run dozens times (at least) to obtain more optimal results.
+	and so normally it is run dozens of times (at least) to obtain more optimal results.
 	K-means also has the issue of having to select the number of clusters ($k$).
-	It should be remembers that there exist many other clustering methods than  k-means and k-means variants.
+	It should be remembered that there exist many other clustering methods than  k-means and k-means variants.
 	These use different loss functions, and different strategies to overcome the NP-hard nature of the problem.
-	In particular there mixture model methods, hierarchical methods, spectral methods, and others.
+	In particular their mixture model methods, hierarchical methods, spectral methods, and others.
 	We personally favour affinity propagation \parencite{frey2007clustering},
-	though there is provably no ideal clustering algorithm, even in the non-heuristic case \parencite{kleinberg2003impossibility}.
-	On any clustering task (word sense or otherwise) it is worth investigating several clustering algorithms, and not just settling for k-means (particularly not setting for k-means run once.).
-	A series of interesting and very easy reading articles on clustering can be found at:
+	though there is provably no ideal clustering algorithm even in the non-heuristic case \parencite{kleinberg2003impossibility}.
+	On any clustering task (word sense or otherwise) it is worth investigating several clustering algorithms, and not just settling for k-means (particularly not settling for k-means run once.).
+	A series of interesting and easy reading articles on clustering can be found at:
 	\url{http://alexhwilliams.info/itsneuronalblog/2015/09/11/clustering1/}, \url{http://alexhwilliams.info/itsneuronalblog/2015/10/01/clustering2/}, and \url{http://alexhwilliams.info/itsneuronalblog/2015/11/18/clustering-is-easy/}
 }
 
@@ -400,23 +400,22 @@ Secondly, some method is then applied to cluster the word uses based on the calc
 	\item \textcite{kaageback2015neural} uses k-means.
 \end{itemize}
 
-Finally some method is used find an embedding for that cluster.
+Finally some method is used to find an embedding for that cluster.
 For non-neural embedding methods this step is not always done, as defining a representation is not the goal, though in general it can be derived from most clustering techniques.
 \textcite{Schutze:1998wordsenseclustering} and 
 \textcite{kaageback2015neural} use the centroids of their clusters.
 \textcite{Huang2012} use a method of relabelling the word uses with the cluster ID,
-then retrain their single sense word embedding method.
+then train a (single-sense) word embedding method on cluster ID's rather than words.
 This relabelling technique is similar to the method later used by \textcite{Chen2014} for learning lexical sense representations, as discussed in \Cref{sec:pseudo-semi-supervised-method}.
 As each cluster of contexts represents a sense, those cluster embeddings are thus also suitable word sense embeddings.
 
 \pdfcomment{Maybe use a table to display this instread of lists?}
-
-Inducing word sense embeddings via off-line clustering is all very similar in its functioning.
-Represent the contexts: generally via some weighted measure.
-Measure the similarity of the contexts: generally by cosine similarity
-Cluster the contexts via some means.
-Extract an embedding to represent the cluster: e.g. using the cluster centroid.
-Use this embedding to represent the sense.
+All the methods for inducing word sense embeddings via off-line clustering follow the same process.
+First represent the contexts,
+so as to be able to measure their similarity.
+Use the context's similarity to cluster them.
+Finally, a vector representation of the cluster.
+This cluster representation is the induced sense embedding.
 
 \subsubsection{Online clustering}
 The methods discussed above all use off-line clustering.
@@ -425,11 +424,11 @@ That is to say the clustering is performed after the embedding is trained.
 To do this they use a modified skip-gram based method.
 They start with a fixed number of randomly initialised sense vectors for each context.
 These sense vectors are used as input embeddings for the skip-gram context prediction task, over single sense output word embeddings.
-Each sense also has linked to it a context cluster centroid, which is the average of all output embeddings for the contexts that that sense is assigned to.
+Each sense also has linked to it a context cluster centroid, which is the average of all output embeddings for the contexts that the sense is assigned to.
 Each time a training instance is presented, the average of the context output embeddings is compared to each sense's context cluster centroid.
 The context is assigned to the cluster with the closest centroid, updating the centroid value.
 This can be seen as similar to performing a single k-means update step for each training instance.
-Optionally, if the closest centroid is further from the context vector than some threshold  a new sense can be created using that context vector as the initial centroid.
+Optionally, if the closest centroid is further from the context vector than some threshold,  a new sense can be created using that context vector as the initial centroid.
 After the assignment of the content to a cluster, the corresponding sense vector is selected for use as the input vector in the skip-gram context prediction task.
 
 \textcite{kaageback2015neural} investigated using their weighting function (discussed above) with the online clustering used by \textcite{neelakantan2015efficient}.
@@ -437,7 +436,7 @@ More generally any such weighting function could be used.
 This online clustering approach is loosely similar to the co-location prediction based approaches.
 
 
-\subsection{Collocation Prediction Based Approaches}
+\subsection{co-location Prediction Based Approaches}
 \aside[Probability]{
 One may wish to brush up on basic probability notions for this section.
 In particular joint, conditional and marginal probabilities definitions;
@@ -461,9 +460,8 @@ we have that the intersection probability $P(\n w_i,\n s_k) = P(\n s_k)$.
 %and $P(\n w_i) = \sum_{\forall \n s_k \in \seq S(\n w_i) P(\n s_k)}$;
 
 We can thus write \Cref{equ:tianmm} as:
-\pdfcomment{I am not happy with how this math looks.}
 \begin{align}
-P(\n w_o\mid \n w_i) &= \sum_{\forall \n s_k \in \seq S(\n w_i)} P(\n w_o \mid \n s_k) P(\n s_k \mid \n w_i) \label{equ:tianmm2}
+P(\n w_o\mid \n w_i) &= \sum_{\forall \n s_k \in \seq S(\n w_i)} P(\n w_o \mid \n s_k) \, P(\n s_k \mid \n w_i) \label{equ:tianmm2}
 \end{align}
 
 A softmax classifier can be used to define $P(\n w_o \mid \n s_k)$, just like in normal language modelling.
@@ -495,12 +493,12 @@ By using this EM optimisation the network can fit values for the embeddings in t
 A limitation of the method used by \tcite{tian2014probabilistic}, is that the number of each sense must be known in advance.
 One could attempt to solve this by using for example the number of senses assigned by a lexicographical resource (e.g. WordNet).
 However, situations where such resources are not available or not suitable are one of the main circumstances in which WSI is desirable  (for example in work using domain specific terminology, or under-resourced languages).
-In these case one could apply a heuristic based on the distribution of senses based on the distribution of words \parencite{zipf1945meaning}.
+In these cases one could apply a heuristic based on the distribution of senses based on the distribution of words \parencite{zipf1945meaning}.
 An attractive alternative would be to allow senses to be determined based how the words are used. If they are used in two different ways, then they should have two different senses.
 How a word is being used can be determined by the contexts in which it appears.
 
 
-\tcite{AdaGrams} extends on this work by making the the number of senses for each word itself a fit-able parameter of the model.
+\tcite{AdaGrams} extends on this work by making the number of senses for each word itself a fit-able parameter of the model.
 This is a rather Bayesian modelling approach, where one considers the distribution of the prior
 
 Considering again the form of \Cref{equ:tianmm2}
@@ -543,13 +541,14 @@ For $\n \seq{W}_i$ giving a context window of width $n$. i.e. $\n \seq{W}_i = \l
 
 \pdfcomment{Check this equation}
 
-\section{Implementations}
-Of the methods discussed in this section the following implementations exist:
-\begin{enumerate}
-	\item WordNet \parencite{tengi1998design} should have a binding in all modern programming languages.
-	\item BabelNet \parencite{navigli2010babelnet} is intended to be accessed as an online resource, via a RESTful APImost commonly accessed. Users receive 1000 free queries per day. Which isn't much for these kinds of tasks. Academic users can request an upgrade to 50,000 queries per day, or to download a copy of the database (My own experience was the request was handled in <24 hours).
-	\item AdaGrams \parencite{AdaGrams} has a julia implementation at \url{https://github.com/sbos/AdaGram.jl}. This was working well for Julia v0.5. At time of publication it was not working in Julia v0.6. Though updating is reasonable.
-\end{enumerate}
+%
+%\section{Implementations}
+%Of the methods discussed in this section the following implementations exist:
+%\begin{enumerate}
+%	\item WordNet \parencite{tengi1998design} should have a binding in all modern programming languages.
+%	\item BabelNet \parencite{navigli2010babelnet} is intended to be accessed as an online resource, via a RESTful APImost commonly accessed. Users receive 1000 free queries per day. Which isn't much for these kinds of tasks. Academic users can request an upgrade to 50,000 queries per day, or to download a copy of the database (My own experience was the request was handled in <24 hours).
+%	\item AdaGrams \parencite{AdaGrams} has a julia implementation at \url{https://github.com/sbos/AdaGram.jl}. This was working well for Julia v0.5. At time of publication it was not working in Julia v0.6. Though updating is reasonable.
+%\end{enumerate}
 
 
 \section{Conclusion}
@@ -558,24 +557,23 @@ Of the methods discussed in this section the following implementations exist:
 	The na\"ive solution is to check the distance to all points.
 	For $n$ points this is for all cases $O(n)$ operations.
 	For word embeddings $n$ is the size of the vocabulary, perhaps $100,000$ words.
-	$100,000$ operations per check, is not entirely unreasonable on modern computers (even when the operations are on 300 dimensional representations).
+	Performing $100,000$ operations per check, is not entirely unreasonable on modern computers (even when the operations are on 300 dimensional representations).
 	However, for word sense embeddings, which have many senses per word in the vocabulary,
 	this means many more points to check.
 	30 senses per word is not unusual for fine-grained word sense induction.
 	Having a total $n=3,000,000$ representations to check causes a noticeable delay, when performing thousands of checks for a similarity or analogy task.
-	To solve this we can use  data structures exist for fast nearest neighbour querying.
-	A k-d tree takes at worst $O(n \log_2(n))$ time to construct.
+	To solve this we can use  data structures designed for fast nearest neighbour querying.
+	A k-d tree  takes at worst $O(n \log_2(n))$ time to construct.
 	Once constructed on average it takes $O(\log (n))$ to find the nearest neighbour to any point.
 	This makes checking the nearest neighbour nearly instantaneous for even the largest vocabularies.
 }
-Word sense representations allow the representations of the senses of words.
-When one word has multiple meanings.
+Word sense representations allow the representations of the senses of words when one word has multiple meanings.
 This increases the expressiveness of the representation.
-They can in general be applied anywhere word embeddings can.
+These representations can in general be applied anywhere word embeddings can.
 They are particularly useful for translation,
 and in languages with large numbers of homonyms.
 
-It leads naturally to the next section on phrase representation. Rather than a single word having many meanings, the next chapter will discuss how a single meaning may take multiple words to express.
+The word representations naturally to the next section on phrase representation. Rather than a single word having many meanings, the next chapter will discuss how a single meaning may take multiple words to express.
 
 
 \end{document}
