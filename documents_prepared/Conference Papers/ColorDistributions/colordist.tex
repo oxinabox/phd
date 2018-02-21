@@ -63,42 +63,41 @@
 When a speaker says the name of a color, the color that they picture is not necessarily the same as the listener imagines.
 Color is a grounded semantic task, but that grounding is not a mapping of a single word (or phrase) to a single point in color-space.
 Proper understanding of color language requires the capacity to map a sequence of words to a probability distribution in color-space.
-A distribution is required as there is no clear agreement between people as to what a particular color describes -- different people have a different idea of what it means to be \texttt{``very dark orange''}.
+A distribution is required as there is no clear agreement between people as to what a particular color describes -- different people have a different idea of what it means to be ``very dark orange''.
 Further, such a model must learn an understanding of how each word in the sequence contributes to the color being described.
 It is impossible to collect data for every possible sequence of color words.
 A system is required that solves both these issues.
 To achieve this, we propose a novel GRU-based model, which when given such a color description produces an estimated probability distribution across HSV color-space.
-This model learns how each term in the color name comes together to determine the shape of the distribution.
+This model learns how each word in the color name comes together to determine the shape of the distribution.
 This allows the prediction of distributions for color description phrases never seen in training.
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
 
 Color understanding is an important subtask in natural language understanding.
-The color language sub-domain displays many of the same features and difficulties as in the full domain.
-Due to this difficulty, recent state of the art systems for image generation have demonstrated their capacity by generating from texts containing color descriptions such as ``the flower has petals that are bright pinkish purple with white stigma'' \parencite{reed2016generative, 2015arXiv151102793M}.
 It is a challenging domain, due to ambiguity, multiple roles taken by the same words, the many modifiers, and shades of meaning.
-The core focus of the work we present here is on these linguistic phenomena around the descriptions of the color of a single patch as characterized by a color-space such as HSV \parencite{smith1978color}.
+Due to its difficulty, texts containing color descriptions such as \texttt{the flower has petals that are bright pinkish purple with white stigma} are used as demonstrations for state of the art image generation systems \parencite{reed2016generative, 2015arXiv151102793M}.
+The core focus of the work we present here is addressing these linguistic phenomena around the descriptions of the color in a single patch as represented in a color-space such as HSV \parencite{smith1978color}.
 Issues of illumination and perceived color based on visual context are considered out of the scope.
 
 
-Consider that the word \texttt{``tan''} may mean one of a number of colors for different people in different circumstances ranging from the bronze of a tanned sunbather, to the brown of tanned leather;
-\texttt{``green''} may mean anything from \texttt{``aquamarine''} to \texttt{``forest green''};
- and even \texttt{``forest green''} may mean the rich shades of a rain-forest, or the near grey of the Australian bush.
+Consider that the word \texttt{tan} may mean one of many colors for different people in different circumstances ranging from the bronze of a tanned sunbather, to the brown of tanned leather;
+\texttt{green} may mean anything from \texttt{aquamarine} to \texttt{forest green};
+ and even \texttt{forest green} may mean the rich shades of a rain-forest, or the near grey of the Australian bush.
 Thus the color intended cannot be uniquely inferred from the color name.
-However, based on knowledge of the population's use of the words it is possible to estimate probabilities for the colors that might be intended.
+Without further context, it does remain possible  to estimate likelihoods of which colors might be intended based on the knowledge of the population's use of the words.
 The primary aim of this work is to map a sequence of color description words to a probability distribution in a color-space such as HSV.
 This is required for a proper understanding of color language.
 This is in contrast to other recent work where terms are mapped to a single point in color-space \parencite{DBLP:journals/corr/KawakamiDRS16}.
 
 
 Estimating color distributions has a clear use as a subsystem in many systems.
-For example, in a human-interfacing image-processing system, when asked to select the \texttt{``dark bluish green''} object, each object can be ranked based on how likely its color is according to the distribution.
+For example, in a human-interfacing image-processing system, when asked to select the \texttt{dark bluish green} object, each object can be ranked based on how likely its color is according to the distribution.
 This way if extra information eliminates the most-likely object, the second most likely object can immediately be determined.
-Further, as the probability of the color of the object being described by the user input is known, a threshold can be given to report that no object is found, or to ask for additional confirmation.
+Further, if the probability of the color of the object being described by the user input is known, a threshold can be given to report that no object is found, or to ask for additional information.
 
 
-Proper understanding requires considering the color intended as a random variable.
+Proper understanding requires considering \emph{the color intended} as a random variable.
 One cannot simply map from a name to a single point or region in the color-space, but rather one must map to a distribution.
 For a given color name, any number of points in the color-space could be intended, with some being more or less likely than others.
 Or equivalently, up to interpretation, it may intend a region but the likelihood of what points are covered is variable and uncertain.
@@ -109,8 +108,8 @@ This allows us to take advantage of the well known methods for estimating a prob
 
 
 This understanding of color language also requires a model capable of understanding linguistic compositionality.
-It must understand how modifiers such as \texttt{``dark''} modify basic colors; and  how other modifiers such as \texttt{``very''} would interact as a modifier to modifiers.
-It also must understand the functioning of affixes such as \texttt{``-ish''} in \texttt{``greenish''}.
+It must understand how modifiers such as \texttt{dark} modify basic colors; and  how other modifiers such as \texttt{very} would interact as a modifier to modifiers.
+It also must understand the functioning of affixes such as \texttt{-ish} in \texttt{greenish}.
 This compositional understanding is needed both as a point of theory and practically.
 Practically, the generalisation ability from a compositional model allows it to handle color descriptions not seen in training.
 Due to the combinatorial nature of language a data-sparsity problem exists that
@@ -349,8 +348,8 @@ They also define a standard test, development and train split.
 
 In the dataset each observation is a textual color description, paired with a point in HSV color-space.
 We tokenized the textual color descriptions into separate words and affixes, using a short list of word replacement rules.
-Beyond simply breaking up a description \texttt{``greenish blue''} into words: \texttt{``greenish''} and \texttt{``blue''}, the suffixes \texttt{``-ish''} and \texttt{``-y''} are also separated at their own tokens: \texttt{``green''}, \texttt{``ish''}, \texttt{``blue''}.
-Hyphens are also treated as their own tokens: \texttt{``blue-green''} becomes \texttt{``blue''}, \texttt{``-''}, \texttt{``green''}.
+Beyond simply breaking up a description \texttt{greenish blue} into words: \texttt{greenish} and \texttt{blue}, the suffixes \texttt{-ish} and \texttt{-y} are also separated at their own tokens: \texttt{green}, \texttt{ish}, \texttt{blue}.
+Hyphens are also treated as their own tokens: \texttt{blue-green} becomes \texttt{blue}, \texttt{-}, \texttt{green}.
 The beginning and end of the color description is not demarcated with any form of marker token.
 Using this tokenization, each description is split into up to four tokens.
 This results in a total of 311 unique tokens used by the CDEST model.
@@ -358,13 +357,13 @@ The baseline model does not function per term, so it uses the original 829 descr
 
 \subsection{Extrapolation Sub-Dataset} \label{sec:extrapodataset}
 The key advantage of CDEST over the baseline model is its ability to predict the distribution for never before seen descriptions of colors.
-For example, based on the learned understanding of \texttt{``salmon''} and of \texttt{``bright''}, from examples like \texttt{``bright green''} and \texttt{``bright red''}, our system can suggest the distribution in the color-space of \texttt{``bright salmon''}, even though that description never occurs in the training data.
+For example, based on the learned understanding of \texttt{salmon} and of \texttt{bright}, from examples like \texttt{bright green} and \texttt{bright red}, our system can suggest the distribution in the color-space of \texttt{bright salmon}, even though that description never occurs in the training data.
 Thus demonstrating proper compositional learning.
 %
 To evaluate this capacity, we define the extrapolation sub-dataset.
 This is defined by selecting the rarest 100 color descriptions from the dataset,
 with the restriction that every token in a selected description must still have at least 8 uses in other descriptions.
-The selected examples include multi-token descriptions such as: \texttt{``bright yellow green''} and also single tokens that occur more commonly as modifiers than as stand-alone descriptions such as \texttt{``pale''}.
+The selected examples include multi-token descriptions such as: \texttt{bright yellow green} and also single tokens that occur more commonly as modifiers than as stand-alone descriptions such as \texttt{pale}.
 The test and development datasets are restricted to contain only observations of these selected color descriptions.
 Conversely, the training set has no observations of these color descriptions.
 This produces a dataset suitable for evaluating the capacity of our model to estimate the distributions for color descriptions not seen in training.
@@ -418,7 +417,7 @@ The full implementation is included in the supplementary materials.
 		\vspace{3mm}
 		
 		\includegraphics[width=\columnwidth]{multimodal/gru256#1}	
-		\caption{\label{fig#1} Distribution estimate for \\ \mbox{\texttt{``#2''}}}
+		\caption{\label{fig#1} Distribution estimate for \\ \mbox{\texttt{#2}}}
 	\end{figure}
 }
 
@@ -435,12 +434,12 @@ As the bin boundaries are artificial and the bins are very narrow, it is not rea
 We expect  (as discussed in \Cref{sec:discretization-and-blurring}) this continuity, where adjacent points in color-space have similar probability values.
 
 This smoothness can however be taken too far, when it results in the filling-in of the area between peaks for multimodal colors.
-It can be seen that the CDEST model fails for some multimodal colors -- such as the hue \texttt{``greenish''} (\Cref{figgreenish}) where the concave section is filled in;
-but succeeds for others such as \texttt{``purplish grey''} (\Cref{figpurplishgrey}).
+It can be seen that the CDEST model fails for some multimodal colors -- such as the hue \texttt{greenish} (\Cref{figgreenish}) where the concave section is filled in;
+but succeeds for others such as \texttt{purplish grey} (\Cref{figpurplishgrey}).
 
 
 The horizontal bands in the baseline model outputs are the result of the add-one smoothing process.
-Notice that they are larger for colors with fewer examples -- such as \texttt{``purplish grey''}.
+Notice that they are larger for colors with fewer examples -- such as \texttt{purplish grey}.
 In the seminal work of \textcite{NPLM} one of the motivations for employing neural networks in natural language processing was to better handle cases that do not occur in the training data, by sharing information between terms.
 CDEST efficiently applies the same core idea here for distribution estimation.
 The neural model of CDEST can, by knowledge sharing, better estimate the values for the unseen points in color-space, as compared to using smoothing.
@@ -546,10 +545,10 @@ For each input color name our model outputs a probability distribution over disc
 Outputting a probability distribution, rather than a single point, allows for better handling of colors with observed distributions that are asymmetric, feature wide variance or are multimodal in the color-space -- i.e. most colors.
 
 The model learns the compositional structure of a color name, which allows it to predict distributions for color names which are not seen during training.
-%For example: the color \texttt{``bright salmon''} does not occur in the training data, but there are many uses of \texttt{``bright''}, and \texttt{``salmon''} in other combinations.
+%For example: the color \texttt{bright salmon} does not occur in the training data, but there are many uses of \texttt{bright}, and \texttt{salmon} in other combinations.
 As the CDEST model learns how each term influences the shape of the distribution, it can thus extrapolate a distribution for
  an arbitrary compound color names, based on the learnt understanding of the individual terms.
- %\texttt{``bright salmon''} based on the learnt understanding of the \texttt{``bright''} and the \texttt{``salmon''} tokens.
+ %\texttt{bright salmon} based on the learnt understanding of the \texttt{bright} and the \texttt{salmon} tokens.
 
 We find that the discretization process for representing the continuous probability distribution is pragmatically effective, but unsatisfying.
 While it is possible to simply fit a GMM or other continuous model to the final discretized output;
