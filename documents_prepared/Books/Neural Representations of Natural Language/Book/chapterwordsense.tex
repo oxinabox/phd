@@ -53,8 +53,8 @@ Can be simple as the WordNet tag set: noun, adjective, verb, etc. or complex as 
 In WordNet each synset shares a common gloss.}
 
 %\aside[Sensekey]{This is not a commonly used phrase by linquists, but it is an important implementation detail when using WordNet for WSD tasks. It repressents the mapping between lemma+pos and synset, and is needed because that is a many-many relationship. It take the basic form \texttt{lemma\%pos\_id:lex\_filenum}}
-\aside[Lemmatization]{WordNet is indexed by lemmas. This in essence means with tense and plurality information removed. WordNet comes with a lemmatizer called morphy to do this.}
-\aside[Unlemmatization]{Given lemma (as one can extract from WordNet) and a full POS tag (such as a Brown-style tag) for a word, it is possible to undo the lemmatization with a high degree of reliability using relatively simple rules. The POS tag encodes the key inflectional features that are lost. Patten.en \pcite{de2012pattern} is a python library encoding such rules (pluralisation, verb conjugation, etc.); though combining them with the POS tag to drive them is a task left for the reader. This can can be used to find substitute words using WordNet's features, for finding synonyms, antonyms and other lemmas from lexically related categories.}
+\aside[Lemmatization]{Lemmatization is the method of converting a word into its lemma. Due to the similarity of to \emph{stemming}, it in essence means with tense and plurality information removed with some additional special-cases. WordNet is indexed by lemmas, and comes with a lemmatizer called morphy which is used for this}
+\aside[Unlemmatization]{Given lemma (as one can extract from WordNet) and a full POS tag (such as a Brown-style tag) for a word, it is possible to undo the lemmatization with a high degree of reliability using relatively simple rules (again due to the similarity of the lemma to the stem). The POS tag encodes the key inflectional features that are lost. Patten.en \pcite{de2012pattern} is a python library encoding such rules (pluralisation, verb conjugation, etc.); though combining them with the POS tag to drive them is a task left for the reader. This can be used to find substitute words using WordNet's features, for finding synonyms, antonyms and other lemmas from lexically related categories.}
 
 
 The standard way to assign word senses is via some lexicographical resource, such as a dictionary, or a thesaurus.
@@ -117,11 +117,12 @@ It maybe unintentionally unknowable, due to poor writing style, such that it wou
 These difficulties are compounded by the limited amount of data available.
 
 There is only a relatively small amount of labelled data for word sense problems.
-It is the general virtue of machine learning that given enough data almost any input-output mapping problem can be solved.
-Such an amount of word sense annotated data is not available -- compared to finding unsupervised word embeddings which can use anything that has ever been written.
+It is the general virtue of machine learning that given enough data almost any input-output mapping problem (i.e. function approximation) can be solved.
+Such an amount of word sense annotated data is not available.
+This is in contrast to finding unsupervised word embeddings, which can be trained on any text that has ever been written.
 The lack of very large scale training corpora renders fully supervised methods difficult.
-It also results in small sized testing corpora; which leads to systems that may appear to perform well, but do not generalise to real world uses.
-Lack of human agreement on the correct sense, resulting in weak ground truth, further makes creating new resources harder.
+It also results in small sized testing corpora; which leads to systems that may appear to perform well (on those small test corpora), but do not generalise to real world uses.
+In addition, the lack of human agreement on the correct sense, resulting in weak ground truth, further makes creating new resources harder.
 This limited amount of data compounds the problem's inherent difficulties.
 
 
@@ -130,13 +131,14 @@ However, WSD is required to interface with  lexicographical resources,
 such as translation dictionaries (e.g. BabelNet), ontologies (e.g. OpenCyc), and other datasets (e.g. ImageNet \pcite{imagenet_cvpr09}).
 
 
-It may be interesting to note, that the number of meanings a word has is anti-logarithmically related to its rank \pcite{zipf1945meaning}.
-\pdfcomment{idk if this is the right way to talk about it, can I just say Zipfian, or is that not true in this case?}
+It may be interesting to note, that the number of meanings a word is approximately anti-logarithmically related to its rank \pcite{zipf1945meaning}.
+\pdfcomment{A plot might be nice}
 That is to say the most common words have exponentially more meanings than rarer words.
-This aligns well with our notion that precise (e.g. technical) words exist but are used only infrequently -- since they are only explaining a single situation
+It is related to the more well-known Zipf's Law on word use \pcite{zipf1949human}, and can similarly be explained Zipf's core premise of the principle of least effort. 
+This aligns well with our notion that precise (e.g. technical) words exist but are used only infrequently -- since they are only explaining a single situation.
 This also means that by far most word uses are potentially very ambiguous.
 
-The most commonly used word sense (for a given word) is also overwhelmingly more frequent than it's less common brethren -- also being Zipfian distributed in there usage \pcite{Kilgarriff2004}.
+The most commonly used word sense (for a given word) is also overwhelmingly more frequent than it's less common brethren -- also being roughly Zipfian distributed in there usage \pcite{Kilgarriff2004}.
 For this reason the most frequent sense (MFS) baseline is often the best performing result in any WSD task.
 \aside[Semantic Syllepsis]{
 	(Also known as pathological sentences that kill almost all WSD systems.)
@@ -144,10 +146,10 @@ For this reason the most frequent sense (MFS) baseline is often the best perform
 	In this sentence the word-use newspaper simultaneously have two different meanings: it is both the company, and the object.
 	This violates out earlier statement that every word-use belongs to exactly one synset.
 	As word sense disambiguation systems normally attempt to assign a single sense they are unable to handle these sentences.
-	Most word sense induction systems can not much better: at best a new sense could be allocated for the joint use, which does not correspond to the linguistic notion of the word having two senses for different parts of the sentence.
+	Most word sense induction systems cannot do much better: at best a new sense could be allocated for the joint use, which does not correspond to the linguistic notion of the word having two senses for different parts of the sentence.
 	Most works on word sense disambiguation outright ignore these sentences, or consider them to be ungrammatical, or incorrect.
 	However, they are readily understood and used without thought by most native speakers.
-	These constructions are also known as zeugma, although zeugma is itself as highly polysemous word, so its usage varies. 
+	These constructions are also known as zeugma, although zeugma is itself a highly polysemous word, so its usage varies. 
 }
 \subsubsection{Most Frequent Sense}\label{sec:most-frequent-sense}
 Given a sense annotated corpus, it is easy to count how often each sense of a word occurs.
@@ -157,7 +159,7 @@ The Most Frequent Sense (MFS) method of word sense disambiguation is defined by 
 For the $i$th word use being the word $\n w_i$, having some sense $\n s_j$
 then without any further context the 
 probability of that sense being the correct sense is $P(\n s_j \mid \n w_i)$.
-One can use the part of speech tag $p_i$ (for the $i$ word use) as an additional condition, and thus find $P(\n s_j \mid \n w_i, p_i)$.
+One can use the part of speech tag $p_i$ (for the $i$th word use) as an additional condition, and thus find $P(\n s_j \mid \n w_i, p_i)$.
 WordNet encodes this information for lemma-sense pair using the SemCor corpus counts (this is also used for sense ordering, which is why this is sometimes called First Sense.).
 This is a readily available and practical method for getting a baseline probability of each sense.
 Most frequent sense can be applied for word sense disambiguation using this frequency based probability estimate:  $\argmax_{\forall \n s_j} P(\n s_j \mid \n w_i, p_i)$.
@@ -165,7 +167,7 @@ Most frequent sense can be applied for word sense disambiguation using this freq
 
 In the most recent SemEval WSD task \pcite{moro2015semeval},
 MFS beat all submitted entries for English, both overall, and on almost all cuts of the data.
-(The results for other languages were not as good, however in other languages true true corpus derived sense counts were not used).
+(The results for other languages were not as good, however in other languages true true corpus-derived sense counts were not used).
 
 
 
@@ -177,10 +179,9 @@ MFS beat all submitted entries for English, both overall, and on almost all cuts
 	and on the literature of 1961,
 	is not the kind of resource one might hope for from a AI information perspective.
 	
-	
-	The glosses include a number of biases.
-	These biases are reflective of language use, but are not necessarily ideal to be encoding into a system.
-	For example: \natlang{"S: (v) nag, peck, hen-peck (bother persistently with trivial complaints) `She nags her husband all day long' ''}.
+		The glosses include a number of biases.
+	These biases are reflective of language use, but are not necessarily ideal to be encoded into a system.
+	For example: \natlang{\mbox{S: (v) nag}, peck, hen-peck (bother persistently with trivial complaints) `She nags her husband all day long's}.
 	Other dictionaries regularly show up in the News for similar content.
 	
 	Another problem is the source of the word sense counts.
@@ -212,24 +213,24 @@ This allows for existing word representation techniques to be applied, but being
 
 \subsection{Word embedding based disambiguation method}\label{sec:pseudo-semi-supervised-method}
 \aside[WSD with embeddings]{
-It is beyond the scope of this work to discuss WSD systems in general,
-we discussed the baseline Most Frequent Sense in \Cref{sec:most-frequent-sense},
-and a word-embedding based is detailed as a part of the method discussed in \Cref{sec:pseudo-semi-supervised-method}.
+It is beyond the scope of this work to discuss WSD systems more completely.
+However, we will comment that (single sense) word embeddings are a generally useful feature as an input to any NLP ML system.
+As such they can be used as features for a WSD system.
 This can be seen as similar to the LSI enhanced Lesk WSD system of \textcite{basile-caputo-semeraro:2014:Coling}.
 }
 
 \textcite{Chen2014} uses an almost semi-supervised approach to train sense vectors.
 They partially disambiguate their training corpus, using initial word sense vectors and WordNet.
-They then discard these original sense-vectors, and use the partially disambiguated corpus to train sense-vectors via a skip-gram variant.
+They then completely replace these original (phase one) sense-vectors, by using the partially disambiguated corpus to train new (phase two) sense-vectors via a skip-gram variant.
 
 
 %
 \aside[Cosine distance]{
-As a refresher:
-here we talk of cosine distance, as it is more reasonable as smaller implies closer.
+Here we talk of cosine distance, where smaller distance implies closer.
+Contrasting with cosine similarity, where higher value implies more similar.
 
-(Though it is still not a true metric as $\d d_{cos}(v,kv)=0$ for all $k\in \mathbb{R}_+$).
-Other times you may see cosine similarity, ranging between -1 (most different) and 1 (most similar).
+Cosine distance is still not a true metric as $\d d_{cos}(v,kv)=0$ for all $k\in \mathbb{R}_+$).
+Other times you may see cosine similarity, ranging between -1 (most different) and 1 (most similar.
 Cosine similarity is given by $sim(a,b)=\frac{\v a\cdot \v b}{\left\Vert \v a\right\Vert _{2}\left\Vert \v b\right\Vert _{2}}=\cos(\angle \v a \v b )$
 i.e. the unit-length normalised dot product of the vectors.
 Cosine distance is usually defined as $\d d_{cos}(\v a,\v b)=\frac{1-sim(\v a,\v b)}{2}$.
@@ -244,20 +245,24 @@ They assign every word-sense in WordNet a sense vector.
 This sense vector is the average of word-embeddings of a subset of words in the gloss,
 as determined using pretrained skip-grams \parencite{mikolov2013efficient}.
 For the word $w$ with word-sense $\d w_{\n s_i}$,
-a set of candidate words, $cands(\d w_{\n s_i})$, is selected from the gloss to be included in the average
-based on the follow set of requirements.
+a set of candidate words, $cands(\d w_{\n s_i})$, is selected from the gloss to be included in the averagen
+based on the following set of requirements.
 First, the word must be a content word: that is a verb, noun, adverb or adjective.
 Secondly, its cosine distance to $w$ must be below some threshold $\delta$.
 Finally, it must not be the word itself (one can assume this is in terms of identical lexemes).
-Or written mathematically, where $C_v$ is the skip-gram word vector for $v$
-\begin{equation}
-cands(\d w_{\n s_{i}})=\left\{ u\left|\begin{array}{c}
-u \in gloss(\d w_{\n s_{i}})\\
-\wedge\, d_{cos}(\i C_w, \i C_u)<\delta\\
-\wedge\, pos(u)\in\left\{ verb,adv,noun,adj\right\} \\
-\wedge\, u\ne w
-\end{array}\right.\right\} 
-\end{equation}
+
+
+%Or written mathematically, where $C_v$ is the skip-gram word vector for $v$
+%\begin{equation}
+%cands(\d w_{\n s_{i}})=\left\{ u\left|\begin{array}{c}
+%u \in gloss(\d w_{\n s_{i}})\\
+%\wedge\, d_{cos}(\i C_w, \i C_u)<\delta\\
+%\wedge\, pos(u)\in\left\{ verb,adv,noun,adj\right\} \\
+%\wedge\, u\ne w
+%\end{array}\right.\right\} 
+%\end{equation}
+
+
 The phase one sense vector for $\d w_{\n s_i}$ is the mean of the word vectors for all the words in $cands(\d w_{\n s_{i}})$.
 The effect of this is that most words in the same synset will have similar but not necessarily identical initial vectors.
 \pdfcomment{Consider what this does to rare senses of a word, i.e. the base wordsense will be distant}
@@ -266,13 +271,13 @@ The phase one sense vectors are used to disambiguate the words in their unlabell
 For each sentence in the corpus, an initial content vector is defined by taking the mean of the skip-gram word embedding (not word sense) for all content words in the sentence.
 For each word in the sentence, each possible sense-embedding is compared to the context vector.
 If the closest sense vector is below a given threshold,
-then it that word is tagged with that word-sense, and the context vector is updated to use the sense-vector instead of the word vector.
+then that word is tagged with that word-sense, and the context vector is updated to use the sense-vector instead of the word vector.
 Words that do not come within the threshold are not tagged, and the context vector is not updated.
-This is an important feature, as it ensures that words without clear senses do not get a sense ascribed to them.
-Thus avoiding any dubious sense tags for the next training step.
+This is an important part of their algorithm, as it ensures that words without clear senses do not get a sense ascribed to them.
+This thus avoids any dubious sense tags for the next training step.
 
 In phase two of training
-Chen et. al. employ the skip-gram word-embedding method with a variation to predict the word-senses.
+\textcite{Chen2014} employ the skip-gram word-embedding method with a variation to predict the word-senses.
 They train it on the partially disambiguated corpus produces in phase one.
 The original sense vectors are discarded.
 Rather than the model being tasked only to predict the surrounding words, it is tasked to predict surrounding words and their sense-tags (where present).
@@ -281,10 +286,11 @@ Note that the input the skip-gram is the central word, not the central word and 
 In this method the word-sense embeddings are output embeddings.
 
 The phase one sense vectors have not been assessed on their representational quality.
-It could be assumed that as results for these were not reported that it was worse than those found in phase two.
+It could be assumed that as results for these were not reported, they were worse than those found in phase two.
 The phase two sense vectors were not assessed for their capacity to be used for word sense disambiguation.
-An extension to the method of \textcite{Chen2014}, to use the phase two vectors for WSD, would allow this method to be used to disambiguate its own training data.
-Which would allowing the method to become self-supervised.
+It would be desirable to extend the method of \textcite{Chen2014}, to use the phase two vectors for WSD.
+This would allow this method to be used to disambiguate its own training data,
+thus enabling the method to become self-supervised.
 
 
 \section{Word Sense Induction (WSI)}
@@ -314,14 +320,14 @@ This allows the data to inform on what word-senses exist.
 
 \aside[Why do skipgrams perform so well on SCWS?]{
 	SCWS is a corpus designed for evaluating word sense embeddings.
-	Single sense embeddings (e.g. skipgrams) can not take advantage of the context information in the SCWS, however, they do often perform comparably to the word-sense embeddings.
+	Single sense embeddings (e.g. skipgrams) cannot take advantage of the context information in the SCWS, however, they do often perform comparably to the word-sense embeddings.
 	Sometimes even outperforming them.
 	It is unclear if this highlights the difficulty of the task (i.e. that the impact of context is hard to gauge).
 	Or if it merely shows just how well tuned the more mature single-sense embedding methods are.
 }
 
 Most vector WSI and WSR approaches are evaluated on similarity tests.
-Like WordSim-353 \textcite{WordSim353}, for context-less, or Stanford's Contextual Word Similarities (SCWS) \textcite{Huang2012}.
+Such tests include WordSim-353 \parencite{WordSim353}, for context-less, or Stanford's Contextual Word Similarities (SCWS) for similarity with context information \parencite{Huang2012}.
 This evaluation is also suitable for evaluating single sense word-embeddings, e.g. skipgrams.
 
 
@@ -329,7 +335,7 @@ We can divide these into context clustering based approaches,
 and co-location prediction based approaches.
 This division is similar to the separation of co-location matrix factorisation,
 and co-location prediction based approaches discussed in \Cref{sec:word-representations}.
-It can be assumed thus that at their heart, like for word embeddings,
+It can be assumed thus that at the core, like for word embeddings,
 they are fundamentally very similar.
 One could think of prediction of collocated words as a soft indirect clustering of contexts that can have those words.
 
@@ -344,7 +350,7 @@ It is on this principle that the context clustering based approaches function.
 \subsubsection{Offline clustering}
 The fundamental method for most clustering based approaches is as per \tcite{Schutze:1998wordsenseclustering}.
 That original work is not a neural word-sense embedding, however the approach remains the same.
-\tcite{pantel2002WSI} and \tcite{Reisinger2010} are also not strictly neural word embedding approaches, however the overall method is also identical.
+\tcite{pantel2002WSI} and \tcite{Reisinger2010} are also not strictly neural word embedding approaches (being more classical vector representations), however the overall method is also very similar.
 
 
 \aside[On context representations]{
@@ -354,17 +360,17 @@ In most works (and all the works discussed here) a comparatively simple represen
 }
 
 The clustering process is done by considering all word uses, with their contexts.
-The contexts can be a fixed-sized window of words (like in many word-embedding models), the sentence, or defined using some other rules.
+The contexts can be a fixed-sized window of words (like is in many word-embedding models), the sentence, or defined using some other rule.
 Given a pair of contexts, some method of measuring their similarity must be defined.
 In vector representational works, this is ubiquitously done by assigning each context a vector, and then using cosine similarity between those vectors.
 Different methods define the context vectors differently
 \begin{itemize}
-\item \textcite{Schutze:1998wordsenseclustering} uses variations of inverse-document-frequency (idf) weighted bags of words, including applying dimensionality to find a dense representation.
+\item \textcite{Schutze:1998wordsenseclustering} uses variations of inverse-document-frequency (idf) weighted bags of words, including applying dimensionality reduction to find a dense representation.
 \item \textcite{pantel2002WSI} uses the mutual information vectors between words and their contexts.
 \pdfcomment{At somepoint I have to explain what td-idf is}
 \item \textcite{Reisinger2010}, uses td-idf or $\chi^2$ weighted bag of words.
 \item \tcite{Huang2012} uses td-idf weighted averages of (their own) single sense word embeddings for all words in the context.
-\item  \tcite{kaageback2015neural} also uses a weighted average of single sense word embeddings, using a factor based on how close the word was, and a factor based on how likely the co-occurrence was according to the word embedding skip-gram models.
+\item  \tcite{kaageback2015neural} also uses a weighted average of single sense word embeddings, using a factor based on how close the words were, and a factor based on how likely the co-occurrence was according to the word embedding skip-gram models.
 
 \end{itemize}
 It is interesting to note that idf, td-idf, mutual information, skip-gram co-occurrence probabilities (being a proxy for point-wise mutual information \parencite{levy2014neural}), are all closely related measures.
@@ -387,12 +393,12 @@ It is interesting to note that idf, td-idf, mutual information, skip-gram co-occ
 }
 
 
-Secondly, some method is then applied to cluster the word uses based on the calculated similarity of the contexts.
+Secondly, some method is then applied to cluster the word uses based on the calculated similarity of the contexts to each other.
 \begin{itemize}
-	\item \textcite{Schutze:1998wordsenseclustering} used group average agglomerative clustering.
-	\item \textcite{pantel2002WSI} used a custom hierarchical clustering method.
-	\item \textcite{Reisinger2010} used mixtures of von-Mises-Fisher distributions.
-	\item \textcite{Huang2012} used spherical k-means.
+	\item \textcite{Schutze:1998wordsenseclustering} uses group average agglomerative clustering.
+	\item \textcite{pantel2002WSI} uses a custom hierarchical clustering method.
+	\item \textcite{Reisinger2010} uses mixtures of von-Mises-Fisher distributions.
+	\item \textcite{Huang2012} uses spherical k-means.
 	\item \textcite{kaageback2015neural} uses k-means.
 \end{itemize}
 
@@ -443,6 +449,8 @@ The principle is that it is not the word that determined it's collocated context
 but rather a word sense.
 So the word sense can be modelled as a hidden variable, where the word, and the context words are being observed.
 
+
+
 \tcite{tian2014probabilistic} used this to define a  skip-gram based method for word sense embeddings.
 For input word $\n w_i$ having senses given by $\seq S(\n w_i)$,
 the probability of output word $\n w_o$ occurring near $\n w_i$ can be given as:
@@ -486,7 +494,7 @@ This is done via gradient descent on the neural network parameters of the softma
 By using this EM optimisation the network can fit values for the embeddings in that softmax component.
 
 
-A limitation of the method used by \tcite{tian2014probabilistic}, is that the number of each sense must be known in advance.
+A limitation of the method used by \textcite{tian2014probabilistic}, is that the number of each sense must be known in advance.
 One could attempt to solve this by using for example the number of senses assigned by a lexicographical resource (e.g. WordNet).
 However, situations where such resources are not available or not suitable are one of the main circumstances in which WSI is desirable  (for example in work using domain specific terminology, or under-resourced languages).
 In these cases one could apply a heuristic based on the distribution of senses based on the distribution of words \parencite{zipf1945meaning}.
@@ -496,6 +504,19 @@ How a word is being used can be determined by the contexts in which it appears.
 
 \tcite{AdaGrams} extends on this work by making the number of senses for each word itself a fit-able parameter of the model.
 This is a rather Bayesian modelling approach, where one considers the distribution of the prior
+
+
+\aside[WordNet and BabelNet]{
+	As mentions in the previous sections, WordNet and BabelNet are the predominant lexicons used with word senses. It is not directly relevant to this section, but we have space here to remark upon them.
+	WordNet \parencite{tengi1998design} as a very well established tool should have a binding in all modern programming languages.
+	WordNet.jl (\url{https://github.com/JuliaText/WordNet.jl}) is the Julia binding.
+	NLTK \parencite{bird2009natural} includes one (of many) for Python.
+	
+	BabelNet \parencite{navigli2010babelnet} is intended to be accessed as an online resource, via a RESTful API. Users receive 1000 free queries per day.
+	Academic users can request an upgrade to 50,000 queries per day, or to download a copy of the database.
+	(From personal experience we found those requests to be handled easily and rapidly)
+}
+
 
 Considering again the form of \Cref{equ:tianmm2}
 \begin{align}
@@ -510,44 +531,28 @@ then that prior becomes a Dirichlet process.
 
 In essence, this prior over a potentially unlimited number of possible senses becomes another parameter of the model (along with the input sense embeddings and output word embeddings).
 The fitting of the parameters of such a model is beyond the scope of this book;
-it is not entirely dissimilar to the fitting via EM and gradient descent used by Tian et. al.
-The final output of \tcite{AdaGrams} is as desired:
+it is not entirely dissimilar to the fitting via EM and gradient descent used by  \textcite{tian2014probabilistic}.
+The final output of \textcite{AdaGrams} is as desired:
 a set of induced sense embeddings, 
 and a language model that is able to predict how likely a word is to occur near that word sense ($P(\n w_o \mid \n s_k)$).
 
 By application of Bayes' theorem, the sense language model can be inverted to take a word's context,
 and predict the probability of each word sense.
 
-\begin{equation}
-P(\n s_l \mid \n w_o) = \frac{P(\n w_o \mid \n s_l) P(\n s_l \mid \n w_i)}{\sum_{\forall \n s_k \in \seq S(\n w_i)} P(\n w_o \mid \n s_k) P(\n s_k \mid \n w_i)}
-\end{equation}
+\aside[Independence Assumption]{Technically, \Cref{equ:bayeswds} does not require the independence of the probabilities of the context words.
+Rather it only only requires that the context words be conditionally independent on on the word in question $\n w_i$.
+Nevertheless this assumption is incorrect.}
 
-With the common (but technically incorrect) assumption that all words in the context are independent \footnote{Technically, this use of Bayes theorem only requires that the context words be conditionally independent on on the word in question $\n w_i$, never the less incorrect.}
+\begin{equation}
+P(\n s_l \mid \n w_o) = \frac{P(\n w_o \mid \n s_l) P(\n s_l \mid \n w_i)}{\sum_{\forall \n s_k \in \seq S(\n w_i)} P(\n w_o \mid \n s_k) P(\n s_k \mid \n w_i)} \label{equ:bayeswds}
+\end{equation}
+with the common (but technically incorrect) assumption that all words in the context are independent 
 Given a sequence of context words:
 \begin{equation}
 \n \seq{W}_i = \n w_{i-\frac{n}{2}},\ldots, \n w_{i-1}, \n w_{i+1},\ldots, \n w_{i+\frac{n}{2}}
 \end{equation}
 being a context window (as in \Cref{sec:acausal-language-modeling})
 
-\begin{equation}
-P(\n s_l \mid \n \seq{W}_i) = 
-\frac{\prod_{\forall \n w_{j}\in \n \seq{W}_i} P(\n w_{j} \mid \n s_l) P(\n s_l | \n w_i)}{\sum_{\n s_k \in \seq S(\n w_i)} \prod_{\forall \n w_{j} \in \n \seq{W}_i} P(\n w_{j} \mid \n s_k) P(\n s_k | \n w_i)}
-\end{equation}
-For $\n \seq{W}_i$ giving a context window of width $n$. i.e. $\n \seq{W}_i = \lbrace \n w_{i-\frac{n}{2}} \ldots \n w_{i-1} \ldots \n w_{i-1} \ldots \n w_{i+\frac{n}{2}} \rbrace$
-
-\pdfcomment{Check this equation}
-
-%
-%\section{Implementations}
-%Of the methods discussed in this section the following implementations exist:
-%\begin{enumerate}
-%	\item WordNet \parencite{tengi1998design} should have a binding in all modern programming languages.
-%	\item BabelNet \parencite{navigli2010babelnet} is intended to be accessed as an online resource, via a RESTful APImost commonly accessed. Users receive 1000 free queries per day. Which isn't much for these kinds of tasks. Academic users can request an upgrade to 50,000 queries per day, or to download a copy of the database (My own experience was the request was handled in <24 hours).
-%	\item AdaGrams \parencite{AdaGrams} has a julia implementation at \url{https://github.com/sbos/AdaGram.jl}. This was working well for Julia v0.5. At time of publication it was not working in Julia v0.6. Though updating is reasonable.
-%\end{enumerate}
-
-
-\section{Conclusion}
 \aside[Finding the nearest neighbours (Nearest Neighbour Trees)]{
 	A common task with any representation (once trained) is to find its nearest neighbours, given a particular point.
 	The na\"ive solution is to check the distance to all points.
@@ -563,6 +568,26 @@ For $\n \seq{W}_i$ giving a context window of width $n$. i.e. $\n \seq{W}_i = \l
 	Once constructed on average it takes $O(\log (n))$ to find the nearest neighbour to any point.
 	This makes checking the nearest neighbour nearly instantaneous for even the largest vocabularies.
 }
+\begin{equation}
+P(\n s_l \mid \n \seq{W}_i) = 
+\frac{\prod_{\forall \n w_{j}\in \n \seq{W}_i} P(\n w_{j} \mid \n s_l) P(\n s_l | \n w_i)}{\sum_{\n s_k \in \seq S(\n w_i)} \prod_{\forall \n w_{j} \in \n \seq{W}_i} P(\n w_{j} \mid \n s_k) P(\n s_k | \n w_i)}
+\end{equation}
+For $\n \seq{W}_i$ giving a context window of width $n$. i.e. $\n \seq{W}_i = \lbrace \n w_{i-\frac{n}{2}} \ldots \n w_{i-1} \ldots \n w_{i-1} \ldots \n w_{i+\frac{n}{2}} \rbrace$
+
+\pdfcomment{Check this equation}
+
+
+%
+%\section{Implementations}
+%Of the methods discussed in this section the following implementations exist:
+%\begin{enumerate}
+
+%	\item AdaGrams \parencite{AdaGrams} has a julia implementation at \url{https://github.com/sbos/AdaGram.jl}. This was working well for Julia v0.5. At time of publication it was not working in Julia v0.6. Though updating is reasonable.
+%\end{enumerate}
+
+
+\section{Conclusion}
+
 Word sense representations allow the representations of the senses of words when one word has multiple meanings.
 This increases the expressiveness of the representation.
 These representations can in general be applied anywhere word embeddings can.
