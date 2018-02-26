@@ -14,14 +14,14 @@
 \begin{abstract}
 	This chapter discusses representations for larger structures in natural language.
 	The primary focus is on the sentence level.
-	However, many of the techniques also apply for sub-sentence structures (phrases), and super-sentence structures (documents).
+	However, many of the techniques also apply to sub-sentence structures (phrases), and super-sentence structures (documents).
 	The three main types of representations discussed here are: unordered models, such as sum of word embeddings; sequential models, such as recurrent neural networks; and structured models, such as recursive autoencoders.
 \end{abstract}
 
 
-\aside[Word Sense Embeddings as a by-product]{
+\aside[Word Embeddings as a by-product]{
 	Almost all sentence representation methods product word embeddings as a by-product
-	Either output embeddings, from the softmax,
+	Either the output embeddings, from the softmax,
 	or input embeddings that are used as the networks inputs.}
 \aside[Initialising input embeddings]{
 	In the case of systems with input embeddings it is common (but not ubiquitous) to initialise them using a pretrained embeddings from one of the methods discussed in the \Cref{sec:word-representations},
@@ -30,13 +30,13 @@
 
 
 It can be argued that the core of true AI,
-is the capture and manipulate the representation of an idea.
+is  capturing and manipulating the representation of an idea.
 In natural language a sentence (as defined by Webster in the quote above),
 is such a representation of an idea, but it is not machine manipulatable.
 As such the conversion of sentences to a machine manipulatable representation is an important task in AI research.
 
 
-All techniques which can represent documents (or paragraphs) can by necessity represent sentences as well.
+All techniques which can represent documents (or paragraphs) by necessity represent sentences as well.
 A single sentence can be a whole document, similarly for paragraphs.
 Many of these models always work for sub-sentence structures also, like key-phrases.
 The reverse is not necessarily true: most documents are not just a single sentence.
@@ -47,29 +47,29 @@ These include LSI \pcite{dumais1988using}, probabilistic LSI \pcite{hofmann2000l
 \pdfcomment{I need to get my head straight about when these models are like word embeddings vs when they are like document embeddings. I think it is just taking on output instread of the other, but it has been a while since I looked at this}
 
 \aside[Word Sense Embeddings in Sentence Embeddings]{
-While the last chapter was all about sense embeddings, they are unmentioned here.
+While the last \Cref{sec:word-sense-representations} was all about sense embeddings, they are unmentioned here.
 One might think that they would be very useful for sentence embeddings.
 However, they are not as needful as one might expect.
 The sense of a word being used is determined by the context.
 Ideally, it is determined by what the context means.
-As a sentence embedding is a direct attempt to represent the meaning of such a context, determining the sense of each word within is not a requirement.
+As a sentence embedding is a direct attempt to represent the meaning of such a context, determining the sense of each word within it is not required.
 Using sense embeddings instead of word embeddings is a valid extension to many of these methods.
-However it requires performing word sense disambiguation.
-Which as discussed in the previous chapter is very difficult.
+However it requires performing word sense disambiguation,
+which as discussed is very difficult.
 }
 
 
 
 \section{Unordered and Weakly Ordered Representations}
 
-A model that does not take into account word order can not perfectly capture the meaning of an a sentence.
+A model that does not take into account word order cannot perfectly capture the meaning of an a sentence.
 \tcite{Mitchell2008} give the poignant examples of:
 \begin{itemize}
 	\item \natlang{It  was  not  the  sales  manager who  hit  the  bottle that day, but the office worker with the serious drinking problem.}
 	\item \natlang{That  day  the  office  manager,   who  was drinking, hit the problem sales worker with a bottle, but it was not serious.}
 \end{itemize}
-These two sentences have the same words, but in a different structure, given them a very different meanings.
-However, in practice representations which discard word order can be quiet effective.
+These two sentences have the same words, but in a different structure, resulting in their very different meanings.
+In practice, however, representations which discard word order can be quite effective.
 
 
 \subsection{Sums of Word Embeddings}
@@ -78,16 +78,16 @@ However, in practice representations which discard word order can be quiet effec
 	that a word-embedding lookup is the same as a one-hot vector product:
 	$\i C_{\n w_i} = C\,\hat{e}_{\n w_i}$.
 	Similar can be said for sum of word embeddings (SOWE) and bag of words (BOW).
-	For some set of words $\seq{W} = \lbrace{w_1,\ldots, w_n}$:
+	For some set of words $\seq{W} = \lbrace{w_1,\ldots, w_n \rbrace}$:
 	the BOW representation is $B_\seq{W} = \sum_{\n w_i\in \seq{W}} \hat{e}_{\n w_i}$;
 	the SOWE representation is $\sum_{\n w_i\in \seq{W}} C_{\n w_i} = CB_\seq{W}$.
-	As with word-embeddings it is immensely cheaper to calculate this via lookup, than via matrix product;
+	As with word-embeddings, it is immensely cheaper to calculate this via lookup and sum, rather than via matrix product;
 	except on systems with suitable sparse matrix product tricks.	
 }
 
-Classically, in information retrieval documents have been represented by bags of words (BOW).
+Classically, in information retrieval, documents have been represented as bags of words (BOW).
 That is to say a vector with length equal to the size of the vocabulary, with each position representing the count of the number of occurrences of a single word.
-This is much the same as a one-hot vector representing a word, but with every word in the sentence/document counted.
+This is much the same as a \emph{one-hot vector} representing a word, but with every word in the sentence/document counted.
 The word embedding equivalent is sums of word embeddings (SOWE), and mean of word embeddings (MOWE).
 These methods, like BOW, lose all order information in the representation.
 In many cases it is possible to recover a BOW from a much lower dimensional SOWE  \pcite{White2015BOWgen}.
@@ -95,55 +95,58 @@ In many cases it is possible to recover a BOW from a much lower dimensional SOWE
 Surprisingly, these unordered methods have been found on many tasks to be extremely well performing, better than several of the more advanced techniques discussed later in this chapter.
 This has been noted in several works including: \tcite{White2015SentVecMeaning}, \tcite{RitterPosition} and \tcite{rui2017mvrusemantic}.
 It has been suggested that this is because in English there are only a few likely ways to order any given bag of words.
-It has been noted that given a simple ngram language model the original sentences can often be recovered from BOW \pcite{Horvat2014} and thus also from a SOWE \pcite{White2016a}.
+It has been noted that given a simple n-gram language model the original sentences can often be recovered from BOW \pcite{Horvat2014} and thus also from a SOWE \pcite{White2016a}.
 Thus word-order may not in-fact be as important as one would expect in many natural language tasks, as it is in practice more proscribed than one would expect.
 That is to say very few sentences with the same word content, will in-practice be able to have it rearranged for a very different meaning.
-However, this is unsatisfying, and certainly can not capture fine grained meaning.
+However, this is unsatisfying, and certainly cannot capture fine grained meaning.
 
 
-The step beyond this is to encode the ngrams into a bag of words like structure.
-This is a bag of ngrams (BON), e.g. bag of trigrams.
-Each index in the vector thus represents the occurrence of a ngram in the text.
+The step beyond this is to encode the n-grams into a bag of words like structure.
+This is a bag of n-grams (BON), e.g. bag of trigrams.
+Each index in the vector thus represents the occurrence of a n-gram in the text.
 So \natlang{It is a good day today}, has the 3grams: \natlang{(It is a)},\natlang{(is a good)},\natlang{(a good day)}, \natlang{(good day today)}.
-As is obvious for all but the most pathological sentences, recovering the full sentence order from a bag of ngrams is possible even without a language model.
+As is obvious for all but the most pathological sentences, recovering the full sentence order from a bag of n-grams is possible even without a language model.
 
-The natural analogy to this with word embeddings might seem to be to find ngram embeddings by the concatenation of $n$ word embeddings; and then to sum these.
+The natural analogy to this with word embeddings might seem to be to find n-gram embeddings by the concatenation of $n$ word embeddings; and then to sum these.
 However, such a sum is less informative than it might seem.
-As the sum in each concatenated section is equal to the others, minus the edge words. To illustrate the case of trigram sums of word embeddings, for \natlang{It is a good day today},
-the sums in each position would be:
-\begin{multline}
-\left[\begin{array}{c|c|c}
-	\sum & \sum & \sum\\
-	\i C_{it} & \i C_{was} & \i C_{a}\\
-	\i C_{was} & \i C_{a} & \i C_{good}\\
-	\i C_{a} & \i C_{good} & \i C_{day}\\
-	\i C_{good} & \i C_{day} & \i C_{today}
-\end{array}\right]\\
-=\left[\begin{array}{c|c|c}
-	\i C_{M}+\i C_{it}-\i C_{day} & \i C_{M} & \i C_{M}-\i C_{was}+\i C_{today}\end{array}\right]
-\end{multline}
-\pdfcomment{remove one or both of these}
-\begin{multline}
-\left[\begin{array}{c|c|c}
-	\quad \i C_{\n w_{1}} & \quad \i C_{\n w_{2}} & \quad \i C_{\n w_{3}}\\
-	+\i C_{\n w_{2}} & +\i C_{\n w_{3}} & +\i C_{\n w_{4}}\\
-	+\i C_{\n w_{3}} & +\i C_{\n w_{4}} & +\i C_{\n w_{5}}\\
-	+\i C_{\n w_{4}} & +\i C_{\n w_{5}} & +\i C_{\n w_{6}}
-\end{array}\right]=\\
-\left[\begin{array}{c|c|c}
-	\sum \i C_{\n w_{i}}-\i C_{\n w_{n-1}}-\i C_{\n w_{n-2}} & \sum \i C_{\n w_{i}}-\i C_{\n w_{1}}-\i C_{\n w_{n-1}} & \sum \i C_{\n w_{i}}-\i C_{\n w_{1}}-\i C_{\n w_{2}}\end{array}\right]
-\end{multline}
+As the sum in each concatenated section is equal to the others, minus the edge words.
+
+
+% To illustrate the case of trigram sums of word embeddings, for \natlang{It is a good day today},
+%the sums in each position would be:
+%\begin{multline}
+%\left[\begin{array}{c|c|c}
+%	\sum & \sum & \sum\\
+%	\i C_{it} & \i C_{was} & \i C_{a}\\
+%	\i C_{was} & \i C_{a} & \i C_{good}\\
+%	\i C_{a} & \i C_{good} & \i C_{day}\\
+%	\i C_{good} & \i C_{day} & \i C_{today}
+%\end{array}\right]\\
+%=\left[\begin{array}{c|c|c}
+%	\i C_{M}+\i C_{it}-\i C_{day} & \i C_{M} & \i C_{M}-\i C_{was}+\i C_{today}\end{array}\right]
+%\end{multline}
+%\pdfcomment{remove one or both of these}
+%\begin{multline}
+%\left[\begin{array}{c|c|c}
+%	\quad \i C_{\n w_{1}} & \quad \i C_{\n w_{2}} & \quad \i C_{\n w_{3}}\\
+%	+\i C_{\n w_{2}} & +\i C_{\n w_{3}} & +\i C_{\n w_{4}}\\
+%	+\i C_{\n w_{3}} & +\i C_{\n w_{4}} & +\i C_{\n w_{5}}\\
+%	+\i C_{\n w_{4}} & +\i C_{\n w_{5}} & +\i C_{\n w_{6}}
+%\end{array}\right]=\\
+%\left[\begin{array}{c|c|c}
+%	\sum \i C_{\n w_{i}}-\i C_{\n w_{n-1}}-\i C_{\n w_{n-2}} & \sum \i C_{\n w_{i}}-\i C_{\n w_{1}}-\i C_{\n w_{n-1}} & \sum \i C_{\n w_{i}}-\i C_{\n w_{1}}-\i C_{\n w_{2}}\end{array}\right]
+%\end{multline}
 
 
 Instead one should train n-gram embedding model directly.
-The method discussed in \Cref{sec:word-representations}, can be adpted to use n-grams rather than words as the basic token.
+The method discussed in \Cref{sec:word-representations}, can be adapted to use n-grams rather than words as the basic token.
 This was explored in detail by \pcite{li2017neural}.
-Their model is based on the skip-gram.
+Their model is based on skip-gram.
 They take as input an n-gram embedding, and attempt to predict the surrounding n-grams.
 This reduces to the original skip-gram method for the case of unigrams.
 Note that the surrounding n-grams will overlap in words (for $n>1$)  with the input n-gram.
 As the overlap is not complete, this task remains difficult enough to encourage useful information to be represented in the embeddings.
-Li et. al. also consider training n-gram embeddings as a bi-product of text classification tasks.
+\textcite{li2017neural} also consider training n-gram embeddings as a bi-product of text classification tasks.
 
 
 
@@ -154,7 +157,7 @@ It is important to be clear in this section on the difference between the window
 The window is the words near the target word.
 The context (in this context) refers to the larger structure (sentence, paragraph, document) that a representation is attempting to be found for.
 The window is always a subset of the context.
-And in modelling the context many windows with in it will be considered (one per target word).
+In modelling the context many windows within it will be considered (one per target word).
 Some works say sentence vector, document vector or paragraph vector.
 We say context vector as it could be any of the above.
 In theory it could even be a whole collection of documents.
@@ -170,10 +173,10 @@ This extra structure could be used to learn
 \textcite{le2014distributed} considered the context vector itself must contain useful information about the context.
 The effect in both cases of adding a context vector is to allow the network to learn a mildly different accusal language model depending on the context.
 To do this, the context vector would have to learn a representation for the context.
-\pdfcomment{Can its failure be attributed to it being a linear model, so as such the context vector can not change much?}
+\pdfcomment{Can its failure be attributed to it being a linear model, so as such the context vector cannot change much?}
 
 PV-DBOW is an extension of CBOW.
-The inputs the model are not only the word-embedding $\i C_{w_j}$ for the words $\n w_j$ from the window,
+The inputs to the model are not only the word-embedding $\i C_{w_j}$ for the words $\n w_j$ from the window,
 but also a context-embedding $\i D_{\n d_k}$ for its current context (sentence, paragraph or document etc.) $\n d_k$.
 The task remains to predict which word was the missing word from the center of the context $\n w_i$
 \pdfcomment{consider grouping the context words into a named sequence to clarify the equations, like in wordsense chapter}
@@ -194,10 +197,12 @@ P(\n w_j \mid \n d_k,\, \n w_{i}) = \left[ \softmax(W\i D_{\n d_k} + V\,\i C_{\n
 
 The results of this work are now considered of limited validity.
 There were failures to reproduce as documented online by several users,
-including by the second author.
- \footnote{ \url{https://groups.google.com/forum/\#!msg/word2vec-toolkit/Q49FIrNOQRo/DoRuBoVNFb0J}}
+including by the second author.%
+\footnote{ \url{https://groups.google.com/forum/\#!msg/word2vec-toolkit/Q49FIrNOQRo/DoRuBoVNFb0J}}
 A follow up paper, \tcite{mesnil2014ensemble} it was found that reweighed bags of n-grams \pcite{wang2012baselines} out performed these vector models.
-\textcite{lau2016doc2vecissues} found that on other problems  showed that with the right tuning these paragraph vector models could perform well.
+Conversely, \textcite{lau2016doc2vecissues} found that on short text similarity problems, with the right tuning these paragraph vector models could perform well;
+however they did not consider the reweighed n-grams of \parencite{wang2012baselines}.
+On a different short text-similarity task, \textcite{White2015SentVecMeaning} found the paragraph vector models to be significantly out-performed by SOWE, MOWE, and BOW, and BOW with dimensionality reduction.
 This highlights the importance of rigorous testing against a suitable baseline, on the task in question.
 
 
@@ -225,16 +230,23 @@ Several other RNNs have been used in this way since.
 
 \subsection{VAE and encoder-decoder}\label{sec:vae-and-encoder-decoder}
 \tcite{Bowman2015SmoothGeneration} presents an extension on this notion,
-where in-between the encoder and the decode stages there is a variational autoencoder (VAE).
+where in-between the encode and the decode stages there is a variational autoencoder (VAE).
 As shown in \Cref{fig:bowman}.
-The variational autoencoder \pcite{2014VAE} has been demonstrated to have very good properties in a number of machine learning applications.
+The variational autoencoder \pcite{2014VAE} has been demonstrated to have very good properties in a number of machine learning applications: they are able to work to find continuous latent variable distributions over arbitrary likelihood functions (such as in the neural network); and are very fast to train.
 Using the VAE it is hoped that a better representation can be found for the sequence of words in the input and output.
 
 
-Bowman et. al. trained the network as encoder-decoder reproducing its exact input.
-They found that short syntactically similar sentences were located near to each other according to this space.
-Further to that, because it has a decoder, it can generate these nearby sentences.
-Which is not possibly for most sentence embedding methods.
+\textcite{Bowman2015SmoothGeneration} trained the network as encoder-decoder reproducing its exact input.
+They found that short syntactically similar sentences were located near to each other according to this space,
+further to that, because it has a decoder, it can generate these nearby sentences,
+which is not possibly for most sentence embedding methods.
+
+Interestingly, they use the VAE output, i.e. the \emph{code}, only as the state input to the decoder.
+This is in-contrast to the encoder-decoders of \textcite{cho-EtAl:2014:EMNLP2014},
+where the \emph{code} was concatenated to the input to ever timestep of the decoder.
+\textcite{Bowman2015SmoothGeneration} investigated such a configuration,
+and found that it did not yield an improvement in performance.
+
 
 \begin{figure}
 	\caption{The VAE plus encoder-decoder of \textcite{Bowman2015SmoothGeneration}.
@@ -244,7 +256,6 @@ Which is not possibly for most sentence embedding methods.
 	}
 	\label{fig:bowman}
 	
-	\pdfcomment{Recheck this diagram. Is the output going to the right place? or should it go everywhere?}
 	%%%%%%%%%%%%%%%%%%%%%%%%%
 	% Encoder
 	\resizebox{\textwidth}{!}{\begin{tikzpicture}[]
@@ -256,6 +267,7 @@ Which is not possibly for most sentence embedding methods.
 	
 		\node(L2)[layer, right = of L1] {$\ldots$};
 		\node(w2)[below = of L2]{$\ldots$};
+		\draw[dotted, ->] (w2) -- (L2);
 	
 		\node(L3)[layer, right = of L2] {$\mathrm{RU_E}$};
 		\node(w3)[below = of L3]{$\n w_n$};
@@ -268,11 +280,13 @@ Which is not possibly for most sentence embedding methods.
 		\node(w5)[below = of L5]{$\nv r_1$};
 		\node(y5)[above = of L5]{$\n \hat{y}_1$};
 		\draw[->] (L5) -- (y5);
+		\draw[->] (w5) -- (L5);
 		
-		\node(L6)[layer, right = of L5] {$\ldots$};
-		\node(w6)[below = of L6]{$\ldots$};
-		\node(y6)[above = of L6]{$\ldots$};
-		\draw[->] (L6) -- (y6);
+		\node(L6)[dotted,layer, right = of L5] {$\ldots$};
+		\node(w6)[dotted,below = of L6]{$\ldots$};
+		\node(y6)[dotted,above = of L6]{$\ldots$};
+		\draw[dotted,->] (L6) -- (y6);
+		\draw[dotted,->] (w6) -- (L6);
 		
 		
 		\node(L7)[layer, right = of L6] {$\mathrm{RU_D}$};
@@ -284,10 +298,9 @@ Which is not possibly for most sentence embedding methods.
 		
 		\foreach \i/\j in {1/2, 2/3, 5/6,6/7} {
 			\draw[->] (L\i) edge node[labe] {state} (L\j);
-			\draw[->] (w\i) -- (L\i);
 		}
 		\draw[->] (L3) edge node[labe] {output} (L4);		
-		\draw[->, bend left] (L4) edge node[labe] {output} (L5);
+		\draw[->, bend left] (L4) edge node[labe] {output\\(code)} (L5);
 		 
 	\end{tikzpicture}}
 	
@@ -302,10 +315,10 @@ The other decoder is to produce the next sentence.
 \pdfcomment{Check that this is not mean to have the final encoder output as part of every prompt}
 \begin{figure}
 	\caption{The skip-thought model \textcite{DBLP:journals/corr/KirosZSZTUF15}.
-	Note the outputs are $\n \hat{q}_t$ and $\n \hat{p}_t$,
-	and the prompts are $\n {a}_t$ and $\n {b}_t$,
+	Note the outputs are $\n \hat{q}_i$ and $\n \hat{p}_i$,
+	and the prompts are $\n {a}_i$ and $\n {b}_i$,
 	for the next and previous sentences respectively.
-	The input (being the current sentence) is $\n w_t$.
+	The input words are $\n w_i$, which come from the current sentence.
 }
 	\label{fig:skip-thought}
 	
@@ -320,38 +333,46 @@ The other decoder is to produce the next sentence.
 		
 		\node(L2)[layer, right = of L1] {$\ldots$};
 		\node(w2)[below = of L2]{$\ldots$};
+		\draw[->] (w2) -- (L2);
 		
 		\node(L3)[layer, right = of L2] {$\mathrm{RU_E}$};
 		\node(w3)[below = of L3]{$\n w_n$};
+		\draw[->] (w3) -- (L3);
 		
 
-		\node(LN5)[layer, above right = 2 of L3] {$\mathrm{RU_N}$};
-		\node(LP5)[layer, below right = 2 of L3] {$\mathrm{RU_P}$};
+
+		\node(LN5)[layer, above right = 2 of L3, yshift=3cm] {$\mathrm{RU_N}$};
+		\node(LP5)[layer, below right = 2 of L3, yshift=-1cm] {$\mathrm{RU_P}$};
 		\foreach \y/\r/\dd in {q/a/N, p/b/P} {
-			\path[draw, ->] (L3.east) edge node[labe] {output} (L\dd5);
+
 					
-			\node(w\dd5)[below = of L\dd5]{$\nv \r_{1}$};
+			\node(w\dd5)[below = of L\dd5]{$[\v z; \nv \r_{1}]$};
 			\node(y\dd5)[above = of L\dd5]{$\n \hat{\y}_{1}$};
 			\draw[->] (L\dd5) -- (y\dd5);
+			\draw[->] (w\dd5) -- (L\dd5);
+			\path[draw, ->] (L3.east) -- (w\dd5);
 			
-			\node(L\dd6)[layer, right = of L\dd5] {$\ldots$};
-			\node(w\dd6)[below = of L\dd6]{$\ldots$};
-			\node(y\dd6)[above = of L\dd6]{$\ldots$};
-			\draw[->] (L\dd6) -- (y\dd6);
+			\node(L\dd6)[dotted, layer, right = of L\dd5] {$\ldots$};
+			\node(w\dd6)[dotted, below = of L\dd6]{$\ldots$};
+			\node(y\dd6)[dotted, above = of L\dd6]{$\ldots$};
+			\draw[dotted,->] (L\dd6) -- (y\dd6);
+			\draw[dotted, ->] (w\dd6) -- (L\dd6);
+			\draw[dotted, ->] (L3.east) -- (w\dd6);
 			
 			
 			\node(L\dd7)[layer, right = of L\dd6] {$\mathrm{RU_\dd}$};
-			\node(w\dd7)[below = of L\dd7]{$\nv \r_{\d m_\dd}$};
+			\node(w\dd7)[below = of L\dd7]{$[\v z; \nv \r_{\d m_\dd}$]};
 			\node(y\dd7)[above = of L\dd7]{$\n \hat{\y}_{\d m_\dd}$};
 			\draw[->] (L\dd7) -- (y\dd7);
-			\draw[->] (w\dd7) -- (L\dd7);	
+			\draw[->] (w\dd7) -- (L\dd7);
+			\path[draw, ->] (L3.east) --  (w\dd7);
+			
 		}
-
-
+		
+		\node[labe, right = 0 of L3] {output\\(code)};
 				
 		\foreach \i/\j in {1/2, 2/3, N5/N6, N6/N7, P5/P6, P6/P7} {
 			\draw[->] (L\i) edge node[labe] {state} (L\j);
-			\draw[->] (w\i) -- (L\i);
 		}
 		\end{tikzpicture}}
 	
@@ -403,7 +424,7 @@ These structures are well linguistically motivated, so it make sense to use them
 
 
 \aside[Machine learning frameworks for structural models]{
-	Structural networks can not be easily defined in most modern static neural network frameworks,	such as TensorFlow.
+	Structural networks cannot be easily defined in most modern static neural network frameworks,	such as TensorFlow.
 	These frameworks function by defining a single computational graph that is used to process each training/test case.
 	The same graph is used for each input.
 	By definition the structure of the network differs from training/test case to training/test case.
@@ -423,7 +444,7 @@ These structures are well linguistically motivated, so it make sense to use them
 	In implementation it is very important to test for correctness using gradient checks, as it is easy to make a mistake and end-up with models that seem to work ok, but are actually crippled due to some mistake in the coding.
 	Unfolding recursive autoencoders are particularly difficult,
 	as the gradient must be propagated from all leaves.
-	And output interior nodes can not have their gradients calculated until the gradients of their children are calculated.
+	And output interior nodes cannot have their gradients calculated until the gradients of their children are calculated.
 	The solution to this is to process the node gradient calculation using a priority queue,
 	where the priority is set by the depth of the node.
 	Thus ensuring all children are processes before their parents.
@@ -533,7 +554,7 @@ More recent advancements in dependency tree parsing using structured networks ar
 
 Recursive autoencoders are autoencoders, just as the autoencoder discussed in \Cref{sec:bottle-necking-autoencoder}, they reproduce their input.
 It should be noted that unlike the encoder-decoder RNN discussed above, e.g. \Cref{sec:vae-and-encoder-decoder},
-they can not be trivially used to generate natural language from an arbitrary embeddings, as they require the knowledge of the tree structured to unfold into.
+they cannot be trivially used to generate natural language from an arbitrary embeddings, as they require the knowledge of the tree structured to unfold into.
 Solving this would be the inverse problem of parsing to a composed representation discussed above.
 
 The models presented in \textcite{SocherEtAl2011:PoolRAE} and \textcite{iyyer2014generating}
@@ -574,7 +595,7 @@ In theory it is possible for a sequential model (with sufficiently deep and wide
 While structural models are theoretically nicer from a linguistics standpoint, pragmatically they are the last resort in modelling.
 When attempting to find an useful representation of a sentence for a task, one should first try a sum of word embeddings with a simple network on-top,
 then sequential model (based on LSTM or GRU), and only if these fail then try a structured model.
-Arguably before using any neural network approach at all, one should eliminated bag of words, bag of ngrams, dimensionality reduced version of those bags, and also eliminated LSI and LDA as inputs for the task.
+Arguably before using any neural network approach at all, one should eliminated bag of words, bag of n-grams, dimensionality reduced version of those bags, and also eliminated LSI and LDA as inputs for the task.
 Simple is powerful.
 }
 
@@ -655,7 +676,7 @@ $z_t$ is the update gate, it controls how much of the actual composed embedding 
 The composition matrix $\n Y_t$ (which is also part of the state/output) is not gated.
 
 Notice, that the state composition matrix $\n Y_{t-1}$ is only used to control the gate $\n z_t$, not to directly effect the candidate composited embedding $\n h_t$.
-Indeed, in fact one can note that all similarity to the structural method of \textcite{SocherMVRNN} is applied in the gate $\n z_t$.
+Indeed, in fact one cannote that all similarity to the structural method of \textcite{SocherMVRNN} is applied in the gate $\n z_t$.
 The method for calculating $\n h_t$ is similar to in a normal RU.
 
 
