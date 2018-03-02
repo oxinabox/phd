@@ -23,7 +23,7 @@
 	In this chapter, techniques for representing the multiple meanings of a single word are discussed.
 	This is a growing area, and is particularly important in languages where polysemous and homonymous words are common.
 	This includes English, but it is even more prevalent in Mandarin for example.
-	The techniques discussed can be broadly classified as lexical word sense representation,  and as word sense induction.
+	The techniques discussed can broadly be classified as lexical word sense representation,  and as word sense induction.
 	The inductive techniques can be sub-classified as clustering based or as prediction-based.
 \end{abstract}
 	
@@ -31,7 +31,7 @@
 
 Words have multiple meanings.
 A single representation for a word cannot truly describe the correct meaning in all contexts.
-It may have some features applicable to some uses but not to others,
+It may have some features that are applicable to some uses but not to others,
 it may be an average of all features for all uses,
 or it may only represent the most common sense.
 For most word-embeddings it will be an unclear combination of all of the above.
@@ -48,12 +48,12 @@ Can be simple as the WordNet tag set: noun, adjective, verb, etc. or complex as 
 \aside[Word-use]{An occurrence of a word in a text, such as a training corpus. Each word will have multiple uses in a text. Each word-use will only have one particular meaning and will thus belong to one synset.}
 \aside[Lemma]{The base form of the word as defined by a lexicographical resource. It is normally closely related to (often identical to) the \emph{stem} which is the word's root form with all morphological inflections (e.g. tenses) removed.}
 \aside[Lexeme]{The set of words that share a common lemma: \natlang{go}, \natlang{going}, \natlang{goes}, and \natlang{went} all belong to the lexeme headed by the lemma \natlang{go}}
-\aside[Synset]{A synset is a set of synonymous words: that is words that have the same meaning.}
+\aside[Synset]{A synset is a set of synonymous words: that is words that have the same meaning. In lexographic terms the synset is the core unit of meaning. Identifying the synset of a word-use is the the same as identifying the word sense. Every word sense corresponds to one synset.}
 \aside[Gloss]{A gloss is the dictionary entry for a word-sense, it normally includes both the definition and an example of use.
 In WordNet each synset shares a common gloss.}
 
 %\aside[Sensekey]{This is not a commonly used phrase by linquists, but it is an important implementation detail when using WordNet for WSD tasks. It repressents the mapping between lemma+pos and synset, and is needed because that is a many-many relationship. It take the basic form \texttt{lemma\%pos\_id:lex\_filenum}}
-\aside[Lemmatization]{Lemmatization is the method of converting a word into its lemma. Due to the similarity of to \emph{stemming}, it in essence means with tense and plurality information removed with some additional special-cases. WordNet is indexed by lemmas, and comes with a lemmatizer called morphy which is used for this}
+\aside[Lemmatization]{Lemmatization is the method of converting a word into its lemma. Due to the similary of the lemma to the stem,  this in essence means removing the tense and plurality information (stemming), with some additional special-cases. WordNet is indexed by lemmas, and comes with a lemmatizer called morphy allowing any word to be looked up by lemmatizing it to it's lemma}
 \aside[Unlemmatization]{Given lemma (as one can extract from WordNet) and a full POS tag (such as a Brown-style tag) for a word, it is possible to undo the lemmatization with a high degree of reliability using relatively simple rules (again due to the similarity of the lemma to the stem). The POS tag encodes the key inflectional features that are lost. Patten.en \pcite{de2012pattern} is a python library encoding such rules (pluralisation, verb conjugation, etc.); though combining them with the POS tag to drive them is a task left for the reader. This can be used to find substitute words using WordNet's features, for finding synonyms, antonyms and other lemmas from lexically related categories.}
 
 
@@ -61,16 +61,17 @@ The standard way to assign word senses is via some lexicographical resource, suc
 There is not a canonical list of word senses that are consistently defined in English.
 Every dictionary is unique, with different definitions and numbers of word senses.
 The most commonly used lexicographical resource is WordNet \pcite{miller1995wordnet}, and the multi-lingual  BabelNet \pcite{navigli2010babelnet}.
-The relationship between terminology used in word sense problems is shown in \Cref{fig:wordsenseterms}
+The relationship between the terminology used in word sense problems is shown in \Cref{fig:wordsenseterms}
 
 
 \begin{figure}
-	\caption{The relationship between terms used to discuss word sense problems.
+	\caption{The relationship between terms used to discuss various word sense problems.
 		The lemma is used as the representation for the lexeme, for WordNet's purposes when indexing.
-		The core task of WSD is to go from a word-use to the corresponding synset.
-		For WSD tasks the word-use is normally pre-tagged with its lemma and POS tag,
+		For many tasks each the word-use is pre-tagged with its lemma and POS tag,
 		as these can be found with high reliability using standard tools.
-		Note that the arrows in this diagram are \emph{directional} -- if you reverse the single directional \emph{has 1} relationships, they are \emph{has many} relationships.
+		Note that the arrows in this diagram are \emph{directional}.
+		That is to say, for example, each Synset \emph{has 1} POS,
+		but each POS \emph{has many} Synsets.
 	}
 	\label{fig:wordsenseterms}
 
@@ -79,12 +80,16 @@ The relationship between terminology used in word sense problems is shown in \Cr
 		\node[circle, above right = 2 of worduse](pos){\normalsize POS\\ e.g.\\ \emph{verb}};
 		\node[circle, below right = 2 of worduse](lexeme){\normalsize Lexeme\\  e.g. \\ \{\natlang{go}, \natlang{going},\\ \natlang{goes}, \natlang{went}\}};
 		\node[circle, draw, below right = 2 of pos](synset){\normalsize Synset\\ e.g. \\ \{\natlang{go}, \natlang{move}, \\ \natlang{locomote}\}};
+		\node[circle, draw, left = 2 of lexeme](word){\normalsize Word\\ e.g. \\ \natlang{goes}};
 
 		
 		
 		\draw[->] (worduse) edge node[labe] {has 1} (synset);
 		\draw[->] (worduse) edge node[labe] {has 1} (pos);
 		\draw[->] (worduse) edge node[labe] {has 1} (lexeme);
+		\draw[->] (worduse) edge node[labe] {has 1} (word);
+		
+		\draw[->] (word) edge node[labe] {has 1} (lexeme);
 		
 		\draw[->] (synset) edge node[labe] {has 1} (pos);
 		\draw[<->] (synset) edge node[labe] {has many} (lexeme);
@@ -110,14 +115,14 @@ Progress on the problem is made difficult by several factors.
 The sense is hard to identify from the context.
 Determining the sense may require very long range information:
 for example the information on context may not even be in the same sentence.
-It may require knowing the domain of the text, because word sense uses vary between domain.
+It may require knowing the domain of the text, because word sense uses vary between domains.
 Such information is external to the text itself.
 It may in-fact be intentionally unclear, with multiple correct interpretations, as in a pun.
-It maybe unintentionally unknowable, due to poor writing style, such that it would confuse any human reader also.
+It maybe unintentionally unknowable, due to a poor writing style, such that it would confuse any human reader.
 These difficulties are compounded by the limited amount of data available.
 
 There is only a relatively small amount of labelled data for word sense problems.
-It is the general virtue of machine learning that given enough data almost any input-output mapping problem (i.e. function approximation) can be solved.
+It is the general virtue of machine learning that given enough data, almost any input-output mapping problem (i.e. function approximation) can be solved.
 Such an amount of word sense annotated data is not available.
 This is in contrast to finding unsupervised word embeddings, which can be trained on any text that has ever been written.
 The lack of very large scale training corpora renders fully supervised methods difficult.
@@ -131,20 +136,19 @@ However, WSD is required to interface with  lexicographical resources,
 such as translation dictionaries (e.g. BabelNet), ontologies (e.g. OpenCyc), and other datasets (e.g. ImageNet \pcite{imagenet_cvpr09}).
 
 
-It may be interesting to note, that the number of meanings a word is approximately anti-logarithmically related to its rank \pcite{zipf1945meaning}.
-\pdfcomment{A plot might be nice}
-That is to say the most common words have exponentially more meanings than rarer words.
-It is related to the more well-known Zipf's Law on word use \pcite{zipf1949human}, and can similarly be explained Zipf's core premise of the principle of least effort. 
+It may be interesting to note, that the number of meanings that a word has is approximately inversely proportional related to its frequency of use rank \pcite{zipf1945meaning}.
+That is to say the most common words have far more meanings than rarer words.
+It is related to (and compounds with) the more well-known Zipf's Law on word use \pcite{zipf1949human}, and can similarly be explained based on Zipf's core premise of the principle of least effort. 
 This aligns well with our notion that precise (e.g. technical) words exist but are used only infrequently -- since they are only explaining a single situation.
-This also means that by far most word uses are potentially very ambiguous.
+This also means that by most word-uses are potentially very ambiguous.
 
-The most commonly used word sense (for a given word) is also overwhelmingly more frequent than it's less common brethren -- also being roughly Zipfian distributed in there usage \pcite{Kilgarriff2004}.
-For this reason the most frequent sense (MFS) baseline is often the best performing result in any WSD task.
+The most commonly used word sense (for a given word) is also overwhelmingly more frequent than its less common brethren -- word sense usage also being roughly Zipfian distributed \pcite{Kilgarriff2004}.
+For this reason the Most Frequent Sense (MFS) is a surprisingly hard baseline to beat in any WSD task.
 \aside[Semantic Syllepsis]{
 	(Also known as pathological sentences that kill almost all WSD systems.)
 	Consider the sentence: \natlang{John used to work for the \emph{newspaper} that you are carrying.}.	In this sentence the word-use \natlang{newspaper} simultaneously have two different meanings: it is both the company, and the object.
 	This violates our earlier statement that every word-use belongs to exactly one synset.
-	As word sense disambiguation systems normally attempt to assign a single sense they are unable to handle these sentences.
+	WSD systems are unable to handle these sentences as they attempt to assign a single sense to each word-use.
 	Most word sense induction systems cannot do much better: at best a new sense could be allocated for the joint use, which does not correspond to the linguistic notion of the word having two senses for different parts of the sentence.
 	Most works on word sense disambiguation outright ignore these sentences, or consider them to be ungrammatical, or incorrect.
 	However, they are readily understood and used without thought by most native speakers.
@@ -154,19 +158,19 @@ For this reason the most frequent sense (MFS) baseline is often the best perform
 Given a sense annotated corpus, it is easy to count how often each sense of a word occurs.
 Due to the over-whelming frequency of the most frequent sense, it is unlikely for even a small training corpus to have the most frequent sense differing from the use in the language as a whole.
 
-The Most Frequent Sense (MFS) method of word sense disambiguation is defined by counting the frequency of a particular word-sense for a particular part of speech tagged word.
+The Most Frequent Sense (MFS) method of word sense disambiguation is defined by counting the frequency of a particular word-sense for a particular POS tagged word.
 For the $i$th word use being the word $\n w_i$, having some sense $\n s_j$
 then without any further context the 
 probability of that sense being the correct sense is $P(\n s_j \mid \n w_i)$.
 One can use the part of speech tag $p_i$ (for the $i$th word use) as an additional condition, and thus find $P(\n s_j \mid \n w_i, p_i)$.
-WordNet encodes this information for lemma-sense pair using the SemCor corpus counts (this is also used for sense ordering, which is why this is sometimes called First Sense.).
+WordNet encodes this information for a lemma-synset pair using the SemCor corpus counts (this is also used for sense ordering, which is why most frequent sense  is sometimes called first sense.).
 This is a readily available and practical method for getting a baseline probability of each sense.
 Most frequent sense can be applied for word sense disambiguation using this frequency based probability estimate:  $\argmax_{\forall \n s_j} P(\n s_j \mid \n w_i, p_i)$.
 
 
 In the most recent SemEval WSD task \pcite{moro2015semeval},
 MFS beat all submitted entries for English, both overall, and on almost all cuts of the data.
-(The results for other languages were not as good, however in other languages true true corpus-derived sense counts were not used).
+The results for other languages were not as good, however in other languages the true corpus-derived sense counts were not used.
 
 
 \aside[WordNet is not a strong moral baseline]{
@@ -199,7 +203,7 @@ MFS beat all submitted entries for English, both overall, and on almost all cuts
 It is desirable to create a vector representation of a word-sense much like in \Cref{sec:word-representations} representations were created for words.
 We desire to an embedding to represent each word-sense, as normally represented by a word-synset pair.
 This section considers the representations for the lexical word senses as given from a dictionary.
-We consider a direct methods of using a labelled corpus, and an indirect method take uses simpler sense-embeddings to then partially label a corpus before retraining.
+We consider a direct method of using a labelled corpus, and an indirect method makes use of simpler sense-embeddings to partially label a corpus before retraining.
 These methods create representations corresponding to senses from WordNet.
 \Cref{sec:word-sense-induction-wsi} considers the case when the senses are to also be discovered, as well as represented.
 
@@ -210,7 +214,7 @@ These methods create representations corresponding to senses from WordNet.
 The simple and direct method is to take a dataset that is annotated with word-senses,
 and then treat each sense-word pair as if it were a single word, then apply any of the methods for word representation discussed in \Cref{sec:word-representations}.
 \tcite{iacobacci2015sensembed} use a CBOW language model \parencite{mikolov2013efficient} to do this.
-This does however run into the aforementioned problem, that there is relatively little training data that has been manually sense annotated.
+This does, however, run into the aforementioned problem, that there is relatively little training data that has been manually sense annotated.
 \textcite{iacobacci2015sensembed} use a 3rd party WSD tool, namely BabelFly \parencite{Moro2014}, to annotate the corpus with senses.
 This allows for existing word representation techniques to be applied, but being limited to an existing WSD tool makes the reliability of the resulting word sense embeddings questionable in application to WSD tasks.
 
@@ -254,7 +258,7 @@ $cands(\d w_{\n s_i})$ is a set of significant closely related words from the gl
 \aside[WSD with embeddings]{
 	It is beyond the scope of this work to discuss WSD systems more completely.
 	However, we will comment that (single sense) word embeddings are a generally useful feature as an input to any NLP ML system.
-	As such they can be used as features for a WSD system.
+	As such they can be used as for a WSD system.
 	This can be seen as similar to the LSI enhanced Lesk WSD system of \textcite{basile-caputo-semeraro:2014:Coling}.
 }
 
