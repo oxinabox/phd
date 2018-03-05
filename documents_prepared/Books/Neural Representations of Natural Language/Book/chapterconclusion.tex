@@ -12,10 +12,72 @@
 \chapter{Conclusion}\label{sec:conclusion}
 
 Methods for finding representations of natural languages have been introduced.
-Neural networks, elegantly produce such representations as by products,
-when applied to an NLP task.
+Neural networks, elegantly produce such representations as by products, when applied to a NLP task.
+We have introduced neural networks, and covered techniques for working with words, word senses, and larger structures.
 
-A key take-away idea is that simple methods often work best.
+
+
+\Cref{sec:machine-learning-for-representations} introduced the idea of machine learning, in particular neural networks.
+Machine learning allows us to use examples correct outputs for given inputs,
+to train a system that can generalised to determine the output for an input its was never shown during training.
+A key feature of modern machine learning is the decreased reliance on hand-engineered features to represent their inputs.
+The embeddings and vector representations that are the main topic of this book, as just such automatically derived features.
+
+\Cref{sec:rnn} showed how recursive neural networks allowed working with inputs of varying lengths -- such as natural language senses.
+It discussed the various types of recursive networks as characterised by their recurrent units, including both GRU and LSTM.
+As well as the common RNN structures, including:
+the encoder for producing an a fixed-size  output (such as a classification) from an a varying sized input;
+the decoder for generating a varying sized output from a fixed size input;
+and the encoder-decoder for when the input and output both vary in size.
+These models are vary practical for natural language processing applications.
+
+\Cref{sec:word-representations} is arguably the core chapter of this book.
+It discusses how we can find and use representation of words.
+It begins with the core idea of how a word can be input into a neural network:
+the input embedding via a look-up table.
+The input embedding, and the complementarity output embedding from the weights of the softmax layer, capture a representation of the words.
+The meaning of a word is determined by its usage, which is largely characterised by what words it co-occurs with  with.
+Word representation models include the well known skip-gram model use these principles to derivative high quality representations that can be reused as features in many tasks.
+The skip-gram model is based around predicting which words will be co-located.
+It is closely related to an iterative approximation to factorising the matrix of co-occurrence counts, which is commonly used in older methods.
+Word embedding models commonly use  hierarchical softmax or negative sampling to speed-up training and evaluation.
+These word embeddings allow machine learning to be used for natural language processing.
+
+\Cref{sec:word sense-representations} extends the idea of representing words to representing senses.
+Most words have many meanings.
+It is thus impossible for a single representation to characterise the correct meaning in all contexts.
+Word senses can either be externally defined using a lexical resource,
+or discovered (induced) from the data.
+If they are externally defined, determining a good representation for them boils down to disambiguating a corpus to find the senses used, then created a representation for them using the single sense word embedding methods.
+Inducing the senses from the corpus is more in-line with the general goal of not needing hand-engineered features, and there are many more methods for this.
+
+The majority of word sense induction methods are either context-clustering-based, or co-location-prediction based.
+In both cases, the core idea is still that (like for word-embeddings) the words surrounding a word use characterise what it means.
+In the context clustering methods, for each word the different contexts in which it occurs are represented and then clustered.
+Each cluster represents a word sense.
+In the co-location prediction approaches the word sense is treated as a hidden (latent) variable,
+which is giving influence on the observed variables that are the words which it is co-occurring with.
+Classical probability methods can then be used, together with the neural network methods, in order to uncover that latent variable that is the sense.
+These word sense induction methods give embeddings that can be used much like word embeddings.
+
+
+\Cref{sec:sentence-representations-and-beyond} takes the idea of represent words to larger structures.
+There is a great diversity of methods to represent phrases, sentences, and documents.
+In three broad categories, we can consider weakly ordered models, sequential models, and structural models.
+Weakly ordered models are the most diverse category, being the catch all for various methods that use combinations word embeddings, or methods that approximate them.
+The sequential methods are largely the application of the RNNs from \Cref{sec:rnn} in the natural way to process text,
+but also include some methods specifically for obtaining a representation.
+Finally, the structural methods allow the inputs to change the structure of the network,
+allowing it to process parse trees in the natural way.
+
+
+
+There are a great number of techniques for using natural language with machine learning.
+They all revolve around the core idea of a representation.
+Beyond that they range from simple to complex.
+
+
+
 The methods used need to be sufficiently powerful to accomplish the task,
 but beyond this excess capacity is both a waste of training time,
 and a waste of developer effort.
@@ -26,18 +88,17 @@ In part this can perhaps be attributed to our over-expectation of complexity in 
 While language can be complex, a lot of it is surprisingly simple.
 
 
-
 The systems we have discussed have been small and self-contained.
-Suitable for use as a component in a larger system.
-If one looks at the workings of a digital assistant such as is found on a smart phone,
+They suitable for use as a component in a larger system.
+If one looks at the workings of a digital assistant (such the ones found on a smart phone),
 one will find many machine learning based subsystems:
 for speech-recognition, for intent detection, and for accomplishing subtasks within those.
-A complicated system such as Zara \pcite{siddique2017zara} contains over a dozen machine learning based subsystems.
+A complicated system such as Zara \pcite{siddique2017zara} contains over a dozen separate machine learning based subsystems.
 \aside[Zara, and defending herself from bad influences]{
 	One of the most interesting subsystems in Zara \parencite{siddique2017zara},
 	is the use of a module to detect abusive language, racism and sexism.
 	It is a well-known problem that when allowing a learning system to learn from the open-web,
-	such system's can pick-up bad habits 
+	such systems can pick-up bad habits 
 	(\url{https://www.theverge.com/2016/3/24/11297050}).
 	The use of such an abuse detection module allows a system to be protected from such things.
 }
@@ -45,7 +106,7 @@ A complicated system such as Zara \pcite{siddique2017zara} contains over a dozen
 
 There is another approach, so called big data, processing petabytes of text on GPU farms,
 with end-to-end deep learning systems such as char-RNNs.
-Even this is based on the many of the same principles we've discussed in this book.
+Even this is based on the many of the same principles we have discussed in this book.
 Though the data and computational requirements place such things out of reach of most readers.
 
 
@@ -54,25 +115,23 @@ They may be small data, a few hundred examples.
 They may be largish data, with a few million examples.
 The more data you have, the more complex a model you can train,
 and thus the more difficult a problem you can solve.
-But good representations can help us when we don't have enough data.
+But good representations can help us when we do not have enough data.
 By creating word embeddings (\Cref{sec:word-representations}),
 word sense embeddings (\Cref{sec:word-sense-representations}),
 and larger embeddings (\Cref{sec:sentence-representations-and-beyond}),
 we can leverage other larger data sources.
-The embedding created using systems that are trained on other data, to perform other tasks,
-capture information to accomplish those tasks,
-information that will also likely be useful for our own tasks, whatever they may be.
+The embeddings created using systems that are trained on other data, to perform other tasks,
+capture information to accomplish those tasks.
+This information that will also likely be useful for our own unrelated tasks.
 
 
 
 
 \section{??Blurb??}
-
-Popular deep neural networks for languages processing comprehensively reviewed and explained from a practical perspective.
-Language modelling, vector representations, and challenging tasks such as WSD, and sentence embeddings investigated to illustrate the used of these networks.
-This book is packed with valuable advice and experiences
-obtained from practical development and implementations 
-in the up-and-coming Julia programming language for technical computing.
+This book covers popular deep neural networks for language processing.
+They networks comprehensively reviewed and explained from a practical perspective.
+Language modelling, vector representations, and challenging tasks such as WSD, and sentence embeddings are investigated to illustrate the use of these networks.
+This book is packed with valuable advice obtained from first-hand experience in implementing these networks.
 It is a solid introduction to one of the most exciting new areas of natural language processing and computational linguistics.
 
 
