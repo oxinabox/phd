@@ -2,7 +2,7 @@
 \ProvidesClass{komatufte}[2017/07/05 A Hacked Up Tufte-like Koma book]
 % Based on https://tex.stackexchange.com/questions/333111/how-to-align-the-baseline-of-margin-notes-in-latex-with-the-main-text
 
-
+\PassOptionsToPackage{hyphens}{url}
 
 % General setup
 \RequirePackage{etoolbox}
