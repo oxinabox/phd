@@ -338,7 +338,6 @@ They very briefly mention that an RNN could be used in its place.
 	\resizebox{\textwidth}{!}{\input{figs/chapterwordrepr/rnn-language-model2010.tex}}
 \end{figure}
 
-\pdfcomment{I'm not sure if Mikolov was using the design matrix formulatiuon where bias terms are skipped, if so this section is the only section so far that skips it}
 
 In \tcite{mikolov2010recurrent} an RNN is used for language modelling.
 Using the terminology of \Cref{sec:rnn}, this is an encoder RNN, made using Basic Recurrent Units.
@@ -581,16 +580,14 @@ then the optimisation criteria becomes minimising the cross-entropy between the 
 with the cross entropy measure being weighted by the frequency of the occurrence of the word.
 That is to say if skip-gram were optimised globally it would be equivalent to minimising:
 \begin{equation}
-Loss = - \sum_{\forall \n w_i} \sum_{\forall \n w_j} X_{\n w_i,\n w_j} P(\n w_j\mid \n w_i) \log (\i V_{\n w_j,:}\,\i C_{\n w_i})
+Loss = - \sum_{\forall \n w_i \in \set V} \sum_{\forall \n w_j  \in \set V } X_{\n w_i,\n w_j} P(\n w_j\mid \n w_i) \log (\i V_{\n w_j,:}\,\i C_{\n w_i})
 \end{equation}
-for $X$ being the a matrix of the true co-occurrence counts, (such that $X_{\n w_i,\n w_j}$ is the number of times words $\n w_i$ and $\n w_j$ co-occur),
+for $\set V$ being the vocabulary and for $X$ being the a matrix of the true co-occurrence counts, (such that $X_{\n w_i,\n w_j}$ is the number of times words $\n w_i$ and $\n w_j$ co-occur),
 and for $P$ being the predicted probability output by the skip-gram.
 
 
 Minimising this cross-entropy efficiently means  factorising the true co-occurrence matrix $X$,
 into the input and output embedding matrices $C$ and $V$, under a particular set of weightings given by the cross entropy measure.
-
-\pdfcomment{Consider referring to the vocabulary in the equations}
 
 \textcite{pennington2014glove} propose an approach based on this idea.
 For each word co-occurrence of $\n w_i$ and $\n w_j$ in the vocabulary: they attempt to find optimal values for 
@@ -703,7 +700,7 @@ or the matrix can be written in \emph{design matrix form} with an implicitly app
 or it can even be ignored in the implementation (as was done in \textcite{mikolov2013efficient}).
 The reasoning for being able to ignore it is that the bias in normal softmax encodes unigram probability information;
 in hierarchical softmax, when used with the common Huffman encoding, its the tree's depth in tree encodes its unigram probability. In this case, not using a bias would at most cause an error proportionate to $2^{-k}$, where $k$ is the smallest integer such that $2^{-k}>P(\n w_i)$.
-\pdfcomment{this seems right, but idk if it is. I need to work out a way to check this}
+
 
 
 \paragraph{First consider a binary tree with just 1 layer and 2 leaves}
@@ -916,21 +913,18 @@ There is no functional difference between the three formulations.
 Though the final one is perhaps a key reason for the difficulties in understanding the hierarchical softmax algorithm.
 
 \subsubsection{Loss Function}\label{sec:softmax-loss-function}
-\pdfcomment{This should maybe be moved to intro to machine learning. Also should be double checked}
-
 \aside[The gradient calculations]{They are not fun. They never are for back-propagation. We recommend using a framework with automated differentiation, and/or performing gradient checks against a numerical differentiation tool (simple finite-differencing will do in a pinch).}
 
 Using normal softmax, during the training, the cross-entropy between the model's predictions and the ground truth as given in the training set is minimised.
 Cross entropy is given by
- \pdfcomment{Really check this}
+
 \begin{equation}
 CE(P^\star, P) = \sum_{\forall \n w_i\in \set{V}} \sum_{\forall \n z_j \in \set{Z}} -P^\star(\n w_i \mid \n z_j) \log P(\n w_i \mid \n z_j)
 \end{equation}
 Where $P^\star$ is the true distribution, and $P$ is the approximate distribution given by our model (in other sections we have abused notation to use $P$ for both).
-$\set Z$ is the set of values that are input into the model -- the context words in language modelling.
+$\set Z$ is the set of values that are input into the model, (or equivalently the values derived from them from lower layers) -- Ithe context words in language modelling.
 $\set V$ is the set of outputs, the vocabulary in language modeling.
 The training dataset $\seq X$ consists of pairs from $\set V \times \set Z$.
-\pdfcomment{Calling the Z set mathbb Z isn't great as that is normally the integers }
 
 The true probabilities (from $P^\star$) are implicitly given by the frequency of the training pairs in the training dataset $\seq X$.
 \begin{equation}
@@ -947,7 +941,7 @@ Then applying back-propagation as usual.
 
 \subsection{Negative Sampling}\label{sec:negative-sampling}
 
-\pdfcomment{This section is currently written using skip-gram no hidden layer, so uses $\n w_i$, but it doesn't have to. It could be rewritten like the previous, to use $z$ for the output of the pre-output layer. Which might just so happen to bt $\n w_i$ in the case of the skip-gram. }
+%\pdfcomment{This section is currently written using skip-gram no hidden layer, so uses $\n w_i$, but it doesn't have to. It could be rewritten like the previous, to use $z$ for the output of the pre-output layer. Which might just so happen to bt $\n w_i$ in the case of the skip-gram. }
 
 Negative sampling was introduced in \tcite{mikolovSkip} as another method to speed up this problem.
 Much like hierarchical softmax in its purpose.
@@ -1168,11 +1162,14 @@ as well as kernel CCA for a non-linear alignment.
 The inputs to CCA, are two sets of vectors, normally expressed as matrices.
 We will call these:
 $C \in \mathbb{R}^{\d n_C \times \d m_C}$ and $V \in \mathbb{R}^{\d n_V \times \d m_V}$.
-These are both some set of vector representations for words, not necessarily of the same dimensionality.
-These could be the output of any of the embedding models discussed earlier,
+They are both sets of vector representations, not necessarily of the same dimensionality.
+They could be the output of any of the embedding models discussed earlier,
 or even a sparse (non-embedding) representations such as the point-wise mutual information of the co-occurrence counts.
-The other input is a subset of pairs from those sets that are to be aligned, which we will call, $\d C_\star \times \d V_\star$.
-This subset contains only pairs with known translations -- this does not have to be the whole vocabulary of either language.
+The other input is series  pairs of elements from within those those sets that are to be aligned.
+We will call the elements from that series of pairs from the original sets $\d C_\star$ and $\d V_\star$ respectively.
+$\d C_\star$  and $\d V_\star$ are subsets of the original sets, with the same number of representations.
+In the example of applying this to translation, if each vector was a word embedding:
+$\d C_\star$  and $\d V_\star$ would contains only words with a single known best translation, and this does not have to be the whole vocabulary of either language.
 
 
 %
@@ -1184,7 +1181,7 @@ When complete, taking $S$ and $T$ as matrices gives projection matrices which pr
 The new common vector space embeddings are given by:
 $C S$ and $V T$.
 Even for sparse inputs the outputs will be dense embeddings.
-\pdfcomment{Check this, both for correctness in description, and for correctness in notation. In particular recheck dimensions WRT transposing/row/column}
+%\pdfcomment{Check this, both for correctness in description, and for correctness in notation. In particular recheck dimensions WRT transposing/row/column}
 
 \textcite{faruqui2014improving} investigated this primarily as a means to use additional data to improve performance on monolingual tasks.
 In this, they found a small and inconsistent improvement.

@@ -40,6 +40,7 @@ It is for this reason they are often called black-box models.
 
 
 \section{Neural Networks}
+
 \aside[Multilayer perceptron or Artificial Neural Network?]{An artificial neural network is sometimes called a multilayer perceptron.
 This is in reference to the (distantly) related perceptron learning algorithm.
 This term has generally fallen out of favour in newer works,
@@ -57,13 +58,62 @@ Some advancements have also been inspired by the functioning of the brain,
 but many others have come from statistical methods or elsewhere.
 A neural network is no more similar to a brain, than it is to a Fourier transform.
 
+\begin{figure}
+	\caption{A diagram of a neural network, with 2 inputs, and 3 outputs, and 2 hidden layers of width 5 and 6 neurons respectively.}
+	\label{fig:nn}
+	\resizebox{\textwidth}{!}{
+		\begin{tikzpicture}
+		\numdef{\lenL}{2}
+		\numdef{\lenM}{5}
+		\numdef{\lenO}{6}
+		\numdef{\lenP}{3}
+		
+		\coordinate (L0) at (0,0);
+		\foreach[count=\j from 0] \ii in {1,...,\lenL} {
+			\node(L\ii)[below = of L\j] {$\iv x_\ii$};
+		}
+		\node[labe, above=0.5 of L0]{Input\\ Layer};
+		
+		\coordinate[right = 5 of L0, yshift=4cm] (M0);
+		\foreach[count=\j from 0] \ii in {1,...,\lenM} {
+			\node(M\ii)[draw, circle,below = of M\j] {$\i {\d {\v z}_1}_\ii$};
+			
+			\foreach \k in {1,...,\lenL} {
+				\draw[->] (L\k) -- (M\ii);
+			}		
+		}
+		\node[labe, above=0.1 of M0]{1nd\\Hidden Layer};
+		
+		\coordinate[right = 4 of M0, yshift=1cm] (O0);
+		\foreach[count=\j from 0] \ii in {1,...,\lenO} {
+			\node(O\ii)[draw, circle,below = of O\j] {$\i {\d {\v z}_2}_\ii$};
+			
+			\foreach \k in {1,...,\lenM} {
+				\draw[->] (M\k) -- (O\ii);
+			}		
+		}
+		\node[labe, above=0.1 of O0]{2nd\\Hidden\\ Layer};
+		
+		\coordinate[right = 5 of O0, yshift=-4cm] (P0);
+		\foreach[count=\j from 0] \ii in {1,...,\lenP} {
+			\node(P\ii)[below = of P\j] {$\iv y_\ii$};
+			
+			\foreach \k in {1,...,\lenO} {
+				\draw[->] (O\k) -- (P\ii);
+			}		
+		}
+		\node[labe, above=0.5 of P0]{Output\\ Layer};
+		
+		\end{tikzpicture}
+	}
+\end{figure}
+
 The core idea behind a neural network is to represent the transformation of the input to the output as links between neurons in a sequence of layers.
+This is shown  in \Cref{fig:nn}.
 Each neuron has a weighted connection to the neurons in the layer below,
 and it applies a nonlinear function to this weighted sum, 
 to determine its own output.
 The output is connected to the inputs in the layer above, or is the final output.
-
-\pdfcomment{Maybe a diagram and/or some equations here. and a bit more detail?}
 
 
 \aside[Don't implement neurons]{
@@ -282,7 +332,6 @@ recall that by our notation convention $\iv y_i$ is the $i$th element of the vec
 \iv y_i=\i {\left(\softmax(\v z)\right)}_i= \frac{\exp{\iv z_i}}{\sum_{j=1}^{j=N} \exp{\iv z_j}}
 \end{equation}
 $\v y$ is a vector of length $n$, where $n$ the number of classes in the classification.
-\pdfcomment{Diagram might be nice here}
 
 These elements have  values between zero and one, and sum to one.
 They thus define a discrete probability mass function.
@@ -344,7 +393,6 @@ This results in sparse connections between the layers.
 This has been found to be a good thing \pcite{glorot2011deepRELUsparse}.
 ReLU is very commonly used as a hidden layer activation function for deep networks.
 It also helps with the gradient vanishing and gradient exploding problems that occur in deep networks \parencite{glorot2011deepRELUsparse}.
-\pdfcomment{I think maybe this whole section needs to be moved to after I have explained gradient descent?}
 
 
 \subsubsection{RELU6}
@@ -601,10 +649,10 @@ By considering this for each index $i$ (class value) that $Y$ might take then we
 
 Given one is considering the case for a particular class $Y=i$,
 then it can be seen that the row vector $\i W_{i,:}$ as a weighting map for features possessed by $\v z$,
-i.e. for input ($Z$) feature $j$, $\i W_{i,j}$ determines the relative weighting for that feature vs the other features of $Z$,
+i.e. for input ($Z$) feature $j$, $\i W_{i,j}$ determines the relative weighting for $j$th feature vs the other features of $Z$,
 when the class is $i$.
-When trained, the weight values should be such that it scores how likely the features are to occur for a given output class.
-\pdfcomment{This sentence can be replaced wit ha stronger statement I think}
+When trained, the weight values will be such that it scores how likely the features are to occur for a given output class.
+
 
 We can say that our scoring function $R$, has a likelihood term:
 \begin{equation}
@@ -637,7 +685,7 @@ P(Y{=}i\mid Z{=}\v z)&=\frac{P(Z{=}\v z\mid Y{=}i)\,P(Y{=}i)}{P(Z{=}\v z)}\\
 The similarities can be seen.
 The bias effectively determines a prior probability-like term.
 The weights defines the posterior probability: that is the chance of a particular class having a particular set of features.
-The rows of the weight matrix mark how important each hidden feature is to each class. \pdfcomment{check rows vs cols}
+The rows of the weight matrix mark how important each hidden feature is to each class.
 We can consider that each row of the weight matrix is itself a representation of the class, as characterised by the importance of those latent features.
 In the next chapter we will consider this as an output embedding.
 

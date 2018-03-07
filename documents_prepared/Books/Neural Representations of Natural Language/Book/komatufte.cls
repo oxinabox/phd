@@ -105,12 +105,12 @@ captions = nooneline
 \NewDocumentCommand{\aside}{o +m}{%
 	\IfNoValueTF{#1}%
 	{\makenote*{#2\bigskip}}%
-	{\makenote*{{\nohyphens{\textbf{\raggedright#1}}\\}#2\bigskip}}%
+	{\makenote*{{\nohyphens{\textbf{\sloppy\raggedright#1}}\\}#2\bigskip}}%
 }
 \NewDocumentCommand{\asideunsafe}{o +m}{%
 	\IfNoValueTF{#1}%
 	{\makenote{#2\bigskip}}%
-	{\makenote{{\nohyphens{\textbf{\raggedright#1}}\\}#2\bigskip}}%
+	{\makenote{{\nohyphens{\textbf{\sloppy\raggedright#1}}\\}#2\bigskip}}%
 }
 
 \NewDocumentCommand{\asidefig}{o +m}{%
