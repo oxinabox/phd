@@ -100,17 +100,21 @@ captions = nooneline
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-\RequirePackage{hyphenat}
 
+\RequirePackage{ragged2e}
+%\newcommand{\asideheading}[1]{{\bfseries\raggedright\parfillskip=-\rightskip #1\par}}
+\newcommand{\asideheading}[1]{{\bfseries\setlength{\RaggedRightParfillskip}{-\RaggedRightRightskip}\RaggedRight #1\par}}
+
+	
 \NewDocumentCommand{\aside}{o +m}{%
 	\IfNoValueTF{#1}%
 	{\makenote*{#2\bigskip}}%
-	{\makenote*{{\nohyphens{\textbf{\sloppy\raggedright#1}}\\}#2\bigskip}}%
+	{\makenote*{\asideheading{#1} #2\bigskip}}%
 }
 \NewDocumentCommand{\asideunsafe}{o +m}{%
 	\IfNoValueTF{#1}%
 	{\makenote{#2\bigskip}}%
-	{\makenote{{\nohyphens{\textbf{\sloppy\raggedright#1}}\\}#2\bigskip}}%
+	{\makenote{\asideheading{#1} #2\bigskip}}%
 }
 
 \NewDocumentCommand{\asidefig}{o +m}{%
