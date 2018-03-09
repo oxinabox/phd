@@ -5,8 +5,6 @@
 \PassOptionsToPackage{hyphens}{url}
 
 % General setup
-\RequirePackage{etoolbox}
-
 \RequirePackage{leading}
 \RequirePackage{calc}
 \RequirePackage{xparse}
@@ -85,8 +83,12 @@ captions = nooneline
 \let\ocolor\color % Protect it, see: https://tex.stackexchange.com/a/415272/5834
 \NewDocumentCommand{\asidefont}{}{\small\sffamily\color{blue}}
 
+
 % Set up the note column
-\AtEndPreamble{\RequirePackage{scrlayer-notecolumn} %must be loaded ``Lastest''
+\RequirePackage{etoolbox}
+\RequirePackage{xpatch}
+\AtEndPreamble{
+	\RequirePackage{scrlayer-notecolumn} %must be loaded ``Lastest''
 	\RedeclareNoteColumn[
 		normalmarginpar,
 		width = \notescolwidth,
@@ -150,13 +152,13 @@ captions = nooneline
 % Bibliography Commands
 %
 \RequirePackage[
-	backend=bibtex,
+	backend=biber,
 	url=false,  
 	style=alphabetic,
 	citestyle=authoryear,
 	bibstyle=authoryear,
 	maxbibnames=99,
-	dashed=false
+	dashed=false,
 ]{biblatex}
 
 
