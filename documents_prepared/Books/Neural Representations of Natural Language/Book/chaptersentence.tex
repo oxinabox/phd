@@ -249,54 +249,70 @@ where the \emph{code} was concatenated to the input at every timestep of the dec
 \textcite{Bowman2015SmoothGeneration} investigated such a configuration,
 and found that it did not yield an improvement in performance.
 
-%\pdfcomment{Would be good to add the embedding step}
+
+
 \begin{figure}
 	\caption{The VAE plus encoder-decoder of \textcite{Bowman2015SmoothGeneration}.
 		Note that during training, $\n \hat{y}_i=\n w_i$, as it is an autoencoder model.
 		As is normal for encoder-decoders the prompts are the previous output (target during training, predicted during testing): $\n r_i=\n y_{i-1}$,
 		with $\n r_1= \n y_0= \natlang{<EOS>}$ being a pseudo-token marker for the end of the string.
-		Not shown is the standard embedding lookup step for all word inputs.
+		The Emb. step represents the embedding table lookup. In the diagrams for \Cref{sec:word-representations}  we showed this as  as a table but just as a block here for conciseness.
 	}
 	\label{fig:bowman}
 	
 	%%%%%%%%%%%%%%%%%%%%%%%%%
 	% Encoder
 	\resizebox{\textwidth}{!}{\begin{tikzpicture}[]
+		
+		
 		\coordinate (L0) at (lbl.east);
 		
 		\node(L1)[layer, right = of L0] {$\mathrm{RU_E}$};
-		\node(w1)[below = of L1]{$\n w_1$};
-		\draw[->] (w1) -- (L1);
+		\node(e1)[layer, below=of L1] {\small Emb.};
+		\draw[->] (e1) edge node[labe]{$\i C_{\n w_1}$} (L1);
+		\node(w1)[below = of e1]{$\n w_1$};
+		\draw[->] (w1) -- (e1);
 	
-		\node(L2)[layer, right = of L1] {$\ldots$};
-		\node(w2)[below = of L2]{$\ldots$};
-		\draw[dotted, ->] (w2) -- (L2);
+		\node(L2)[dotted, layer, right = of L1] {$\ldots$};
+		\node(e2)[layer, below=of L2, dotted] {\small Emb.};
+		\draw[->, dotted] (e2) edge (L2);
+		\node(w2)[below = of e2]{$\ldots$};
+		\draw[->, dotted] (w2) -- (e2);
 	
 		\node(L3)[layer, right = of L2] {$\mathrm{RU_E}$};
-		\node(w3)[below = of L3]{$\n w_n$};
-		\draw[->] (w3) -- (L3);
+		\node(e3)[layer, below=of L3] {\small Emb.};
+		\draw[->] (e3) edge node[labe]{$\i C_{\n w_n}$} (L3);
+		\node(w3)[below = of e3]{$\n w_n$};
+		\draw[->] (w3) -- (e3);
 	
 		\node(L4)[layer, above = of L3] {$VAE$};
 		
 		
 		\node(L5)[layer, above right = of L4] {$\mathrm{RU_D}$};
-		\node(w5)[below = of L5]{$\n r_1$};
 		\node(y5)[above = of L5]{$\n \hat{y}_1$};
 		\draw[->] (L5) -- (y5);
-		\draw[->] (w5) -- (L5);
+		\node(e5)[layer, below=of L5] {\small Emb.};
+		\node(w5)[below = of e5]{$\n r_1$};
+		\draw[->] (e5) edge node[labe]{$\i C_{\n r_1}$} (L5);
+		\draw[->] (w5) -- (e5);
 		
 		\node(L6)[dotted,layer, right = of L5] {$\ldots$};
-		\node(w6)[dotted,below = of L6]{$\ldots$};
 		\node(y6)[dotted,above = of L6]{$\ldots$};
 		\draw[dotted,->] (L6) -- (y6);
-		\draw[dotted,->] (w6) -- (L6);
+		\node(e6)[layer, below=of L6, dotted] {\small Emb.};
+		\draw[->, dotted] (e6) edge (L6);
+		\node(w6)[dotted,below = of e6]{$\ldots$};
+		\draw[->, dotted] (w6) -- (e6);
 		
 		
 		\node(L7)[layer, right = of L6] {$\mathrm{RU_D}$};
-		\node(w7)[below = of L7]{$\n r_m$};
 		\node(y7)[above = of L7]{$\n \hat{y}_m$};
 		\draw[->] (L7) -- (y7);
-		\draw[->] (w7) -- (L7);
+		\node(e7)[layer, below=of L7] {\small Emb.};
+		\node(w7)[below = of e7]{$\n r_m$};
+		\draw[->] (e7) edge node[labe]{$\i C_{\n r_m}$} (L7);
+		\draw[->] (w7) -- (e7);
+		
 		
 		
 		\foreach \i/\j in {1/2, 2/3, 5/6,6/7} {
@@ -304,8 +320,7 @@ and found that it did not yield an improvement in performance.
 		}
 		\draw[->] (L3) edge node[labe] {output} (L4);		
 		\draw[->, bend left] (L4) edge node[labe] {output\\(code)} (L5);
-		 
-	\end{tikzpicture}}
+		 \	\end{tikzpicture}}
 	
 \end{figure}
 
@@ -330,7 +345,7 @@ That output code is the representation of the sentence.
 	As there is no intent to use the decoders after training, there is no need to worry about providing an evaluation-time prompt, so the prompt is always the previous word.
 	$\n p_0= \n p_{\d m_p} = \n q_0= \n q_{\d m_q} =  \natlang{<EOS>}$ being a pseudo-token marker for the end of the string.
 	The input words are $\n w_i$, which come from the current sentence.
-	Not shown is the standard embedding lookup step for all word inputs.	
+	the Emb. steps represents the look-up of the embedding for the word.
 }
 	\label{fig:skip-thought}
 	
@@ -339,69 +354,104 @@ That output code is the representation of the sentence.
 	\resizebox{\textwidth}{!}{\begin{tikzpicture}[]
 		\coordinate (L0) at (lbl.east);
 		
+
+				
 		\node(L1)[layer, right = of L0] {$\mathrm{RU_E}$};
-		\node(w1)[below = of L1]{$\n w_1$};
-		\draw[->] (w1) -- (L1);
+		\node(e1)[layer, below=of L1] {\small Emb.};
+		\draw[->] (e1) edge node[labe]{$\i C_{\n w_1}$} (L1);
+		\node(w1)[below = of e1]{$\n w_1$};
+		\draw[->] (w1) -- (e1);
 		
-		\node(L2)[layer, right = of L1] {$\ldots$};
-		\node(w2)[below = of L2]{$\ldots$};
-		\draw[->] (w2) -- (L2);
+		\node(L2)[dotted, layer, right = of L1] {$\ldots$};
+		\node(e2)[layer, below=of L2, dotted] {\small Emb.};
+		\draw[->, dotted] (e2) edge (L2);
+		\node(w2)[below = of e2]{$\ldots$};
+		\draw[->, dotted] (w2) -- (e2);
 		
 		\node(L3)[layer, right = of L2] {$\mathrm{RU_E}$};
-		\node(w3)[below = of L3]{$\n w_n$};
-		\draw[->] (w3) -- (L3);
-		
+		\node(e3)[layer, below=of L3] {\small Emb.};
+		\draw[->] (e3) edge node[labe]{$\i C_{\n w_n}$} (L3);
+		\node(w3)[below = of e3]{$\n w_n$};
+		\draw[->] (w3) -- (e3);
+			
 
 
 		
 		%TOP
-		\node(LN5)[layer, above right = 2 of L3, yshift=3cm] {$\mathrm{RU_N}$};
-		\node(wN5)[below = of LN5]{$[\v z; \n q_{0}]$};
+		\node(LN5)[layer, above right = 2 of L3, yshift=6cm] {$\mathrm{RU_N}$};
+		\node(wN5)[below = of LN5]{$[\v z; \i C_{\n q_0}]$};
 		\node(yN5)[above = of LN5]{$\n \hat{q}_{1}$};
 		\draw[->] (LN5) -- (yN5);
 		\draw[->] (wN5) -- (LN5);
-		\path[draw, ->] (L3.east) -- (wN5);
+		\path[draw, ->] (L3.east) to[bend left=10] (wN5);
+		\node(eN5)[draw, below = of wN5]{\small Emb.};
+		\node(wwN5)[below = 2 of eN5]{$\n q_{0}$};
+		\draw[->] (eN5) edge node[labe, right]{$\i C_{\n q_{0}}$} (wN5);
+		\draw[->] (wwN5) -- (eN5);
+		
 		
 		\node(LN6)[dotted, layer, right = of LN5] {$\ldots$};
 		\node(wN6)[dotted, below = of LN6]{$\ldots$};
 		\node(yN6)[dotted, above = of LN6]{$\ldots$};
 		\draw[dotted,->] (LN6) -- (yN6);
 		\draw[dotted, ->] (wN6) -- (LN6);
-		\draw[dotted, ->] (L3.east) -- (wN6);
+		\draw[dotted, ->] (L3.east) to[bend left=10]  (wN6);
+		\node(eN6)[dotted, draw, below = of wN6]{\small Emb.};
+		\node(wwN6)[below = 2 of eN6]{$\ldots$};
+		\draw[->, dotted] (eN6) -- (wN6);
+		\draw[->, dotted] (wwN6) -- (eN6);
 		
 		
 		\node(LN7)[layer, right = of LN6] {$\mathrm{RU_N}$};
-		\node(wN7)[below = of LN7]{$[\v z; \n q_{\d m_N - 1}$]};
+		\node(wN7)[below = of LN7]{$[\v z; \i C_{\n q_{\d m_N - 1}}]$};
 		\node(yN7)[above = of LN7]{$\n \hat{q}_{\d m_N}$};
 		\draw[->] (LN7) -- (yN7);
 		\draw[->] (wN7) -- (LN7);
-		\path[draw, ->] (L3.east) --  (wN7);
+		\path[draw, ->] (L3.east) to[bend left=10]   (wN7);
+		\node(eN7)[draw, below = of wN7]{\small Emb.};
+		\node(wwN7)[below = 2 of eN7]{$\n q_{\d m_N - 1}$};
+		\draw[->] (eN7) edge node[labe, right]{$ \i C_{\n q_{\d m_N - 1}}$} (wN7);
+		\draw[->] (wwN7) -- (eN7);
+		
 		
 		%Bottom
-		\node(LP5)[layer, below right = 2 of L3, yshift=-3cm] {$\mathrm{RU_P}$};
-		\node(wP5)[above = of LP5]{$[\v z; \n p_{0}]$};
+		\node(LP5)[layer, below right = 2 of L3, yshift=-6cm] {$\mathrm{RU_P}$};
+		\node(wP5)[above = of LP5]{$[\v z; \i C_{\n p_{0}}]$};
 		\node(yP5)[below = of LP5]{$\n \hat{p}_{1}$};
 		\draw[->] (LP5) -- (yP5);
 		\draw[->] (wP5) -- (LP5);
-		\path[draw, ->] (L3.east) -- (wP5);
+		\path[draw, ->] (L3.east) to[bend right=10] (wP5);
+		\node(eP5)[draw, above = of wP5]{\small Emb.};
+		\node(wwP5)[above = 2 of eP5]{$\n p_{0}$};
+		\draw[->] (eP5) edge node[labe]{$\i C_{\n p_{0}}$} (wP5);
+		\draw[->] (wwP5) -- (eP5);
+		
 		
 		\node(LP6)[dotted, layer, right = of LP5] {$\ldots$};
 		\node(wP6)[dotted, above = of LP6]{$\ldots$};
 		\node(yP6)[dotted, below = of LP6]{$\ldots$};
 		\draw[dotted,->] (LP6) -- (yP6);
 		\draw[dotted, ->] (wP6) -- (LP6);
-		\draw[dotted, ->] (L3.east) -- (wP6);
+		\path[draw, ->] (L3.east) to[bend right=10] (wP6);
+		\node(eP6)[dotted, draw, above = of wP6]{\small Emb.};
+		\node(wwP6)[above = 2 of eP6]{$\ldots$};
+		\draw[dotted, ->] (eP6) -- (wP6);
+		\draw[dotted, ->] (wwP6) -- (eP6);
 		
 		
 		\node(LP7)[layer, right = of LP6] {$\mathrm{RU_P}$};
-		\node(wP7)[above = of LP7]{$[\v z; \n p_{\d m_P - 1}$]};
+		\node(wP7)[above = of LP7]{$[\v z; \i C_{\n p_{\d m_P - 1}}]$};
 		\node(yP7)[below = of LP7]{$\n \hat{p}_{\d m_P}$};
 		\draw[->] (LP7) -- (yP7);
 		\draw[->] (wP7) -- (LP7);
-		\path[draw, ->] (L3.east) --  (wP7);
+		\path[draw, ->] (L3.east) to[bend right=10] (wP7);
+		\node(eP7)[draw, above = of wP7]{\small Emb.};
+		\node(wwP7)[above = 2 of eP7]{$\n p_{\d m_P - 1}$};
+		\draw[->] (eP7) edge node[labe]{$\i C_{\n p_{\d m_P - 1}}$} (wP7);
+		\draw[->] (wwP7) -- (eP7);
 			
 		
-		\node[labe, right = 0 of L3] {output\\(code)};
+		\node[labe, right = 0 of L3] {$\v z$\\output\\(code)};
 				
 		\foreach \i/\j in {1/2, 2/3, N5/N6, N6/N7, P5/P6, P6/P7} {
 			\draw[->] (L\i) edge node[labe] {state} (L\j);
