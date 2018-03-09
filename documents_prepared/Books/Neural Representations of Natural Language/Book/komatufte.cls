@@ -159,6 +159,7 @@ captions = nooneline
 	bibstyle=authoryear,
 	maxbibnames=99,
 	dashed=false,
+	refsection=chapter
 ]{biblatex}
 
 
