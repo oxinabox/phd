@@ -178,10 +178,10 @@ We investigated several options which the main text of this paper will discuss.
 	\caption{The general structure of the character classification systems. This in turn is the classification step of part of the large stem in \Cref{fig:fullprocess}. \label{fig:classify}}
 \end{figure*}
 The common structure of all our character classification systems is shown in \Cref{fig:classify}.
-First the raw text is enriched with part of speech and named entity targets,
-from which features are extracted for each named entity.
+First the raw text is enriched with part of speech and named entity tags, which features are extracted for each named entity.
 Theses are used to score the named entities for the most-likely to be the POV character, and the highest scoring is returned by the system.
 The different systems presented modify the the Feature extraction and Character scoring steps.
+A broadly similar idea, for primary location classification in news articles, was presented by \textcite{2017focus}.
 
 
 \subsection{Baseline systems: First and Most Common}
@@ -208,7 +208,6 @@ One can see the determination of the main character as a multi-class classificat
 From the set of all named entities in the section, classify that section as to which one is the main character.
 Unlike typical multi-class classification problems
 the set of possible classes varies per section being classified.
-\pdfcomment{Relate this to named enity detection?}
 Further, even the total set of possible named characters, and thus classes, varies from book to book.
 
 An information extraction approach is required which can handle these varying classes.
@@ -223,31 +222,10 @@ We chose the highest scoring character.
 It should be noted that the base-line systems, while not using machine learning for the final character classification, they do make extensive use of machine learning based systems during the preprocessing stages (in the same way the machine learning systems to also for preprocessing).
 The POS-tagger, and the Named Entity recogniser are based on machine learning.
 
-\subsubsection{Classifier}
-XGBoost tree ensemble's are used for the machine learning methods \parencite{chen2016xgboost}.
-We use the default hyper-parameters:  100 trees with a max depth of 3,
-using the logistic loss function.
-
-During training, from each text in the training dataset,
-we generated a training example for every named entity that occurred.
-All bar one of these was a negative example.
-We then trained it as per normal for a binary classifier, using the logistic loss function.
-This predicted probability of that feature vector being for POV character was used as the score for that character.
-
-This may seem similar to an one-vs-rest approach to using binary classifiers for multiclass classification.
-However, there is an important difference.
-Our system only uses a single binary classifier; not one classifier per class,
-as the classes in our case vary with every item to be classified.
-The problem is truly one of information extraction, and the classifier is a tool for the scoring.
-
-
-\pdfcomment{Theoretically, a better loss function would be a variation on the multi-class hinge-loss \parencite{dogan2016multiclassSVM}, where the objective would be for the true named entity to score higher than any of the other named entities extracted from the same text.}
-
 
 
 \subsubsection{Feature Extraction}
 For the models we investigated several feature sets.
-XGBoost is based on decision trees with limited depth.
 It thus performs implicit pruning, so we are not concerned with redundant or useless features.
 As such we use large numbers of features, many of which are not actually used in the trained model, as discussed in \Cref{sec:featureweights}.
 
@@ -268,6 +246,29 @@ We concatenate the word embedding for the a 5 word window to either size of the 
 and take the element-wise mean of this concentrated vector over all occurrences of the named entity.
 Such averages of word embeddings have been shown to be a rich and useful feature in many tasks \cite{White2015SentVecMeaning,mikolovSkip}.
 
+\subsubsection{Classifier}
+During training, from each text in the training dataset,
+we generated a training example for every named entity that occurred.
+All bar one of these was a negative example.
+We then trained it as per normal for a binary classifier, using the logistic loss function.
+This predicted probability of that feature vector being for POV character was used as the score for that character.
+
+This may seem similar to an one-vs-rest approach to using binary classifiers for multiclass classification.
+However, there is an important difference.
+Our system only uses a single binary classifier; not one classifier per class,
+as the classes in our case vary with every item to be classified.
+The problem is truly one of information extraction, and the classifier is a tool for the scoring.
+
+For the Classical Feature-set, we used logistic regression, with the features being preprocessed with 0-1 scaling.
+We  during preliminary testing found that many classifiers had similarly high degree of success, and so chose the simplest.
+With the higher dimensional feature-sets we used a radial bias support vector machine, with  standardisation during preprocessing,
+as has been commonly used with word embeddings .
+
+
+
+\pdfcomment{Put what  classifier was finally used for higher dimensional features}
+
+\pdfcomment{Theoretically, a better loss function would be a variation on the multi-class hinge-loss \parencite{dogan2016multiclassSVM}, where the objective would be for the true named entity to score higher than any of the other named entities extracted from the same text.}
 
 
 
@@ -325,20 +326,21 @@ The text is preprocessed using NLTK \parencite{NLTK} to added features.
 The text is first tokenised, part of speech (POS) tagged , and finally named entity chunked (binary), using NLTK's default methods.
 That is the Punkt sentence tokenizer \parencite{kiss2006unsupervised}, regex based improved TreeBank word tokenizer, Greedy Averaged Perceptron POS tagger, and the Max Entropy Named Entity Chunker.
 The use of a binary, rather than a multi-class named entity chunker is significant.
-Because fantasy novels often use ``exotic'' names for characters, we found that it often  fooled the multi-class named entity recogniser, into thinking characters were organisations or places rather than people.
-Note that this is particularly disadvantageous to the First Mentioned Named Entity Baseline, as any kind of named entity will steal the place.
+Fantasy novels often use ``exotic'' names for characters, we found that this often resulted in character named entities being classified as organisations or places.
+Note that this is particularly disadvantageous to the First Mentioned Baseline, as any kind of named entity will steal the place.
 Never-the-less, it is required to ensure that all character names are a possibility to be selected.
 
-Scikit-Learn is used to calculate the evaluation metrics and to orchestrate the cross-validation tests \parencite{scikit-learn}.
-
+Scikit-Learn is used for the machine learning and evaluations \parencite{scikit-learn}.
 
 \section{Results and Discussion}\label{sec:results-and-discussion}
 
 \subsection{Main results}
 
 \begin{table}
-	\begin{adjustbox}{max width=\textwidth}
-		\pgfplotstabletypeset[]{results/maineval.csv}
+	\begin{adjustbox}{max width=\columnwidth}
+		\pgfplotstabletypeset[%
+			every nth row={5}{before row=\cmidrule{2-4}},
+			]{results/maineval.csv}
 	\end{adjustbox}
 	
 	\caption{The results of the character classifier systems.} \label{tbl:resmain}
@@ -367,29 +369,6 @@ This can be attributed to during training, the word embedding features being fou
 
 The weak ground truth of SA can be seen is the relatively poor performance of the ML systems trained on SA, compared to the other ML systems.
 \pdfcomment{See if this can be attributed to it learning to only trust most common features,  due to the decreased usefulness of other features as they are actually right for subsets of the text that are mis-labelled}
-
-
-
-\subsection{Cross Validation Results}
-
-\begin{table}
-	\begin{adjustbox}{max width=\textwidth}
-		\pgfplotstabletypeset[]{results/crosseval.csv}
-	\end{adjustbox}
-	
-	\caption{10 fold cross-validation results. The ML systems are trained and tested on distinct slices of the same dataset. \label{tbl:rescross}}
-\end{table}
-
-To determine the effect of author/book style on the performance of the systems,
-we also evaluated them using 10 fold cross validation.
-By training and testing on different chapters from within the same book we control for variations in the writing style.
-The results are shown in  \Cref{tbl:rescross}.
-It can be seen that they are indeed significantly better for the classical features system than the results in \Cref{tbl:resmain} where the systems trained on different books.
-With the SOC result being a perfect score
-This suggests that indeed the features that indicate a point of view character in one book, do not perfectly transfer to another; but that they are reasonably consistent within a single book.
-
-
-
 
 
 \subsection{Feature Weights}\label{sec:featureweights}

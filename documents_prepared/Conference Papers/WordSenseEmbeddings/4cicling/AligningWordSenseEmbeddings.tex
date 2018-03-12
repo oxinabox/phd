@@ -59,7 +59,7 @@ compat=1.12,
 %leading=tight,
 %margins=normal
 %]{savetrees}
-\usepackage[moderate]{savetrees}
+\usepackage[subtle]{savetrees}
 
 %\textfloatsep 2pt plus 2pt minus 4pt
 %\floatsep 2pt plus 2pt minus 4pt
@@ -69,6 +69,14 @@ compat=1.12,
 \begin{document}
 
 \title{Finding Word Sense Embeddings Of Known Meaning}
+\author{Lyndon White \and Roberto Togneri \and Wei Liu \and Mohammed Bennamoun}
+\institute{The University of Western Australia, \\
+	35 Stirling Highway, Crawley, Western Australia \\
+	\email{lyndon.white@research.uwa.edu.au}, 
+	\email{roberto.togneri@uwa.edu.au},
+	\email{wei.liu@uwa.edu.au},
+	\email{mohammed.bennamoun@uwa.edu.au}
+}
 
 
 \maketitle
@@ -108,10 +116,8 @@ Given an example sentence with the labelled lexical sense of a particular word, 
 We find that in doing so, the sense of the word in that sentence is captured.
 With the refitting, the induced sense embeddings are now able to be used in more general situations where standard senses, or user defined senses are desired.
 
-
 Refitting word sense vectors to match a lexicographical sense inventory, such as WordNet or a translator's dictionary, is possible if the sense inventory features at least one example of the target sense's use.
 Our method allows this to be done very rapidly, and from only the single example of use this has with possible applications in low-resource languages.
-
 
 %\microtypesetup{protrusion=false, tracking=false}
 Refitting can also be used to fit to a user provided example, giving a specific sense vector for that use.
@@ -375,11 +381,11 @@ for contexts $\c$ and $\c^\prime$, the contexts of the two words to be compared,
 
 \subsection{A New Similarity Measure: RefittedSim}\label{RefittedSimVsAvgSimC}
 \begin{figure}
+	\caption{Block diagram for RefittedSim similarity measure} \label{diaRefittedSim}
 	\centering
 	\begin{adjustbox}{max width=0.7\linewidth}
 	\input{../figs/refittedsim.tex}
 	\end{adjustbox}
-	\caption{Block diagram for RefittedSim similarity measure} \label{diaRefittedSim}
 \end{figure}
 We define a new similarity measure, RefittedSim, as the distance between the refitted sense embeddings.
 As shown in \Cref{diaRefittedSim} the example contexts are used to refit the induced sense embeddings of each word.
@@ -418,7 +424,9 @@ During evaluation, each context paragraph is limited to 5 words to either side o
 
 
 \begin{table}
+	\caption{Spearman rank correlation $\rho \times 100$  when evaluated on the SCWS task.}
 	\begin{minipage}[t]{0.5\linewidth}
+		\subcaption{For varying hyper-parameters.} \label{swscres}
 		\begin{adjustbox}{max width=0.9\linewidth}
 			\pgfplotstabletypeset[col sep=comma, header=has colnames, string type,
 			columns/Smoothing/.style={column name={$\substack{\mathrm{Geometric}\\\mathrm{Smoothing}}$}},
@@ -452,11 +460,11 @@ During evaluation, each context paragraph is limited to 5 words to either side o
 			},
 			every head row/.style={after row = {\toprule}}
 			]{swsc-grid.csv}
-		\end{adjustbox}
-		
-		\subcaption{For varying hyper-parameters.} \label{swscres}
+		\end{adjustbox}		
 	\end{minipage}%	
 	\begin{minipage}[t]{0.5\linewidth}
+		\subcaption{Compared to other methods \label{swscEvery}.
+			RefittedSim-S is with smoothing, and RefittedSim-SU is with uniform prior}
 		\begin{adjustbox}{max width=0.9\linewidth}
 			\pgfplotstabletypeset[col sep=comma, header=has colnames, string type,
 			%		columns/Smoothing/.style={column name={\small{Smoothing}}},
@@ -477,10 +485,7 @@ During evaluation, each context paragraph is limited to 5 words to either side o
 			every head row/.style={after row = {\toprule}}
 			]{swsc.csv}
 		\end{adjustbox}
-		\subcaption{Compared to other methods \label{swscEvery}.
-			RefittedSim-S is with smoothing, and RefittedSim-SU is with uniform prior}
 	\end{minipage}
-	\caption{Spearman rank correlation $\rho \times 100$  when evaluated on the SCWS task.}
 \end{table}
 
 
@@ -549,7 +554,7 @@ Geometric smoothing serves a different (but related) purpose, of decreasing the 
 \subsection {Experimental Setup}
 The WSD performance is evaluated on the SemEval 2007 Task 7.
 
-We use the weighted mapping method of Agirre et al \parencite{agirre2006}, (see \Cref{mapping}) as a baseline alternative method for using WSI senses for WSD.
+We use the weighted mapping method of Agirre et al. \parencite{agirre2006}, (see \Cref{mapping}) as a baseline alternative method for using WSI senses for WSD.
 We use Semcor as the mapping corpus, to derive the mapping weights.
 
 The second baseline we use is the Most Frequent Sense (MFS).
@@ -596,8 +601,8 @@ We also consider the results when using a backoff to MSF when a method is unable
 	\end{adjustbox}
 
 	\caption{Results on SemEval 2007 Task 7 -- course-all-words disambiguation.
-	The \emph{-S} marks results using geometric smoothing.
-	The \emph{\textasteriskcentered } marks results with MSF backoff.
+	The \mbox{\emph{-S} marks} results using geometric smoothing.
+	The \mbox{\emph{\textasteriskcentered } marks} results with MSF backoff.
 	} \label{samevalres}
 \end{table}
 
@@ -605,10 +610,10 @@ The results of employing our method for WSD , are shown in \Cref{samevalres}.
 Our results using smoothed refitting, both with AdaGram and Greed Embeddings with backoff, outperform the MSF baseline  \cite{Navigli:2007:STC:1621474.1621480}  -- noted as a surprisingly hard baseline to beat \parencite{Chen2014}.
 
 The mapping method \parencite{agirre2006}  was not up to the task of mapping unsupervised senses to supervised senses, on this large scale task.
-The Refitting method worked significantly better.
+The Refitting method works better.
 Though refitting is only usable for language-model embedding WSI, the mapping method is suitable for all WSI systems.
 
-While not directly comparable due to the difference in training data, we note that our Refitted results, are similar in performance, as measured by F1 score, to the results reported by Chen et al \parencite{Chen2014}.
+While not directly comparable due to the difference in training data, we note that our Refitted results, are similar in performance, as measured by F1 score, to the results reported by Chen et al. \parencite{Chen2014}.
 AdaGram with smoothing, and Greedy embeddings with backoff have close to the same result as reported for L2R with backoff -- with the AdaGram slightly better and the Greedy embeddings slightly worse.
 They are exceeded by the best method reported in that paper: S2C method with backoff.
 Comparison to non-embedding based methods is not discussed here for brevity.
@@ -624,9 +629,11 @@ A new method is proposed for taking unsupervised word embeddings, and adapting t
 This refitting method thus allows us to find word sense embeddings with known meaning.
 This method can be seen as a one-shot learning task, where only a single labelled example of each class is available for training.
 We show how our method can be used to create embeddings to evaluate the similarity of words, given their contexts.
+
 This allows us to propose a new similarity measuring method, RefittedSim.
 The performance of RefittedSim on AdaGram is comparable to the results reported by the researchers of other sense embeddings techniques using AvgSimC, but its time complexity is significantly lower.
 We also demonstrate how similar refitting principles can be used to create a set of vectors that are aligned to the meanings in a sense inventory, such as WordNet.
+
 We show how this can be used for word sense disambiguation.
 On this difficult task, it performs marginally better than the hard to beat MFS baseline, and significantly better than a general mapping method used for working with WSI senses on lexical WSD tasks.
 As part of our method for refitting, we present a geometric smoothing to overcome the issues of overly dominant senses probability estimates.
