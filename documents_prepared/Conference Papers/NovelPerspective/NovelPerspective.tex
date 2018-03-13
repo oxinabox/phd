@@ -9,7 +9,7 @@
 
 
 \usepackage{url}
-\usepackage[subtle]{savetrees}
+%\usepackage[subtle]{savetrees}
 
 %%%%%%%%%%%
 %Graphics
@@ -114,7 +114,7 @@ Tools such as the one present here, give the reader new freedoms in controlling 
 Having a large cast of character, in particular POV characters, is a hallmark of the epic fantasy genre.
 Well known examples include: George R.R. Martin's "A Song of Ice and Fire", 
 Robert Jordan's ``Wheel of Time'', Brandon Sanderson's ``Cosmere'' universe, 
-Steven Erikson's "Malazan Book of the Fallen", amongst thousands of others.
+Steven Erikson's ``Malazan Book of the Fallen'', amongst thousands of others.
 Generally, these books are written in limited third-person point of view (POV);
 that is to say the reader has little or or more knowledge of the situation described than the main character does.
 
@@ -239,15 +239,17 @@ It would be possible to create more rank based-features for the other features.
 The other features are based on frequency of each POS tag of the immediately adjacent words.
 We theorised that this POS information would be informative, as the it seemed reasonable that the POV character would be described as doing more things, so co-occurring with verbs seemed useful.
 This give 100 base features.
-To allow for text length invariance we also provide each as a percentage its maximum possible value, For a total of 200 features.
+To allow for text length invariance we also provide each as a percentage its maximum possible value (e.g. for a given POS tag occurring before a named entity, the percent of times this tag occurred).
+This gives a total of 200 features.
 
 We define a ``Word Embedding Feature-Set'' using FastText word vectors \parencite{bojanowski2016enriching}.
-We concatenate the word embedding for the a 5 word window to either size of the named entity;
+We concatenate the word embedding for the word immediately prior to, and immediately after each occurrence of a named entity;
 and take the element-wise mean of this concentrated vector over all occurrences of the named entity.
-Such averages of word embeddings have been shown to be a rich and useful feature in many tasks \cite{White2015SentVecMeaning,mikolovSkip}.
+Such averages of word embeddings have been shown to be a rich and useful feature in many tasks \parencite{White2015SentVecMeaning,mikolovSkip}.
+This has an a total of 600 features.
 
 \subsubsection{Classifier}
-During training, from each text in the training dataset,
+From each text in the training dataset
 we generated a training example for every named entity that occurred.
 All bar one of these was a negative example.
 We then trained it as per normal for a binary classifier, using the logistic loss function.
@@ -262,14 +264,7 @@ The problem is truly one of information extraction, and the classifier is a tool
 For the Classical Feature-set, we used logistic regression, with the features being preprocessed with 0-1 scaling.
 We  during preliminary testing found that many classifiers had similarly high degree of success, and so chose the simplest.
 With the higher dimensional feature-sets we used a radial bias support vector machine, with  standardisation during preprocessing,
-as has been commonly used with word embeddings .
-
-
-
-\pdfcomment{Put what  classifier was finally used for higher dimensional features}
-
-\pdfcomment{Theoretically, a better loss function would be a variation on the multi-class hinge-loss \parencite{dogan2016multiclassSVM}, where the objective would be for the true named entity to score higher than any of the other named entities extracted from the same text.}
-
+as has been commonly used with word embeddings on other tasks.
 
 
 
@@ -277,18 +272,21 @@ as has been commonly used with word embeddings .
 \subsection{Datasets}
 We make uses of three series of books selected from our own personal collections.
 The first four books of George R. R. Martin's ``A Song of Ice and Fire'' series (hereafter referred to as ASOIAF);
-the two books of  Leigh Bardugo's ``Six of Crows'' duology (hereafter referred to as SOC);
-and the first three books of Brandon Sanderson's ``Stormlight Archive'' (hereafter referred to as SA).
+The two books of  Leigh Bardugo's ``Six of Crows'' duology (hereafter referred to as SOC);
+and the first 9 volumes of Robert Jordan's ``Wheel of Time'' series (hereafter referred to as WOT).
 The requirements of the books to use in the training and evaluation of the NovelPerspective system is that they provide ground truth for the section's POV  character.
 
 ASOIAF and SOC provide ground truth for the main character in the chapter names.
 Every chapter only uses the POV of that named character.
-SA indicates using an chapter image corresponding to the main character.
-Problematically, each chapter of SA has sections which feature different POV characters, though the indicated character is normally the most prevalent.
-Ideally, the sub-chapter sections individually labelled, however they are not.
-For this reason the ground truth of SA is much weaker.
-As such we do not use it for the testing of the main results,
-but consider it as supplementary training data in \Cref{sec:results-extradata}.
+WOT's ground truth comes from an index created by readers\footnote{\url{http://wot.wikia.com/wiki/List_of_Point_of_View_Characters}}.
+This ground truth may be less reliable -- we corrected one error in it before training, there may be others.
+
+%% SA indicates using an chapter image corresponding to the main character.
+% Problematically, each chapter of SA has sections which feature different POV characters, though the indicated character is normally the most prevalent.
+%Ideally, the sub-chapter sections individually labelled, however they are not.
+%For this reason the ground truth of SA is much weaker.
+%As such we do not use it for the testing of the main results,
+%but consider it as supplementary training data in \Cref{sec:results-extradata}.
 
 We do not have any datasets with labelled sub-chapter sections, though the tool does support such works.
 
@@ -299,9 +297,10 @@ We do not have any datasets with labelled sub-chapter sections, though the tool 
 		\toprule
 		ASOIAF  & 256	&	15\\
 		SOC		& 91	&	9\\
-		SA		& 275	&	6
+%		SA		& 275	&	6
+		WOT     & 506   &   53
 	\end{tabular}
-	\caption{Dataset key features. \label{tbl:datasets}}
+	\caption{The number of chapters and point of view characters for each dataset \label{tbl:datasets}}
 \end{table}
 
 The total counts of chapters and characters in the datasets, after preprocessing, is shown in \Cref{tbl:datasets}.
@@ -309,8 +308,10 @@ Preprocessing consisted of  discarding chapters for which the POV character was 
 
 \subsection{Evaluation Details}
 In the evaluation, the systems are given the body text and asked to predict the character names.
-To mimic the human users ability to select multiple aliases of a character, before final classification the scores of character's nicknames are merged.
+During evaluation, we sum the scores of the characters alternative aliases/nick-names used in the  books.
 For example merging \texttt{Ned} into \texttt{Eddard}.
+This corresponds to the case that a normal user can enter multiple aliases into our application when selecting sections to keep.
+
 
 %\subsection{Evaluation Metrics}
 %We report overall accuracy, and the micro-averaged precision, recall and F1-score \parencite{sokolova2009systematica}.
@@ -339,6 +340,13 @@ Scikit-Learn is used for the machine learning and evaluations \parencite{scikit-
 \begin{table}
 	\begin{adjustbox}{max width=\columnwidth}
 		\pgfplotstabletypeset[%
+			every row 1 column Acc/.style={
+				postproc cell content/.style={@cell content/.add={$\bf}{$}}
+			},
+			every row 8 column Acc/.style={
+				postproc cell content/.style={@cell content/.add={$\bf}{$}}
+			},
+			%
 			every nth row={5}{before row=\cmidrule{2-4}},
 			]{results/maineval.csv}
 	\end{adjustbox}
@@ -349,34 +357,23 @@ Scikit-Learn is used for the machine learning and evaluations \parencite{scikit-
 The results of all the methods on both datasets are shown in \Cref{tbl:resmain}.
 This includes the two baseline methods, and the machine learning methods with the different feature sets.
 The machine learning methods are each train on the dataset which they are not tested on.
+
 As expected the First Mentioned baseline is very weak.
-
 The Most Commonly Mentioned baseline is much stronger.
-It marginally outperforms the ML system using Classical Features on the ASIAF dataset.
-However, it performs much more poorly on the SOC dataset, 84\% vs 91\% for the Classical Features ML system.
-The difference in the Most Commonly Mentioned baseline can be attributed to the difference in writing styles between the novels, how often other characters are being described from the point of view of the (so called) main character.
 
-The Word Embedding model performs generally worse than the classical features model.
-This is actually a surprising good result.
-The word embedding model contains no features about how frequent the named entity occurs.
-Only the average of the word embeddings for its context.
-Yet it is still able to generally perform the task.
-This suggests that word vector 
-\pdfcomment{IDK compare to work embedding feature on cross validation.}
+Of the two machine learning models the Classical Feature set performs best for the ASOIAF test set,
+and the Word Embeddings for the SOC testset.
+This asymmetry can potentially be attributed to the different amounts of training data for each task.
+The word embedding feature set has 600 dimensions, it seems that smaller SOC training set (used for the ASOIAF test set)
+allowed it to over-fit, causing poor generalisation.
+Where-as the simpler classic feature set was more robust.
+The opposite is true for the other task; the larger amount of training data allowed the capacity of the word embeddings to be exploited,
+resulting in higher accuracy..
 
-The hybrid results, including both word embedding features, and classical features perform identically to the Classical Features system.
-This can be attributed to during training, the word embedding features being found to be less useful, and thus not used in any of the trees.
-
-The weak ground truth of SA can be seen is the relatively poor performance of the ML systems trained on SA, compared to the other ML systems.
-\pdfcomment{See if this can be attributed to it learning to only trust most common features,  due to the decreased usefulness of other features as they are actually right for subsets of the text that are mis-labelled}
-
-
-\subsection{Feature Weights}\label{sec:featureweights}
-From a model trained on the full combined dataset,
-we can extract the feature weights.
-
-
-
+We are surprised at how well the word embeddings perform.
+The features do not include any information on the occurrence frequency of the named entity.
+According to our examination of the logistic regression co-efficient is the most important feature for the classical feature set.
+The word embeddings which provide just context word information can still produce accurate results, given enough context information,
 
 
 \section{Demonstration}
@@ -423,7 +420,6 @@ The user can manually correct the selection using the check-boxes before downloa
 
 
 
-
 \section{Conclusion}\label{sec:conclusion}
 We have presented a tool to allow consumers to restructure their ebooks around the characters they find most interesting.
 The system must discover the named entities present in each section of the book,
@@ -450,14 +446,13 @@ for use in future training.
 
 Further tools along these lines have potential as writing aids for authors.
 To allow them to assess how much ``screentime'' is being given to each character of their work in progress novels.
-With additional discourse processing, it would be possible to display other useful analytics, such as how often characters occur in the same scenes.
+With additional discourse processing, it would be possible to display other useful analytic, such as how often characters occur in the same scenes.
 
-Another application of related work would be the automatic indexing of texts, by adding features such as the main character name, the perspective, etc.
-This could be applied to resources such as Wikisource, or Project Gutenberg;
-which have texts, but not annotations such as these.
+Another application of related work would be the automatic indexing of texts,
+ by adding features such as the main character name, the perspective, etc.
+This could be applied to resources such as Wikisource, or Project Gutenberg.
 
-
-
+Consumer fiction processing is an interesting area to develop useful tools that can change how we consume written media.
 
 \bibliography{master}
 \end{document}
