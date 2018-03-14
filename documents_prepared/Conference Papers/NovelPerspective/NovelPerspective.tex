@@ -9,7 +9,7 @@
 
 
 \usepackage{url}
-%\usepackage[subtle]{savetrees}
+\usepackage[subtle]{savetrees}
 
 %%%%%%%%%%%
 %Graphics
@@ -38,7 +38,8 @@
 %	numcol/.style={},
 	string replace={"}{},
 	string replace={ASIAF}{ASOIAF},
-	numeric type, precision=3, fixed zerofill=true,
+	string replace={Most Commonly Mentioned}{Most Mentioned},
+	numeric type, precision=3, fixed zerofill=true, fixed,
 	%			bf content/.style={postproc cell content/.style={@cell content/.add={1\textbf{##1}}}},
 	stringcol/.style={string type, column type={r}},
 	%
@@ -109,17 +110,17 @@ This is not an insurmountable task, building upon the well established field of 
 However to our knowledge there does not currently exist any  software to do this.
 We attribute this lack to it being impractical to physically implement until recent times.
 The surge in popularity of ebooks has opened a new niche for consumer narrative processing.
-Tools such as the one present here, give the reader new freedoms in controlling how they consume their media.
+Tools such as the one presented here, give the reader new freedoms in controlling how they consume their media.
 
-Having a large cast of character, in particular POV characters, is a hallmark of the epic fantasy genre.
+Having a large cast of characters, in particular point of view (POV) characters, is a hallmark of the epic fantasy genre.
 Well known examples include: George R.R. Martin's "A Song of Ice and Fire", 
 Robert Jordan's ``Wheel of Time'', Brandon Sanderson's ``Cosmere'' universe, 
 Steven Erikson's ``Malazan Book of the Fallen'', amongst thousands of others.
-Generally, these books are written in limited third-person point of view (POV);
-that is to say the reader has little or or more knowledge of the situation described than the main character does.
+Generally, these books are written in limited third-person POV;
+that is to say the reader has little or no more knowledge of the situation described than the main character does.
 
 We focus here on novels written in the limited third-person point of view.
-In these stories, the main character is, for our purposes, the point of view (POV) character.
+In these stories, the main character is, for our purposes, the POV character.
 Limited third-person POV is written in the third-person, that is to say the character is referred to by name, but with the observations limited to being from the perspective of that character.
 This is in-contrast to the omniscient third-person POV, where events are described by an external narrator.
 Limited third-person POV is extremely popular in modern fiction.
@@ -129,17 +130,17 @@ Our tool helps users un-entwine such storylines, giving the option to process th
 
 
 The utility of dividing a book in this way varies with the book in question.
-Some books will cease to make sense when the core storyline crosses over different character.
+Some books will cease to make sense when the core storyline crosses over different characters.
 Other novels, particularly the large epic fantasy stories we are primarily considering,
 have many parallel story lines focused on the different characters that only rarely intersect.
-While we are unable to find formal study on this, 
+While we are unable to find a formal study on this, 
 anecdotally many readers speak of:
 \begin{itemize}
 	\item ``Skipping the chapters about the boring characters''
 	\item ``Only reading the \emph{real} main character's sections''
-	\item ``Reading ahead past the side-stories to get on with the main plot''	
+	\item ``Reading ahead, past the side-stories, to get on with the main plot''	
 \end{itemize}
-Particularly if the have read the story before, and thus do not risk confusion.
+Particularly if they have read the story before, and thus do not risk confusion.
 Such opinions are, of-course, but a matter of the consumer's taste.
 The NovelPerspective tool gives the reader the option to customise the book in this way, according to their personal preference.
 
@@ -163,10 +164,10 @@ We investigated several options which the main text of this paper will discuss.
 		\node(enrich)[draw, right=of start] {Tokenization\\POS Tagging\\Named Entity Tagging};
 		\node(features)[draw, right=of enrich] {Feature\\ Extraction};
 		\node(scoring)[draw, right=of features] {Character\\Scoring};				
-		\node(classify)[draw, right=of scoring] {POV Character\\ Classification \\(ArgMax)};
+		\node(classify)[draw, right=of scoring] {POV Character\\ Classification};
 		\node(end)[right=of classify] {};
 		
-		\path (start) edge node[above]{Raw Text \\ of Section}  (enrich);
+		\path (start) edge node[above]{raw\\ text}  (enrich);
 		\path (enrich) edge node[above]{enriched\\text} (features);
 		\path (features) edge node[above]{character-name\\feature-vector\\pairs
 		} (scoring);
@@ -178,27 +179,43 @@ We investigated several options which the main text of this paper will discuss.
 	\caption{The general structure of the character classification systems. This in turn is the classification step of part of the large stem in \Cref{fig:fullprocess}. \label{fig:classify}}
 \end{figure*}
 The common structure of all our character classification systems is shown in \Cref{fig:classify}.
-First the raw text is enriched with part of speech and named entity tags, which features are extracted for each named entity.
-Theses are used to score the named entities for the most-likely to be the POV character, and the highest scoring is returned by the system.
-The different systems presented modify the the Feature extraction and Character scoring steps.
+First the raw text is enriched with parts of speech, and named entity tags.
+From this features are extracted for each named entity.
+Theses feature vectors are used to score the named entities for the most-likely to be the POV character, and the highest scoring is returned by the system.
+The different systems presented modify the the \textbf{Feature Extraction} and \textbf{Character Scoring} steps.
 A broadly similar idea, for primary location classification in news articles, was presented by \textcite{2017focus}.
 
 
-\subsection{Baseline systems: First and Most Common}
-The obvious way to determine the main character of the section is to select the first named entity.
-In this system feature extraction and scoring is just to give a score of one to the first named entity found, and zero to the others.
-This works well for many examples: ``It was a dark and stormy night. Bill heard a knock at the door.''; however it fails for many others ``'Is that Tom knocking on my door' thought Bill, one storm night.''.
+\subsection{Baseline systems}
+To the best of our knowledge no systems have been developed for this task before.
+As such we have developed two deterministic baseline character classifiers.
+These are both potentially useful to the end-user in our deployed system (\Cref{sec:demonstration}), and used to gauge the performance of the more complicated systems in the evaluations presented in \Cref{sec:results-and-discussion}.
+
+It should be noted that the baseline systems, while not using machine learning for the  character classification steps, do make extensive use of machine learning based systems during the preprocessing stages (in the same way the machine learning systems to also for preprocessing).
+The POS-tagger, and the Named Entity recogniser are based on machine learning.
+
+\subsubsection{First Mentioned}
+An obvious way to determine the main character of the section is to select the first named entity.
+We use this to define the ``First Mentioned'' baseline
+In this system: the \textbf{Feature Extraction} step is simply retrieving position of the first use of the named entity;
+and the \textbf{Character Scoring} step is assigning them a score such that earlier is higher.
+This works well for many examples: \emph{``It was a dark and stormy night. Bill heard a knock at the door.''};
+however it fails for many others \emph{``'Is that Tom knocking on my door' thought Bill, one stormy night.'}'.
 Sometimes a section  may go several paragraphs describing events before it even mentions the character who is perceiving them.
 This is a varying element of style.
 
-A more robust method is to use the most commonly named entity.
-
-Here the feature extraction and scoring step scores each named entity proportionate to how often it occurred.
-This works well, as once can assume the most commonly named entity is the main character.
-However, it is fooled, for example, by book chapters that are about the main character's relationship with a secondary character.
+\subsubsection{Most Mentioned}
+A more robust method to determine the main character, is to use the occurrence counts.
+We call this the ``Most Mentioned'' baseline
+The \textbf{Feature Extraction} step is to extract occurrence counts.
+The \textbf{Character Scoring} assign a score based on the proportion of all occurrences of any named entity we for a given character.
+This works well for many books.
+The more important a character the more often they would occur.
+However, it is fooled, for example, by book chapters that are about the point of view character's relationship with a secondary character.
 In such cases the secondary character may be mentioned more often.
 
-A better system would combine both the information about when a named entity appeared,
+\pdfcomment{this paragraph could be cleaner}
+A better system would combine both the information about when a named entity appears,
 with a how often it occurs, and other information about how that named entity token is being used.
 It is not obvious as to how these should be combined to determine which named entity section is about.
 We thus attempt to solve it using machine learning, to combine these features to make a classifier.
@@ -214,55 +231,63 @@ An information extraction approach is required which can handle these varying cl
 As such, any machine learning model used can not incorporate knowledge of the classes themselves into it's learned system.
 
 We reconsider the problem as a series of binary predictions.
-For each possible character (i.e. each named-entity that occurs), a feature vector is extracted.
+The task is to predict if a given named entity is the point of view character.
+For each possible character (i.e. each named-entity that occurs), a feature vector is extracted (see \Cref{sec:feature-extraction-for-ml}).
 This feature vector is the input to a binary classifier, which determines the probability that it represents the main character.
-We consider than binary probability as the score for the corresponding character.
-We chose the highest scoring character.
-
-It should be noted that the base-line systems, while not using machine learning for the final character classification, they do make extensive use of machine learning based systems during the preprocessing stages (in the same way the machine learning systems to also for preprocessing).
-The POS-tagger, and the Named Entity recogniser are based on machine learning.
+The \textbf{Character Scoring} step is thus the running of the binary classifier:
+the score is the output probability normalised over all the named entities
 
 
 
-\subsubsection{Feature Extraction}
-For the models we investigated several feature sets.
-It thus performs implicit pruning, so we are not concerned with redundant or useless features.
-As such we use large numbers of features, many of which are not actually used in the trained model, as discussed in \Cref{sec:featureweights}.
 
 
-We define the  ``Classical Features-Set'' using features that are well established in NLP related tasks.
-We start with the features from the Baseline systems.
-The position in the text that the named Entity first occurs, and for symmetry also the last position.
-The the number of occurrences, as well as the rank of that score compared to the other named entity in this text.
-This occurrence rank is the only feature which gives direct reference to the other possibly labels.
-It would be possible to create more rank based-features for the other features.
-The other features are based on frequency of each POS tag of the immediately adjacent words.
-We theorised that this POS information would be informative, as the it seemed reasonable that the POV character would be described as doing more things, so co-occurring with verbs seemed useful.
+\subsubsection{Feature Extraction for ML}\label{sec:feature-extraction-for-ml}
+For the models we investigated two feature sets.
+The different feature sets correspond to different \textbf{Feature Extraction} steps in \Cref{fig:classify}.
+A hand-engineered feature set, that we call the ``Classical'' feature set;
+and a more modern ``Word Embedding'' feature set''.
+Both feature sets give information about how the each named entity token was used in the text.
+
+
+The  ``Classical'' feature set uses features that are well established in NLP related tasks.
+The features can be described as \emph{positional features},like in the First Mentioned baseline; \emph{occurrence count features}, like in the \emph{Most Mentioned} baseline
+and \emph{adjacent POS counts}, to give usage context.
+The \emph{positional features} are the index (in token counts) of the first and last occurrence of the named entity.
+The \emph{occurrence count features} are simply the number of occurrences of the named entity, supplemented with its rank on that count compared to the others (this is the only rank feature provided).
+The \emph{adjacent POS counts} are the counts of each part of speech tag on the word prior to the named entity, and on the word after.
+We theorised that this POS information would be informative, as the it seemed reasonable that the POV character would be described as doing more things, so co-occurring with more verbs.
 This give 100 base features.
 To allow for text length invariance we also provide each as a percentage its maximum possible value (e.g. for a given POS tag occurring before a named entity, the percent of times this tag occurred).
 This gives a total of 200 features.
 
-We define a ``Word Embedding Feature-Set'' using FastText word vectors \parencite{bojanowski2016enriching}.
+
+
+
+The ``Word Embedding'' feature set uses FastText word vectors \parencite{bojanowski2016enriching}.
 We concatenate the word embedding for the word immediately prior to, and immediately after each occurrence of a named entity;
 and take the element-wise mean of this concentrated vector over all occurrences of the named entity.
 Such averages of word embeddings have been shown to be a rich and useful feature in many tasks \parencite{White2015SentVecMeaning,mikolovSkip}.
-This has an a total of 600 features.
+This has a total of 600 features.
 
 \subsubsection{Classifier}
+The binary classify that predicts if a named entity is the main character is the key part of the \textbf{Character Scoring} step for the machine learning systems.
 From each text in the training dataset
 we generated a training example for every named entity that occurred.
 All bar one of these was a negative example.
-We then trained it as per normal for a binary classifier, using the logistic loss function.
-This predicted probability of that feature vector being for POV character was used as the score for that character.
+We then trained it as per normal for a binary classifier.
+The score for a character is the classifiers predicted probability of it's feature vector being for the main character.
+This idea of using the output of a binary classifier as a score has also been used, for example, by \textcite{corston2001machine} where the estimated probability of translation being a written by a human to rate machine translations.
 
-This may seem similar to an one-vs-rest approach to using binary classifiers for multiclass classification.
+Our approach of using a binary classifier to rate each possible class,
+may seem similar to the one-vs-rest approach for multi-class classification.
 However, there is an important difference.
 Our system only uses a single binary classifier; not one classifier per class,
 as the classes in our case vary with every item to be classified.
 The problem is truly one of information extraction, and the classifier is a tool for the scoring.
 
+
 For the Classical Feature-set, we used logistic regression, with the features being preprocessed with 0-1 scaling.
-We  during preliminary testing found that many classifiers had similarly high degree of success, and so chose the simplest.
+During preliminary testing we found that many classifiers had similarly high degree of success, and so chose the simplest.
 With the higher dimensional feature-sets we used a radial bias support vector machine, with  standardisation during preprocessing,
 as has been commonly used with word embeddings on other tasks.
 
@@ -270,16 +295,22 @@ as has been commonly used with word embeddings on other tasks.
 
 \section{Experimental Setup}\label{sec:experimental-setup}
 \subsection{Datasets}
-We make uses of three series of books selected from our own personal collections.
+We make use of three series of books selected from our own personal collections.
 The first four books of George R. R. Martin's ``A Song of Ice and Fire'' series (hereafter referred to as ASOIAF);
 The two books of  Leigh Bardugo's ``Six of Crows'' duology (hereafter referred to as SOC);
 and the first 9 volumes of Robert Jordan's ``Wheel of Time'' series (hereafter referred to as WOT).
-The requirements of the books to use in the training and evaluation of the NovelPerspective system is that they provide ground truth for the section's POV  character.
+In \Cref{sec:results-and-discussion} we consider the use of each as a training and testing dataset.
+In the online demonstration (\Cref{sec:demonstration}), we deploy models trained on the combined total of all the datasets.
+
+
+
+The requirements of a books to use in the training and evaluation of the NovelPerspective system is that they provide ground truth for the section's POV  character.
 
 ASOIAF and SOC provide ground truth for the main character in the chapter names.
 Every chapter only uses the POV of that named character.
 WOT's ground truth comes from an index created by readers\footnote{\url{http://wot.wikia.com/wiki/List_of_Point_of_View_Characters}}.
 This ground truth may be less reliable -- we corrected one error in it before training, there may be others.
+
 
 %% SA indicates using an chapter image corresponding to the main character.
 % Problematically, each chapter of SA has sections which feature different POV characters, though the indicated character is normally the most prevalent.
@@ -297,20 +328,23 @@ We do not have any datasets with labelled sub-chapter sections, though the tool 
 		\toprule
 		ASOIAF  & 256	&	15\\
 		SOC		& 91	&	9\\
-%		SA		& 275	&	6
-		WOT     & 506   &   53
+%		SA		& 275	&	6\\
+		WOT     & 432   &   52\\
+		\midrule
+		\textbf{combined}  &  779 & 76
 	\end{tabular}
 	\caption{The number of chapters and point of view characters for each dataset \label{tbl:datasets}}
 \end{table}
 
 The total counts of chapters and characters in the datasets, after preprocessing, is shown in \Cref{tbl:datasets}.
-Preprocessing consisted of  discarding chapters for which the POV character was not identifies (e.g. prologues); and of removing the character names from the chapter titles as required.
+Preprocessing consisted of  discarding chapters for which the POV character was not identified (e.g. prologues); and of removing the character names from the chapter titles as required.
 
 \subsection{Evaluation Details}
 In the evaluation, the systems are given the body text and asked to predict the character names.
 During evaluation, we sum the scores of the characters alternative aliases/nick-names used in the  books.
 For example merging \texttt{Ned} into \texttt{Eddard}.
-This corresponds to the case that a normal user can enter multiple aliases into our application when selecting sections to keep.
+This roughly corresponds to the case that a normal user can enter multiple aliases into our application when selecting sections to keep.
+We do not use these aliases during training, though that is an option that could be investigated in a future work.
 
 
 %\subsection{Evaluation Metrics}
@@ -323,9 +357,9 @@ This corresponds to the case that a normal user can enter multiple aliases into 
 \subsection{Implementation}
 The full implementation is available at \url{https://github.com/oxinabox/NovelPerspective/}
 
-The text is preprocessed using NLTK \parencite{NLTK} to added features.
+The text is preprocessed using NLTK \parencite{NLTK}.
 The text is first tokenised, part of speech (POS) tagged , and finally named entity chunked (binary), using NLTK's default methods.
-That is the Punkt sentence tokenizer \parencite{kiss2006unsupervised}, regex based improved TreeBank word tokenizer, Greedy Averaged Perceptron POS tagger, and the Max Entropy Named Entity Chunker.
+Specifically, using the Punkt sentence tokenizer \parencite{kiss2006unsupervised}, regex based improved TreeBank word tokenizer, Greedy Averaged Perceptron POS tagger, and the Max Entropy Named Entity Chunker.
 The use of a binary, rather than a multi-class named entity chunker is significant.
 Fantasy novels often use ``exotic'' names for characters, we found that this often resulted in character named entities being classified as organisations or places.
 Note that this is particularly disadvantageous to the First Mentioned Baseline, as any kind of named entity will steal the place.
@@ -340,14 +374,17 @@ Scikit-Learn is used for the machine learning and evaluations \parencite{scikit-
 \begin{table}
 	\begin{adjustbox}{max width=\columnwidth}
 		\pgfplotstabletypeset[%
-			every row 1 column Acc/.style={
+			every row 3 column Acc/.style={
 				postproc cell content/.style={@cell content/.add={$\bf}{$}}
 			},
-			every row 8 column Acc/.style={
+			every row 10 column Acc/.style={
+				postproc cell content/.style={@cell content/.add={$\bf}{$}}
+			},
+			every row 14 column Acc/.style={
 				postproc cell content/.style={@cell content/.add={$\bf}{$}}
 			},
 			%
-			every nth row={5}{before row=\cmidrule{2-4}},
+			every nth row={6}{before row=\cmidrule{2-4}},
 			]{results/maineval.csv}
 	\end{adjustbox}
 	
@@ -356,27 +393,48 @@ Scikit-Learn is used for the machine learning and evaluations \parencite{scikit-
 
 The results of all the methods on both datasets are shown in \Cref{tbl:resmain}.
 This includes the two baseline methods, and the machine learning methods with the different feature sets.
-The machine learning methods are each train on the dataset which they are not tested on.
+We evaluate the machine learning methods using each dataset in turn as the testset and the training set.
 
-As expected the First Mentioned baseline is very weak.
-The Most Commonly Mentioned baseline is much stronger.
-
-Of the two machine learning models the Classical Feature set performs best for the ASOIAF test set,
-and the Word Embeddings for the SOC testset.
-This asymmetry can potentially be attributed to the different amounts of training data for each task.
-The word embedding feature set has 600 dimensions, it seems that smaller SOC training set (used for the ASOIAF test set)
-allowed it to over-fit, causing poor generalisation.
-Where-as the simpler classic feature set was more robust.
-The opposite is true for the other task; the larger amount of training data allowed the capacity of the word embeddings to be exploited,
-resulting in higher accuracy..
-
-We are surprised at how well the word embeddings perform.
-The features do not include any information on the occurrence frequency of the named entity.
-According to our examination of the logistic regression co-efficient is the most important feature for the classical feature set.
-The word embeddings which provide just context word information can still produce accurate results, given enough context information,
+The First Mentioned baseline is very weak.
+The Most Mentioned baseline is much stronger.
+All the machine learning methods out-perform both baselines;
+with the exception of the SOC trained word embeddings for WOT.
+We attribute the poor performance of the SOC trained word embeddings, on both the  WOT and ASOIAF test sets, to the small amount of training data.
+With only 91 chapters to generate its training cases from, and 600 dimensions of input to fit it can very easily over-fit -- thus causing these bad results.
 
 
-\section{Demonstration}
+Using more training data for the ML methods generally gives better results.
+The datasets are, as was presented in \Cref{tbl:datasets}, of very different sizes.
+In all cases, except Word Embedding features testing on SOC, the larger training dataset performed at least as well as the smaller.
+In the exceptional case, of Word Embedding features testing on SOC,
+we will note that the difference between the results for the ASOIAF and WOT test set,
+is getting 1 additional test case correct, and so may not be significant. \pdfcomment{Can I get some p-values on this?}
+In the demonstration we deploy models training on the combined dataset of all the books.
+
+
+Between the methods the results on the ASOIAF and SOC are very strong.
+The results for WOT are much weaker, though still accurate enough to be useful
+when combined with manual checking.
+We believe the reason for this is that the WOT is practically a more difficult text.
+It comes closer to the line between 3rd person omniscient, than the more clear 3rd person limited point of view of the other texts.
+It also has a much larger set of named entities mentioned in each chapter.
+As a more difficult task features which may be clearly indicative of main characters in other texts are less indicative on WOT.
+
+
+It should be noted that the word embedding feature set only contains context information, and not frequency information, but still performs well.
+Not only that, but it only uses a single word window to each side of the named entity.
+This suggests that the point of view character can largely be inferred only from the usage of the named entity
+This is in-line with a humans ability to take a arbitrary single paragraph of text and identify the point of view character.
+
+
+Overall the performance between word embeddings and classical features is quick close.
+Particularly when the small SOC training set is excluded.
+It may be that with more training data the word embeddings could consistently out-perform the classical features.
+With the limited training data we currently have it seems that the classical feature set is marginally more useful.
+Pragmatically, the word embeddings do have an issue in that they require storing a large lookup table in memory (Over 10GB for the FastText embeddings); though there are methods to handle this.
+In our demonstration we allow the user to select from either of the machine learning systems or the baseline systems.
+
+\section{Demonstration}\label{sec:demonstration}
 
 \begin{figure*}
 	\resizebox{\textwidth}{!}{
@@ -402,15 +460,14 @@ The word embeddings which provide just context word information can still produc
 An online demonstration is available at \url{http://white.ucc.asn.au/tools/np}.
 This is a web-app, made using the CherryPy framework\footnote{\url{http://cherrypy.org/}}.
 This allows the user to apply any of the model discussed to their own novels.
-With the exclusion of the word embedding based models, as while interesting, these were less performant and much more demanding on computational resources.
 
 
-The users uploads an ebook, and selects one of the character detection systems we have discussed above.
-The users is then presented with a page displaying a list of sections,
-with the predicted main character(/s) in the left, and an excerpt from the beginning of the section on the right.
+The user uploads an ebook, and selects one of the character detection systems we have discussed above.
+The user is then presented with a page displaying a list of sections,
+with the predicted main character(/s) paired with an excerpt from the beginning of the section.
 The user can adjust to show the top-k most-likely characters on this screen, to allow for additional recall.
 To avoid the user having to wait while the whole book is processed this list is dynamically loaded as it is computed.
-We find that the majority of the time is spend on running the preprocessing to annotate the data before the classification.
+We find that the majority of the time is spent on running the preprocessing to annotate the data before the classification.
 
 The user can select sections to keep using a series of check-boxes.
 The user can input a regular expression for the name of the characters they wish to keep.
@@ -423,7 +480,7 @@ The user can manually correct the selection using the check-boxes before downloa
 \section{Conclusion}\label{sec:conclusion}
 We have presented a tool to allow consumers to restructure their ebooks around the characters they find most interesting.
 The system must discover the named entities present in each section of the book,
-and then classify the section as to which character is the Point of View character.
+and then classify the section as to which character is the point of view character.
 For named entity detection we make use of standard tools.
 The classification is non-trivial.
 In its design we implemented several systems.
@@ -437,7 +494,7 @@ The user can use the results to select the chapters from the point of view of th
 and correct any errors the system has made.
 The user can then download the selected subset of their book.
 
-A primary issues is the limited amount of labelled training data.
+A primary issue is the limited amount of labelled training data.
 A future version of our application will allow the users to submit corrections.
 This would be achieved by allowing them to select the true main character from amongst the named entities,
 then sorting those named entities along side their feature vector,
