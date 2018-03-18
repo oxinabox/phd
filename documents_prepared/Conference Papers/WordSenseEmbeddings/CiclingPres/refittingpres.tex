@@ -89,7 +89,7 @@
 %\logo{\hfill\includegraphics[scale=0.12]{uwa}\hfill\hspace{1.5cm}\vspace{0.5cm}}
 \begin{document}
 	
-\newcommand{\sentexample}{\fitmath{
+\newcommand{\sentexample}{\vfill\fitmath{
 		\overbrace{
 			\obraceword{wow}{w_1}
 			\obraceword{the} {w_2}
@@ -129,63 +129,101 @@
 \begin{frame}{Word embeddings represent each word as a single vector}
 	\begin{block}<1->{SkipGram Language Model:}
 		\begin{itemize}
-			\item \alert{Input} a word $w_T$
-			\item \alert{Output} probabilities of words appearing in its context \alert{$P(w_i \mid w_T)$}
+			\item \alert{Input:} a word $w_T$
+			\item \alert{Output:} probabilities of words appearing in its context
+			 \alert{$P(w_i \mid w_T)$}
+			\item this results in training a useful \alert{vector representation} of each word.
 		\end{itemize}
 	\end{block}
 	
-	\begin{block}<2->{Word Embeddings Implementation}
-		\begin{itemize}
-			\item Represent each input word as a \alert{vector}
-			\item Train a neural network to estimate  \alert{$P(w_i \mid w_T)$}
-			\item Back-prop finds values for the input vector -- i.e. good representation for the word
-		\end{itemize}
-	\end{block}	
 	\sentexample
 \end{frame}
 
 
+\begin{frame}{We can word sense induction method which generate word-sense vectors}
+	\begin{itemize}
+		\item Word sense induction methods discover the senses as it trains.
+		\item They don't need manually \alert{annotated} training data.
+		\item It is less \alert{hand engineered} than using some human defined set of senses.
+		\item There exist many methods for vector word sense induction
+	\end{itemize}
+	\sentexample
+\end{frame}
+
+
+\begin{frame}{For our evaluations we consider two word sense induction models}
+	\begin{columns}[T]
+		\begin{column}{0.5\textwidth}
+			\alert{Greedy}
+			\begin{itemize}
+				\item Model a \alert{fixed set} of senses vectors
+				\item Assign each training case to the sense that give the \alert{highest probability}.
+				\item Similar to \textcite{neelakantan2015efficient}, but using \alert{probability} rather than distance.
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.5\textwidth}
+			\alert{AdaGram}
+			\begin{itemize}
+				\item \textcite{AdaGrams}
+				\item A Neural-Bayesian approach.
+				\item Models an \alert{adaptive number} of possible senses.
+				\item A fairly good sense induction method.
+			\end{itemize}
+		\end{column}	
+	\end{columns}
+\end{frame}
 
 \begin{frame}{Word sense embeddings represent each word as a multiple vectors}
 	\begin{itemize}
-		\item Each word has multiple senses $\{u_1, u_2, ..., u_n\}$
-		\item SkipGram Language Model becomes \begin{itemize}
+		\item Each word has multiple senses, with one vector per sense $\{u_1, u_2, ..., u_n\}$
+		\item SkipGram sense language model  \begin{itemize}
 			\item \alert{Input} a word sense $u_i$
-			\item \alert{Output} probabilities of words appearing in its context \alert{$P(w_i \mid u_j$)}
+			\item \alert{Output} probabilities of words appearing in its context \alert{$P(w_j \mid u_j$)}
 		\end{itemize}
 	\end{itemize}
-	\footfullcite{AdaGrams}
 	\sentexample
 \end{frame}
 
-\begin{frame}{Many sense embeddings don't produce human recognisable senses}
+
+
+
+\begin{frame}{Induced sense embeddings don't produce standard dictionary senses}
 	 \begin{itemize}
-	 	\item<1-> Embeddings are learnt by modelling what words occur near the sense
+	 	\item<1-> Embeddings are learnt purely by modelling what words occur near the sense
+	 	\note[item]{Most humans learn word senses this way also -- most people don't sit down with a dictionary}
 	 	\item<2-> No control over the meanings of the senses \begin{itemize}
 	 		\item Cover overlapping definitions
 	 		\item Find overly narrow meanings
 	 		\item Capture rare jargon uses
 	 	\end{itemize}
-		\item<3-> Useful, but not interoperable with lexical knowledge bases.	
+		\item<3-> Useful, but not interoperable with lexical knowledge bases. OpenCyc, ImageNet etc.	
 	 \end{itemize}
 \end{frame}
 
+\begin{frame}{We want to align these induced senses to a known meaning.}
+ \begin{itemize}
+ 	\item When people need to clarify a sense, they give just a single example.
+ 	\begin{itemize}
+ 		\item Kid as in \emph{The fluffy goat kid.}
+ 		\item or; Kid as in \emph{My brother is such an annoying kid}
+ 	\end{itemize}
+	 \item The hearer immediately knows what sense of the word is meant.
+	 \item We want a system that can do that.
+ \end{itemize}	
+\end{frame}
 
 
-\begin{frame}[label=refittingslide]{We will solve this by \emph{refitting} them to be for the sense we mean}
+\begin{frame}[label=refittingslide]{We want to \emph{refit}  our embeddings to be for the sense we mean}
 	\begin{columns}[T]
 		\begin{column}{0.5\textwidth}
 			\begin{itemize}
 				\item \alert{Refitting} constructs new sense embeddings out of the old.
-				
-				\item It uses the \alert{probabilities} of example sentence occuring.
-				
+				\item It uses the \alert{probabilities} of example sentence occurring.
 				\item The new embedding aligns to the meaning in \alert{that sentence}.
 			\end{itemize}			
 		\end{column}
 		
 		\inputcolumn{../figs/refitting.tex}
-		
 	\end{columns}
 \end{frame}
 
@@ -212,18 +250,18 @@
 	\sentexample
 \end{frame}
 
-\begin{frame}{The probabilities are found using Bayes' theorem}
+\begin{frame}{The probabilities are found using Bayes'~theorem}
 	\vspace{-1em}
 	\begin{columns}[T]
 		\begin{column}{0.5\textwidth}
 			
-			\onslide<1->{Language model: $P(w_i \mid u_{i})$}
+			\onslide<1->{\alert{Sense}-Language model: $P(w_j \mid u_{i})$\\}
 			\vspace{1em}
 			\onslide<2->{
 				Conditional Independence:
 				$\displaystyle%
 				P(\c \mid u_{i})=\prod_{\forall w_{j}\in\c}P(w_{j} \mid u_{i})
-				$
+				$\\
 			}
 			\vspace{1em}
 			\onslide<3->{
@@ -232,7 +270,7 @@
 				P(u_{i} \mid \c) =
 				\dfrac{P(\c \mid u_{i})P(u_{i})}
 				{\sum_{u_{j}\in\s} P(\c \mid u_{j})P(u_{j})}
-				$
+				$\\
 			}
 
 		\end{column}
@@ -329,6 +367,8 @@
 \end{frame}
 
 
+\section{Similarity with Context}
+
 
 \newcommand{\simsentone}{%
 	\fitmath{
@@ -396,9 +436,39 @@
 	 \end{aligned}
 	}
 	\vfill
-	
-
 \end{frame}
+
+\begin{frame}{RefittedSim vs AvgSimC}
+	\vspace{-1em}
+	\vfill
+	\begin{block}{RefittedSim}
+		\fitmath{
+			\mathrm{RefittedSim}((\u,\c),(\u^{\prime},\c^{\prime}))
+			= d\left(
+			\sum_{u_{i}\in\u}u_{i}P(u_{i}\mid\c),\:
+			\sum_{u_{j}^{\prime}\in\u^{\prime}}u_{i}P(u_{j}^{\prime}\mid\c^{\prime})\right)
+		}
+		
+		\vspace{0.2em}
+		Time Complexity: 
+		$O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert)$
+	\end{block}
+	\vfill
+	
+	\begin{block}{AvgSimC}
+		\fitmath{
+			\mathrm{AvgSimC}((\u,\c),(\u^{\prime},\c^{\prime})) 
+			=  \frac{1}{n \times n^{\prime}}
+			\sum_{u_{i}\in\u}
+			\sum_{u_{j}^{\prime}\in\u^{\prime}}
+			P(u_{i}\mid\c)\,P(u_{j}^{\prime}\mid\c^{\prime})\,d(u_{i},u_{j}^{\prime})
+		}
+		
+		\vspace{0.2em}
+		Time Complexity: $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert +n\times n^{\prime})$
+	\end{block}
+\end{frame}
+
 
 
 
@@ -437,6 +507,7 @@
 \end{frame}
 
 
+\section{Lexical Word Sense Disambiguation}
 
 \begin{frame}{WSD is the task of determining which sense is being used}
 	\glosses
@@ -488,7 +559,7 @@ columns/F1/.style={numeric type},
 	width=0.9\textwidth,height=0.8\textheight,
 	%xmin=-0.2,
 	%xmax=3.2,
-	ylabel=F1,
+	ylabel={F1 (Note the cut scale)},
 	xticklabels from table={\wsd}{Method},
 	legend style={fill=none},
 	xticklabel style={text width=8em, align=center},
@@ -505,7 +576,7 @@ columns/F1/.style={numeric type},
 	\begin{columns}[T]
 		\begin{column}{0.5\textwidth}
 			\begin{itemize}
-				\item \alert{Results are not great}: an improvement of a few percent over the baseline.
+				\item \alert{Results are not great}: an improvement of $\sim1\%$ over the baseline.
 				
 				\item With that said, this is an \alert{almost unsupervised method}.
 				
@@ -542,9 +613,9 @@ columns/F1/.style={numeric type},
 			\begin{itemize}
 				\item \alert{RefittedSim}, faster and higher correlation with human judgement than \alert{AvgSimC}. 
 				
-				\item \alert{WSD} results using refitted \alert{not competitive} with supervised methods.
+				\item \alert{WSD} results using refitting is \alert{not competitive} with supervised methods.
 				
-				\item This problem of aligning \alert{induced} senses to \alert{lexical} senses is important.
+				\item This problem of aligning \alert{induced} senses to \alert{lexical} senses is important, and worth further research.
 			\end{itemize}			
 %		\end{column}
 		
@@ -557,36 +628,6 @@ columns/F1/.style={numeric type},
 
 \section{Appendix}
 
-\begin{frame}{RefittedSim vs AvgSimC}
-	\vspace{-1em}
-	\vfill
-	\begin{block}{RefittedSim}
-		\fitmath{
-			\mathrm{RefittedSim}((\u,\c),(\u^{\prime},\c^{\prime}))
-			= d\left(
-			\sum_{u_{i}\in\u}u_{i}P(u_{i}\mid\c),\:
-			\sum_{u_{j}^{\prime}\in\u^{\prime}}u_{i}P(u_{j}^{\prime}\mid\c^{\prime})\right)
-		}
-		
-		\vspace{0.2em}
-		Time Complexity: 
-		$O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert)$
-	\end{block}
-	\vfill
-	
-	\begin{block}{AvgSimC}
-		\fitmath{
-			\mathrm{AvgSimC}((\u,\c),(\u^{\prime},\c^{\prime})) 
-			=  \frac{1}{n \times n^{\prime}}
-			\sum_{u_{i}\in\u}
-			\sum_{u_{j}^{\prime}\in\u^{\prime}}
-			P(u_{i}\mid\c)\,P(u_{j}^{\prime}\mid\c^{\prime})\,d(u_{i},u_{j}^{\prime})
-		}
-		
-		\vspace{0.2em}
-		Time Complexity: $O(n\left\Vert \c\right\Vert +n^{\prime}\left\Vert \c^{\prime}\right\Vert +n\times n^{\prime})$
-	\end{block}
-\end{frame}
 
 
 \begin{frame}[fragile]{Results on word similarity with context}
