@@ -33,6 +33,10 @@
 %	numcol/.style={},
 	string replace={"}{},
 	string replace={ASIAF}{ASOIAF},
+	string replace={ASOIAF+SOC}{\small ASOIAF+SOC},
+	string replace={WOT+ASOIAF}{\small WOT+ASOIAF},
+	string replace={WOT+SOC}{\small WOT+SOC},
+%	string replace={Features}{\small Feats.},
 	string replace={Most Commonly Mentioned}{Most Mentioned},
 	numeric type, precision=3, fixed zerofill=true, fixed,
 	%			bf content/.style={postproc cell content/.style={@cell content/.add={1\textbf{##1}}}},
@@ -134,9 +138,9 @@ have many parallel storylines which only rarely intersect.
 While we are unable to find a formal study on this, 
 anecdotally many readers speak of:
 \begin{itemize}
-	\item ``Skipping the chapters about the boring characters''
-	\item ``Only reading the \emph{real} main character's sections''
-	\item ``Reading ahead, past the side-stories, to get on with the main plot''	
+	\item ``Skipping the chapters about the boring characters.''
+	\item ``Only reading the \emph{real} main character's sections.''
+	\item ``Reading ahead, past the side-stories, to get on with the main plot.''	
 \end{itemize}
 Particularly if they have read the story before, and thus do not risk confusion.
 Such opinions are a matter of the consumer's personal taste.
@@ -196,7 +200,7 @@ We investigated several options which the main text of this paper will discuss.
 		\path (classify) edge node[above]{character\\name}  (end);
 		\end{tikzpicture}
 	}
-	\caption{The general structure of the character classification systems. This is step 3 of the whole pipeline shown in \Cref{fig:fullprocess}. \label{fig:classify}}
+	\caption{The general structure of the character classification systems. This repeated for each section of the book during step 3 of the pipeline shown in \Cref{fig:fullprocess}. \label{fig:classify}}
 \end{figure*}
 
 The full NovelPerspective pipeline is shown in \Cref{fig:fullprocess}.
@@ -222,8 +226,8 @@ An obvious way to determine the main character of the section is to select the f
 We use this to define the ``First Mentioned'' baseline
 In this system, the \textbf{Feature Extraction} step is simply retrieving the position of the first use of each name;
 and the \textbf{Character Scoring} step assigns each a score such that earlier is higher.
-This works well for many examples: \emph{``One dark and stormy night, Bill heard a knock at the door.''};
-however it fails for many others \emph{`` `Is that Tom?' called out Bill, after hearing a knocking.'}'.
+This works for many examples: \emph{``One dark and stormy night, Bill heard a knock at the door.''};
+however it fails for many others \emph{`` `Is that Tom?' called out Bill, after hearing a knock.'}'.
 Sometimes a section  may go several paragraphs describing events before it even mentions the character who is perceiving them.
 This is a varying element of style.
 
@@ -231,7 +235,7 @@ This is a varying element of style.
 A more robust method to determine the main character, is to use the occurrence counts.
 We call this the ``Most Mentioned'' baseline.
 The \textbf{Feature Extraction} step is to count how often the name is used.
-The \textbf{Character Scoring} step assigns each a score based what proportional of all names used were for this entity
+The \textbf{Character Scoring} step assigns each a score based what proportional of all names used were for this entity.
 This works well for many books.
 The more important a character is, the more often their name occurs.
 However, it is fooled, for example, by book chapters that are about the POV character's relationship with a secondary character.
@@ -255,8 +259,6 @@ the score is the output probability normalised over all the named entities.
 
 
 
-
-
 \subsubsection{Feature Extraction for ML}\label{sec:feature-extraction-for-ml}
 We investigated two feature sets as inputs for our machine learning-based solution.
 They correspond to different \textbf{Feature Extraction} steps in \Cref{fig:classify}.
@@ -270,7 +272,7 @@ The features can be described as \emph{positional features}, like in the First M
 and \emph{adjacent POS counts}, to give usage context.
 The \emph{positional features} are the index (in the token counts) of the first and last occurrence of the named entity.
 The \emph{occurrence count features} are simply the number of occurrences of the named entity, supplemented with its rank on that count compared to the others.
-The \emph{adjacent POS counts} are the counts of each part of speech tag on the word prior to the named entity, and on the word after.
+The \emph{adjacent POS counts} are the occurrence counts of each of the 46 POS tags on the word prior to the named entity, and on the word after.
 We theorised that this POS information would be informative, as it seemed reasonable that the POV character would be described as doing more things, so co-occurring with more verbs.
 This gives 100 base features.
 To allow for text length invariance we also provide each of the base features expressed as a portion of its maximum possible value (e.g. for a given POS tag occurring before a named entity, the potion of times this tag occurred).
@@ -280,7 +282,7 @@ This gives a total of 200 features.
 
 
 The ``Word Embedding'' feature set uses FastText word vectors \parencite{bojanowski2016enriching}.
-We concatenate the word embedding for the word immediately prior to, and immediately after each occurrence of a named entity;
+We concatenate the 300 dimensional word embedding for the word immediately prior to, and immediately after each occurrence of a named entity;
 and take the element-wise mean of this concatenated vector over all occurrences of the  entity.
 Such averages of word embeddings have been shown to be a useful feature in many tasks \parencite{White2015SentVecMeaning,mikolovSkip}.
 This has a total of 600 features.
@@ -302,9 +304,9 @@ as the classes in our case vary with every item to be classified.
 The fundamental problem is information extraction, and the classifier is a tool for the scoring which is the correct information to report.
 
 
-For the Classical Feature-set, we used logistic regression, with the features being preprocessed with 0-1 scaling.
+With the classical feature set we use logistic regression, with the features being preprocessed with 0-1 scaling.
 During preliminary testing we found that many classifiers had similar high degree of success, and so chose the simplest.
-With the higher dimensional feature-sets we used a radial bias support vector machine, with  standardisation during preprocessing,
+With the word embedding feature set we used a radial bias support vector machine, with  standardisation during preprocessing,
 as has been commonly used with word embeddings on other tasks.
 
 
@@ -363,70 +365,95 @@ Scikit-Learn is used for the machine learning and evaluations \parencite{scikit-
 
 \section{Results and Discussion}\label{sec:results-and-discussion}
 
-\subsection{Main results}
-
 \begin{table}
 	\begin{adjustbox}{max width=\columnwidth}
+		\pgfplotstableset{best/.append style={
+				postproc cell content/.style={@cell content/.add={$\bf}{$}}
+			},
+		nearbest/.append style={
+			postproc cell content/.style={@cell content/.add={$\it}{$}}
+		}
+	}
+		
 		\pgfplotstabletypeset[%
-			every row 3 column Acc/.style={
-				postproc cell content/.style={@cell content/.add={$\bf}{$}}
-			},
-			every row 10 column Acc/.style={
-				postproc cell content/.style={@cell content/.add={$\bf}{$}}
-			},
-			every row 14 column Acc/.style={
-				postproc cell content/.style={@cell content/.add={$\bf}{$}}
-			},
+			every row 3 column Acc/.style={best},
 			%
-			every nth row={6}{before row=\cmidrule{2-4}},
+			every row 14 column Acc/.style={best},
+			every row 15 column Acc/.style={best},
+			%
+			every row 19 column Acc/.style={best},
+			%
+			every nth row={8}{before row=\cmidrule{2-4}},
 			]{results/maineval.csv}
 	\end{adjustbox}
 	
-	\caption{The results of the character classifier systems.} \label{tbl:resmain}
+	\caption{The results of the character classifier systems. The best results are \textbf{bolded}.
+	%Results that are within a single classification error of the best, are \textit{italicised}.
+	} \label{tbl:resmain}
 \end{table}
 
 The results of all the methods on both datasets are shown in \Cref{tbl:resmain}.
 This includes the two baseline methods, and the machine learning methods with the different feature sets.
-We evaluate the machine learning methods using each dataset in turn as the test set and the training set.
+We evaluate the machine learning methods using each dataset as a test set, and using each of the other two and their combination as the training set.
 
 The First Mentioned baseline is very weak.
 The Most Mentioned baseline is much stronger.
-All the machine learning methods outperform both baselines;
-with the exception of the SOC trained word embeddings for WOT.
-We attribute the poor performance of the SOC trained word embeddings, on both the  WOT and ASOIAF test sets, to the small amount of training data.
-With only 91 chapters to generate its training cases from, and 600 dimensions of input to fit it can very easily over-fit -- thus causing these bad results.
+In almost all cases machine learning methods outperform both baselines.
+The results of the machine learning method on the ASOIAF and SOC are very strong.
+The results for WOT are weaker, though they are still accurate enough to be useful when combined with manual checking.
 
 
-Using more training data for the ML methods generally gives better results.
-The datasets are, as was presented in \Cref{tbl:datasets}, of very different sizes.
-In all but one case, the larger training dataset performed at least as well as the smaller.
-In the exceptional case, of the Word Embedding features testing on SOC,
-we  note that the difference between the results for the ASOIAF and WOT training set,
-is getting one additional test case correct, and so may not be significant.
-The models deployed to our demonstration system (\Cref{sec:demonstration}) use the complete set of three datasets for training to achieve the best possible results.
+It surprising that using the combination of the two training sets does not always out-perform each on their own.
+For many methods training on just one dataset resulted in better results.
+We believe that difference between the top result for a method and the result using the combined training sets is too small to be meaningful.
+It can, perhaps, be attributed to a coincidental small similarity in writing style of one of the training books to the testing book.
+To maximise the generalisability of the NovelPerspective prototype (see \Cref{sec:demonstration}), we deploy models trained on the combination all three datasets.
+
+More generally the machine learning model results for all the models were very close.
+The exception to this is the SVM trained on SOC, using word embedding features, which for both ASOIAF and WOT test sets performed much worse.
+We attribute the poor performance of these models to the small amount of training data.
+SOC has only 91 chapters to generate its training cases from, and the word embedding feature set has 600 dimensions.
+It is thus very easily to over-fit which causes these poor results.
 
 
-Between the methods, the results on the ASOIAF and SOC are very strong.
-The results for WOT are much weaker, though still accurate enough to be useful
-when combined with manual checking.
-We believe the reason for this is that the WOT is practically a more difficult text.
-It comes closer to the line between third-person \emph{omniscient}, than the more clear third-person \emph{limited} POV of the other texts.
-It also has a much larger set of named entities mentioned in each chapter.
-As a more difficult task, features which may be clearly indicative of the main character in other texts are less indicative on WOT.
+\begin{table}
+	\begin{adjustbox}{max width=\columnwidth}
+		\small
+		\pgfplotstableset{best/.append style={
+				postproc cell content/.style={@cell content/.add={$\bf}{$}}
+			},
+			nearbest/.append style={
+				postproc cell content/.style={@cell content/.add={$\it}{$}}
+			}
+		}
+		
+		\pgfplotstabletypeset[%
+		every nth row={2}{before row=\cmidrule{2-4}},
+		]{results/traineval.csv}
+	\end{adjustbox}
+	
+	\caption{The training set accuracy of the machine learning character classifier systems.
+	} \label{tbl:restrain}
+\end{table}
 
+\Cref{tbl:restrain} shows the training set accuracy of each machine learning model.
+This is rough upper bound for the possible performance of these models, as imposed by the classifier and the feature set.
+The WOT bound is much lower than the other two texts.
+This likely relates to WOT being written in a style that  closer to the line between third-person \emph{omniscient}, than the more clear third-person \emph{limited} POV of the other texts.
+We believe longer range features are required to improve the results for WOT.
+However, as this achieves such high accuracy for the other texts, further features would not improve accuracy significantly, without additional more difficult training data (and would likely cause over-fitting).
 
-The word embedding feature set only contains context information, not frequency information, but still performs well.
-Further, it only uses a single word window to each side of the named entity.
-This suggests that the point of view character can largely be inferred only from the usage of its name. 
-This is in-line with a human's ability to read an arbitrary paragraph and identify the point of view character.
-
-
-Overall the performance between word embeddings and classical features is quite  close.
-Particularly when the small SOC training set is excluded.
-It may be that with more training data, the word embeddings could consistently out-perform the classical features.
-With the limited training data, that we currently have, it seems that the classical feature set is marginally more useful.
-A pragmatic issue with the word embeddings is the requirement to store a large lookup table in memory (over 10GB for the FastText embeddings); though there are methods to handle this.
-In our prototype we allow the user to select from either of the machine learning systems or the baseline systems.
+%
+%The word embedding feature set only contains context information, not frequency information, but still performs well.
+%Further, it only uses a single word window to each side of the named entity.
+%This suggests that the point of view character can largely be inferred only from the usage of its name. 
+%This is in-line with a human's ability to read an arbitrary paragraph and identify the point of view character.
+%
+The result do not show a clear advantage to either machine learning feature set.
+Both the classical features and the word embeddings work well.
+It seems that the classical feature are more robust to smaller training sets (like SOC), and to more difficult test sets (like WOT).
+\Cref{tbl:restrain} shows the upper bound for this word embeddings feature set is not much higher, so without using more features, more training data would not allow an improvement.
+But with more training data, and more features (wider-window), it may be that word embedding may prove better.
 
 \section{Demonstration System}\label{sec:demonstration}
 We have deployed an online prototype to \url{https://white.ucc.asn.au/tools/np}.
@@ -461,26 +488,10 @@ While none of the classifiers are perfect,
 they achieve high enough accuracy to be useful.
 
 
+A future version of our application will allow the users to submit corrections, giving us more training data.
+However, storing this information poses copyright issues that are yet to be resolved.
 
-The results are presented to the user via a web-interface.
-The user can use the results to select the chapters from the point of view of the character/s they are most interested in;
-and correct any errors the system has made.
-The user can then download the selected subset of their book.
-
-A primary issue is the limited amount of labelled training data.
-A future version of our application will allow the users to submit corrections.
-This would be achieved by allowing them to select the true main character from amongst the named entities,
-then sorting those named entities along side their feature vector,
-for use in future training.
-
-%Further tools along these lines have potential as writing aids for authors.
-%To allow them to assess how much ``screentime'' is being given to each character of their work in progress novels.
-
-%Another application of related work would be the automatic indexing of texts,
-%by adding features such as the main character name, the perspective, etc.
-%This could be applied to resources such as WikiSource, or Project Gutenberg.
-
-Consumer fiction processing is an interesting area to develop useful tools that can change how we consume written media.
+%Consumer fiction processing is an interesting area to develop useful tools that can change how we consume written media.
 
 \bibliography{master}
 \end{document}
