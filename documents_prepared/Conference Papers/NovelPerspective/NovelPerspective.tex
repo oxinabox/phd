@@ -74,17 +74,17 @@
 
 %opening
 \title{NovelPerspective}
-\author{Lyndon White %
-	\and Roberto Togneri %
-	\and Wei Liu %
-	\and Mohammed Bennamoun %
+\author{Lyndon White, %
+	Roberto Togneri, %
+	Wei Liu, %
+	\and Mohammed Bennamoun%
 	\\ 
-%	lyndon.white@research.uwa.edu.au %
-%	\and roberto.togneri,@uwa.edu.au%
-%	\and wei.liu@uwa.edu.au %
-%	\and mohammed.bennamoun@uwa.edu.au %
-%	\\
-	The University of Western Australia\\
+	\url{lyndon.white@research.uwa.edu.au}, %
+	\url{roberto.togneri@uwa.edu.au},\\
+	\url{wei.liu@uwa.edu.au}, %
+	\and \url{mohammed.bennamoun@uwa.edu.au}%
+	\\
+	The University of Western Australia.
 	35 Stirling Highway, Crawley, Western Australia
 }
 
@@ -95,21 +95,21 @@
 \maketitle
 
 \begin{abstract}
-We present NovelPerspective: a proof-of-concept tool to allow consumers to subset their digital literature, based on the main characters sub-sections.
+We present NovelPerspective: a proof-of-concept tool to allow consumers to subset their digital literature, based on point of view (POV) character.
 Many novels have multiple main characters each with their own storyline running in parallel.
-A well-known example is George R. R. Martin's  novel: ``A Game of Thrones'', and the others from that series.
-Our tool detects which character each section is about,
+A well-known example is George R. R. Martin's  novel: ``A Game of Thrones'', and others from that series.
+Our tool detects the main character that each section is from the POV of,
 and allows the user to generate a new ebook with only those sections.
 This gives consumers new options in how they consume their media; allowing them to  pursue the storylines sequentially, or skip chapters about characters they find boring.
-We present two simple baselines, and several machine learning based methods for the detection of the main character.
+We present two heuristic-based baselines, and two machine learning based methods for the detection of the main character.
 \end{abstract}
 
 \section{Introduction}
 Often each section of a novel is written  from the perspective of a different main character.
 The characters each take turns in the spot-light,
 with their own parallel storylines being unfolded by the author.
-Personally, as readers, we have often desired to read just one storyline at a time, particularly when reading the book a second-time.
-We present a tool, NovelPerspective, to give the consumer this choice.
+As readers, we have often desired to read just one storyline at a time, particularly when reading the book a second-time.
+In this paper, we present a tool, NovelPerspective, to give the consumer this choice.
 
 Our tool allows the consumer to select which characters of the book they are interested in,
 and to generate a new ebook file containing just the sections from that character's point of view (POV).
@@ -142,14 +142,14 @@ Our tool helps users un-entwine such storylines, giving the option to process th
 
 The utility of dividing a book in this way varies with the book in question.
 Some books will cease to make sense when the core storyline crosses over different characters.
-Other novels, particularly the epic fantasy stories which we are primarily considering,
-have many parallel storylines which only rarely intersect.
+Other novels, particularly in epic fantasy genre,
+have parallel storylines which only rarely intersect.
 While we are unable to find a formal study on this, 
 anecdotally many readers speak of:
 \begin{itemize}
 	\item ``Skipping the chapters about the boring characters.''
 	\item ``Only reading the \emph{real} main character's sections.''
-	\item ``Reading ahead, past the side-stories, to get on with the main plot.''	
+	\item ``Reading ahead, past the side-stories, to get on with the \emph{main} plot.''	
 \end{itemize}
 Particularly if they have read the story before, and thus do not risk confusion.
 Such opinions are a matter of the consumer's personal taste.
@@ -159,11 +159,11 @@ We note that sub-setting the novel once does not prevent the reader from going b
 We can personally attest for some books reading the chapters one character at a time is indeed possible, and pleasant: the first author of this paper read George R.R. Martin's ``A Song of Ice and Fire'' series in exactly this fashion.
 
 
-The primary difficulty in segmenting ebooks this way attributing each section to its POV character.
+The primary difficulty in segmenting ebooks this way is attributing each section to its POV character.
 That is to say detecting who is the point of view character.
 Very few books indicate this clearly, and the reader is expected to infer it during reading.
 This is easy for most humans, but automating it is a challenge.
-To solve this, the core of our tool is its character classification systems.
+To solve this, the core of our tool is its character classification system.
 We investigated several options which the main text of this paper will discuss.
 
 
@@ -209,7 +209,7 @@ We investigated several options which the main text of this paper will discuss.
 		\path (classify) edge node[above]{character\\name}  (end);
 		\end{tikzpicture}
 	}
-	\caption{The general structure of the character classification systems. This repeated for each section of the book during step 3 of the pipeline shown in \Cref{fig:fullprocess}. \label{fig:classify}}
+	\caption{The general structure of the character classification systems. This repeated for each section of the book during step 3 of the full pipeline shown in \Cref{fig:fullprocess}. \label{fig:classify}}
 \end{figure*}
 
 The full NovelPerspective pipeline is shown in \Cref{fig:fullprocess}.
@@ -225,10 +225,10 @@ A broadly similar idea, for detecting the focus location of news articles, was p
 \subsection{Baseline systems}
 To the best of our knowledge no systems have been developed for this task before.
 As such, we have developed two deterministic baseline character classifiers.
-These are both potentially useful to the end-user in our deployed system (\Cref{sec:demonstration}), and used to gauge the performance of the more complicated systems in the evaluations presented in \Cref{sec:results-and-discussion}.
+These are both potentially useful to the end-user in our deployed system (\Cref{sec:demonstration}),
+and used to gauge the performance of the more complicated systems in the evaluations presented in \Cref{sec:results-and-discussion}.
 
-It should be noted that the baseline systems, while not using machine learning for the  character classification steps, do make extensive use of machine learning-based systems during the preprocessing stages.
-The POS-tagger, and the Named Entity recogniser are based on machine learning.
+It should be noted that the baseline systems, while not using machine learning for the character classification steps, do make extensive use of machine learning-based systems during the preprocessing stages.
 
 \subsubsection{``First Mentioned'' Entity}
 An obvious way to determine the main character of the section is to select the first named entity.
@@ -291,6 +291,7 @@ This gives a total of 200 features.
 
 
 The ``Word Embedding'' feature set uses FastText word vectors \parencite{bojanowski2016enriching}.
+We use the pretrained 300 dimensional embeddings trained on English Wikipedia \footnote{\url{https://fasttext.cc/docs/en/pretrained-vectors.html}}.
 We concatenate the 300 dimensional word embedding for the word immediately prior to, and immediately after each occurrence of a named entity;
 and take the element-wise mean of this concatenated vector over all occurrences of the  entity.
 Such averages of word embeddings have been shown to be a useful feature in many tasks \parencite{White2015SentVecMeaning,mikolovSkip}.
@@ -332,7 +333,7 @@ In the online demonstration (\Cref{sec:demonstration}), we deploy models trained
 To use a book for the training and evaluation of our system, we require a ground truth for each section's POV character.
 ASOIAF and SOC provide ground truth for the main character in the chapter names.
 Every chapter only uses the POV of that named character.
-WOT's ground truth comes from an index created by readers\footnote{\url{http://wot.wikia.com/wiki/List_of_Point_of_View_Characters}}.
+WOT's ground truth comes from an index created by readers.\footnote{\url{http://wot.wikia.com/wiki/List_of_Point_of_View_Characters}}
 We do not have any datasets with labelled sub-chapter sections, though the tool does support such works.
 
 
@@ -361,16 +362,17 @@ This roughly corresponds to the case that a normal user can enter multiple alias
 We do not use these aliases during training, though that is an option that could be investigated in a future work.
 
 \subsection{Implementation}
-The full implementation is available at \url{https://github.com/oxinabox/NovelPerspective/}
-The text is preprocessed using NLTK \parencite{NLTK}.
-It is tokenised, POS tagged , and finally named entity chunked, using NLTK's default methods.
+The implementation is available on GitHub.
+\footnote{\url{https://github.com/oxinabox/NovelPerspective/}}
+Scikit-Learn \parencite{scikit-learn} is used for the machine learning and evaluations,
+and NLTK \parencite{NLTK} is used for textual preprocessing.
+The text is tokenised, and tagged with POS and named entities using NLTK's default methods.
 Specifically, these are the Punkt sentence tokenizer, the regex-based improved TreeBank word tokenizer, greedy averaged perceptron POS tagger, and the max-entropy binary named entity chunker.
 The use of a binary, rather than a multi-class, named entity chunker is significant.
 Fantasy novels often use ``exotic'' names for characters, we found that this often resulted in character named entities being misclassified as organisations or places.
 Note that this is particularly disadvantageous to the First Mentioned baseline, as any kind of named entity will steal the place.
 Nevertheless, it is required to ensure that all character names are a possibility to be selected.
 
-Scikit-Learn is used for the machine learning and evaluations \parencite{scikit-learn}.
 
 \section{Results and Discussion}\label{sec:results-and-discussion}
 
@@ -401,7 +403,7 @@ Scikit-Learn is used for the machine learning and evaluations \parencite{scikit-
 	} \label{tbl:resmain}
 \end{table}
 
-The results of all the methods on both datasets are shown in \Cref{tbl:resmain}.
+Our evaluation results are shown in \Cref{tbl:resmain} for all methods.
 This includes the two baseline methods, and the machine learning methods with the different feature sets.
 We evaluate the machine learning methods using each dataset as a test set, and using each of the other two and their combination as the training set.
 
@@ -412,17 +414,18 @@ The results of the machine learning method on the ASOIAF and SOC are very strong
 The results for WOT are weaker, though they are still accurate enough to be useful when combined with manual checking.
 
 
-It surprising that using the combination of the two training sets does not always out-perform each on their own.
+It is surprising that using the combination of two training sets does not always out-perform each on their own.
 For many methods training on just one dataset resulted in better results.
 We believe that the difference between the top result for a method and the result using the combined training sets is too small to be meaningful.
 It can, perhaps, be attributed to a coincidental small similarity in writing style of one of the training books to the testing book.
 To maximise the generalisability of the NovelPerspective prototype (see \Cref{sec:demonstration}), we deploy models trained on all three datasets combined.
 
-More generally the machine learning model results for all the models were very close.
+Almost all the machine learning models resulted in similarly high accuracy.
 The exception to this is word embedding features based model trained on SOC, which for both ASOIAF and WOT test sets performed much worse.
 We attribute the poor performance of these models to the small amount of training data.
 SOC has only 91 chapters to generate its training cases from, and the word embedding feature set has 600 dimensions.
 It is thus very easily to over-fit which causes these poor results.
+%Using a different, lower dimensional set of pretrained word embeddings mould likely decrease this over-fitting, however given the existence of more data allowing other methods to fit we have not investigated this.
 
 
 \begin{table}
@@ -460,13 +463,13 @@ However, as this achieves such high accuracy for the other texts, further featur
 %
 The results do not show a clear advantage to either machine learning feature set.
 Both the classical features and the word embeddings work well.
-It seems that the classical feature are more robust to smaller training sets (like SOC), and to more difficult test sets (like WOT).
-\Cref{tbl:restrain} shows the upper bound for this word embeddings feature set is not much higher, so without using more features, more training data would not allow an improvement.
-But with more training data, and more features (e.g. a wider window of context words), it may be that word embedding may prove better.
+It seems that the classical feature are more robust; both with smaller training sets (like SOC), and with more difficult test sets (like WOT).
+With more training data, it would be reasonable to more features (e.g. additional adjacent words),
+by doing this it may be that word embedding may prove better.
 
 \section{Demonstration System}\label{sec:demonstration}
 We have deployed an online prototype to \url{https://white.ucc.asn.au/tools/np}.
-A video of its use can be found at \url{https://youtu.be/iu41pUF4wTY}
+A video of its use can be found at \url{https://youtu.be/iu41pUF4wTY}.
 This web-app, made using the CherryPy framework,\footnote{\url{http://cherrypy.org/}}
 allows the user to apply any of the model discussed to their own novels.
 
@@ -492,9 +495,8 @@ For named entity detection we make use of standard tools.
 However, the classification is non-trivial.
 In this design we implemented several systems.
 Simply selecting the most commonly named character proved successful as a baseline approach.
-It is outperformed by our machine learning based  approaches.
-While none of the classifiers are perfect,
-they achieve high enough accuracy to be useful.
+To improve upon this, we developed several machine learning based approaches which perform very well.
+While none of the classifiers are perfect, they achieve high enough accuracy to be useful.
 
 
 A future version of our application will allow the users to submit corrections, giving us more training data.
