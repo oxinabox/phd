@@ -1,0 +1,170 @@
+\documentclass{book}
+\usepackage{geometry}
+\geometry{a4paper, inner=2cm, outer=2cm, top=2cm, bottom=2cm}
+
+\usepackage{xcolor}
+
+\usepackage{pdfpages}
+\usepackage{xparse}
+
+\usepackage{fancyhdr}
+\pagecolor{white}
+\usepackage{pdfpages}
+
+\usepackage{etoolbox}
+
+\usepackage{cleveref}
+
+%%%%%%%%%%%%%%%%%%%%
+% Capture name of the part
+
+\newcommand{\parttitle}{}
+\newcommand{\chaptertitle}{}
+\makeatletter
+
+\patchcmd{\@part}% <cmd>
+{\markboth}% <search>
+{\renewcommand{\parttitle}{#1}}% <replace>
+{}{}% <success><failure>
+
+\patchcmd{\@chapter}% <cmd>
+{\markboth}% <search>
+{\renewcommand{\chaptertitle}{#1}}% <replace>
+{}{}% <success><failure>
+\makeatother
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+\fancypagestyle{plain}{%
+	\fancyhf{} % clear all header and footer fields
+	\fancyfoot[RO,LE]{\thepage}
+	\renewcommand{\headrulewidth}{0pt}
+	\renewcommand{\footrulewidth}{0pt}}
+
+\pagestyle{fancy}
+	\fancyhf{}
+	\fancyhead[L]{\thepart \hspace{0.5em} \parttitle}
+	\fancyhead[R]{\thechapter \hspace{0.5em} \chaptertitle}
+	\fancyfoot[RO,LE]{\thepage}
+
+
+
+\DeclareDocumentCommand{\includepublication}{O{-} m}{
+	\def\pubfile{#2}
+	\def\pages{#1}
+
+	\definecolor{randomcolor}{RGB}
+	{
+		\pdfuniformdeviate 256,
+		\pdfuniformdeviate 256,
+		\pdfuniformdeviate 256
+	}%
+	\pagecolor{randomcolor!20!white}
+	
+	\includepdf[%
+		pages={#1},% can't use \pages inside []
+		frame=true, %
+		scale=0.8, %
+		pagecommand={\pagestyle{fancy}}, %
+		]{publications/\pubfile.pdf}
+	\nopagecolor
+}
+
+
+\DeclareDocumentCommand{\setchapter}{m}{
+	\renewcommand{\chaptertitle}{#1}
+	\refstepcounter{chapter}
+	\addcontentsline{toc}{chapter}{\protect\numberline{\thechapter} #1}
+}
+
+
+\title{From Classical to Neural Representations of Natural Language}
+\author{Lyndon White}
+\begin{document}
+\maketitle
+\tableofcontents
+
+\part{Literature Review}
+\chapter{Introduction}
+I present here, the traditional literature review chapter in a nontrational form: as 3 chapters taken from a book I wrote during my candidature.
+The book ``Neural Representations of Natural Language'' is currently available from SpringerBriefs.
+I include here the three core, non-introductory chapters, in there original manuscript form.
+This skips over the original preface, and the chapters introducing machine learning and recurrent neural networks.
+
+
+%\setchapter{Neural Representations of Natural Language: Preamble}
+\includepublication[{1}]{Book} %{1-6} gets TOC
+
+\setchapter{Neural Representations of Natural Language: Word Representations}
+\includepublication[{53-92}]{Book} %{NNoNL: Word Representations}
+\label{LR:WordRep}
+\setchapter{Neural Representations of Natural Language: Word Sense Representations}
+\includepublication[{93-113}]{Book} %{NNoNL: Word Sense Representations}
+\label{LR:SenseRep}
+\setchapter{Neural Representations of Natural Language: Sentence Representations and Beyond}
+\label{LR:SentenceRep}
+\includepublication[{115-140}]{Book} %{NNoNL: Sentence Representations and Beyond}
+
+\chapter{Conclusion}
+In these three literature review chapters I have introduced the core notions used in modern machine learning based natural language processing.
+Each of the papers in the following sections also include there own background and related works sections detailing specifically relevant works to their area.
+
+
+\part{Contrasting Classical and Neural Representations}
+
+\chapter{Introduction}
+In the works in this section I contrast classical representation approaches with more modern neural network-based representational approaches.
+
+\Cref{SentVecMeaning} presents an abstract comparison of multiple neural network sentence representations compared to the classical bag of words.
+The core idea of the comparason in \Cref{SentVecMeaning} is to see how easy it is to partition the vector representation space according to the partitioning of natural language space of meaning.
+The natural language space is partitioned by meaning: an equivalent relation of paraphrases is defined, which gives rise to that partitioning.
+The task assesses that by assessing if subsets of the data when represented using a system can be used to train a linear SVM to determine the class (partition) of the held-out phrases.
+Using the conclusion that a good vector representation of sentences results sentences from different paraphrase groups being:
+linearly separable
+
+
+
+The systems evaluated included PV-DM and PV-DBOW.
+The work was done before these systems were discredited, 
+as discussed in \Cref{LR:SenseRep}.
+The results presented in this work supported the findings of the limited value of those systems.
+
+
+
+
+\setchapter{How Well Sentence Embeddings Capture Meaning}
+\label{SentVecMeaning}
+\includepublication{SentVecMeaning}
+
+\setchapter{Novel Perspective}
+\includepublication{NovelPerspective}
+\includepublication{NovelPerspectiveSupp}
+
+
+\setchapter{Learning Distributions of Meant Color}
+\includepublication{ColorDist}
+\includepublication{ColorDistSupp}
+
+
+
+\part{Connecting Classical to Neural Representations}
+\setchapter{Generating BOW from SOWE}
+\includepublication{BOWgen}%{Generating BOW from SOWE}
+\includepublication{BOWgenSupp}%{Generating BOW from SOWE: Supplementary Materials}
+
+\setchapter{Generating Sentences from SOWE}
+\includepublication{SOWE2Sent}
+\includepublication{SOWE2SentSupp}
+
+\setchapter{Finding Word Sense Embeddings of Known Meanings}
+\includepublication{RefittingSenses}
+
+
+\part{Tooling}
+\setchapter{Repeatable Data Setup For Reproducible Data Science}
+\includepublication{DataDeps}
+
+
+\end{document}
