@@ -1,5 +1,5 @@
-\documentclass[twoside,11pt]{article}\usepackage{jmlr2e}
-
+\documentclass[twoside,11pt]{article}
+\usepackage{jmlr2e}
 
 %%%%%%%%%%%
 %Graphics
@@ -54,7 +54,7 @@
 	It is used to automate the data setup part of running software which accompanies a paper to replicate a result.
 	This step is commonly done manually, which expends time and allows for confusion.
 	This functionality is also useful for other packages which require data to function (e.g. a trained machine learning based model).
-	DataDeps.jl simplifies extending research software by automatically managing the dependencies and makes it easier to run another authors code, thus enhancing the reproducibility of data science research.
+	DataDeps.jl simplifies extending research software by automatically managing the dependencies and makes it easier to run another author's code, thus enhancing the reproducibility of data science research.
 \end{abstract}
 
 \begin{keywords}
@@ -63,39 +63,66 @@ data management;  reproducible science; continuous integration, JuliaLang
 
 \section{Introduction}
 
-In the movement for reproducible data and computational sciences there have been two key additional requests from authors:
-1. Make your research code public, 2. Make your data public \citep{lookafterdata}.
-In practice however, this alone is not enough to ensure that even the purely computational results can be replicated.
-To get another author's code running on a new machine is often non-trivial.
-One is more likely to see errors preventing the code from running, than in the results.
-One aspect of this is the data setup, how to acquire the data, and how to connect it to the code.
+In the movement for reproducible sciences there have been two key requests upon authors:
+\textbf{1.} Make your research code public, \textbf{2.} Make your data public \citep{lookafterdata}.
+In practice this alone is not enough to ensure that results can be replicated.
+To get another author's code running on a your own computing environment is often non-trivial.
+One aspect of this is the data setup step: how to acquire the data, and how to connect it to the code.
 
-DataDeps.jl simplifies the automation of the data setup step for Julia \citep{Julia}  packages and research software.
+DataDeps.jl simplifies the data setup step for software written in Julia \citep{Julia}.
 It allows the code to depend on data, and have that data automatically downloaded as required.
 DataDeps.jl is a compact tool with a single job, following the unix philosophy of doing one job well.
-It increases repeatability of any scientific code that uses data.
-It does this by decreasing the effort to get such a program working on a new system,
-while also decreasing the effort to write the code in the first place.
+It increases replicability of any scientific code that uses data.
+It provides easy to use methods to orchestrate the data setup thus making it simple ot create software that works on a new system without any user effort.
+While it has been argued that the direct replicability of executing the author's code is a poor substitute for independent reproduction \citet{drummond2009replicability},
+we maintain that being able to run the original code is important for understanding, for extension, and for future comparisons.
 
 
-\citet{VabdewakkeReproduceableResearch} distinguishes 6 degrees of reproducibility for scientific code.
-To achieve either of the 2 highest levels,
+\citet{VabdewakkeReproduceableResearch} distinguishes six degrees of replicability for scientific code.
+To achieve either of the two highest levels
 requires that ``The results can be easily reproduced by an independent researcher with at most 15 min of user effort''.
-It is our experience that one can often expend much of that time just on setting up the data.
+It is our experience that one can  expend much of that time just on setting up the data.
 This involves reading the instructions, locating the download link, transferring it to the right location, extracting an archive, and identifying how to inform the script as to where the data is located.
-These tasks are automatable therefore should be automated; to save user time, and remove the opportunity for mistakes, as per the key practice identified by \citet{10.1371/journal.pbio.1001745} ``let the computer do the work''.
+These tasks are automatable and therefore should be automated; to save user time and remove the opportunity for mistakes, as per the key practice identified by \citet{10.1371/journal.pbio.1001745} ``let the computer do the work''.
 
-Automating the data setup is part of achieving full automation of the setup in  a new environment.
-DataDeps.jl handles the setup of data dependencies in Julia, while BinDeps.jl (and other packages) handle the binary software dependency.
-The automation of the full setup is required to make automated testing possible, for example using Continuous Integration testing services, such as TravisCI or AppVeyor. Automated testing is already ubiquitous in use amongst researchers and developers using Julia, but rarely for parts where data is involved.
-If the full setup can be automated, such that it can run on a clean CI environment,
-it is almost certain that any human trying to reproduce your work 
-using your code will be able to do so with little effort.
-
-
+Automating the data setup is part of achieving full automation of the setup in a new environment.
+DataDeps.jl handles the data dependencies, while Pkg
+ and BinDeps.jl\footnote{\url{https://docs.julialang.org/en/stable/stdlib/pkg/}, \url{https://github.com/JuliaLang/BinDeps.jl}}
+ (etc.) handle the software dependencies.
+This makes automated testing possible, e.g., using services such as 
+TravisCI or AppVeyor.\footnote{\url{https://travis-ci.org/}, \url{https://ci.appveyor.com/}}
+Automated testing is already ubiquitous amongst julia users, but rarely for parts where data is involved.
+If the full deployment process can be automated, much more testing can be run on a clean continuous integration environment.
 
 
 \section{DataDeps.jl}
+\subsection{Three common issues about research data}\label{sec:issues}
+DataDeps.jl is designed around solving common issues researchers have with their file-based data.
+The three key problems that it is particularly intended to address are:
+
+\begin{description}
+	\item[Storage location:] Where do I put it? \label{itm:where}
+	Should it be on the local disk (small) or the network file-store (slow)?
+	If I move it, am I going to have to reconfigure things>
+	\item[Redistribution:] I don't own this data, am I allowed to redistribute it? \label{itm:ownredistribute} 
+	How will I give credit, and ensure the users know who the original creator was?
+	\item[Replication:] How can I be sure that someone running my code has the same data?
+	What if they download the wrong data, or extract it incorrectly?
+	What if it gets corrupted or modified?
+\end{description}
+
+\subsection{Similar Tools}
+For python: Quilt\footnote{\url{https://github.com/quiltdata/quilt}} is a loosely similar tool.
+In contrast to DataDeps.jl quilt uses a centralised data-store, to which users upload the data, and they can then download and install the data as a software package.
+Uploading the data to the centralised Quilt data store \textbf{Redistribution} issues are made worse, further it is a single point of failure, that can not be easily replaced.
+If the Quilt server goes down all packages depending on quilt break, and it can not be fixed without recreating all of Quilt's  infrastructure
+If an original URL referenced using DataDeps.jl goes down, only software using that URL breaks, and it can be fixed by rehosting the data at a new URL and updating.
+
+Quilt does offer a number of advantages over DataDeps.jl:
+additional convince methods for the file formats quilt can parse,
+and also handling data versioning.
+At present DataDeps.jl does not handle versioning, being more focused on static data.
+
 \subsection{Ecosystem}
 
 \begin{figure}
@@ -103,76 +130,60 @@ using your code will be able to do so with little effort.
 	\resizebox{!}{0.15\paperheight}{%
 		\begin{tikzpicture}[]
 		\node[ellipse, thick, draw, inner sep = 3] (datadeps) {\textbf{DataDeps.jl}};
-		\node[matrix, xshift=3cm, below right = 1 of datadeps, draw, column sep=15, row sep=7] (datasetpackages) {
+		\node[matrix, xshift=3cm, below right = 0.5 of datadeps, draw, column sep=15, row sep=7] (datasetpackages) {
 			\node{\textbf{Dataset packages}}; \\
 			\node[draw,ellipse]{MLDatasets.jl};\\
 			\node[draw,ellipse]{CorpusLoaders.jl}; \\
 			\node{\phantom{M} \ldots \phantom{M}};\\
 		};
-		\node[matrix, xshift=-3cm, below left = 1 of datadeps, draw, column sep=15] (packages) {
+		\node[matrix, xshift=-3cm, below left = 0.5 of datadeps, draw, column sep=15] (packages) {
 			\node{\textbf{Packages}}; \\
 			\node{\textbf{needing data}}; \\
 			\node[draw,ellipse]{WordNet.jl}; \\
 			\node{\phantom{M} \ldots \phantom{M}};\\
 		};
-		\node[ellipse, draw, inner sep = 3, below = 5 of datadeps] (researchcode) {Research Scripts/Software};
+		\node[ellipse, draw, inner sep = 3, below = 3 of datadeps] (researchcode) {Research Scripts/Software};
 		
-		\path[->,draw] (datadeps) edge node{raw data} (packages);
-		\path[->,draw] (packages) edge node{functionality} (researchcode);
-		\path[->,draw] (datadeps) edge node{raw data} (datasetpackages);
-		\path[->,draw] (datasetpackages) edge node[xshift=10]{processed/loaded data} (researchcode);
-		\path[->,draw] (datadeps) edge node{raw data} (researchcode);	
+		\path[->,draw] (datadeps) edge node[sloped,above]{raw data} (packages);
+		\path[->,draw] (packages) edge node[sloped,above]{functionality} (researchcode);
+		
+		\path[->,draw] (datadeps) edge[above] node[sloped,above]{raw data} (datasetpackages);
+		\path[->,draw] (datasetpackages) edge[above] node[sloped,above, xshift=-0.2cm, yshift=0.1cm]{processed/loaded data} (researchcode);
+		
+		\path[->,draw] (datadeps) edge node[sloped,above]{raw data} (researchcode);	
 		\end{tikzpicture}
 	}
-	\caption{The package ecosystem using DataDeps.jl. DataDeps.jl can be used directly by research code to produce data; or it can be used indirectly by making use of a package which uses DataDeps.jl to manage its data dependencies. \label{fig:eco}}
+	\caption{How DataDeps.jl fits into the package ecosystem around data. The referenced packages currently exist and are using DataDeps.jl.\label{fig:eco}}
 \end{figure}
 
-As shown in \Cref{fig:eco}, DataDeps.jl exists as a higher level dependency.
-Some research code employing commonly used datasets will not directly use DataDeps.jl at all;
-rather it will depend on a dataset loading package such as MLDatasets.jl,
-or CorpusLoaders.jl, which in turn use DataDeps.jl as their back-end to actually manage their data.
-These dataset packages provide a more friendly access to data that has been cleanly loaded into Julia data structures.
-For more obscure, or self-created data sets the research code would employ DataDeps.jl directly, and handle the loading of the data itself.
-Finally, DataDeps.jl is also used by packages which require data to perform their functionality.
-Examples include WordNet.jl which provides functions for non-trivial lookups on the WordNet \citep{miller1995wordnet} database,
-or any packages which require a trained machine-learning based model -- the data in this case being the serialised model.
+DataDeps.jl is part of a package ecosystem as shown in \Cref{fig:eco}.
+DataDeps.jl can be used directly by research software, to access the data they depend upon for e.g. evaluations.
+For many standard datasets, packages such as MLDatasets.jl\footnote{\url{https://github.com/JuliaML/MLDatasets.jl}}
+ provide more convenient accesses with suitable preprocessing.
+These dataset loading packages currently use DataDeps.jl as a back-end.
+Research code also might use DataDeps.jl indirectly by making use of packages, such as WordNet.jl\footnote{\url{https://github.com/JuliaText/WordNet.jl}}
+ (see \Cref{sec:research-tool-wordnetjl}), which currently use DataDeps.jl to load the data they depend on.
 Packages and research code alike depend on data, and DataDeps.jl exists to fill that need.
 
-\subsection{Three common questions about research data}
-DataDeps.jl is designed around solving common issues researchers have with their file-based data.
-The three questions it is particularly intended to address are:
-
-\begin{description}
-	\item[Storage location:] Where do I put it? \label{itm:where}
-		Should it be on the local disk (small) or the network file-store (slow)?
-		If I move it, I'm going to have to reconfigure things.
-	\item[Redistribution:] Is it ok to include it with my work? \label{itm:ownredistribute} I don't own copyright on this data.
-		Am I allowed to redistribute this data?
-		What if people getting the data from me as part of my experiments don't realize the original creator?
-	\item[Replication:] How can I be sure someone running my code has the same data?
-	It is possible for later users to download the wrong data
-	It is possible for data to be corrupted, or modified (even maliciously).
-\end{description}
 
 \subsection{Functionality}
-When declaring a data dependency the developer needs only to declare a data registration block.
-For a normal data dependency this is a small piece of code consisting of:
-
+A data dependency is defined using a registration block.
+The information in this block is used to solve the issues highlighted in \Cref{sec:issues}.
+This code normally consists of:
 \begin{description}
 	\item[Name] used to refer to the dependency in code, as in the described \datadep{NAME}. 
-	This solves the \textbf{Storage Location} issues, as will be discussed below data is referred to by name, not by path.
-	\item[Remote path] a path or a list of paths (normally URLs) to remote copies of the data. By fetching the data from a remote location, the issues of \textbf{Redistribution} are avoided, as you are not distributing data merely using existing links.
-	\item[Message] to be displayed to the user before any download occurs,  allows the user to be informed of the data's true origin, and display other key info like papers about the data to be cited. Solving the other main \textbf{Redistribution} concern.
-	\item[Checksum] for the files being fetch. This, together with the automation of the whole process, solves the \textbf{Replication} issue, 
-	ensuring the data the user receives is as it was when the software was developed.
-	\item[Post fetch method] a function  (or list of functions) to call on the fetched files. Most commonly used to unpack an archive. This completes the automation of data setup, contribution towards the \textbf{Replication} issue.
+	This solves the \textbf{Storage Location} issues, as the data is referred to by name, not by path.
+	\item[Remote path] to fetch the data from. By fetching the data issues of \textbf{Redistribution} are avoided, as data is not being redistributing data with the code, but fetched using the normal links.
+	\item[Message] to be displayed to the user before any download occurs:  allowing the user to be informed of the data's true origin, with other key information such as papers to be cited. This prompt solves the  \textbf{Redistribution} concern of giving proper credit.
+	\item[Checksum] for the files being fetched. This solves the \textbf{Replication} issue of ensuring the data that the user receives is exactly as it was when the script was created.
+	\item[Post fetch method] to be executed on the fetched files. Most commonly this is used to unpack an archive, but it can also be used to perform preprocessing. This allows complete automation, avoiding the \textbf{Replication} issues related to user mistakes.
 \end{description}
-\noindent The registration block is effectively metadata, instructing on how to obtain the data.
+\noindent The registration block is effectively executable metadata, instructing on how to obtain the data.
 
 Once the data dependency has been declared using the registration block, it can be referred to by name using a datadep string, written \datadep{Name}.
-It can be treated just like it were an absolute path to the data, however it is actually a a string macro.
+It can be treated just like it were an absolute path to the data, however it is actually a string macro.
 At compile time it is replaced with a block of code which performs the operation shown in \Cref{fig:block}.
-It always resolves to a being a string to an absolute path to the data, even if that means it must download the data first.
+The value of this expression is always an absolute path string to the data, even that means the data must be download and placed at that path first.
 
 
 \begin{figure}
@@ -194,7 +205,7 @@ It always resolves to a being a string to an absolute path to the data, even if 
 		\path (search)  edge node[sloped,below]{datadep} node[sloped,above]{Not Found}  (msg);
 		\path (msg)	edge[below] node{remote paths} node[above]{Accept}  (fetch);
 		\path (fetch)	edge[below] node{local paths}  (checksum);
-		\path (checksum)	edge node[below]{local paths} node[above]{Success\\/Ignored} (postfetch);
+		\path (checksum)	edge node[below]{local paths} node[above]{Succeeded\\/Ignored} (postfetch);
 		\path (postfetch)	edge (end);
 		\path (search) edge node[above]{Found} node[below]{local path} (end);
 		
@@ -208,78 +219,69 @@ It always resolves to a being a string to an absolute path to the data, even if 
 		\path (checksum) edge node[above, sloped]{Failed}  (err2);
 		\end{tikzpicture}
 	}
-	\caption{The core process for resolving a data dependency. \label{fig:block}
+	\caption{The process that is executed when a data dependency is accessed by name.		
+		 \label{fig:block}
 	}
 \end{figure}
 
 
 DataDeps.jl is primarily focused on public, static data.
-For researchers who are using private data, or collecting that data while developing the scripts a manual option is provided; the registration block here would only include a name and a message. This allows users to manage the data themselves by putting a folder somewhere on the load path. They can still refer to it using the \datadep{Name}. If it is not found, the message is displayed which should include instructions on fetching it manually.
-It its final form during publication the user can upload their data to an archival repository such as DataDryad or FigShare, and update the registration.
-
-The use of archival repositories as the remotepath host should combat URL decay \citep{wren2008url}. Though it remains that URLs in DataDeps.jl are just as vulnerable to URL decay as those in manual instructions.
-Unlike manual instructions however, periodic automated tests can easily be use to confirm if the URLs remain valid.
+For researchers who are using private data, or collecting that data while developing the scripts, a manual option is provided; the registration block here would only include a name and a message. This allows users to manage the data themselves by putting a folder somewhere on the load path. They can still refer to it using the \datadep{Name}.
+During publication the researcher can upload their data to an archival repository and update the registration.
+The use of archival repositories as the remotepath host should combat URL decay \citep{wren2008url}. In general URLs in DataDeps.jl are just as vulnerable to URL decay as those in manual instructions.
+However, periodic automated tests can easily be used to confirm if the URLs remain valid.
 
 
 
 
 \subsection{Case Studies}\label{sec:case-studies}
-\subsubsection{Research Paper: \citet{White2015BOWgen}}
-We criticize our own prior work here: \citet{White2015BOWgen} \footnote{Source code and data provided at \url{http://white.ucc.asn.au/publications/White2016BOWgen/}}.
+\paragraph{Research Paper: \citet{White2015BOWgen}}
+We criticize our own prior work here, so as to avoid casting aspersions on others. 
 While this is our own research, already we have forgotten much of how to set it up and get it running.
 
-The first thing to note is that the additional materials page gives two links to download the source code.
-One with just the code, and the other with the code and all data.
-This is not an uncommon pattern.
-The full version is almost 3Gb in size.
-Most of this is the two corpora \citep{francis1979brown,moviebook}, and the pretrained embeddings from \citet{pennington2014glove}.
-Including the data massively inflates the size of the download, so an user just wanting the source to understand would not wish to download it.
+Two download links are provided:\footnote{Source code and data provided at \url{http://white.ucc.asn.au/publications/White2016BOWgen/}}
+one with just the code, and the other with the code and all 3GB of data.
+The data consists of two corpora \citep{francis1979brown,moviebook}, and the pretrained embeddings from \citet{pennington2014glove}.
+Including the data massively inflates the size of the download, so a user just wanting to read to the source, for understanding, would not wish to download it.
+This is solved by DataDep.jl's feature of only downloading data when (and if) it is required.
 
-The license file goes to pains to explain which files it covers (the source code) and which it does not (the data), and to explain the ownership of the data.
+The license file included with the software goes to pains to explain which files it covers (the source code) and which it does not (the data), and to explain the ownership of the data.
+Using DataDeps.jl the predownload message allows the ownership to be made clear.
 
-Most of the source files have the the paths to the data hard-coded using relative paths, except some which take it as an argument.
-The intimidate consequence is that most parts can be run without intervention if the provided script is run (which passes the file paths where required).
-But it is very fragile to the data being moved.
+The scripts themselves use paths as arguments, with relative paths hard-coded in the the top level script.
+This is fairly robust, unless the data is moved to a different folder relative to the scripts.
+Using DataDeps.jl to refer to the data by name rather than by path would make it robust against data movement.
 
-Using DataDeps.jl would solve many of these problems.
-The size of the download would be just the source files, as the data would be downloaded as required.
-This would mean that only one download would need to be provided: an user that just wants to read the code, without running it would never trigger the download of the data.
-The smaller file-size makes it much easier for the user to move the data, for example downloading it on one work station, then transferring it to another machine for the execution can be done rapidly with any removable media, via network transfer or even via email.
-The need to explain in detail the licensing of the included files would be removed since the data would no longer be included.
-Instead a licensing message would be displayed before they are downloaded -- which in turn means it is more likely to be read.
-The whole package would become more robust against moving the data -- it will be searched for in many locations, and if not found then simply be re-downloaded
+\paragraph{Research Tool: WordNet.jl}\label{sec:research-tool-wordnetjl}
+WordNet.jl is the Julia binding for the WordNet tool \citep{miller1995wordnet}.
+As of PR \#8\footnote{\url{https://github.com/JuliaText/WordNet.jl/pull/8}} it now uses DataDeps.jl.
+To function, it depends on having the WordNet database.
+Previously, after installing the software using the package manager,
+the user had to manually download and set this up.
+Any packages depending on WordNet.jl also would inherit this manual setup problem.
+Now it is handled automatically.
 
-
-\subsubsection{Research Tool: WordNet.jl}
-WordNet.jl is the Julia binding for the WordNet tool \citep{miller1995wordnet}..
-As of PR \#8 \footnote{\url{https://github.com/JuliaText/WordNet.jl/pull/8}} it now uses DataDeps.jl.
-Prior to that 
-Installing the julia code was trivial using the package manager.
-But afterwards the user had to manually download the data.
-This requirement to also propagated to other packages depending upon it.
-Now its data dependencies is all handled automatically.
-
-The WordNet.jl author, prior to the use of DataDeps.jl, expressed many legitimate concerns about other ways of handling the data.
-They worried over including it with the repository inflating the download size, and of it being placed in an unreasonable location on disk.
-They also worried that redistributing it would violate some copyright terms.
-DataDeps.jl solves both these issues.
+Previously, the WordNet.jl author expressed common concerns about handling the data.
+Concerning including it with the repository inflating the download size, and that in including it with the code it would be placed in an unreasonable location on disk.
+They were also worried that redistributing a copy would violate some licensing terms.
+DataDeps.jl solved both of these issues.
 
 The prior manual instructions for downloading and extracting the data included multiple points of possible confusion.
-Extracting the data must correctly take into account that it is both tarballed and gzipped -- common practice amongst linux users, but by no means well known across all potential users.
-The user also had to correctly know that the target direction should be the twice parent directory of the database files.
-With the setup automated no misunderstanding can occur.
+The gzipped tarball must be correctly extracted.
+The user also had to correctly know that the target directory was the \emph{grand-parent} directory of the database files.
+With the setup fully automated, no misunderstanding can occur.
 
 
 \section {Concluding Remarks}
 DataDeps.jl aims to help solve reproducibility issues in data driven research by automating the data setup step.
-It is hoped that by setting up for good practices now for the still young Julia programming language, better scientific code can be written in the future.
-
+It is hoped that by supporting good practices, with tools like DataDeps.jl, now for the still young Julia programming language
+better scientific code can be written in the future .
 
 
 \section{Availability and Requirements}
-DataDeps.jl is verified to work on  Windows 7+, Linux, Mac OS X, with Julia 0.6.
-It depends on HTTP.jl, Reexport.jl, and SHA.jl, which are automatically installed when the package is installed through the normal Julia package manager.
-The source code, documentation, and issue tracker can be found at \url{https://github.com/oxinabox/DataDeps.jl}.
+DataDeps.jl works on  Windows 7+, Linux, and Mac OS X, with Julia 0.6.
+It depends on HTTP.jl, Reexport.jl, and SHA.jl, which are automatically installed.
+The source code, documentation, and issue tracker are at \url{https://github.com/oxinabox/DataDeps.jl}.
 
 \newpage
 \bibliography{master}
