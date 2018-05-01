@@ -1,0 +1,88 @@
+\usepackage{geometry}
+\geometry{a4paper, inner=2cm, outer=2cm, top=2cm, bottom=2cm}
+
+
+\usepackage{xcolor}
+
+\usepackage{standalone}
+\usepackage{pdfpages}
+\usepackage{xparse}
+
+\usepackage{fancyhdr}
+\pagecolor{white}
+\usepackage{pdfpages}
+
+\usepackage{etoolbox}
+
+
+\usepackage{cleveref}
+
+%%%%%%%%%%%%%%%%%%%%
+% Capture name of the part
+
+\newcommand{\parttitle}{}
+\newcommand{\chaptertitle}{}
+\makeatletter
+
+\patchcmd{\@part}% <cmd>
+{\markboth}% <search>
+{\renewcommand{\parttitle}{#1}}% <replace>
+{}{}% <success><failure>
+
+\patchcmd{\@chapter}% <cmd>
+{\markboth}% <search>
+{\renewcommand{\chaptertitle}{#1}}% <replace>
+{}{}% <success><failure>
+\makeatother
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+\fancypagestyle{plain}{%
+	\fancyhf{} % clear all header and footer fields
+	\fancyfoot[RO,LE]{\thepage}
+	\renewcommand{\headrulewidth}{0pt}
+	\renewcommand{\footrulewidth}{0pt}}
+
+\pagestyle{fancy}
+	\fancyhf{}
+	\fancyhead[L]{\parttitle}
+	\fancyhead[R]{\chaptertitle}
+	\fancyfoot[RO,LE]{\thepage}
+
+
+
+\DeclareDocumentCommand{\includepublication}{O{-} m}{
+	\def\pubfile{#2}
+	\def\pages{#1}
+
+	\definecolor{randomcolor}{RGB}
+	{
+		\pdfuniformdeviate 256,
+		\pdfuniformdeviate 256,
+		\pdfuniformdeviate 256
+	}%
+	\pagecolor{randomcolor!20!white}
+	
+	\includepdf[%
+		pages={#1},% can't use \pages inside []
+		frame=true, %
+		scale=0.8, %
+		pagecommand={\pagestyle{fancy}}, %
+		]{publications/\pubfile.pdf}
+	\nopagecolor
+}
+
+
+\DeclareDocumentCommand{\setchapter}{s m}{
+	\renewcommand{\chaptertitle}{#2}
+	\IfBooleanTF{#1}{
+		\addcontentsline{toc}{chapter}{#2}
+	}%
+	{
+		\refstepcounter{chapter}
+		\addcontentsline{toc}{chapter}{\protect\numberline{\thechapter}#2}
+	}
+
+}
