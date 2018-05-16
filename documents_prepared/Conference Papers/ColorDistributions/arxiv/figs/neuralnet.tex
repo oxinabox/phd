@@ -1,0 +1,71 @@
+\documentclass{standalone}
+\graphicspath{figs, .}
+\usepackage{verbatim}
+\usepackage{tikz}
+\usetikzlibrary{positioning, fit,  shapes.geometric}
+\usepackage{graphicx}
+
+\begin{document}
+
+\newcommand{\picwidth}{60pt}
+\begin{tikzpicture}[%
+	node distance=1cm and 1.5cm,
+	every text node part/.style= {
+		align=center
+	},
+	word/.style= {
+		blue,
+    	font=\itshape,
+    },
+	layer/.style= {rectangle, black,
+		draw
+    },
+]
+	
+	\node (hiddenoutput)[layer] at (0,0) {ReLU};
+	\node (GRU1)[layer, below = of hiddenoutput]{GRU};
+	
+	\foreach[count=\i from 1] \j in {2,...,4}
+	{
+		\node (GRU\j)[layer, left = of GRU\i]{GRU};
+		\draw[->] (GRU\j) to (GRU\i);
+	}
+	
+	\foreach[count=\i from 1] \word in {green, ish, blue, light}
+	{
+		\node (emb\i)[layer, below = of GRU\i]  {Embedding};
+		\node (word\i)[word, below = of emb\i]{\word};
+	    \draw[->] (word\i) to  (emb\i);
+    	\draw[->] (emb\i) to (GRU\i);
+		\node[draw,dotted,fit= (emb\i)  (word\i)  (GRU\i)] {};
+	}
+	
+    
+	\draw[->] (GRU1) to (hiddenoutput);
+
+	\node(outHue)[layer, above left = of hiddenoutput] {Softmax};
+	\node(outSaturation)[layer, above = of hiddenoutput] {Softmax};
+	\node(outValue)[layer, above right = of hiddenoutput] {Softmax};
+
+	\foreach \p in {Hue, Saturation, Value} 
+	{
+		\draw[->] (hiddenoutput) to (out\p);
+		
+		\node(plot\p)[above = of out\p, text width=\picwidth]{
+			\includegraphics[width=\picwidth]{netdia/\p}
+			\\
+			\p
+			};
+		\draw[->] (out\p) to (plot\p);
+	}
+
+%
+
+
+
+
+
+\end{tikzpicture}
+
+
+\end{document}
