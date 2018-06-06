@@ -10,8 +10,22 @@
 
 \usepackage{tikz}
 \usetikzlibrary{positioning, fit,  shapes.geometric}
-\usepackage{graphicx}
+\tikzset{
+	node distance=1cm and 1.5cm,
+	every text node part/.style= {
+		align=center
+	},
+	word/.style= {
+		blue,
+		font=\itshape,
+	},
+	layer/.style= {rectangle, black,
+		draw
+	}
+}
 
+
+\usepackage{graphicx}
 \graphicspath{{./figs/}, {./}}
 
 
@@ -22,6 +36,8 @@
 \usepackage{mathtools}
 \DeclareMathOperator*{\argmin}{arg\,min}
 \DeclareMathOperator*{\argmax}{arg\,max}
+
+
 
 
 \usepackage{cleveref}
@@ -35,6 +51,11 @@
 \newcommand{\textcite}{\citet}
 
 
+%%%%%%%%%%%%%
+
+
+\newcommand{\natlang}[1]{\texttt{#1}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %opening
 \title{Estimating Intended Color from its name}
 \author{Lyndon White, %
@@ -73,6 +94,10 @@ Our model is able to predict reasonable distributions for these cases, as evalua
 
 
 
+
+
+
+
 \section{Method}
 \subsection{Tokenization}
 For all the term based methods, we perform tokenization.
@@ -81,7 +106,7 @@ Tokenization
 \subsection{HSV color-space}
 
 \section{Distribution Estimation}
-\subsubsection{The conditional independence assumption}\label{sec:conditional-independence-assumption}
+\subsection{The conditional independence assumption}\label{sec:conditional-independence-assumption}
 \subsection{Discretization}
 For distribution estimation, our models are trained to output histograms.
 By making use of the conditional independence assumption \Cref{sec:conditional-independence-assumption},
@@ -101,6 +126,7 @@ We make use of the \textcite{silverman1982algorithm}
 
 
 
+
 \section{Experimental Setup}
 
 \subsection{Input Modules}
@@ -117,7 +143,37 @@ To baseline the performance of our models we propose
 \paragraph{Histogram Baseline (Distribution Estimation, only)}
 \paragraph{Mean Squared Error Baseline (Point Estimation, only)}
 
+\subsection{Datasets}
 
+
+\subsubsection{Full Training and Testing set}
+\subsubsection{Extrapolation Training and Testing Set}
+The primary goal in constructing using the term based models is to be able to make predictions for never before seen descriptions of colors.
+For example, based on the learned understanding of \texttt{salmon} and of \texttt{bright}, from examples like \texttt{bright green} and \texttt{bright red}, we wish for the systems to make predictions about \texttt{bright salmon}, even though that description never occurs in the training data.
+%
+To evaluate this generalisation capacity, we define an extrapolation sub-dataset for both testing and training.
+This is defined by selecting the rarest 100 color descriptions from the full dataset,
+with the restriction that every token in a selected description must still have at least 8 uses in other descriptions in the training set.
+The selected examples include multi-token descriptions such as: \texttt{bright yellow green} and also single tokens that occur more commonly as modifiers than as stand-alone descriptions such as \texttt{pale}.
+
+The extrapolation training set is made up of the data from the full training set, excluding those  corresponding the the rare descriptions.
+Similar is done for the development set, so as no direct knowledge of the combined terms can leak during early-stopping.
+Conversely, the extrapolation test set is made up of only the observations from the full test set that do use those rare descriptions.
+
+
+By training on the extrapolation training set and testing on the extrapolation test set, we can assess the capacity of the models to make predictions for color descriptions not seen in training.
+A similar approach was used in \textcite{DBLP:journals/corr/AtzmonBKGC16}.
+We contrast this to the same models when trained on the full training set, but tested on the extrapolation test set, to see how much accuracy was lost.
+
+
+\subsection{Order Testset}
+It is known that the order of words in a color description to some extent matters.
+\natlang{greenish brown} and \natlang{brownish green} are distinct, if similar, colors.
+To assess the models on there ability to make predictions when order matters we construct the order testset.
+This is a subset of the full test set containing only descriptions with terms that occur in multiple different orders.
+There are 76 such descriptions in the full dataset.
+Each of which has exactly one alternate ordering.
+This is unsurprising as while color descriptions may have more than 2 terms, normally one of the terms is a joining token such as \natlang{ish} or \natlang{-}.
 
 
 
@@ -125,13 +181,98 @@ To baseline the performance of our models we propose
 \subsubsection{Distribution Estimation}
 
 For all the distribution estimation systems we investigate here, 
-we consider training both on the direct bin-data,
-and on the smoothed data (as described in )
+we consider training both on the binned-data, and on the smoothed data (as described in \Cref{sec:kernel-density-based-smoothing}).
+Making use of the conditional independence assumption (see \Cref{sec:conditional-independence-assumption}), we output the three discretized distributions.
+This is done using 3 softmax output layers.
+
+The output module for distribution estimation 
+
+Contrasting to estimating continuous conditional distributions, 
+estimating a discrete conditional distributions is a significantly more studied application of neural networks
+-- this is the basic function of any softmax classifier.
+To simplify the problem, we therefore transform it to be a discrete distribution estimation task, by discretizing the color-space.
+Discretization to a resolution of 64 and 256 bins per channel is considered.
+
+
+For the case of the machine learning models, the output is produced using softmax layers.
+
+
+\begin{figure}
+	\newcommand{\picwidth}{60pt}
+	\begin{tikzpicture}
+	
+	\node (input)[layer, dotted]{Input Module};
+	
+	\node(outHue)[layer, above left = of input] {Softmax};
+	\node(outSaturation)[layer, above = of input] {Softmax};
+	\node(outValue)[layer, above right = of input] {Softmax};
+	
+	\foreach \p in {Hue, Saturation, Value} 
+	{
+		\draw[->] (input) to (out\p);
+		
+		\node(plot\p)[above = of out\p, text width=\picwidth]{
+			\includegraphics[width=\picwidth]{netdia/\p}
+			\\
+			\p
+		};
+		\draw[->] (out\p) to (plot\p);
+	}
+	
+	\end{tikzpicture}
+	
+	\caption{The Distribution Output Module \label{fig:distoutmod}}
+\end{figure}
+	
 
 \subsubsection{Point Estimation}
 
 
-
+\begin{figure}
+	\newcommand{\picwidth}{60pt}
+	\begin{tikzpicture}
+	
+	\node (input)[layer, dotted]{Input Module};
+	\node (hiddenout)[layer, above= 1 of input]{ReLU, with output width 4};
+	\draw[->](input) to (hiddenout);
+	
+	\node(outHue)[xshift=-1cm, above = 5 of hiddenout] {$y_{hue}$};
+	\node(outSaturation)[above = 5 of hiddenout] {$y_{sat}$};
+	\node(outValue)[xshift=1cm, above = 5 of hiddenout] {$y_{val}$};
+	
+	\node(Z)[above=0.1cm of hiddenout.north]{};
+	\node(Z2)[layer, left=0cm of Z]{$z_2$};
+	\node(Z1)[layer, left=0.3cm of Z2]{$z_1$};
+	\node(Z3)[layer, right=0cm of Z]{$z_3$};
+	\node(Z4)[layer, right=0.3cm of Z3]{$z_4$};
+	
+	
+	\node(s3)[layer, above=1 of Z3, xshift=0.5cm]{$\sigma$};
+	\node(s4)[layer, above=1 of Z4, xshift=1cm]{$\sigma$};
+	\draw[->](Z3) to (s3) to (outSaturation);
+	\draw[->](Z4) to (s4) to (outValue);
+	
+	
+	\node(AngHue)[layer, below = 1 of outHue, xshift=-0.7cm]{$ \mathrm{atan2}^\ast \left(y_{shue}, y_{chue} \right) $ };
+	\draw[->](AngHue) to (outHue.south);
+	
+	\node(s1)[layer, above=1 of Z1, xshift=-1cm]{$\tanh$};
+	\node(s2)[layer, above=1 of Z2, xshift=-0.5cm]{$\tanh$};
+	\draw[->](Z1) to (s1);
+	\draw[->](s1) to node[left]{$y_{shue}$} (AngHue);
+	\draw[->](Z2) to (s2);
+	\draw[->](s2) to node[right]{$y_{chue}$}  (AngHue);
+	
+	
+	
+	
+	
+	\end{tikzpicture}
+	
+	\caption{The Point Estimate Output Module.
+		Here $ \mathrm{atan2}^\ast$ is the quadrant preserving arctangent, outputting as a regularized angle (as per in all evaluations)
+		 \label{fig:distoutmod}}
+\end{figure}
 
 
 
