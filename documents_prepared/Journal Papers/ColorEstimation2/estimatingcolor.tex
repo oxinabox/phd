@@ -19,7 +19,9 @@
 		blue,
 		font=\itshape,
 	},
-	layer/.style= {rectangle, black,
+	layer/.style= {
+		rectangle, 
+		black,
 		draw
 	}
 }
@@ -102,7 +104,60 @@ Issues of illumination and perceived color based on visual context are considere
 
 
 
+\section{Related Work}\label{sec:related-work}
+The understanding of color names has long been a concern of psycholinguistics and anthropology  \parencite{berlin1969basic,heider1972universals,HEIDER1972337,mylonas2015use}.
+It is thus no surprise that there should be a corresponds field of research in natural language processing.
 
+The earliest works revolve around explicit color dictionaries.
+This includes the ISCC-NBS color system \parencite{kelly1955iscc} of 26 words, including modifiers, that are composed according to a context free grammar such that phrases are mapped to single points in the color-space;
+and the simpler, non-compositional, 11 basic colors of \textcite{berlin1969basic}.
+Works including \textcite{Berk:1982:HFS:358589.358606,conway1992experimental,ele1994computational, mojsilovic2005computational, menegaz2007discrete,van2009learning} which propose methods for the automatic mapping of colors to and from these small manually defined sets of colors.
+We note that \textcite{menegaz2007discrete,van2009learning} both propose systems that discretize the color-space, though to a much courser level than we consider in this work.
+
+
+More recent works, including the work presented here, function with much larger number of colors, larger vocabularies, and larger pools of respondents.
+In particular making uses of the large Munroe dataset \textcite{Munroe2010XKCDdataset}, as we do here.
+This allows a data driven approach towards the modelling.
+
+\textcite{mcmahan2015bayesian} and \textcite{meomcmahanstone:color} present color naming methods, mapping from colors to to their names, the reverse of our task.
+These works are based on defining fuzzy rectangular distributions in the color-space to cover the distribution estimated from the data, which are used in a Bayesian system to non-compositionally determine the color name.
+%
+%\pdfcomment{During the similar time-period another online color naming survey was conducted.
+%\textcite{mylonas2010online,mylonas2012colour} collected a total of 50,000 observations from 2500 respondents in 7 languages.
+%In this work we use the larger, more publically available, Munroe dataset.}
+%
+\textcite{2016arXiv160603821M} maps a point in the color-space, to a sequence of probability estimates over color terms.
+They extends beyond, all prior color naming systems to produce a compositional color namer based on the Munroe dataset.
+Their method uses a recurrent neural network (RNN), which takes as input a color-space point, and the previous output word, and gives a probability of the next word to be output -- this is a conditional language model.
+In this work we tackle the inverse problem to the creation of a conditional language model.
+Our distribution estimation models map from a sequence of terms, to distribution in color space.
+Similarly, our point estimation models map from sequence of terms to single point in color-space.
+
+
+
+\textcite{DBLP:journals/corr/KawakamiDRS16} propose another compositional color naming model.
+They use a per-character RNN and a variational autoencoder approach.
+It is in principle very similar to \textcite{2016arXiv160603821M}, but functioning on a character, rather than a word level.
+The work by Kawakami et al. also includes a method for generating colors.
+However they only consider the generation of point estimated, rather than distributions.
+The primary focus of our work is on generating distributions.
+The datasets used by Kawakami et al. contain only very small numbers of observations for each color name (often just one).
+These datasetsare thus not suitable for modelling the distribution in color space as interpreted by the population.
+Further, given the very small number of examples they are not well suited for use with word-based modelling: the character based modelling employed by Kawakami et al. is much more suitable.
+As such we do not attempt comparison to their work.
+
+
+\textcite{DBLP:journals/corr/MonroeHGP17} presents a neural network solution to a communication game, where a speaker is presented with three colors and asked to describe one of them, and the listener is to work out which is being described.
+Speaker and listener models are trained, using LSTM-based decoders and encoders respectively.
+The final time-step of their model produces a 100 dimensional representation of the description provided.
+From this, a Gaussian distributed score function is calculated, over a high dimensional color-space from \textcite{2016arXiv160603821M}, which is then used to score each of the three options.
+While this method does work with a probability distribution, as a step in its goal,
+this distribution is always both symmetric and unimodal -- albeit in a high-dimensional color-space.
+
+The generation of color from text has not received a signficant ammount of attention in prior work.
+In particular the generation of probability distributions in color space, to our knowledge has not been considered at all.
+Conversely, there has been several works on the reverse problem: the generation of a textual name for a color from color space point.
+The work presented here closed that gap.
 
 Consider that the word \texttt{tan} may mean one of many colors for different people in different circumstances: ranging from the bronze of a tanned sunbather, to the brown of tanned leather;
 \texttt{green} may mean anything from \texttt{aquamarine} to \texttt{forest green};
@@ -173,6 +228,20 @@ One of it's important advantages over other color spaces is that it best meets t
 
 
 \section{Distribution Estimation}
+\subsection{Conditional Independence Assumption}\label{sec:conditional-independence-assumption}
+We make the assumption that given the name of the color, the distribution of the H, S and V channels are independent.
+That is to say, it is assumed if the color name is known, then  knowing the value of one channel would not provide any additional information as to the value of the other two channels.
+The same assumption is made, though not remarked upon, in \textcite{meomcmahanstone:color} and \textcite{mcmahan2015bayesian}.
+This assumption of conditional independence allows considerable saving in computational resources.
+Approximating the 3D joint distribution as the product of three 1D distributions decreases the space complexity from $O(n^3)$ to $O(n)$ in the discretized step that follows.
+
+Superficial checks were carried out on the accuracy of this assumption.
+Spearman's correlation on the training data suggests that for over three quarters of all color names, there is only weak correlation between the channels (\mbox{Q3 = 0.187}).
+However, this measure underestimates correlation for values that have circular relative value, such as hue.
+HSV had the lowest correlation by a large margin of the 16 color-spaces evaluated.
+Full details, including the table of correlations, are available in supplementary materials.
+These results are suggestive, rather than solidly indicative, on the degree of correctness of the conditional independence assumption.
+We consider the assumption sufficient for this investigation.
 
 \subsection{Discretization}
 For distribution estimation, our models are trained to output histograms.
@@ -271,7 +340,7 @@ Using a simple sum of word embeddings as a layer in a neural network is less typ
 Though it is well established as a useful representation, and has been used an input to other classifiers such as support vector machines. \pdfcomment{Cite some papers, e.g. mine where this is done.}
 Any number of word embeddings can be added to the sum.
 However, it has no representation of the order.
-The structure we used is shown in \Cref{fig:sowemod}
+The structure we used is shown in \Cref{fig:sowemod}.
 
 \begin{figure}
 	\begin{tikzpicture}
