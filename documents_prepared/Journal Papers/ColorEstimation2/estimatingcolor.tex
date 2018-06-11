@@ -209,20 +209,41 @@ through-out this work.
 We use the format which the data is originally provided in.
 In this format hue, saturation and value all range between zero and one.
 Unlike many other colors spaces (CIELab, Luv etc.) the gamut is square.
-This regular space means that errors on all channels can be considered equally, and unlike other .
-Though when working with the hue, all measures need to take into account the wrap-around effect.
+This regular space means that errors on all channels can be considered equally, and unlike other color spaces.
+The scaling of hue in particular to be between zero and one (like the other channels) makes the modelling task more consistent as were the hue to range between $0$ and $2\pi$ it would be over-weighted compared to the other channels.
+
+When working with the hue, all measures need to take into account the wrap-around effect.
 When ever we refer to mean squared error, mean or mode on the HSV space in this paper, we are referring to the angularly corrected forms given in \Cref{sec:angularly-correct}.
 
 
 Unlike the RGB color space, the HSV channels do correspond to how humans perceive colors.
-Though it is not a perceptionally uniform color space across hue (unlike CIELab), which does suggest using mean squared error for the point estimates is not optimal.
+However, it is not designed to be a perceptionally uniform color space across hue (unlike CIELab), which does suggest using mean squared error for the point estimates is not optimal.
 However, given the other issues outlined above with point estimates we do not judge this a major concern.
-There are no such issues for our 
+There are no such issues for our distribution estimations.
 
 One of it's important advantages over other color spaces is that it best meets the assumption that for a given color name each channel is statistically independent.
-\subsubsection{The conditional independence assumption}\label{sec:conditional-independence-assumption}
 
 \subsection{Angularly Correct Calculations on HSV}\label{sec:angularly-correct}
+When performing calculations with the HSV color space it is important to take into account that hue is an angle.
+As we are working with the color space regularized to range between zero and one for all channels,
+this means a hue of one and a hue of zero are equivalent (in radian's this would be $0$ and $2\pi$).
+
+The square error of two hue values is thus calculated as
+\begin{equation}
+SE(h_1, h_2) = \min \big( \left(h_1 - h_2 \right)^2, \, \left(h_1 - h_2 -1 \right)^2  \big)
+\end{equation}
+(using radians the $-1$ would be $-2\pi$)
+to take into account the error could be calculated clockwise or counter clockwise.
+
+
+The mean of a series of  $N$ hue values is calculated as 
+\begin{equation}
+\bar h = \mathrm{atan2} \Bigg(%
+	\frac{1}{N} \sum_{i=1}^{i=N} \sin (h_i), \,  %
+	\frac{1}{N} \sum_{i=1}^{i=N} \cos (h_i)%
+\Bigg)%
+\end{equation}
+As we are using the regularized angle, we use the regularized versions of the trigonometric functions (though this shift is no different from degrees to radians).
 
 
 
@@ -245,8 +266,7 @@ We consider the assumption sufficient for this investigation.
 
 \subsection{Discretization}
 For distribution estimation, our models are trained to output histograms.
-By making use of the conditional independence assumption \Cref{sec:conditional-independence-assumption},
-we output one histogram per channel.
+By making use of the conditional independence assumption \Cref{sec:conditional-independence-assumption}, we output one histogram per channel.
 
 
 \subsection{Kernel-Density Based Smoothing}\label{sec:kernel-density-based-smoothing}
@@ -287,7 +307,8 @@ This embedding layer maps from tokenized words to vectors.
 We make use of 300d pretrained FastText embeddings \textcite{bojanowski2016enriching}\footnote{Available from \url{https://fasttext.cc/docs/en/english-vectors.html}}.
 
 The embeddings are not trained during the task, but are kept fixed.
-The layers above allow for arbitrary non-linear transform of the result.
+As per the universal approximation theorem \parencite{leshno1993uat, SONODA2017uat} the layers above allow for arbitrary non-linear continuous transformation.
+
 
 
 
@@ -434,6 +455,14 @@ To baseline the performance of our models we propose
 
 
 \subsubsection{Full Training and Testing set}
+We make use of the  Munroe dataset as prepared by \textcite{mcmahan2015bayesian} from the results of the XKCD color survey.
+The XKCD color survey \parencite{Munroe2010XKCDdataset}, collected over 3.4 million observations from over 222,500 respondents.
+McMahan and Stone take a subset from Munroe's full survey, by restricting it to the responses from native English speakers, 
+and removing very rare color names with less than 100 uses.
+This gives a total of 2,176,417 observations and 829 color names. 
+They also define a standard test, development and train split.
+
+
 \subsubsection{Extrapolation Training and Testing Set}
 The primary goal in constructing using the term based models is to be able to make predictions for never before seen descriptions of colors.
 For example, based on the learned understanding of \texttt{salmon} and of \texttt{bright}, from examples like \texttt{bright green} and \texttt{bright red}, we wish for the systems to make predictions about \texttt{bright salmon}, even though that description never occurs in the training data.
@@ -453,7 +482,7 @@ A similar approach was used in \textcite{DBLP:journals/corr/AtzmonBKGC16}.
 We contrast this to the same models when trained on the full training set, but tested on the extrapolation test set, to see how much accuracy was lost.
 
 
-\subsection{Order Testset}
+\subsection{Order Testing set}
 It is known that the order of words in a color description to some extent matters.
 \natlang{greenish brown} and \natlang{brownish green} are distinct, if similar, colors.
 To assess the models on there ability to make predictions when order matters we construct the order testset.
@@ -513,25 +542,43 @@ For the case of the machine learning models, the output is produced using softma
 	
 
 \subsubsection{Point Estimation}
+Our point estimation output model for the neural network is shown in \Cref{fig:pointoutmod}.
+The hidden-layer from the top of the input module is feed to an 4 single output neurons.\footnote{Equivalently these 4 single neurons can be expressed as a layer with 4 outputs and 2 different activation functions.}
+Two of these are used the sigmoid activation function (range 0:1) to produce the outputs for the saturation and value channels.
+The other two use the tanh activation function (range -1:1), they produce the intermediate output that we call $y_{shue}$ and $y_{chue}$ for the sine and cosine of the hue channel respectively.
+We use these intermediate values when calculated this loss function as it results in a loss function that is continuous and correctly handles the wrap-around nature of the hue channel.
+
+During training we use the following loss function for each observation $y^\star$, and each corresponding prediction $y$.
+\begin{align}
+loss &= %
+\frac{1}{2} \left(\sin(y^\star_{hue}) - y_{shue} \right)^2  \\
+&+ \frac{1}{2} \left(\cos(y^\star_{hue}) - y_{chue} \right)^2  \\
+&+ \left(y^\star_{sat} - y_{sat} \right)^2 \\
+&+ \left(y^\star_{val} - y_{val} \right)^2 %
+\end{align}
+This mean of this loss is taken over all observations in each mini-batch during training.
+
+
+
 
 
 \begin{figure}
 	\newcommand{\picwidth}{60pt}
 	\begin{tikzpicture}
 	
-	\node (input)[layer, dotted]{Input Module};
-	\node (hiddenout)[layer, above= 1 of input]{ReLU, with output width 4};
-	\draw[->](input) to (hiddenout);
+	\node (hiddenout)[layer, dotted]{Input Module};
+	%\node (hiddenout)[above= 1 of input]{Affine with output width 4};
+	%\draw[->](input) to (hiddenout);
 	
 	\node(outHue)[xshift=-1cm, above = 5 of hiddenout] {$y_{hue}$};
 	\node(outSaturation)[above = 5 of hiddenout] {$y_{sat}$};
 	\node(outValue)[xshift=1cm, above = 5 of hiddenout] {$y_{val}$};
 	
-	\node(Z)[above=0.1cm of hiddenout.north]{};
-	\node(Z2)[left=0cm of Z]{$z_2$};
-	\node(Z1)[left=0.3cm of Z2]{$z_1$};
-	\node(Z3)[right=0cm of Z]{$z_3$};
-	\node(Z4)[right=0.3cm of Z3]{$z_4$};
+	\node(Z)[above=-0.2cm of hiddenout.north]{};
+	\node(Z2)[left=0cm of Z]{};%{$z_2$};
+	\node(Z1)[left=0.3cm of Z2]{};%{$z_1$};
+	\node(Z3)[right=0cm of Z]{};%{$z_3$};
+	\node(Z4)[right=0.3cm of Z3]{};%{$z_4$};
 	
 	
 	\node(s3)[layer, above=1 of Z3, xshift=0.5cm]{$\sigma$};
@@ -540,7 +587,7 @@ For the case of the machine learning models, the output is produced using softma
 	\draw[->](Z4) to (s4) to (outValue);
 	
 	
-	\node(AngHue)[layer, below = 1 of outHue, xshift=-0.7cm]{$ \mathrm{atan2}^\ast \left(y_{shue}, y_{chue} \right) $ };
+	\node(AngHue)[layer, below = 1 of outHue, xshift=-0.7cm]{$ \mathrm{atan2} \left(y_{shue}, y_{chue} \right) $ };
 	\draw[->](AngHue) to (outHue.south);
 	
 	\node(s1)[layer, above=1 of Z1, xshift=-1cm]{$\tanh$};
@@ -557,8 +604,8 @@ For the case of the machine learning models, the output is produced using softma
 	\end{tikzpicture}
 	
 	\caption{The Point Estimate Output Module.
-		Here $ \mathrm{atan2}^\ast$ is the quadrant preserving arctangent, outputting as a regularized angle (as per in all evaluations)
-		 \label{fig:distoutmod}}
+		Here $\mathrm{atan2}$ is the quadrant preserving arctangent, outputting as a regularized angle (as per in all evaluations).
+		 \label{fig:pointoutmod}}
 \end{figure}
 
 
