@@ -1,6 +1,7 @@
 \documentclass[11pt,a4paper]{article}
 \usepackage[author={Lyndon}]{pdfcomment}
 
+
 \usepackage{booktabs}
 \usepackage{pgfplotstable}
 \pgfplotsset{compat=1.14}
@@ -26,6 +27,10 @@
 	}
 }
 
+% Center all floats
+\makeatletter
+\g@addto@macro\@floatboxreset{\centering}
+\makeatother
 
 \usepackage{graphicx}
 \graphicspath{{./figs/}, {./}}
@@ -95,9 +100,57 @@ Our model is able to predict reasonable distributions for these cases, as evalua
 
 Color understanding is an important subtask in natural language understanding.
 It is a challenging domain, due to ambiguity, multiple roles taken by the same words, the many modifiers, and shades of meaning.
+In many ways it is a grounded microcosm of natural language understanding.
 Due to its difficulty, texts containing color descriptions such as \texttt{the flower has petals that are bright pinkish purple with white stigma} are used as demonstrations for state of the art image generation systems \parencite{reed2016generative, 2015arXiv151102793M}.
 The core focus of the work we present here is addressing these linguistic phenomena around the descriptions of the color, in a single patch, as represented in a color-space such as HSV \parencite{smith1978color}.
 Issues of illumination and perceived color based on visual context are considered out of the scope.
+We evaluated a variety of neural-network based systems, for their capacity to be used for this natural language understanding task.
+We believe the results are suggestive to the capacity of these systems for other similar tasks involving short token sequences.
+\pdfcomment{Rui has a paper for neural represenstation of phrases. Maybe I should link into that}
+
+
+Consider that the word \texttt{tan} may mean one of many colors for different people in different circumstances: ranging from the bronze of a tanned sunbather, to the brown of tanned leather;
+\texttt{green} may mean anything from \texttt{aquamarine} to \texttt{forest green};
+and even \texttt{forest green} may mean the rich shades of a rain-forest, or the near grey of the Australian bush.
+Thus the color intended cannot be uniquely inferred from the color name.
+Without further context, it does nevertheless remain possible to estimate likelihoods of which colors are be intended based on the population's use of the words.
+The primary aim of this work is to map a sequence of color description words to a probability distribution over a color-space.
+This is required for a proper understanding of color language.
+We also consider the more basic point estimation of colors, though we question its value.
+
+
+Proper understanding requires considering \emph{the color intended} as a random variable.
+In other words, a color name should map to a distribution, not just a single point or region.
+For a given color name, any number of points in the color-space could be intended, with some being more or less likely than others.
+Or equivalently, up to interpretation, it may intend a region but the likelihood of what points are covered is variable and uncertain.
+This distribution is often multimodal and has high and asymmetrical variance, which further renders regression to a single point unsuitable.
+We do produce results point estimate results for interest in \Cref{sec:results-point-est}, however for any form of precise work the use of such systems is limited
+A single point estimate, does not capture the nature of the problem adequately.
+The mean of a multimodal distribution (one with two peaks) will lie in the valley between the -- a less likely color.
+Similarly it will be off to the side of the mode, in an asymmetrical distribution.
+The other problem is that is that a point estimate does not capture the sensitivity.
+In an asymmetrical (but monomodal) distribution, having  point slight off-center in one direction may result in very different probability,
+this more generally holds for a narrow variance distribution.
+Conversely for a very wide variance distribution (for example one approaching the uniform distribution) the point estimate value may matter very little with all points providing similar probabilities.
+Color distributions are always one or more of multimodal or asymmetrical, and feature widely different variances for different names.
+As such, we feel producing a point estimate has limited value.
+However we do consider the task, for comparison, and it remains an interesting challenge for assessing the systems under evaluation.
+While by definition the mean color point minimizes the squared error, it may not meaningful actually be a reasonable point estimate.
+Better is to estimate the distribution and allow the consumer of the estimate to determine how to reduce that to a point estimate.
+
+
+
+We estimate a probability distribution over the color-space.
+To qualify our estimate of the distribution we discretize the space into a large number of patches, and produce an output much like a histogram.
+This allows us to take advantage of the well-known softmax based methods for estimating a probability mass distribution using a neural network.
+
+
+Estimating color probabilities has a clear use as a subsystem in many systems.
+For example, in a human-interfacing system, when asked to select the \texttt{dark bluish green} object, each object can be ranked based on how likely its color is according to the distribution.
+This way if extra information eliminates the most-likely object, the second most likely object can immediately be determined.
+Further, if the probability of the color of the object being described by the user input is known, a threshold can be set to report that no object is found, or to ask for additional information.
+More generally, the distribution based on the color name alone can be used as a prior probability and combined with additional context information to yield better predictions.
+
 
 
 
@@ -157,42 +210,6 @@ In particular the generation of probability distributions in color space, to our
 Conversely, there has been several works on the reverse problem: the generation of a textual name for a color from color space point.
 The work presented here closed that gap.
 
-Consider that the word \texttt{tan} may mean one of many colors for different people in different circumstances: ranging from the bronze of a tanned sunbather, to the brown of tanned leather;
-\texttt{green} may mean anything from \texttt{aquamarine} to \texttt{forest green};
-and even \texttt{forest green} may mean the rich shades of a rain-forest, or the near grey of the Australian bush.
-Thus the color intended cannot be uniquely inferred from the color name.
-Without further context, it does nevertheless remain possible to estimate likelihoods of which colors are be intended based on the population's use of the words.
-The primary aim of this work is to map a sequence of color description words to a probability distribution over a color-space.
-This is required for a proper understanding of color language.
-We also consider the more basic point estimation of colors, though it's value is questionable.
-
-
-Proper understanding requires considering \emph{the color intended} as a random variable.
-In other words, a color name should map to a distribution, not just a single point or region.
-For a given color name, any number of points in the color-space could be intended, with some being more or less likely than others.
-Or equivalently, up to interpretation, it may intend a region but the likelihood of what points are covered is variable and uncertain.
-This distribution is often multimodal and has high and asymmetrical variance, which further renders regression to a single point unsuitable.
-We do produce results point estimate results for interest in \Cref{sec:results-point-est}, however for any form of precise work the use of such systems is limited
-A single point estimate, does not capture the nature of the problem adequately.
-The mean of a multimodal distribution (one with two peaks) will lie in the valley between the -- a less likely color.
-Similarly it will be off to the side of the mode, in an asymmetrical distribution
-Thus whi 
-
-
-We estimate a probability distribution over the color-space.
-To qualify our estimate of the distribution we discretize the space into a large number of patches, and produce an output much like a histogram.
-This allows us to take advantage of the well-known softmax based methods for estimating a probability mass distribution using a neural network.
-
-
-Estimating color probabilities has a clear use as a subsystem in many systems.
-For example, in a human-interfacing system, when asked to select the \texttt{dark bluish green} object, each object can be ranked based on how likely its color is according to the distribution.
-This way if extra information eliminates the most-likely object, the second most likely object can immediately be determined.
-Further, if the probability of the color of the object being described by the user input is known, a threshold can be set to report that no object is found, or to ask for additional information.
-More generally, the distribution based on the color name alone can be used as a prior probability and combined with additional context information to yield better predictions.
-
-
-
-
 
 
 
@@ -201,6 +218,24 @@ More generally, the distribution based on the color name alone can be used as a 
 For all the term based methods, we perform tokenization.
 During tokenization a color name is split into terms, with consistent spelling.
 For example, \natlang{bluish kahki} would become the sequence of 3 tokens: [\natlang{blue}, \natlang{ish}, \natlang{khaki}].
+Other than spelling, the tokenizeation results in the splitting of affixes and combine tokens.
+Combining tokens and related affixes affect how multiple colors can be combined.
+The full list of tokenizedation rules can be found in the accompanying source code.
+Some furhter examples showing how combining tokens and affixes are used and tokenized:
+\begin{itemize}
+	\item \natlang{blue purple} $\mapsto$ [\natlang{blue}, \natlang{purple}].
+	\item \natlang{blue-purple} $\mapsto$ [\natlang{blue}, \natlang{-}, \natlang{purple}].
+	\item \natlang{bluish purple} $\mapsto$ [\natlang{blue}, \natlang{ish}, \natlang{purple}]
+	\item \natlang{bluy purple} $\mapsto$ [\natlang{blue}, \natlang{y}, \natlang{purple}]
+	\item \natlang{blurple} $\mapsto$ [\natlang{blue-purple}]
+\end{itemize}
+The final example of \natlang{blurple} is a special-case.
+It is the only portmanteau in the dataset, and we do not have a clear way to tokenize it into a series of terms which occur in our pretrained embedding's vocabulary (see \Cref{sec:embeddings}).
+The portmanteau \natlang{blurple} is not in common use in any training set used for creating word embeddings, so no pretrained embedding is available.
+As such we handle it by treating it as the single token \natlang{blue-purple} for purposes of finding an embedding.
+There are many similar hyphenated tokens in the pretrained embeddings vocabulary, however (with that exception) we do not use them as it reduced the sequential modelling task to the point of being uninteresting.
+
+
 
 \subsubsection{HSV color-space}
 We use the HSV color-space \parencite{smith1978color}.
@@ -267,13 +302,42 @@ We consider the assumption sufficient for this investigation.
 For distribution estimation, our models are trained to output histograms.
 By making use of the conditional independence assumption \Cref{sec:conditional-independence-assumption}, we output one histogram per channel.
 
-We perform an uniform weight attribution of points to bins as described by \tcite{jones1984remark}.
+We perform an uniform weight attribution of points to bins as described by \textcite{jones1984remark}.
 
 
 \subsection{Kernel-Density Based Smoothing}\label{sec:kernel-density-based-smoothing}
 
 
 We make use of the \textcite{silverman1982algorithm}
+
+
+\subsection{Evaluation Metric: Perplexity in Color-Space}
+Perplexity is a measure of how well the distribution, estimated by the model, matches reality according to the observations in the test set.
+Perplexity is commonly used for evaluating language models. However here it is being used to evaluate the discretized distribution estimate.
+It can loosely be thought of as to how well the model's distribution does in terms of the size of an equivalent uniform distribution.
+Note that this metrics does not assume conditional independence of the color channels.
+
+Here $\tau$ is the test-set made up of pairs consisting of a color name $t$, and color-space point $\tilde{x}$;
+and  $p(\tilde{x}\mid t)$  the output of the evaluated model.
+Perplexity is defined:
+\begin{equation}
+PP(\tau) = \exp_2{\left(
+	\frac{-1}{|\tau|} 
+	\sum_{
+		\forall(t,(\tilde{x})) \in \tau}
+	\log_2 p(\tilde{x}\mid t)\right)}
+\end{equation}
+
+We further define the standardized perplexity: $\frac{PP(\tau)}{n_{res}}$,
+where $n_{res}$ is the total number of bins in the discretization scheme.
+For all the results we present here $n_{res} = 256^3$.
+This standardized perplexity gives the easily interpretable values between zero and one.
+It is equivalent to comparing the relative performance of the model to that of a uniform distribution of the same total resolution.
+$\frac{PP(\tau)}{n_{res}}=1$ means the result is equal what we would have to if we had distributed the probability mass uniformly into all bins in a 3D histogram.
+$\frac{PP(\tau)}{n_{res}}=0.5$ means the result twice as good as if we were to simply use an uniform distribution: it is equivalent to saying that the correct bin is selected as often as it would be had an uniform distribution with half as many bins (ie larger bins with twice the area) were used.
+The standardised perplexity is also invariant under different output resolutions.
+Though for brevity we only  present results with 256 bins per channel, our preliminary results for using other resolutions are similar under standardized perplexity.
+
 
 
 
@@ -302,7 +366,7 @@ Point Estimation trains using randomized mini-batches of size $2^16$ observation
 All hidden-layers, except as otherwise precluded (in side the convolution, and in the penultimate layer of the point estimation networks) have the same width 300, as does the the embedding layer.
 
 
-\subsubsection{Embeddings}
+\subsubsection{Embeddings}\label{sec:embeddings} 
 All our neural network based solutions incorporate an embedding layer.
 This embedding layer maps from tokenized words to vectors.
 We make use of 300d pretrained FastText embeddings \textcite{bojanowski2016enriching}\footnote{Available from \url{https://fasttext.cc/docs/en/english-vectors.html}}.
@@ -613,7 +677,7 @@ This mean of this loss is taken over all observations in each mini-batch during 
 	\draw[->](Z1) to (s1);
 	\draw[->](s1) to node[left]{$y_{shue}$} (AngHue);
 	\draw[->](Z2) to (s2);
-	\draw[->](s2) to node[right]{$y_{chue}$}  (AngHue);
+	\draw[->](s2) to node[right]{$y_{chue}$}  (AngHue.340);
 	
 	
 	
@@ -627,8 +691,97 @@ This mean of this loss is taken over all observations in each mini-batch during 
 \end{figure}
 
 
+\section{Results}
+\pdfcomment{IMPORTANT: Current Results are on the Dev Sets. Expriments need to be rerun on the Test Sets}
+\subsection{Distribution Estimation}
+\pgfkeys{
+	/pgf/number format/.cd, fixed relative,precision=3, fixed zerofill=true
+}
+\pgfplotstableset{
+	col sep=comma,
+	header=has colnames,
+	column type={l},
+	ignore chars={"},
+	every head row/.style={before row=\toprule,	after row=\midrule}
+}
+\pgfplotstableset{distresults/.append style={%
+		columns={method,perp, perpstd},
+		columns/method/.style={string type},
+		columns/perp/.style={column name=$PP$},
+		create on use/perpstd/.style={
+			create col/expr={\thisrow{perp}/(256*256*256)},
+		},
+		columns/perpstd/.style={column name=$\frac{PP}{256^3}$},
+	}%
+}
+\subsubsection{Full Task}
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[distresults]{results/dist_full.csv}
+	%	}
+	\caption{\label{tbl:distfull} The results for the \textbf{full distribution estimation task}. Lower perplexity (PP) is better.}
+\end{table}
 
 
+\subsubsection{Order Task}
+
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[distresults]{results/dist_ord.csv}
+	%	}
+	\caption{\label{tbl:distord} The results for the \textbf{order distribution estimation task}. Lower perplexity (PP) is better. This is a subset of the full test set containing only tests where the order of the words matters.}
+\end{table}
+
+\subsubsection{Extrapolation Task}
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[distresults]{results/dist_extrapo.csv}
+	%	}
+	\caption{\label{tbl:distextrapo} The results for the \textbf{extrapolation distribution estimation task}. Lower perplexity (PP) is better. This is a subset of the full test set containing only tests of rare word combinations. In the extrapolating methods those word combinations were removed from the training and development sets.}
+\end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Point Estimation}
+\pgfplotstableset{distpointresults/.append style={%
+		columns={method,mse_to_distmean},
+		columns/method/.style={string type, column name={Mean from distribution estimation method}},
+		columns/mse_to_distmean/.style={column name={MSE}},
+	}%
+}
+\pgfplotstableset{pointresults/.append style={%
+		columns={method,mse},
+		columns/method/.style={string type},
+		columns/mse/.style={column name={MSE}},
+	}%
+}
+\subsubsection{Full Task}
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[pointresults]{results/point_full.csv}
+	\pgfplotstabletypeset[distpointresults]{results/dist_full.csv}
+	%	}
+	\caption{\label{tbl:pointfull} The results for the \textbf{full point estimation task}. Lower mean squared error (MSE) is better.}
+\end{table}
+
+
+\subsubsection{Order Task}
+
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[pointresults]{results/point_ord.csv}
+	\pgfplotstabletypeset[distpointresults]{results/dist_ord.csv}
+	%	}
+	\caption{\label{tbl:pointord} The results for the \textbf{order point estimation task}. Lower mean squared error (MSE) is better. This is a subset of the full test set containing only tests where the order of the words matters.}
+\end{table}
+
+\subsubsection{Extrapolation Task}
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[pointresults]{results/point_extrapo.csv}
+	\pgfplotstabletypeset[distpointresults]{results/dist_extrapo.csv}
+	%	}
+	\caption{\label{tbl:pointextrapo} The results for the \textbf{extrapolation point estimation task}. Lower mean squared error (MSE) is better. This is a subset of the full test set containing only tests of rare word combinations. In the extrapolating methods those word combinations were removed from the training and development sets.}
+\end{table}
 
 
 \clearpage
@@ -637,5 +790,7 @@ This mean of this loss is taken over all observations in each mini-batch during 
 \clearpage
 \appendix
 \input{supp.tex}
+
+
 
 \end{document}
