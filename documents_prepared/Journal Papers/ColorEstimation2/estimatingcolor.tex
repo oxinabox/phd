@@ -33,8 +33,11 @@
 
 \newcommand{\parencite}{\citep}
 \newcommand{\textcite}{\citet}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\newcommand{\natlang}[1]{\texttt{#1}}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %opening
 \title{Estimating Intended Color from its name}
 \author{Lyndon White, %
@@ -76,7 +79,12 @@ Our model is able to predict reasonable distributions for these cases, as evalua
 \section{Method}
 \subsection{Tokenization}
 For all the term based methods, we perform tokenization.
-Tokenization 
+During tokenization a color name is split into terms, with consistent spelling.
+For example, \natlang{bluish kahki} would become the sequence of 3 tokens: [\natlang{blue}, \natlang{ish}, \natlang{khaki}].
+
+
+
+ 
 
 \subsection{HSV color-space}
 
@@ -87,14 +95,13 @@ For distribution estimation, our models are trained to output histograms.
 By making use of the conditional independence assumption \Cref{sec:conditional-independence-assumption},
 we output one histogram per channel.
 
+We perform an uniform weight attribution of points to bins as described by \tcite{jones1984remark}.
+
 
 \subsection{Kernel-Density Based Smoothing}\label{sec:kernel-density-based-smoothing}
 
 
 We make use of the \textcite{silverman1982algorithm}
-
-
-
 
 
 \subsection{Mean Squared Error on HSV}
@@ -106,16 +113,31 @@ We make use of the \textcite{silverman1982algorithm}
 \subsection{Input Modules}
 
 \subsubsection{Sum of Word Embeddings (SOWE)}
-
 \subsubsection{Convolutional Neural Network(CNN)}
 \subsubsection{Recurrent Neural Network(RNN)}
 
+We make use of a Gated Recurrent Unit (GRU), 
+which we found to marginally out-perform the basic RNN in preliminary testing.
+The small improvement is unsurprising, as the color names have at most 4 terms,
+so longer short term memory is not required.
+
+The sequence of word embeddings for each-term was input to the model.
+The stream was terminated with an End of Streak (\natlang{<EOS>}) pseudotoken,
+as represented using a zero-vector.
+
+\subsubsection{Non-term based Direct Methods}
+To establish an rough upper-limit on the modeling results
+we evaluate simple direct methods.
+These direct methods do not process term-by-term, they do not work with the language at all.
+They simply map from the exact input text (no tokenization) to the precalculated histogram or mean of the training data for that exact text.
+
+They represent an approximate upper bound, as they fully exploit all information in the training data for each input.
+There is no attempting to determine how each term affects the result.
+We say approximate upper-bound, as it is not strictly impossible that the ML methods may happen to model the test data better than can be directly determined by the training data.
 
 
-\subsubsection{Non-term based Baseline}
-To baseline the performance of our models we propose 
-\paragraph{Histogram Baseline (Distribution Estimation, only)}
-\paragraph{Mean Squared Error Baseline (Point Estimation, only)}
+\paragraph{Direct Histogram (Distribution Estimation, only)}
+\paragraph{Direct Mean Point (Point Estimation, only)}
 
 
 
