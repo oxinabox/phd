@@ -702,22 +702,37 @@ This mean of this loss is taken over all observations in each mini-batch during 
 	header=has colnames,
 	column type={l},
 	ignore chars={"},
-	every head row/.style={before row=\toprule,	after row=\midrule}
+	every head row/.style={before row=\toprule,	after row=\midrule},
+	columns/method/.style={string type}
 }
 \pgfplotstableset{distresults/.append style={%
 		columns={method,perp, perpstd},
-		columns/method/.style={string type},
 		columns/perp/.style={column name=$PP$},
 		create on use/perpstd/.style={
 			create col/expr={\thisrow{perp}/(256*256*256)},
 		},
 		columns/perpstd/.style={column name=$\frac{PP}{256^3}$},
-	}%
+	},%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	extrapodistresults/.append style={
+		columns={method, extrapolatingperp, nonextrapolatingperp, xperpstd, nxperpstd},
+		columns/nonextrapolatingperp/.style={column name=$PP$},
+		columns/extrapolatingperp/.style={column name=$PP$},
+%		
+		create on use/xperpstd/.style={
+			create col/expr={\thisrow{extrapolatingperp}/(256*256*256)},
+		},
+		create on use/nxperpstd/.style={
+			create col/expr={\thisrow{nonextrapolatingperp}/(256*256*256)},
+		},
+		columns/xperpstd/.style={column name=$\frac{PP}{256^3}$},
+		columns/nxperpstd/.style={column name=$\frac{PP}{256^3}$}
+	}
 }
 \subsubsection{Full Task}
 \begin{table}
 	%	\resizebox{\columnwidth}{!}{
-	\pgfplotstabletypeset[distresults]{results/dist_full.csv}
+	\pgfplotstabletypeset[distresults]{results/res_dist_full.csv}
 	%	}
 	\caption{\label{tbl:distfull} The results for the \textbf{full distribution estimation task}. Lower perplexity (PP) is better.}
 \end{table}
@@ -727,7 +742,7 @@ This mean of this loss is taken over all observations in each mini-batch during 
 
 \begin{table}
 	%	\resizebox{\columnwidth}{!}{
-	\pgfplotstabletypeset[distresults]{results/dist_ord.csv}
+	\pgfplotstabletypeset[distresults]{results/res_dist_ord.csv}
 	%	}
 	\caption{\label{tbl:distord} The results for the \textbf{order distribution estimation task}. Lower perplexity (PP) is better. This is a subset of the full test set containing only tests where the order of the words matters.}
 \end{table}
@@ -735,19 +750,13 @@ This mean of this loss is taken over all observations in each mini-batch during 
 \subsubsection{Extrapolation Task}
 \begin{table}
 	%	\resizebox{\columnwidth}{!}{
-	\pgfplotstabletypeset[distresults]{results/dist_extrapo.csv}
+\pgfplotstabletypeset[extrapodistresults]{results/res_dist_extrapo.csv}
 	%	}
 	\caption{\label{tbl:distextrapo} The results for the \textbf{extrapolation distribution estimation task}. Lower perplexity (PP) is better. This is a subset of the full test set containing only tests of rare word combinations. In the extrapolating methods those word combinations were removed from the training and development sets.}
 \end{table}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Point Estimation}
-\pgfplotstableset{distpointresults/.append style={%
-		columns={method,mse_to_distmean},
-		columns/method/.style={string type, column name={Mean from distribution estimation method}},
-		columns/mse_to_distmean/.style={column name={MSE}},
-	}%
-}
 \pgfplotstableset{pointresults/.append style={%
 		columns={method,mse},
 		columns/method/.style={string type},
@@ -757,8 +766,7 @@ This mean of this loss is taken over all observations in each mini-batch during 
 \subsubsection{Full Task}
 \begin{table}
 	%	\resizebox{\columnwidth}{!}{
-	\pgfplotstabletypeset[pointresults]{results/point_full.csv}
-	\pgfplotstabletypeset[distpointresults]{results/dist_full.csv}
+	\pgfplotstabletypeset[pointresults]{results/res_point_comb_full.csv}
 	%	}
 	\caption{\label{tbl:pointfull} The results for the \textbf{full point estimation task}. Lower mean squared error (MSE) is better.}
 \end{table}
@@ -768,8 +776,7 @@ This mean of this loss is taken over all observations in each mini-batch during 
 
 \begin{table}
 	%	\resizebox{\columnwidth}{!}{
-	\pgfplotstabletypeset[pointresults]{results/point_ord.csv}
-	\pgfplotstabletypeset[distpointresults]{results/dist_ord.csv}
+	\pgfplotstabletypeset[pointresults]{results/res_point_comb_ord.csv}
 	%	}
 	\caption{\label{tbl:pointord} The results for the \textbf{order point estimation task}. Lower mean squared error (MSE) is better. This is a subset of the full test set containing only tests where the order of the words matters.}
 \end{table}
@@ -777,8 +784,7 @@ This mean of this loss is taken over all observations in each mini-batch during 
 \subsubsection{Extrapolation Task}
 \begin{table}
 	%	\resizebox{\columnwidth}{!}{
-	\pgfplotstabletypeset[pointresults]{results/point_extrapo.csv}
-	\pgfplotstabletypeset[distpointresults]{results/dist_extrapo.csv}
+%	\pgfplotstabletypeset[pointresults]{results/res_point_comb_extrapo.csv}
 	%	}
 	\caption{\label{tbl:pointextrapo} The results for the \textbf{extrapolation point estimation task}. Lower mean squared error (MSE) is better. This is a subset of the full test set containing only tests of rare word combinations. In the extrapolating methods those word combinations were removed from the training and development sets.}
 \end{table}
