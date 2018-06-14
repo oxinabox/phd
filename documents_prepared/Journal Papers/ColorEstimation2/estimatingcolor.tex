@@ -62,7 +62,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %opening
-\title{Estimating Intended Color from its Name}
+\title{Estimating the Intended Color from the Terms that make up it's Name}
 \author{Lyndon White, %
 	Roberto Togneri, %
 	Wei Liu, %
@@ -298,7 +298,7 @@ Full details, including the table of correlations, are available in supplementar
 These results are suggestive, rather than solidly indicative, on the degree of correctness of the conditional independence assumption.
 We consider the assumption sufficient for this investigation.
 
-\subsection{Discretization}
+\subsection{Discretization}\label{sec:discretization}
 For distribution estimation, our models are trained to output histograms.
 By making use of the conditional independence assumption \Cref{sec:conditional-independence-assumption}, we output one histogram per channel.
 
@@ -518,10 +518,6 @@ as represented using a zero-vector.
 
 
 
-\subsubsection{Non-term based Baseline}
-To baseline the performance of our models we propose 
-\paragraph{Histogram Baseline (Distribution Estimation, only)}
-\paragraph{Mean Squared Error Baseline (Point Estimation, only)}
 \subsubsection{Non-term based Direct Methods}
 To establish an rough upper-limit on the modeling results
 we evaluate simple direct methods.
@@ -541,7 +537,21 @@ McMahan and Stone take a subset from Munroe's full survey, by restricting it to 
 and removing very rare color names with less than 100 uses.
 This gives a total of 2,176,417 observations and 829 color names. 
 They also define a standard test, development and train split.
-\paragraph{Direct Histogram (Distribution Estimation, only)}
+\paragraph{Direct Histogram (Distribution Estimation, only)}\label{sec:direct-histogram}
+The Direct Histogram method simply returns the histogram as found for training using the method given by \Cref{sec:discretization}.
+With smoothing, it returns the smoothed histogram as per \Cref{sec:kernel-density-based-smoothing}.
+However, with two variation over what is used for the creation of the training data.
+Firstly, they historgrams are calculated using 64 bit IEEE Floating point rather than 32 bit (as the remainer of the models use), this means that when smoothing is applied the kernals nonzero area is wider.
+Secondly, any empty bins in final histogram are replaced with ones containing an arbitrary small value.
+We used the 64bit machine epsilon$\approx 2^{-16}$ as this minimum value.
+While this technically this change would cause the bins to not sum to a total of one, the effect is negligible and is well below the error from using 32 bit math in the other models (which also cause those models not to sum to one).
+The motivation for both these changes was to ensure the direct models would not return a probability estimate of 0 for any input.
+Without this the perplexity of any model that incorrectly reported a probability of zero would be undefined (IEEE +Inf).
+We found that capping the minimum value to the machine epsilon the gives much better results than add-one (i.e Laplace/Lidstone) smoothing, on the development dataset.
+While it penalizes results that would be 0 more than add-one smoothing would, it does not reassign probability mass away from results that would be nonzero.
+We consider giving the direct method this advantage is in-line with determining a rough upper bound on the result.
+
+
 \paragraph{Direct Mean Point (Point Estimation, only)}
 
 
@@ -623,7 +633,7 @@ For the case of the machine learning models, the output is produced using softma
 \end{figure}
 	
 
-\subsubsection{Point Estimation}
+\subsubsection{Point Estimation}\label{sec:point-estimation}
 Our point estimation output model for the neural network is shown in \Cref{fig:pointoutmod}.
 The hidden-layer from the top of the input module is feed to an 4 single output neurons.\footnote{Equivalently these 4 single neurons can be expressed as a layer with 4 outputs and 2 different activation functions.}
 Two of these are used the sigmoid activation function (range 0:1) to produce the outputs for the saturation and value channels.
@@ -633,9 +643,9 @@ We use these intermediate values when calculated this loss function as it result
 During training we use the following loss function for each observation $y^\star$, and each corresponding prediction $y$.
 \begin{align}
 loss &= %
-\frac{1}{2} \left(\sin(y^\star_{hue}) - y_{shue} \right)^2  \\
-&+ \frac{1}{2} \left(\cos(y^\star_{hue}) - y_{chue} \right)^2  \\
-&+ \left(y^\star_{sat} - y_{sat} \right)^2 \\
+\frac{1}{2} \left(\sin(y^\star_{hue}) - y_{shue} \right)^2     \nonumber \\
+&+ \frac{1}{2} \left(\cos(y^\star_{hue}) - y_{chue} \right)^2  \nonumber \\
+&+ \left(y^\star_{sat} - y_{sat} \right)^2  \nonumber \\
 &+ \left(y^\star_{val} - y_{val} \right)^2 %
 \end{align}
 This mean of this loss is taken over all observations in each mini-batch during training.
@@ -694,18 +704,61 @@ This mean of this loss is taken over all observations in each mini-batch during 
 \section{Results}
 \pdfcomment{IMPORTANT: Current Results are on the Dev Sets. Expriments need to be rerun on the Test Sets}
 \subsection{Distribution Estimation}
+
+Overall, we see that our models are able to learn to estimate colors based on sequences of terms.
+The CNN and SOWE models perform almost as well as the direct methods.
+With the SOWE taking the lead for distribution estimation, and the CNN for point estimation.
+We believe the reason for this is the SOWE is an easier to learn model from a gradient descent perspective: is very shallow model with only one true hidden layer.
+The RNN did not perform well at this task, it may be hard to capture the significant relationship between terms in the sequence.
+However, as will be shown in the examples in the next section it did learn generally acceptable colors.
+
+
+The performance of SOWE on the order tasks (\Cref{tbl:distord} and \Cref{tbl:pointord}) is surprising.
+SOWE can not take into account word order, its good results suggest that the word-order is not very significant for color names.
+While word order matters, colors with the same terms in there name but in different order are similar enough that it still performs well.
+
+
+
+It can be seen that smoothing has very little effect on the performance of any of the neural network based distribution estimation models.
+All 3 term based models (SOWE, CNN, RNN) all perform very similarly whether or note the training data is smoothed.
+The direct method which bypasses learning the functioning of terms is very substantially effected by the smoothing.
+This is because without smoothing it results in eastimating the probability based on bins unfilled by any observation (Which is zero due to the cap on the minimum value. See \Cref{sec:direct-histogram}).
+This is particularly notable in the case of the direct, unsmoothed nonextrapolating result reported in \Cref{tbl:distextrapo}. As these were some of the rarest terms in the training set, they were thus more likely to not coincide with any terms from the testing set.
+Conversely, on this dataset the term models do quiet well, with or without smoothing. The SOWE model out out even performs the the Direct method.
+As the network can effectively learn the smoothness, not just from the observations of one color but from all of the observations.
+It learns that increasing the value of one bin should increase adjacent ones.
+As such it does not need the smoothing applied to the training data.
+\pdfcomment{Bring across some of the detail on the reason from the earleier paper}
+
+We see both for point estimation (\Cref{tbl:pointextrapo}) and for distribution estimation (\Cref{tbl:distextrapo}), when the network is forced to extrapolate to new combinations of color names, the SOWE and CNN can do so with a reasonable degree of correctness.
+The RNN results continue to perform badly when extrapolating, doing much worse than the already poor results on the non-extrapolating task.
+However, the CNN and SOWE do well; while as expected the results are worse than for non-extrapolating they are not much worse.
+For the Distribution extrapolation task, they are actually still below the overall full datasets best result for perplexity.
+
+In the point estimation results we find that using the networks trained specifically for point estimation (As described by \Cref{sec:point-estimation}) performs consistently better than taking the weighted mean of the distributions output by the distribution estimation methods.
+We attribute this primarily to the effective additional training data.
+The distribution estimation method combines all training observation points in to one training datum per color description.
+Where as the point estimation uses the points directly.
+\pdfcomment{Is there something to say about the conditional indipednancy assumption, or about the fact that poitn estimation has more training data for more common colors?}.
+We note that for the direct method, the distributions mean is almost identical to the true mean of points, as is expected.
+
+
+
+
 \pgfkeys{
-	/pgf/number format/.cd, fixed relative,precision=3, fixed zerofill=true
+	/pgf/number format/.cd, fixed, precision=3, fixed zerofill=true
 }
 
 \pgfplotstableset{
 	col sep=comma,
 	header=has colnames,
-	column type={l},
+	column type={c},
 	ignore chars={"},
-	%string replace*={NaN}{---} % Workout how to make this work
+%	string replace={NaN}{}, % Workout how to make this work
+	clear infinite,
+	empty cells with={--},
 	every head row/.style={before row=\toprule,	after row=\midrule},
-	columns/method/.style={string type}
+	columns/method/.style={reset styles, string type, column name=Method}
 }
 \pgfplotstableset{distresults/.append style={%
 		columns={method,perp, perpstd},
@@ -717,9 +770,9 @@ This mean of this loss is taken over all observations in each mini-batch during 
 	},%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	extrapodistresults/.append style={
-		columns={method, extrapolatingperp, nonextrapolatingperp, xperpstd, nxperpstd},
-		columns/nonextrapolatingperp/.style={column name={Extrapolating $PP$}},
-		columns/extrapolatingperp/.style={column name={Extrapolating $PP$}},
+		columns={method, nonextrapolatingperp, extrapolatingperp, nxperpstd, xperpstd},
+		columns/nonextrapolatingperp/.style={column name={\shortstack{\small Nonextrapolating\\$PP$}}},
+		columns/extrapolatingperp/.style={column name={\shortstack{\small Extrapolating\\$PP$}}},
 %		
 		create on use/xperpstd/.style={
 			create col/expr={\thisrow{extrapolatingperp}/(256*256*256)},
@@ -727,8 +780,8 @@ This mean of this loss is taken over all observations in each mini-batch during 
 		create on use/nxperpstd/.style={
 			create col/expr={\thisrow{nonextrapolatingperp}/(256*256*256)},
 		},
-		columns/xperpstd/.style={column name={Extrapolating $\frac{PP}{256^3}$}},
-		columns/nxperpstd/.style={column name={NonExtrapolating $\frac{PP}{256^3}$}}
+		columns/xperpstd/.style={column name={\shortstack{\small Extrapolating\\$\frac{PP}{256^3}$}}},
+		columns/nxperpstd/.style={column name={\shortstack{\small Nonextrapolating\\$\frac{PP}{256^3}$}}}
 	}
 }
 \subsubsection{Full Task}
@@ -761,12 +814,12 @@ This mean of this loss is taken over all observations in each mini-batch during 
 \subsection{Point Estimation}
 \pgfplotstableset{pointresults/.append style={%
 		columns={method,mse},
-		columns/mse/.style={column name={MSE}},
+		columns/mse/.style={column name={$MSE$}},
 	},%
 	extrapopointresults/.append style={
-		columns={method, extrapolatingmse, nonextrapolatingmse},
-		columns/nonextrapolatingmse/.style={column name={Extrapolating MSE}},
-		columns/extrapolatingmse/.style={column name={Extrapolating MSE}}
+		columns={method, nonextrapolatingmse, extrapolatingmse},
+		columns/nonextrapolatingmse/.style={column name=\shortstack{\small Nonextrapolating\\$MSE$}},
+		columns/extrapolatingmse/.style={column name=\shortstack{\small Extrapolating\\$MSE$}}
 	}
 }
 \subsubsection{Full Task}
