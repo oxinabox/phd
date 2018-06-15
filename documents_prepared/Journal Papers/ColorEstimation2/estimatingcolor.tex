@@ -328,10 +328,11 @@ PP(\tau) = \exp_2{\left(
 	\log_2 p(\tilde{x}\mid t)\right)}
 \end{equation}
 
-We further define the standardized perplexity: $\frac{PP(\tau)}{n_{res}}$,
+As the perplexity for a high resolution discrized model will inherently be very large and difficult to read,
+we define the standardized perplexity: $\frac{PP(\tau)}{n_{res}}$,
 where $n_{res}$ is the total number of bins in the discretization scheme.
 For all the results we present here $n_{res} = 256^3$.
-This standardized perplexity gives the easily interpretable values between zero and one.
+This standardized perplexity gives the easily interpretable values usually between zero and one.
 It is equivalent to comparing the relative performance of the model to that of a uniform distribution of the same total resolution.
 $\frac{PP(\tau)}{n_{res}}=1$ means the result is equal what we would have to if we had distributed the probability mass uniformly into all bins in a 3D histogram.
 $\frac{PP(\tau)}{n_{res}}=0.5$ means the result twice as good as if we were to simply use an uniform distribution: it is equivalent to saying that the correct bin is selected as often as it would be had an uniform distribution with half as many bins (ie larger bins with twice the area) were used.
@@ -761,7 +762,7 @@ We note that for the direct method, the distributions mean is almost identical t
 	columns/method/.style={reset styles, string type, column name=Method}
 }
 \pgfplotstableset{distresults/.append style={%
-		columns={method,perp, perpstd},
+		columns={method, perpstd},
 		columns/perp/.style={column name=$PP$},
 		create on use/perpstd/.style={
 			create col/expr={\thisrow{perp}/(256*256*256)},
@@ -770,7 +771,7 @@ We note that for the direct method, the distributions mean is almost identical t
 	},%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	extrapodistresults/.append style={
-		columns={method, nonextrapolatingperp, extrapolatingperp, nxperpstd, xperpstd},
+		columns={method, nxperpstd, xperpstd},
 		columns/nonextrapolatingperp/.style={column name={\shortstack{\small Nonextrapolating\\$PP$}}},
 		columns/extrapolatingperp/.style={column name={\shortstack{\small Extrapolating\\$PP$}}},
 %		
@@ -847,6 +848,26 @@ We note that for the direct method, the distributions mean is almost identical t
 	%	}
 	\caption{\label{tbl:pointextrapo} The results for the \textbf{extrapolation point estimation task}. Lower mean squared error (MSE) is better. This is a subset of the full test set containing only tests of rare word combinations. In the extrapolating methods those word combinations were removed from the training and development sets.}
 \end{table}
+
+
+
+
+\section{Conclusion}
+
+The RNN is the standard type of model for this task.
+However, we find its performance to be significantly exceeded by the SOWE and CNN.
+The SOWE is an unordered model correspondent to a bag of words.
+The CNN over word embeddings is correspondent to a bag of ngrams, in our case as bag of all 1,2,3,4 and 5-grams.
+This means the CNN can readily take advantage of both fully orderred information, using the filters of length 5, down to undered information using the filters of length one.
+The RNN however must fully process the ordered nature of its inputs, as its output comes only from the final node.
+It would be interesting to further contrast a bidirectional RNN.
+
+We believe that to improve results further for the distribution estimation models,
+it would benefit from not merging the training data into a single histogram per color.
+But rather converting each observation into a one-hot representation of its bin.
+We initially avoiding this solution as it precludes (directly) using KDE-based smoothing of the histograms.
+However our results in this work indicate that the machine learning distribution estimation models is not substantially effected by the use of KDE-based smoothing or not.
+While the single observations represented as one-hot would be less informative, there would be several orders of magnitude more of them, and the natural of training with random minibatches would result in a model that is less likely to get stuck in local minima, as so may achieve better results.
 
 
 \clearpage
