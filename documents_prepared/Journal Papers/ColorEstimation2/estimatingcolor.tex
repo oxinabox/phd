@@ -85,7 +85,7 @@
 
 \begin{abstract}
 When a speaker says the name of a color, the color that they picture is not necessarily the same as the listener imagines.
-Color is a grounded semantic task, but that grounding is not a mapping of a single word or phrase to a single point in color-space.
+Color understanding is a grounded semantic task, but that grounding is not a trivial mapping of a single word or phrase to a single point in color-space as there are many different interpretations of what  color is mean by a particular color name.
 Proper understanding of color language requires the capacity to map a sequence of words to a probability distribution in color-space.
 A distribution is required as there is no clear agreement between people as to what a particular color describes -- different people have a different idea of what it means to be ``very dark orange''.
 
@@ -193,7 +193,7 @@ The work by Kawakami et al. also includes a method for generating colors.
 However they only consider the generation of point estimated, rather than distributions.
 The primary focus of our work is on generating distributions.
 The datasets used by Kawakami et al. contain only very small numbers of observations for each color name (often just one).
-These datasetsare thus not suitable for modelling the distribution in color space as interpreted by the population.
+These datasets are thus not suitable for modelling the distribution in color space as interpreted by the population.
 Further, given the very small number of examples they are not well suited for use with word-based modelling: the character based modelling employed by Kawakami et al. is much more suitable.
 As such we do not attempt comparison to their work.
 
@@ -218,10 +218,10 @@ The work presented here closed that gap.
 For all the term based methods, we perform tokenization.
 During tokenization a color name is split into terms, with consistent spelling.
 For example, \natlang{bluish kahki} would become the sequence of 3 tokens: [\natlang{blue}, \natlang{ish}, \natlang{khaki}].
-Other than spelling, the tokenizeation results in the splitting of affixes and combine tokens.
+Other than spelling, the tokenization results in the splitting of affixes and combine tokens.
 Combining tokens and related affixes affect how multiple colors can be combined.
-The full list of tokenizedation rules can be found in the accompanying source code.
-Some furhter examples showing how combining tokens and affixes are used and tokenized:
+The full list of tokenization rules can be found in the accompanying source code.
+Some further examples showing how combining tokens and affixes are used and tokenized:
 \begin{itemize}
 	\item \natlang{blue purple} $\mapsto$ [\natlang{blue}, \natlang{purple}].
 	\item \natlang{blue-purple} $\mapsto$ [\natlang{blue}, \natlang{-}, \natlang{purple}].
@@ -242,9 +242,11 @@ We use the HSV color-space \parencite{smith1978color}.
 through-out this work.
 We use the format which the data is originally provided in.
 In this format hue, saturation and value all range between zero and one.
-Unlike many other colors spaces (CIELab, Luv etc.) the gamut is square.
-This regular space means that errors on all channels can be considered equally, and unlike other color spaces.
-The scaling of hue in particular to be between zero and one (like the other channels) makes the modelling task more consistent as were the hue to range between $0$ and $2\pi$ it would be over-weighted compared to the other channels.
+Note that in this dataset hue is measured in \emph{turns}, rather than the more traditional degrees, or radians.
+Having hue be measured between zero and one (like the other channels) makes the modelling task more consistent as were the hue to range between $0$ and $2\pi$ (radians) or between $0$ and $360$ (degrees) it would be over-weighted compared to the other channels.
+This regular space means that errors on all channels can be considered equally.
+Unlike many other colors spaces (CIELab, Luv etc.) the gamut is square and all values of all channels corresponds to realizable colors.
+
 
 When working with the hue, all measures need to take into account the wrap-around effect.
 When ever we refer to mean squared error, mean or mode on the HSV space in this paper, we are referring to the angularly corrected forms given in \Cref{sec:angularly-correct}.
@@ -260,24 +262,24 @@ One of it's important advantages over other color spaces is that it best meets t
 \subsection{Angularly Correct Calculations on HSV}\label{sec:angularly-correct}
 When performing calculations with the HSV color space it is important to take into account that hue is an angle.
 As we are working with the color space regularized to range between zero and one for all channels,
-this means a hue of one and a hue of zero are equivalent (in radian's this would be $0$ and $2\pi$).
+this means a hue of one and a hue of zero are equivalent (as we measure in turns, in radian's this would be $0$ and $2\pi$).
 
 The square error of two hue values is thus calculated as
 \begin{equation}
 SE(h_1, h_2) = \min \big( \left(h_1 - h_2 \right)^2, \, \left(h_1 - h_2 -1 \right)^2  \big)
 \end{equation}
-(using radians the $-1$ would be $-2\pi$)
 to take into account the error could be calculated clockwise or counter clockwise.
+(Note that the the $-1$ term related to using units of turns, were we using radians it would be $-2\pi$)
 
 
-The mean of a series of  $N$ hue values is calculated as 
+The mean of a set of hues ($\lbrace h_1,\,\ldots,\,h_N \rbrace$) is calculated as 
 \begin{equation}
 \bar h = \mathrm{atan2} \Bigg(%
 	\frac{1}{N} \sum_{i=1}^{i=N} \sin (h_i), \,  %
 	\frac{1}{N} \sum_{i=1}^{i=N} \cos (h_i)%
 \Bigg)%
 \end{equation}
-As we are using the regularized angle, we use the regularized versions of the trigonometric functions (though this shift is no different from degrees to radians).
+(Note again: as we measure angle in turns we use the turn trigonometric functions in implementation, though this mean is the same expression or any units).
 
 
 
@@ -300,18 +302,38 @@ We consider the assumption sufficient for this investigation.
 
 \subsection{Discretization}\label{sec:discretization}
 For distribution estimation, our models are trained to output histograms.
-By making use of the conditional independence assumption \Cref{sec:conditional-independence-assumption}, we output one histogram per channel.
-
-We perform an uniform weight attribution of points to bins as described by \textcite{jones1984remark}.
-
-
-\subsection{Kernel-Density Based Smoothing}\label{sec:kernel-density-based-smoothing}
-
-
-We make use of the \textcite{silverman1982algorithm}
+This is a discretized representation of the continuous distribution.
+Following standard practice interpolation-based methods can be used to handle it as a continuous distribution.
+By making use of the conditional independence assumption (see \Cref{sec:conditional-independence-assumption}), we output one 256-bin histogram per channel.
+We note as  24-bit color (as was used in the survey that collected the dataset) can have all information captured by a 256 bin discretization  per channel.
+24 bit color allows for a total of $2^{24}$ colors to be represented, and even onehot encoding for each of the 256 bin discretization channels allows for the same.
+As such there is no meaningful loss of information when using histograms over a truely continuous estimation method, such as a Gaussian mixture model.
+Although such models may have other advantages (such as the a priori information added by specifying the distribution), we do not investigating them here, instead considering the simplest non-parametric estimation model (the histogram), which has the simple implementation in a neural network using a softmax output layer.
 
 
-\subsection{Evaluation Metric: Perplexity in Color-Space}
+Discretizing the data in this way is is a useful solution used in several other machine learning systems.
+\textcite{oord2016pixel, DBLP:journals/corr/OordDZSVGKSK16} apply a similar discretization step and found their method to outperforming the more complex continuous distribution outputs.
+
+For training purposes we thus need to convert all the observations into histograms.
+One set of histograms is produced per color description present in the dataset.
+We perform an uniform weight attribution of points to bins as described by \textcite{jones1984remark}. This method of tabulation is in-short to define the bins by there midpoints, and for a point observed between the centre of two bins then probability mass is allocated to each in proportion to how close the point is to the centre of each.
+
+\subsection{Kernel-Density Estimation Based Smoothing}\label{sec:kernel-density-based-smoothing}
+As the distribution is not truly discrete, we investigate adding a Kernel-Density Estimation (KDE) based smoothing step.
+KDE is a common approach in non-parametric estimation.
+
+This is expected as a blurred discrete distribution captures some of the notions of continuity that a truly continuous output distribution would intrinsically feature.
+
+
+We use the Fast Fourier Transform (FFT) based KDE method of the \textcite{silverman1982algorithm}.
+We use a Gaussian kernel, and select the bandwidth per color description based on leave-one-out cross validation on the training data.
+A known issue with the FFT based KDE method is that it has a wrap-around near the boundaries where mass that would be assigned outside the boundaries is instead assigned to the bin on the other side.
+For the value and saturation channels we follow the standard solution of initially defining additional bins outside the true boundaries, then discard those bins and rescale the probability to one.
+For the hue channel this wrap-around effect is exactly as desired.
+
+
+
+\subsection{Perplexity in Color-Space (Evaluation Metric)}
 Perplexity is a measure of how well the distribution, estimated by the model, matches reality according to the observations in the test set.
 Perplexity is commonly used for evaluating language models. However here it is being used to evaluate the discretized distribution estimate.
 It can loosely be thought of as to how well the model's distribution does in terms of the size of an equivalent uniform distribution.
@@ -328,11 +350,11 @@ PP(\tau) = \exp_2{\left(
 	\log_2 p(\tilde{x}\mid t)\right)}
 \end{equation}
 
-As the perplexity for a high resolution discrized model will inherently be very large and difficult to read,
+As the perplexity for a high-resolution discretized model will inherently be very large and difficult to read,
 we define the standardized perplexity: $\frac{PP(\tau)}{n_{res}}$,
 where $n_{res}$ is the total number of bins in the discretization scheme.
 For all the results we present here $n_{res} = 256^3$.
-This standardized perplexity gives the easily interpretable values usually between zero and one.
+This standardized perplexity gives the easily interpretable values \emph{usually} between zero and one.
 It is equivalent to comparing the relative performance of the model to that of a uniform distribution of the same total resolution.
 $\frac{PP(\tau)}{n_{res}}=1$ means the result is equal what we would have to if we had distributed the probability mass uniformly into all bins in a 3D histogram.
 $\frac{PP(\tau)}{n_{res}}=0.5$ means the result twice as good as if we were to simply use an uniform distribution: it is equivalent to saying that the correct bin is selected as often as it would be had an uniform distribution with half as many bins (ie larger bins with twice the area) were used.
@@ -350,11 +372,55 @@ Though for brevity we only  present results with 256 bins per channel, our preli
 \section{Experimental Setup}
 
 \subsection{Implementation}
-The implementation of the CDEST and baseline models was in the Julia programming language \parencite{Julia}.
+The implementation of the all models was in the Julia programming language \parencite{Julia}.
 The full implementation is included in the supplementary materials.
 can be downloaded from the GitHub repository.\footnote{Implementation source is at \url{https://github.com/oxinabox/ColoringNames.jl}}
-It makes heavy use of the MLDataUtils.jl\footnote{MLDataUtils.jl is available from \url{https://github.com/JuliaML/MLDataUtils.jl}} and TensorFlow.jl,\footnote{TensorFlow.jl is available from \url{https://github.com/malmaud/TensorFlow.jl}} packages.
-the latter of which we enhanced significantly to allow for this work to be carried out.
+The machine learning components make heavy use of the MLDataUtils.jl\footnote{MLDataUtils.jl is available from \url{https://github.com/JuliaML/MLDataUtils.jl}} and TensorFlow.jl,\footnote{TensorFlow.jl is available from \url{https://github.com/malmaud/TensorFlow.jl}} packages.
+The latter of which we enhanced significantly to allow for this work to be carried out.
+The discretization and blurring process is done using KernalDensityEstimation.jl.%
+\footnote{KernalDensityEstimation.jl  is available from \url{https://github.com/JuliaStats/KernelDensity.jl}}
+
+
+\subsection{Datasets}
+
+\subsubsection{Full Training and Testing set}
+We make use of the  Munroe dataset as prepared by \textcite{mcmahan2015bayesian} from the results of the XKCD color survey.
+The XKCD color survey \parencite{Munroe2010XKCDdataset}, collected over 3.4 million observations from over 222,500 respondents.
+McMahan and Stone take a subset from Munroe's full survey, by restricting it to the responses from native English speakers, 
+and removing very rare color names with less than 100 uses.
+This gives a total of 2,176,417 observations and 829 color names. 
+They also define a standard test, development and train split.
+
+
+\subsubsection{Extrapolation Training and Testing Set}
+The primary goal in constructing using the term based models is to be able to make predictions for never before seen descriptions of colors.
+For example, based on the learned understanding of \texttt{salmon} and of \texttt{bright}, from examples like \texttt{bright green} and \texttt{bright red}, we wish for the systems to make predictions about \texttt{bright salmon}, even though that description never occurs in the training data.
+%
+To evaluate this generalisation capacity, we define an extrapolation sub-dataset for both testing and training.
+This is defined by selecting the rarest 100 color descriptions from the full dataset,
+with the restriction that every token in a selected description must still have at least 8 uses in other descriptions in the training set.
+The selected examples include multi-token descriptions such as: \texttt{bright yellow green} and also single tokens that occur more commonly as modifiers than as stand-alone descriptions such as \texttt{pale}.
+
+The extrapolation training set is made up of the data from the full training set, excluding those  corresponding the the rare descriptions.
+Similar is done for the development set, so as no direct knowledge of the combined terms can leak during early-stopping.
+Conversely, the extrapolation test set is made up of only the observations from the full test set that do use those rare descriptions.
+
+
+By training on the extrapolation training set and testing on the extrapolation test set, we can assess the capacity of the models to make predictions for color descriptions not seen in training.
+A similar approach was used in \textcite{DBLP:journals/corr/AtzmonBKGC16}.
+We contrast this to the same models when trained on the full training set, but tested on the extrapolation test set, to see how much accuracy was lost.
+
+
+\subsubsection{Order Testing set}
+It is known that the order of words in a color description to some extent matters.
+\natlang{greenish brown} and \natlang{brownish green} are distinct, if similar, colors.
+To assess the models on there ability to make predictions when order matters we construct the order testset.
+This is a subset of the full test set containing only descriptions with terms that occur in multiple different orders.
+There are 76 such descriptions in the full dataset.
+Each of which has exactly one alternate ordering.
+This is unsurprising as while color descriptions may have more than 2 terms, normally one of the terms is a joining token such as \natlang{ish} or \natlang{-}.
+We only constructed a order testing set: not a corresponding training set, as this is an evaluation using the model trained on the full training data.
+
 
 
 \subsection{Common Network Features}
@@ -528,61 +594,22 @@ They simply map from the exact input text (no tokenization) to the precalculated
 They represent an approximate upper bound, as they fully exploit all information in the training data for each input.
 There is no attempting to determine how each term affects the result.
 We say approximate upper-bound, as it is not strictly impossible that the ML methods may happen to model the test data better than can be directly determined by the training data.
-\subsection{Datasets}
 
-
-\subsubsection{Full Training and Testing set}
-We make use of the  Munroe dataset as prepared by \textcite{mcmahan2015bayesian} from the results of the XKCD color survey.
-The XKCD color survey \parencite{Munroe2010XKCDdataset}, collected over 3.4 million observations from over 222,500 respondents.
-McMahan and Stone take a subset from Munroe's full survey, by restricting it to the responses from native English speakers, 
-and removing very rare color names with less than 100 uses.
-This gives a total of 2,176,417 observations and 829 color names. 
-They also define a standard test, development and train split.
 \paragraph{Direct Histogram (Distribution Estimation, only)}\label{sec:direct-histogram}
 The Direct Histogram method simply returns the histogram as found for training using the method given by \Cref{sec:discretization}.
 With smoothing, it returns the smoothed histogram as per \Cref{sec:kernel-density-based-smoothing}.
 However, with two variation over what is used for the creation of the training data.
-Firstly, they historgrams are calculated using 64 bit IEEE Floating point rather than 32 bit (as the remainer of the models use), this means that when smoothing is applied the kernals nonzero area is wider.
+Firstly, they histograms are calculated using 64 bit IEEE Floating point rather than 32 bit (as the remainder of the models use), this means that when smoothing is applied the estimated nonzero area is wider.
 Secondly, any empty bins in final histogram are replaced with ones containing an arbitrary small value.
-We used the 64bit machine epsilon$\approx 2^{-16}$ as this minimum value.
+We (arbitrarily) use the 64 bit machine epsilon$\approx 2^{-16}$ as this minimum value.
 While this technically this change would cause the bins to not sum to a total of one, the effect is negligible and is well below the error from using 32 bit math in the other models (which also cause those models not to sum to one).
 The motivation for both these changes was to ensure the direct models would not return a probability estimate of 0 for any input.
-Without this the perplexity of any model that incorrectly reported a probability of zero would be undefined (IEEE +Inf).
-We found that capping the minimum value to the machine epsilon the gives much better results than add-one (i.e Laplace/Lidstone) smoothing, on the development dataset.
-While it penalizes results that would be 0 more than add-one smoothing would, it does not reassign probability mass away from results that would be nonzero.
+Without this the perplexity of any model that incorrectly reported a probability of zero would be undefined (IEEE \texttt{+Inf}).
+We found that capping the minimum value to the machine epsilon the gives much better results than add-one smoothing, (also known as  Laplace or Lidstone smoothing) on the development dataset.
+While this minimum cap penalizes results that would be zero more than add-one smoothing would, it does not reassign probability mass away from results that would be nonzero.
 We consider giving the direct method this advantage is in-line with determining a rough upper bound on the result.
 
-
 \paragraph{Direct Mean Point (Point Estimation, only)}
-
-
-\subsubsection{Extrapolation Training and Testing Set}
-The primary goal in constructing using the term based models is to be able to make predictions for never before seen descriptions of colors.
-For example, based on the learned understanding of \texttt{salmon} and of \texttt{bright}, from examples like \texttt{bright green} and \texttt{bright red}, we wish for the systems to make predictions about \texttt{bright salmon}, even though that description never occurs in the training data.
-%
-To evaluate this generalisation capacity, we define an extrapolation sub-dataset for both testing and training.
-This is defined by selecting the rarest 100 color descriptions from the full dataset,
-with the restriction that every token in a selected description must still have at least 8 uses in other descriptions in the training set.
-The selected examples include multi-token descriptions such as: \texttt{bright yellow green} and also single tokens that occur more commonly as modifiers than as stand-alone descriptions such as \texttt{pale}.
-
-The extrapolation training set is made up of the data from the full training set, excluding those  corresponding the the rare descriptions.
-Similar is done for the development set, so as no direct knowledge of the combined terms can leak during early-stopping.
-Conversely, the extrapolation test set is made up of only the observations from the full test set that do use those rare descriptions.
-
-
-By training on the extrapolation training set and testing on the extrapolation test set, we can assess the capacity of the models to make predictions for color descriptions not seen in training.
-A similar approach was used in \textcite{DBLP:journals/corr/AtzmonBKGC16}.
-We contrast this to the same models when trained on the full training set, but tested on the extrapolation test set, to see how much accuracy was lost.
-
-
-\subsection{Order Testing set}
-It is known that the order of words in a color description to some extent matters.
-\natlang{greenish brown} and \natlang{brownish green} are distinct, if similar, colors.
-To assess the models on there ability to make predictions when order matters we construct the order testset.
-This is a subset of the full test set containing only descriptions with terms that occur in multiple different orders.
-There are 76 such descriptions in the full dataset.
-Each of which has exactly one alternate ordering.
-This is unsurprising as while color descriptions may have more than 2 terms, normally one of the terms is a joining token such as \natlang{ish} or \natlang{-}.
 
 
 
@@ -704,6 +731,10 @@ This mean of this loss is taken over all observations in each mini-batch during 
 
 \section{Results}
 \pdfcomment{IMPORTANT: Current Results are on the Dev Sets. Expriments need to be rerun on the Test Sets}
+
+
+\input{qualres.tex}
+
 \subsection{Distribution Estimation}
 
 Overall, we see that our models are able to learn to estimate colors based on sequences of terms.
@@ -858,9 +889,10 @@ The RNN is the standard type of model for this task.
 However, we find its performance to be significantly exceeded by the SOWE and CNN.
 The SOWE is an unordered model correspondent to a bag of words.
 The CNN over word embeddings is correspondent to a bag of ngrams, in our case as bag of all 1,2,3,4 and 5-grams.
-This means the CNN can readily take advantage of both fully orderred information, using the filters of length 5, down to undered information using the filters of length one.
+This means the CNN can readily take advantage of both fully ordered information, using the filters of length 5, down to unordered information using the filters of length one.
 The RNN however must fully process the ordered nature of its inputs, as its output comes only from the final node.
 It would be interesting to further contrast a bidirectional RNN.
+
 
 We believe that to improve results further for the distribution estimation models,
 it would benefit from not merging the training data into a single histogram per color.
