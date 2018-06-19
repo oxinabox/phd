@@ -7,40 +7,110 @@
 \usepackage{graphicx}
 \usepackage[space]{grffile}
 
-\def\maincolors{black,
-	brown-orange,
-	green,
-	orange-yellow,
-	purplish,
-	bluish grey,
-	brown,
-	greyish blue,
-	pink-purple,
-	white,
-	brownish green,
-	greenish brown,
-	grey,
-	purple-pink,
-	yellow-orange,
-	brownish,
-	greenish,
-	orange-brown,
-	purple}
-
-\def\models{Direct, Direct-smoothed}
 
 \begin{document}
-\begin{tikzpicture}
-	\foreach[count=\mdlii from 0] \mdlname in \models {
-		\node at (3.1*\mdlii cm, -1cm) {\mdlname};
-		\foreach[count=\colii from 0] \colorname in \maincolors {
-			\node at (3.1*\mdlii cm, 1.1*\colii cm) {\includegraphics[height=0.95cm]{figs/demo/dist/\mdlname/\colorname}};	
-		}
-	}
-	
-	\draw[dashed] (1.555,-1.1) -- (1.555,20.1);
+\clearpage
 
-\end{tikzpicture}
 
+\def\maincolors{%
+	brown-orange,
+	orange-brown,	
+	yellow-orange,
+	orange-yellow,
+	brownish green,
+	greenish brown,
+	bluish grey,
+	greyish blue,
+	pink-purple,
+	purple-pink,
+	green,
+	greenish,
+	purple,	
+	purplish,
+	brown,
+	brownish,
+	black,
+	white,
+	grey%
+}
+
+
+
+\tikzset{lastline/.style={opacity=1}};
+\newcommand{\distfigs}[2]{
+	\begin{tikzpicture}%
+	\foreach[count=\mdlii from 0] \mdlname in #1 {%
+		\node at (3.1*\mdlii cm, -1cm) {\sffamily \mdlname};%
+		\foreach[count=\colii from 0] \colorname in #2 {%
+			\xdef\topy{1.1*\colii}
+			\node at (3.1*\mdlii cm, \topy cm) %
+			{\includegraphics[height=0.95cm]{%
+					figs/demo/dist/\mdlname/\colorname}%
+			};%
+
+		}%
+		\xdef\topy{\topy+1}
+		\node at (3.1*\mdlii cm, -1cm) {\sffamily \mdlname};%
+		\node at (3.1*\mdlii cm, \topy) {\sffamily \mdlname};%
+	}%
+	%
+
+	\draw[dashed] (1.555, -1.1) -- (1.555, \topy);%
+	\draw[lastline] (3*1.555,-1.1) -- (3*1.555, \topy);%
+	\draw[dashed,lastline] (5*1.555,-1.1) -- (5*1.555, \topy);%
+	%
+	\end{tikzpicture}%
+}%
+
+
+\begin{figure}
+	\distfigs{{Direct, Direct-smoothed, SOWE, SOWE-smoothed}}{\maincolors}
+	\caption{Some examples of the output distribution estimations from the models trained on the full dataset} \label{fig:distout1}
+\end{figure}
+
+\begin{figure}
+	\distfigs{{CNN, CNN-smoothed, RNN, RNN-smoothed}}{\maincolors}
+	\caption{Some examples of the output distribution estimations from the models trained on the full dataset} \label{fig:distout2}
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\def\oovcolors{
+%	brownish 1Green,
+%	bluish gray,
+	1Brown,
+	gray,
+	1Gray,
+	1Green,
+	1Purple%	
+}
+
+\begin{figure}
+\distfigs{{SOWE, SOWE-smoothed,CNN, CNN-smoothed}}{\oovcolors}
+\tikzset{lastline/.style={opacity=0}}
+\distfigs{{RNN, RNN-smoothed}}{\oovcolors}
+\tikzset{lastline/.style={opacity=1}}
+
+\caption{Some example distribution estimations for colors names which are completely outside the training data. The terms: \natlang{Brown}, \natlang{gray}, \natlang{Gray}, \natlang{Green}, and \natlang{Purple}, do not occur in any of the color data; however \natlang{brown}, \natlang{grey} \natlang{green}, and \natlang{purple} do occur.} \label{fig:oovdist}
+\end{figure}
+
+
+\newcommand{\pointfigs}[2]{
+	\begin{tikzpicture}%
+	\foreach[count=\mdlii from 0] \mdlname in #1 {%
+		
+		\xdef\topy{20}
+		\node(fig\mdlname) at (3.1*\mdlii cm, \topy cm) %
+			{\includegraphics[height=18 cm]{%
+					figs/demo/point/\mdlname/#2}%
+			};%
+		\node[below = -0.7 of fig\mdlname] {\sffamily \mdlname};%
+		\node[above = -0.7 of fig\mdlname] {\sffamily \mdlname};%
+	}%
+	\end{tikzpicture}%
+}%
+
+\pointfigs{{Direct, SOWE}}{maincolors}
 
 \end{document}
