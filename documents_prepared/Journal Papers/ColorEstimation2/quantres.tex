@@ -1,0 +1,216 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[author={Lyndon}]{pdfcomment}
+
+\usepackage{booktabs}
+
+\usepackage{booktabs}
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=1.14}
+
+\DeclareMathVersion{tabularbold}
+\SetSymbolFont{operators}{tabularbold}{OT1}{cmr}{b}{n}
+
+
+% Center all floats
+\makeatletter
+\g@addto@macro\@floatboxreset{\centering}
+\makeatother
+
+\usepackage{cleveref}
+
+\begin{document}
+	\clearpage
+
+
+\subsection{Quantitative Results}
+
+Overall, we see that our models are able to learn to estimate colors based on sequences of terms.
+The CNN and SOWE models perform almost as well as the direct methods.
+With the SOWE taking the lead for distribution estimation, and the CNN for point estimation.
+We believe the reason for this is the SOWE is an easier to learn model from a gradient descent perspective: is very shallow model with only one true hidden layer.
+The RNN did not perform well at these tasks.
+While it is only marginally behind the SOWE and CNN on the full point estimation task (\Cref{fig:pointfull}), on all other tasks for both point estimation and distribution estimation is is significantly worse.
+This may indicate that it is  hard to capture the significant relationship between terms in the sequence.
+
+However, as will be shown in the examples in the next section it did learn generally acceptable colors.
+
+
+The performance of SOWE on the order tasks (\Cref{tbl:distord} and \Cref{tbl:pointord}) is surprising.
+SOWE can not take into account word order, its good results suggest that the word-order is not very significant for color names.
+While word order matters, colors with the same terms in there name but in different order are similar enough that it still performs well.
+
+
+
+It can be seen that smoothing has very little effect on the performance of any of the neural network based distribution estimation models.
+All 3 term based models (SOWE, CNN, RNN) all perform very similarly whether or note the training data is smoothed.
+The direct method which bypasses learning the functioning of terms is very substantially effected by the smoothing.
+This is because without smoothing it results in eastimating the probability based on bins unfilled by any observation (Which is zero due to the cap on the minimum value. See \Cref{sec:direct-histogram}).
+This is particularly notable in the case of the direct, unsmoothed nonextrapolating result reported in \Cref{tbl:distextrapo}. As these were some of the rarest terms in the training set, they were thus more likely to not coincide with any terms from the testing set.
+Conversely, on this dataset the term models do quiet well, with or without smoothing. The SOWE model out out even performs the the Direct method.
+As the network can effectively learn the smoothness, not just from the observations of one color but from all of the observations.
+It learns that increasing the value of one bin should increase adjacent ones.
+As such it does not need the smoothing applied to the training data.
+\pdfcomment{Bring across some of the detail on the reason from the earleier paper}
+
+We see both for point estimation (\Cref{tbl:pointextrapo}) and for distribution estimation (\Cref{tbl:distextrapo}), when the network is forced to extrapolate to new combinations of color names, the SOWE and CNN can do so with a reasonable degree of correctness.
+The RNN results continue to perform badly when extrapolating, doing much worse than the already poor results on the non-extrapolating task.
+However, the CNN and SOWE do well; while as expected the results are worse than for non-extrapolating they are not much worse.
+For the Distribution extrapolation task, they are actually still below the overall full datasets best result for perplexity.
+
+In the point estimation results we find that using the networks trained specifically for point estimation (As described by \Cref{sec:point-estimation}) performs consistently better than taking the weighted mean of the distributions output by the distribution estimation methods.
+We attribute this primarily to the effective additional training data.
+The distribution estimation method combines all training observation points in to one training datum per color description.
+Where as the point estimation uses the points directly.
+\pdfcomment{Is there something to say about the conditional indipednancy assumption, or about the fact that poitn estimation has more training data for more common colors?}.
+We note that for the direct method, the distributions mean is almost identical to the true mean of points, as is expected.
+
+
+
+
+\pgfkeys{
+	/pgf/number format/.cd, fixed, precision=3, fixed zerofill=true
+}
+
+\pgfplotstableset{
+	col sep=comma,
+	header=has colnames,
+	column type={c},
+	ignore chars={"},
+	string replace={Direct}{\emph{Direct}}, % Workout how to make this work
+	clear infinite,
+	empty cells with={--},
+	every head row/.style={before row=\toprule,	after row=\midrule},
+	columns/method/.style={reset styles, string type, column name=Method},
+	%
+	boldcell/.style = {
+		postproc cell content/.append style={
+			@cell content/.add={\mathversion{tabularbold}}{}
+		}
+	},
+	%
+	greycell/.style = {
+		postproc cell content/.append style={
+			@cell content/.add={\color{gray}}{}
+		}		
+	}
+}
+\pgfplotstableset{distresults/.append style={%
+		columns={method, perpstd},
+		columns/perp/.style={column name=$PP$},
+		create on use/perpstd/.style={
+			create col/expr={\thisrow{perp}/(256*256*256)},
+		},
+		columns/perpstd/.style={column name=$\frac{PP}{256^3}$},
+%
+		every row 1 column 1/.style={greycell},
+		every row 0 column 1/.style={greycell}
+	},%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	extrapodistresults/.append style={
+		every row 1 column 1/.style={greycell},
+		every row 0 column 1/.style={greycell},
+		every row 1 column 2/.style={greycell},
+		every row 0 column 2/.style={greycell},
+				%
+		columns={method, nxperpstd, xperpstd},
+		columns/nonextrapolatingperp/.style={column name={\shortstack{\small Nonextrapolating\\$PP$}}},
+		columns/extrapolatingperp/.style={column name={\shortstack{\small Extrapolating\\$PP$}}},
+%		
+		create on use/xperpstd/.style={
+			create col/expr={\thisrow{extrapolatingperp}/(256*256*256)},
+		},
+		create on use/nxperpstd/.style={
+			create col/expr={\thisrow{nonextrapolatingperp}/(256*256*256)},
+		},
+		columns/xperpstd/.style={column name={\shortstack{\small Extrapolating\\$\frac{PP}{256^3}$}}},
+		columns/nxperpstd/.style={column name={\shortstack{\small Nonextrapolating\\$\frac{PP}{256^3}$}}}
+	}
+}
+
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[distresults,
+		every row 2 column 1/.style={boldcell},
+		every row 3 column 1/.style={boldcell}
+	]{results/res_dist_full.csv}
+	%	}
+	\caption{\label{tbl:distfull} The results for the \textbf{full distribution estimation task}. Lower perplexity (PP) is better.}
+\end{table}
+
+
+
+
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[distresults,
+		every row 2 column 1/.style={boldcell},
+		every row 3 column 1/.style={boldcell}
+	]{results/res_dist_ord.csv}
+	%	}
+	\caption{\label{tbl:distord} The results for the \textbf{order distribution estimation task}. Lower perplexity (PP) is better. This is a subset of the full test set containing only tests where the order of the words matters.}
+\end{table}
+
+
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+\pgfplotstabletypeset[extrapodistresults,
+		every row 2 column 1/.style={boldcell},
+		every row 3 column 1/.style={boldcell},
+		every row 2 column 2/.style={boldcell}
+]{results/res_dist_extrapo.csv}
+	%	}
+	\caption{\label{tbl:distextrapo} The results for the \textbf{extrapolation distribution estimation task}. Lower perplexity (PP) is better. This uses the extrapolation subset of the full test set. In the extrapolating results certain rare word combinations were removed from the training and development sets. In the non-extrapolating results the full training and development stet was used.}
+\end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Point Estimation}
+\pgfplotstableset{pointresults/.append style={%
+		columns={method,mse},
+		columns/mse/.style={column name={$MSE$}},
+		%
+		every row 0 column 1/.style={greycell},
+		every row 5 column 1/.style={greycell},
+		every row 4 column 1/.style={greycell},
+	},%
+	extrapopointresults/.append style={
+		columns={method, nonextrapolatingmse, extrapolatingmse},
+		columns/nonextrapolatingmse/.style={column name=\shortstack{\small Nonextrapolating\\$MSE$}},
+		columns/extrapolatingmse/.style={column name=\shortstack{\small Extrapolating\\$MSE$}},
+%		
+		every row 0 column 1/.style={greycell},
+		every row 5 column 1/.style={greycell},
+		every row 4 column 1/.style={greycell},
+		every row 0 column 2/.style={greycell},
+		every row 5 column 2/.style={greycell},
+		every row 4 column 2/.style={greycell},
+	},
+}
+\subsubsection{Full Task}
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[pointresults,
+		every row 2 column 1/.style={boldcell},
+		every row 1 column 1/.style={boldcell}
+	]{results/res_point_comb_full.csv}
+	%	}
+	\caption{\label{tbl:pointfull} The results for the \textbf{full point estimation task}. Lower mean squared error (MSE) is better.}
+\end{table}
+
+
+\subsubsection{Order Task}
+
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[pointresults,
+		every row 1 column 1/.style={boldcell},
+		every row 2 column 1/.style={boldcell},
+		every row 6 column 1/.style={boldcell},
+		every row 7 column 1/.style={boldcell},
+		every row 8 column 1/.style={boldcell},
+		every row 9 column 1/.style={boldcell}
+	]{results/res_point_comb_ord.csv}
+	%	}
+	\caption{\label{tbl:pointord} The results for the \textbf{order point estimation task}. Lower mean squared error (MSE) is better. This is a subset of the full test set containing only tests where the order of the words matters.}
+\end{table}
+
+\end{document}
