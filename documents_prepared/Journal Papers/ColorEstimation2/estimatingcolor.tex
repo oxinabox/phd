@@ -90,15 +90,17 @@
 
 \begin{abstract}
 When a speaker says the name of a color, the color that they picture is not necessarily the same as the listener imagines.
-Color understanding is a grounded semantic task, but that grounding is not a trivial mapping of a single word or phrase to a single point in color-space as there are many different interpretations of what  color is mean by a particular color name.
+
+Further we argue that color understanding is a grounded semantic task, but that grounding is not a trivial mapping of a single word or phrase to a single point in color-space as there are many different interpretations of what  color is mean by a particular color name.
 Proper understanding of color language requires the capacity to map a sequence of words to a probability distribution in color-space.
+As such we investigate both point estimation distribution estimation from color name.
 A distribution is required as there is no clear agreement between people as to what a particular color describes -- different people have a different idea of what it means to be ``very dark orange''.
 
-Learning how each word in a color name contributes to the color described,
-allows for knowledge sharing between uses of the words in different color names.
-This knowledge sharing significantly improves predicative capacity for color names with sparse training data.
-The extreme case of this challenge in data sparsity is for color names without any direct training data.
-Our model is able to predict reasonable distributions for these cases, as evaluated on a held-out dataset consisting only of such terms.
+Color names are often made up of multiple words,
+as a task in natural language understanding we investigate in depth the capacity of neural networks based on sums of word embeddings (SOWE), recurrence (RNN) and convolution (CNN),  on their ability to make estimates of colors from sequences of terms.
+We contrast their performance to direct non-term based methods which form a rough upper-bound by directly using the training data.
+Surprisingly, the sum of word embeddings generally performs the best, coming close to this upper bound on almost all evaluations.
+It is trailed slightly by the CNN, and most substantially by the RNN.
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
@@ -107,10 +109,10 @@ Color understanding is an important subtask in natural language understanding.
 It is a challenging domain, due to ambiguity, multiple roles taken by the same words, the many modifiers, and shades of meaning.
 In many ways it is a grounded microcosm of natural language understanding.
 Due to its difficulty, texts containing color descriptions such as \texttt{the flower has petals that are bright pinkish purple with white stigma} are used as demonstrations for state of the art image generation systems \parencite{reed2016generative, 2015arXiv151102793M}.
-The core focus of the work we present here is addressing these linguistic phenomena around the descriptions of the color, in a single patch, as represented in a color-space such as HSV \parencite{smith1978color}.
-Issues of illumination and perceived color based on visual context are considered out of the scope.
+The core focus of the work we present here is addressing these linguistic phenomena around the short-phrase descriptions of the color, in a single patch, as represented in a color-space such as HSV \parencite{smith1978color}.
+Issues of illumination and perceived color based on context are considered out of the scope.
 We evaluated a variety of neural-network based systems, for their capacity to be used for this natural language understanding task.
-We believe the results are suggestive to the capacity of these systems for other similar tasks involving short token sequences.
+We believe our results results are suggestive to the capacity of these systems for other similar tasks involving short token sequences.
 \pdfcomment{Rui has a paper for neural represenstation of phrases. Maybe I should link into that}
 
 
@@ -144,10 +146,15 @@ While by definition the mean color point minimizes the squared error, it may not
 Better is to estimate the distribution and allow the consumer of the estimate to determine how to reduce that to a point estimate.
 
 
-
-We estimate a probability distribution over the color-space.
-To qualify our estimate of the distribution we discretize the space into a large number of patches, and produce an output much like a histogram.
+When we estimate a probability distribution over the color-space.
+To qualify our estimate of the distribution we discretize the space to produce into a histogram.
 This allows us to take advantage of the well-known softmax based methods for estimating a probability mass distribution using a neural network.
+
+An interesting consideration when considering this discretization is the smoothness estimate.
+The true space is continuous, even if we are discretizing it at resolution as high as the original color displays used to collect the data.
+Being continuous means that a small change in point the color-space should correspond to a small change in how likely that point is.
+Or more informally: histograms should look smooth, and not spiky.
+We investigate using a KDE based method for smoothing the training data, and further we conclude that the neural network based models are learning this smoothness with or without the smoothing of the training data.
 
 
 Estimating color probabilities has a clear use as a subsystem in many systems.
@@ -157,7 +164,7 @@ Further, if the probability of the color of the object being described by the us
 More generally, the distribution based on the color name alone can be used as a prior probability and combined with additional context information to yield better predictions.
 
 \subsection{Contributions}
-Our contributions in this work are (in order of significances)
+Our contributions in this work are (in order of significance)
 \begin{itemize}
 	\item Investigation of term-based neural network color estimation models based on:
 	\begin{itemize}
@@ -167,7 +174,15 @@ Our contributions in this work are (in order of significances)
 	\item Investigation into the effect of smoothing the distribution training histograms, using a kernel density based (KDE) method; featuring wrapped around effects on the hue channel.
 	\item An marginally novel output method for handling the wrap around nature of the hue when performing point estimation.
 \end{itemize}
-
+The investigations include investigating the estimation capacity of the models:
+\begin{itemize}
+	\item generally on all color names (full task)
+	\item for color names when the order of the words matters (order task)
+	\item for color names which never occur in the training data exactly, but for which all terms occur in the training data (extrapolation task
+	\item for color names with terms that do not occur in the training data at all, but for which we know word embeddings for (embedding only task).
+\end{itemize}
+The last investigation is not carried out in depth, but is presented merely as a point of interest.
+We believe that due to the nature of color understanding as a microcosm of natural language understanding, the results of our investigations have some implications for the capacity of the models for their general use in short phrase understanding.
 
 
 \section{Related Work}\label{sec:related-work}
@@ -229,30 +244,10 @@ The work presented here closed that gap.
 
 
 \section{Method}
-\subsection{Tokenization}
-For all the term based methods, we perform tokenization.
-During tokenization a color name is split into terms, with consistent spelling.
-For example, \natlang{bluish kahki} would become the sequence of 3 tokens: [\natlang{blue}, \natlang{ish}, \natlang{khaki}].
-Other than spelling, the tokenization results in the splitting of affixes and combine tokens.
-Combining tokens and related affixes affect how multiple colors can be combined.
-The full list of tokenization rules can be found in the accompanying source code.
-Some further examples showing how combining tokens and affixes are used and tokenized:
-\begin{itemize}
-	\item \natlang{blue purple} $\mapsto$ [\natlang{blue}, \natlang{purple}].
-	\item \natlang{blue-purple} $\mapsto$ [\natlang{blue}, \natlang{-}, \natlang{purple}].
-	\item \natlang{bluish purple} $\mapsto$ [\natlang{blue}, \natlang{ish}, \natlang{purple}]
-	\item \natlang{bluy purple} $\mapsto$ [\natlang{blue}, \natlang{y}, \natlang{purple}]
-	\item \natlang{blurple} $\mapsto$ [\natlang{blue-purple}]
-\end{itemize}
-The final example of \natlang{blurple} is a special-case.
-It is the only portmanteau in the dataset, and we do not have a clear way to tokenize it into a series of terms which occur in our pretrained embedding's vocabulary (see \Cref{sec:embeddings}).
-The portmanteau \natlang{blurple} is not in common use in any training set used for creating word embeddings, so no pretrained embedding is available.
-As such we handle it by treating it as the single token \natlang{blue-purple} for purposes of finding an embedding.
-There are many similar hyphenated tokens in the pretrained embeddings vocabulary, however (with that exception) we do not use them as it reduced the sequential modelling task to the point of being uninteresting.
 
 
 
-\subsubsection{HSV color-space}
+\subsection{HSV color-space}
 We use the HSV color-space \parencite{smith1978color}.
 through-out this work.
 We use the format which the data is originally provided in.
@@ -378,12 +373,6 @@ Though for brevity we only  present results with 256 bins per channel, our preli
 
 
 
-
-
-
-
-
-
 \section{Experimental Setup}
 
 \subsection{Implementation}
@@ -455,8 +444,30 @@ We make use of 300d pretrained FastText embeddings \textcite{bojanowski2016enric
 
 The embeddings are not trained during the task, but are kept fixed.
 As per the universal approximation theorem \parencite{leshno1993uat, SONODA2017uat} the layers above allow for arbitrary non-linear continuous transformation.
+By fixing the embeddings, and learning this transformation,
+we can produce estimates of colors from their embedding alone -- without any training data at all.
+This is shown in \Cref{sec:embeddingonly}.
 
-
+\subsubsection{Tokenization}
+For all the term based methods, we perform tokenization.
+During tokenization a color name is split into terms, with consistent spelling.
+For example, \natlang{bluish kahki} would become the sequence of 3 tokens: [\natlang{blue}, \natlang{ish}, \natlang{khaki}].
+Other than spelling, the tokenization results in the splitting of affixes and combine tokens.
+Combining tokens and related affixes affect how multiple colors can be combined.
+The full list of tokenization rules can be found in the accompanying source code.
+Some further examples showing how combining tokens and affixes are used and tokenized:
+\begin{itemize}
+	\item \natlang{blue purple} $\mapsto$ [\natlang{blue}, \natlang{purple}].
+	\item \natlang{blue-purple} $\mapsto$ [\natlang{blue}, \natlang{-}, \natlang{purple}].
+	\item \natlang{bluish purple} $\mapsto$ [\natlang{blue}, \natlang{ish}, \natlang{purple}]
+	\item \natlang{bluy purple} $\mapsto$ [\natlang{blue}, \natlang{y}, \natlang{purple}]
+	\item \natlang{blurple} $\mapsto$ [\natlang{blue-purple}]
+\end{itemize}
+The final example of \natlang{blurple} is a special-case.
+It is the only portmanteau in the dataset, and we do not have a clear way to tokenize it into a series of terms which occur in our pretrained embedding's vocabulary (see \Cref{sec:embeddings}).
+The portmanteau \natlang{blurple} is not in common use in any training set used for creating word embeddings, so no pretrained embedding is available.
+As such we handle it by treating it as the single token \natlang{blue-purple} for purposes of finding an embedding.
+There are many similar hyphenated tokens in the pretrained embeddings vocabulary, however (with that exception) we do not use them as it reduced the sequential modelling task to the point of being uninteresting.
 
 
 \subsection{Input Modules}
@@ -752,18 +763,6 @@ This mean of this loss is taken over all observations in each mini-batch during 
 
 
 
-\subsubsection{Extrapolation Task}
-\begin{table}
-	%	\resizebox{\columnwidth}{!}{
-	\pgfplotstabletypeset[extrapopointresults,
-			every row 1 column 1/.style={boldcell},
-			every row 2 column 2/.style={boldcell},
-	]{results/res_point_comb_extrapo.csv}
-	%	}
-	\caption{\label{tbl:pointextrapo} The results for the \textbf{extrapolation point estimation task}. Lower mean squared error (MSE) is better. This uses the extrapolation subset of the full test set. In the extrapolating results certain rare word combinations were removed from the training and development sets. In the non-extrapolating results the full training and development stet was used.}
-\end{table}
-
-
 
 
 \section{Conclusion}
@@ -783,6 +782,11 @@ But rather converting each observation into a one-hot representation of its bin.
 We initially avoiding this solution as it precludes (directly) using KDE-based smoothing of the histograms.
 However our results in this work indicate that the machine learning distribution estimation models is not substantially effected by the use of KDE-based smoothing or not.
 While the single observations represented as one-hot would be less informative, there would be several orders of magnitude more of them, and the natural of training with random minibatches would result in a model that is less likely to get stuck in local minima, as so may achieve better results.
+
+A further interesting avenue for investigation would condition the model not only on the words used but also on the speaker.
+The original source of the data \textcite{Munroe2010XKCDdataset}, includes some demographic information which is not exploited by any known methods.
+It is expected that color-term usage may vary with subcultures.
+
 
 
 \clearpage
