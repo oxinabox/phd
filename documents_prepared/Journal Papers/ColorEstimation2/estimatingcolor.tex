@@ -501,7 +501,7 @@ There are many similar hyphenated tokens in the pretrained embeddings vocabulary
 		\draw[->] (GRU1) to (hiddenoutput);
 	\end{tikzpicture}
 
-	\caption{The RNN Input module for the example input \natlang{light greenish blue}. Each dashed box represents 1 time-step.}
+	\caption{The RNN Input module for the example input \natlang{light greenish blue}. Each dashed box represents 1 time-step. \label{fig:rnnmod}}
 \end{figure}
 
 
@@ -510,8 +510,15 @@ due to the variable length of the input.
 The general structure of this network, shown in \Cref{fig:rnnmod} is similar to \textcite{2016arXiv160603821M}, or indeed to most other word sequence learning models.
 Each word is first transformed to an embedding representation.
 This representation is trained with the rest of the network allowing per word information to be efficiently learned.
-The embedding is used as the input for a Gated Recurrent Unit (GRU)  \parencite{cho2014properties}.
-The output of the last time-step is fed to a Rectified Linear Unit (ReLU)  \parencite{dahl2013reludropout}.
+The embedding is used as the input for a Gated Recurrent Unit (GRU) 
+The stream was terminated with an End of Stream (\natlang{<EOS>}) pseudo-token,
+as represented using a zero-vector.
+The output of the last time-step is fed to a Rectified Linear Unit (ReLU).
+
+We make use of a GRU \parencite{cho2014properties},
+which we found to marginally out-perform the basic RNN in preliminary testing.
+The small improvement is unsurprising, as the color names have at most 5 terms,
+so longer short term memory is not required.
 
 
 \subsubsection{Sum of Word Embeddings (SOWE)}
@@ -520,63 +527,6 @@ Though it is well established as a useful representation, and has been used an i
 Any number of word embeddings can be added to the sum.
 However, it has no representation of the order.
 The structure we used is shown in \Cref{fig:sowemod}.
-
-\begin{figure}
-	\begin{tikzpicture}
-
-	\node (GRU1)[]{};
-	
-	\foreach[count=\i from 1] \j in {2,...,5}
-	{
-		\node (GRU\j)[left = 2 of GRU\i]{};
-	}
-	
-	\node (hstack)[layer, above= of GRU3, xshift=1cm]{stack into grid};
-	
-	
-	\foreach[count=\i from 1] \word in {green, ish, blue, light}
-	{
-		\node (emb\i)[layer, below = of GRU\i]  {Embedding};
-		\node (word\i)[word, below = of emb\i]{\word};
-		\draw[->] (word\i) to  (emb\i);
-		\draw[->] (emb\i) to (hstack);
-	}
-	
-	\node (conv)[layer, above= 0.5 of hstack]{2D Convolution};
-	\node (innerconv)[layer, above= 0.5 of conv]{ReLU};
-	\node (pool)[layer, above= 0.5 of innerconv]{MaxPooling};
-	\node (hiddenoutput)[layer, above= 0.5 of pool] {ReLU};
-	\node (output)[dotted, layer, above=1 of hiddenoutput] {Output Module};
-	\draw[->] (hstack) to (conv);
-	\draw[->] (conv) to (innerconv);
-	\draw[->] (innerconv) to (pool);
-	\draw[->] (pool) to (hiddenoutput);
-	\draw[->] (hiddenoutput) to (output);
-	
-%	\draw[->] (hstack) to (hiddenoutput);
-%	\draw[->] (hiddenoutput) to (output);
-	
-	\end{tikzpicture}
-	
-	\caption{The SOWE input module for the example input \natlang{light greenish blue}}
-	\label{fig:sowemod}
-\end{figure}
-
-
-\subsubsection{Convolutional Neural Network(CNN)}
-
-We make use of a Gated Recurrent Unit (GRU), 
-which we found to marginally out-perform the basic RNN in preliminary testing.
-The small improvement is unsurprising, as the color names have at most 4 terms,
-so longer short term memory is not required.
-We apply a convulutional neural network to the task by applying 2D convolution over the stacked word embeddings.
-\Cref{fig:cnnmod}
-We use 64 filters of size between 1 and the length of the longest padded embedding (5).
-
-The sequence of word embeddings for each-term was input to the model.
-The stream was terminated with an End of Streak (\natlang{<EOS>}) pseudotoken,
-as represented using a zero-vector.
-
 
 \begin{figure}
 	\begin{tikzpicture}
@@ -608,6 +558,57 @@ as represented using a zero-vector.
 	\caption{The SOWE input module for the example input \natlang{light greenish blue}}
 	\label{fig:sowemod}
 \end{figure}
+
+
+
+\subsubsection{Convolutional Neural Network(CNN)}
+
+
+We apply a convolutional neural network to the task by applying 2D convolution over the stacked word embeddings.
+\Cref{fig:cnnmod}
+We use 64 filters of size between 1 and the length of the longest padded embedding (5).
+
+\begin{figure}
+	\begin{tikzpicture}
+	
+	\node (GRU1)[]{};
+	
+	\foreach[count=\i from 1] \j in {2,...,5}
+	{
+		\node (GRU\j)[left = 2 of GRU\i]{};
+	}
+	
+	\node (hstack)[layer, above= of GRU3, xshift=1cm]{stack into grid};
+	
+	
+	\foreach[count=\i from 1] \word in {green, ish, blue, light}
+	{
+		\node (emb\i)[layer, below = of GRU\i]  {Embedding};
+		\node (word\i)[word, below = of emb\i]{\word};
+		\draw[->] (word\i) to  (emb\i);
+		\draw[->] (emb\i) to (hstack);
+	}
+	
+	\node (conv)[layer, above= 0.5 of hstack]{2D Convolution};
+	\node (innerconv)[layer, above= 0.5 of conv]{ReLU};
+	\node (pool)[layer, above= 0.5 of innerconv]{MaxPooling};
+	\node (hiddenoutput)[layer, above= 0.5 of pool] {ReLU};
+	\node (output)[dotted, layer, above=1 of hiddenoutput] {Output Module};
+	\draw[->] (hstack) to (conv);
+	\draw[->] (conv) to (innerconv);
+	\draw[->] (innerconv) to (pool);
+	\draw[->] (pool) to (hiddenoutput);
+	\draw[->] (hiddenoutput) to (output);
+	
+	%	\draw[->] (hstack) to (hiddenoutput);
+	%	\draw[->] (hiddenoutput) to (output);
+	
+	\end{tikzpicture}
+	
+	\caption{The CNN input module for the example input \natlang{light greenish blue}}
+	\label{fig:cnnmod}
+\end{figure}
+
 
 
 
