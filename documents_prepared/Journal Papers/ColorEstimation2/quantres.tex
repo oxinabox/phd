@@ -25,27 +25,34 @@
 \subsection{Quantitative Results}\label{sec:quantitative-results}
 
 Overall, we see that our models are able to learn to estimate colors based on sequences of terms.
+From the consideration of all results (\Cref{tbl:pointextrapo}, \Cref{tbl:distextrapo}, \Cref{tbl:pointfull}, \Cref{tbl:distfull}, \Cref{tbl:distord}, \Cref{tbl:pointord})
 The CNN and SOWE models perform almost as well as the direct methods.
-With the SOWE taking the lead for distribution estimation, and the CNN for point estimation.
+With the SOWE taking the lead on most tasks CNN for point estimation.
 We believe the reason for this is the SOWE is an easier to learn model from a gradient descent perspective: is very shallow model with only one true hidden layer.
-The RNN did not perform well at these tasks.
+The RNN did not perform as well at these tasks.
 While it is only marginally behind the SOWE and CNN on the full point estimation task (\Cref{fig:pointfull}), on all other tasks for both point estimation and distribution estimation is is significantly worse.
 This may indicate that it is  hard to capture the significant relationship between terms in the sequence.
-
 However, as will be shown in the examples in the next section it did learn generally acceptable colors.
 
 
 The performance of SOWE on the order tasks (\Cref{tbl:distord} and \Cref{tbl:pointord}) is surprising.
 SOWE can not take into account word order, its good results suggest that the word-order is not very significant for color names.
-While word order matters, colors with the same terms in there name but in different order are similar enough that it still performs well.
+While word order matters, colors with the same terms in there name but in different order are similar enough that it still performs very well.
+In theory the models capable of using word order have the capacity to ignore it, and thus could achieve a similar result.
+In theory an RNN can learn to perform a sum of its inputs (the word embeddings),
+and the CNN can learn to weight all non-unigram filters to zero.
+In practice we see that for the RNN in particular this did not occur.
+This can be attributed to the more complex networks being more challenging to train via gradient descent.
+
 
 
 
 It can be seen that smoothing has very little effect on the performance of any of the neural network based distribution estimation models.
-All 3 term based models (SOWE, CNN, RNN) all perform very similarly whether or note the training data is smoothed.
-The direct method which bypasses learning the functioning of terms is very substantially effected by the smoothing.
-This is because without smoothing it results in eastimating the probability based on bins unfilled by any observation (Which is zero due to the cap on the minimum value. See \Cref{sec:direct-histogram}).
-This is particularly notable in the case of the direct, unsmoothed nonextrapolating result reported in \Cref{tbl:distextrapo}. As these were some of the rarest terms in the training set, they were thus more likely to not coincide with any terms from the testing set.
+All 3 term based models (SOWE, CNN, RNN) all perform very similarly whether or not the training data is smoothed.
+This is seen consistently in all the distribution estimation tasks  (\Cref{tbl:distfull}, \Cref{tbl:distord}, \Cref{tbl:distextrapo}).
+Conversely, the direct method which bypasses learning the functioning of terms is very substantially effected by the smoothing.
+This is because without smoothing it results in estimating the probability based on bins unfilled by any observation (Which is zero due to the cap on the minimum value. See \Cref{sec:direct-histogram}).
+This is particularly notable in the case of the direct, (unsmoothed) non-extrapolating result reported in \Cref{tbl:distextrapo}. As these were some of the rarest terms in the training set, they were thus more likely to not coincide with any terms from the testing set.
 Conversely, on this dataset the term models do quiet well, with or without smoothing. The SOWE model out out even performs the the Direct method.
 As the network can effectively learn the smoothness, not just from the observations of one color but from all of the observations.
 It learns that increasing the value of one bin should increase adjacent ones.

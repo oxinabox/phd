@@ -93,8 +93,10 @@ When a speaker says the name of a color, the color that they picture is not nece
 
 Further we argue that color understanding is a grounded semantic task, but that grounding is not a trivial mapping of a single word or phrase to a single point in color-space as there are many different interpretations of what  color is mean by a particular color name.
 Proper understanding of color language requires the capacity to map a sequence of words to a probability distribution in color-space.
-As such we investigate both point estimation distribution estimation from color name.
+As such we focus our investigation on distribution estimation from color name.
 A distribution is required as there is no clear agreement between people as to what a particular color describes -- different people have a different idea of what it means to be ``very dark orange''.
+To access if our conclusions about our methods hold more generally, we also assess them on the task of point estimation of color names.
+We find the results are consistent, though we argue this task is less useful.
 
 Color names are often made up of multiple words,
 as a task in natural language understanding we investigate in depth the capacity of neural networks based on sums of word embeddings (SOWE), recurrence (RNN) and convolution (CNN),  on their ability to make estimates of colors from sequences of terms.
@@ -136,7 +138,7 @@ A single point estimate, does not capture the nature of the problem adequately.
 The mean of a multimodal distribution (one with two peaks) will lie in the valley between the -- a less likely color.
 Similarly it will be off to the side of the mode, in an asymmetrical distribution.
 The other problem is that is that a point estimate does not capture the sensitivity.
-In an asymmetrical (but monomodal) distribution, having  point slight off-center in one direction may result in very different probability,
+In an asymmetrical distribution, having  point slight off-center in one direction may result in very different probability,
 this more generally holds for a narrow variance distribution.
 Conversely for a very wide variance distribution (for example one approaching the uniform distribution) the point estimate value may matter very little with all points providing similar probabilities.
 Color distributions are always one or more of multimodal or asymmetrical, and feature widely different variances for different names.
@@ -168,11 +170,11 @@ Our contributions in this work are (in order of significance)
 \begin{itemize}
 	\item Investigation of term-based neural network color estimation models based on:
 	\begin{itemize}
-		\item processing inputs with a Sum of Word Embeddings (SOWE), Convolutional Neural Networks (CNN) and Recurrent Neural Networks (RNN).
-		\item producing outputs as distributions models with histograms, and as point estimates.
+		\item processing inputs per term using  Sum of Word Embeddings (SOWE), Convolutional Neural Networks (CNN) and Recurrent Neural Networks (RNN).
+		\item producing outputs as distributions models using softmax based histograms, and as point estimates using a novel HSV neural network output layer.
+		\item we conclude that while all these models learn useful outputs, the SOWE and the CNN far out perform the RNN.
 	\end{itemize}
-	\item Investigation into the effect of smoothing the distribution training histograms, using a kernel density based (KDE) method; featuring wrapped around effects on the hue channel.
-	\item An marginally novel output method for handling the wrap around nature of the hue when performing point estimation.
+	\item Investigation into the effect of smoothing the distribution training histograms, using a kernel density based (KDE) method; featuring wrapped around effects on the hue channel. We find the interesting conclusion that while smoothing is essential for direct methods of estimation, it has little effect on the machine learning based methods that we investigate.
 \end{itemize}
 The investigations include investigating the estimation capacity of the models:
 \begin{itemize}
@@ -279,7 +281,7 @@ The square error of two hue values is thus calculated as
 SE(h_1, h_2) = \min \big( \left(h_1 - h_2 \right)^2, \, \left(h_1 - h_2 -1 \right)^2  \big)
 \end{equation}
 to take into account the error could be calculated clockwise or counter clockwise.
-(Note that the the $-1$ term related to using units of turns, were we using radians it would be $-2\pi$)
+(Note that the $-1$ term related to using units of turns, were we using radians it would be $-2\pi$)
 
 
 The mean of a set of hues ($\lbrace h_1,\,\ldots,\,h_N \rbrace$) is calculated as 
@@ -396,7 +398,7 @@ This gives a total of 2,176,417 observations and 829 color names.
 They also define a standard test, development and train split.
 
 
-\subsubsection{Extrapolation Training and Testing Set}
+\subsubsection{Extrapolation Training and Testing Set} \label{sec:extrapodata}
 The primary goal in constructing using the term based models is to be able to make predictions for never before seen descriptions of colors.
 For example, based on the learned understanding of \texttt{salmon} and of \texttt{bright}, from examples like \texttt{bright green} and \texttt{bright red}, we wish for the systems to make predictions about \texttt{bright salmon}, even though that description never occurs in the training data.
 %
@@ -405,7 +407,7 @@ This is defined by selecting the rarest 100 color descriptions from the full dat
 with the restriction that every token in a selected description must still have at least 8 uses in other descriptions in the training set.
 The selected examples include multi-token descriptions such as: \texttt{bright yellow green} and also single tokens that occur more commonly as modifiers than as stand-alone descriptions such as \texttt{pale}.
 
-The extrapolation training set is made up of the data from the full training set, excluding those  corresponding the the rare descriptions.
+The extrapolation training set is made up of the data from the full training set, excluding those  corresponding to the rare descriptions.
 Similar is done for the development set, so as no direct knowledge of the combined terms can leak during early-stopping.
 Conversely, the extrapolation test set is made up of only the observations from the full test set that do use those rare descriptions.
 
@@ -434,7 +436,7 @@ The network is optimized using Adam
 Early stopping is checked every 10 epochs using the development dataset.
 Distribution estimation methods are trained using full batch (where each observation is a distribution) for every epoch.
 Point Estimation trains using randomized mini-batches of size $2^16$ observations (which are each color-space triples).
-All hidden-layers, except as otherwise precluded (in side the convolution, and in the penultimate layer of the point estimation networks) have the same width 300, as does the the embedding layer.
+All hidden-layers, except as otherwise precluded (in side the convolution, and in the penultimate layer of the point estimation networks) have the same width 300, as does the embedding layer.
 
 
 \subsubsection{Embeddings}\label{sec:embeddings} 
@@ -470,7 +472,7 @@ As such we handle it by treating it as the single token \natlang{blue-purple} fo
 There are many similar hyphenated tokens in the pretrained embeddings vocabulary, however (with that exception) we do not use them as it reduced the sequential modelling task to the point of being uninteresting.
 
 
-\subsection{Input Modules}
+\subsection{Input Modules} \Cref{sec:inputmod}
 
 
 \subsubsection{Recurrent Neural Network(RNN)}
@@ -612,17 +614,26 @@ We use 64 filters of size between 1 and the length of the longest padded embeddi
 
 
 
-\subsubsection{Non-term based Direct Methods}
+\subsection{Non-term based Direct Methods}
 To establish an rough upper-limit on the modeling results
 we evaluate simple direct methods.
 These direct methods do not process term-by-term, they do not work with the language at all.
-They simply map from the exact input text (no tokenization) to the precalculated histogram or mean of the training data for that exact text.
+They simply map from the exact input text (no tokenization) to the precalculated histogram or mean of the training data for the exact color name.
+It is direct in the sense that it bypassing the compositional language understanding part of the process.
+It is as if the input module (\Cref{sec:inputmod}) perfectly resolved the sequence of terms into a single item.
+
 
 They represent an approximate upper bound, as they fully exploit all information in the training data for each input.
 There is no attempting to determine how each term affects the result.
-We say approximate upper-bound, as it is not strictly impossible that the ML methods may happen to model the test data better than can be directly determined by the training data.
+We say approximate upper-bound, as it is not strictly impossible that the ML methods may happen to model the test data better than can be directly determined by training data as processed per exact color name.
+A term based model could out perform them, however this would require learning how the terms in the color name combine in a way that exceeds the information present in the training data.
+It is this capacity of learning how the terms combine that allow for the models to extrapolate the outputs for combinations of terms that never occur in the training data (\Cref{sec:extrapodata}).
 
-\paragraph{Direct Histogram (Distribution Estimation, only)}\label{sec:direct-histogram}
+
+
+
+
+\subsubsection{Direct Histogram (Distribution Estimation, only)}\label{sec:direct-histogram}
 The Direct Histogram method simply returns the histogram as found for training using the method given by \Cref{sec:discretization}.
 With smoothing, it returns the smoothed histogram as per \Cref{sec:kernel-density-based-smoothing}.
 However, with two variation over what is used for the creation of the training data.
@@ -636,7 +647,13 @@ We found that capping the minimum value to the machine epsilon the gives much be
 While this minimum cap penalizes results that would be zero more than add-one smoothing would, it does not reassign probability mass away from results that would be nonzero.
 We consider giving the direct method this advantage is in-line with determining a rough upper bound on the result.
 
-\paragraph{Direct Mean Point (Point Estimation, only)}
+\subsubsection{Direct Mean Point (Point Estimation, only)}
+In a similar method approach, we also a method that directy produces a point estimate from a color name.
+We define this by taking the mean of all the training observations for a given exact color name  (The mean is taken in the angularly correct way \Cref{sec:angularly-correct}).
+Taking the mean of all the observations gives optimal solution to minimizing the mean squared error on the training data set.
+As with our direct distribution estimation method, this bypasses the term based language understanding, and directly exploits the training data.
+It thus represents an approximate upper bound on the performance of the term based models.
+
 
 
 
