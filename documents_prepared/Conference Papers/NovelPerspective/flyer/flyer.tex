@@ -1,4 +1,7 @@
-\documentclass[12pt,a5paper]{article}
+\documentclass[12pt]{article}
+\usepackage[a5paper, margin=0.5cm]{geometry}
+
+
 \usepackage{xcolor}
 \usepackage{pgfplots}
 \usepackage{pgfplotstable}
@@ -41,7 +44,7 @@ WOT	0.659722222	0.736111111	0.680555556
 \begin{document}
 \centering
 \thispagestyle{empty}
-
+\vspace{0.5cm}
 {\Huge NovelPerpective\\}
 {\Large Identifying Point of View Characters\\}
 \vspace{0.3cm}
@@ -51,17 +54,17 @@ WOT	0.659722222	0.736111111	0.680555556
 	Mohammed Bennamoun\\
 }
 \vspace{0.3cm}
-\hspace{-1.5cm}
+\hspace{-0.1cm}
 \begin{tikzpicture}
 \begin{axis}[ybar,
 	xticklabels from table={\res}{TestSet},
-	legend style={at={(0.5,-0.3)}, anchor=north,legend columns=-1, draw=none},
+	legend style={at={(0.5,-0.5)}, anchor=north,legend columns=-1, draw=none},
 %	enlargelimits=0.3,
 	ymin = 0, ymax=1,
-	enlarge x limits=0.3,
+	enlarge x limits=0.2,
 	xticklabel style={text width=8em, align=center},
 	xtick = data,
-	width=\textwidth, height= 4cm,
+	width=0.7\textwidth, height= 3cm,
 	bar width=0.6cm,
 	yticklabel={\pgfmathparse{\tick*100}\pgfmathprintnumber{\pgfmathresult}\%},
 	ytick = {0, 0.25, 0.50, 0.75, 1.00},
@@ -79,48 +82,48 @@ WOT	0.659722222	0.736111111	0.680555556
 
 \vspace{1cm}
 
-
-\tikzset{
-	every picture/.style={/utils/exec={\sffamily}},
-	every matrix/.style={ampersand replacement=\&, rounded corners=10pt},
-	every node/.style = {font=\small, inner sep = 3},
-	>=latex,
-	every text node part/.style={align=center}, auto,node distance=2.4, ->,
-	every edge/.append style={every node/.style={font=\footnotesize}}
-}
-
-
 \resizebox{\textwidth}{!}{
-	\begin{tikzpicture}	
-	\begin{scope}[yshift=4cm]		
+	\begin{tikzpicture}[
+		>=latex,
+		every text node part/.style={align=center},
+		auto,
+		node distance=2.4, 
+		->,
+		every edge/.append style={every node/.style={font=\small}},
+		every node/.style={rounded corners=7pt},
+		gather/.style = { very thick, purple, shorten <= 0.4cm},
+	]	
+	\begin{scope}[yshift=3cm]		
 		\node(start1){};
-		\node(enrich)[draw, right=of start1] {Tokenization\\POS Tagging\\Named Entity Tagging};
+		\node(enrich)[draw, right=of start1] {POS \& NE \\ Tagging};
 		\node(features)[draw, right=of enrich] {Feature\\ Extraction};
 		\node(scoring)[draw, right=of features] {Character\\Scoring};				
-		\node(classify)[draw, right=of scoring] {POV Character\\ Classification};
-		\node(end)[right=of classify] {};
+		\node(end)[right=of scoring] {};
 		
-		\path (start1) edge node[above]{raw\\ text}  (enrich);
+		\path (start1) edge node[]{raw\\ text}  (enrich);
 		\path (enrich) edge node[above]{enriched\\text} (features);
 		\path (features) edge node[above]{character-name\\feature-vector\\pairs
 		} (scoring);
 		\path (scoring) edge node[above]{character-name\\score pairs
-		} (classify);
-		\path (classify) edge node[above]{character\\name}  (end);
+		} (end);
 	\end{scope}
-		
-	\node(start)[draw] {1.\\User\\ uploads\\ ebook};
-	\node(convert)[draw, right=of start] {2.\\ File is\\ converted and \\preprocessed};
-	\node(classify)[draw, right=of convert, xshift=-0.2cm] {3.\\Sections are \\ classifed by character};
-	\node(select)[draw, right= of classify, xshift=0.2cm] {4.\\User selects\\ sections\\ to keep};
-	\node(create)[draw, right=of select] {5.\\Subsetted\\ ebook\\ is created};
-	\node(download)[draw, right=of create] {6.\\User \\downloads \\ new ebook};
 	
-	\path (start) edge[below] node[above]{original ebook \\ + settings}  (convert);
-	\path (convert) edge[below] node[above]{section\\ content} (classify);
-	\path (classify) edge[below] node[above]{section-character\\list} (select);
-	\path (select) edge[below] node[above]{section\\selection}  (create);
-	\path (create) edge[below] node[above]{new \\ ebook}  (download);	
+	\begin{scope}[xshift=-1cm]		
+		\node(start)[draw] {Upload\\ Ebook};
+		\node(convert)[draw, right=of start, xshift=0.1cm] {File\\Conversion};
+		\node(classify)[draw, right=of convert, xshift=-0.2cm] {POV\\Character\\Classification};
+		\node(select)[draw, right= of classify, xshift=0.5cm] {Select\\ Who To \\ Keep};
+		\node(download)[draw, right=of select] {Download \\ Subsetted \\ ebook};
+		
+		\path (start) edge[below] node[below]{original ebook \\ + settings}  (convert);
+		\path (convert) edge[below] node[below]{section\\ content} (classify);
+		\path (classify) edge[below] node[below]{section-character\\score list} (select);
+		\path (select) edge[below] node[below]{section\\selection} (download);	
+		
+		\draw[->, gather] (classify.north west) to[out=160, in=-50] (start1);
+		\draw[<-, gather] (classify.north east) to[out=20, in=-140] (end);
+	\end{scope}
+	
 	\end{tikzpicture}
 }
 
