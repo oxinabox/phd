@@ -142,10 +142,9 @@ In an asymmetrical distribution, having  point slight off-center in one directio
 this more generally holds for a narrow variance distribution.
 Conversely for a very wide variance distribution (for example one approaching the uniform distribution) the point estimate value may matter very little with all points providing similar probabilities.
 Color distributions are always one or more of multimodal or asymmetrical, and feature widely different variances for different names.
-As such, we feel producing a point estimate has limited value.
-However we do consider the task, for comparison, and it remains an interesting challenge for assessing the systems under evaluation.
 While by definition the mean color point minimizes the squared error, it may not meaningful actually be a reasonable point estimate.
-Better is to estimate the distribution and allow the consumer of the estimate to determine how to reduce that to a point estimate.
+As such, we feel producing a point estimate has limited value.
+However we do consider the task, as it remains an interesting challenge for assessing the systems under evaluation.
 
 
 When we estimate a probability distribution over the color-space.
@@ -157,6 +156,7 @@ The true space is continuous, even if we are discretizing it at resolution as hi
 Being continuous means that a small change in point the color-space should correspond to a small change in how likely that point is.
 Or more informally: histograms should look smooth, and not spiky.
 We investigate using a KDE based method for smoothing the training data, and further we conclude that the neural network based models are learning this smoothness with or without the smoothing of the training data.
+It is however essential when directly estimating from the training data, without a machine learning step that can learn this smoothness relation.
 
 
 Estimating color probabilities has a clear use as a subsystem in many systems.
@@ -247,50 +247,48 @@ The work presented here closed that gap.
 
 \section{Method}
 
-
-
 \subsection{HSV color-space}
-We use the HSV color-space \parencite{smith1978color}.
-through-out this work.
+We use the HSV color-space \parencite{smith1978color}, through-out this work.
 We use the format which the data is originally provided in.
-In this format hue, saturation and value all range between zero and one.
-Note that in this dataset hue is measured in \emph{turns}, rather than the more traditional degrees, or radians.
-Having hue be measured between zero and one (like the other channels) makes the modelling task more consistent as were the hue to range between $0$ and $2\pi$ (radians) or between $0$ and $360$ (degrees) it would be over-weighted compared to the other channels.
+In this format: hue, saturation and value all range between zero and one.
+Note that hue is measured in \emph{turns}, rather than the more traditional degrees, or radians.
+Having hue be measured between zero and one, like the other channels, makes the modelling task more consistent.
+Were the hue to range between $0$ and $2\pi$ (radians) or between $0$ and $360$ (degrees) it would be over-weighted compared to the other channels.
 This regular space means that errors on all channels can be considered equally.
 Unlike many other colors spaces (CIELab, Luv etc.) the gamut is square and all values of all channels corresponds to realizable colors.
-
 
 When working with the hue, all measures need to take into account the wrap-around effect.
 When ever we refer to mean squared error, mean or mode on the HSV space in this paper, we are referring to the angularly corrected forms given in \Cref{sec:angularly-correct}.
 
-
 Unlike the RGB color space, the HSV channels do correspond to how humans perceive colors.
 However, it is not designed to be a perceptionally uniform color space across hue (unlike CIELab), which does suggest using mean squared error for the point estimates is not optimal.
 However, given the other issues outlined above with point estimates we do not judge this a major concern.
+Point estimates have only limited utility, and we include them as a secondary task for the assessment of the models capacities.
 There are no such issues for our distribution estimations.
 
-One of it's important advantages over other color spaces is that it best meets the assumption that for a given color name each channel is statistically independent.
+An important advantage of HSV over other color spaces is that it best meets the assumption that for a given color name each channel is statistically independent (see \Cref{sec:conditional-independence-assumption}).
 
 \subsection{Angularly Correct Calculations on HSV}\label{sec:angularly-correct}
 When performing calculations with the HSV color space it is important to take into account that hue is an angle.
 As we are working with the color space regularized to range between zero and one for all channels,
 this means a hue of one and a hue of zero are equivalent (as we measure in turns, in radian's this would be $0$ and $2\pi$).
 
-The square error of two hue values is thus calculated as
+The square error of two hue values is thus calculated as:
 \begin{equation}
 SE(h_1, h_2) = \min \big( \left(h_1 - h_2 \right)^2, \, \left(h_1 - h_2 -1 \right)^2  \big)
 \end{equation}
-to take into account the error could be calculated clockwise or counter clockwise.
+This takes into account the error could be calculated clockwise or counter-clockwise.
 (Note that the $-1$ term related to using units of turns, were we using radians it would be $-2\pi$)
 
 
-The mean of a set of hues ($\lbrace h_1,\,\ldots,\,h_N \rbrace$) is calculated as 
+The mean of a set of hues ($\lbrace h_1,\,\ldots,\,h_N \rbrace$) is calculated as:
 \begin{equation}
 \bar h = \mathrm{atan2} \Bigg(%
 	\frac{1}{N} \sum_{i=1}^{i=N} \sin (h_i), \,  %
 	\frac{1}{N} \sum_{i=1}^{i=N} \cos (h_i)%
 \Bigg)%
 \end{equation}
+This gives the mean angle.
 (Note again: as we measure angle in turns we use the turn trigonometric functions in implementation, though this mean is the same expression or any units).
 
 
