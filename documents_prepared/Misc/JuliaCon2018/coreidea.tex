@@ -1,4 +1,4 @@
-\RequirePackage{luatex85,shellesc}
+%\RequirePackage{luatex85,shellesc}
 \documentclass[tikz]{standalone}
 \usepackage{tikz}
 \usetikzlibrary{positioning}
@@ -24,19 +24,19 @@
 
 \begin{tikzpicture} [ ->,
 align=center,
-tree layout,
+layered layout,
+grow'=up,
 node distance=10cm, sibling distance=25mm, level distance=40mm,
 thick,
-%start chain=going above,
 package/.style={draw, circle, very thick},
 mypackage/.style={package, blue},
 repo/.style={draw, very thick, purple},
 supports/.style={dotted},
 indirect/.style={decoration={snake}, decorate, very thick, purple}
 ]
-	\node[](researchcode){Research Code};
+	\node[nudge=(left:12mm)](researchcode){Research Code};
 
-	\pkg[mypackage]{CorpusLoaders};
+	\pkg[mypackage, nudge=(right:17mm)]{CorpusLoaders};
 	
 	\pkg[mypackage]{DataDeps};
 	\pkg[mypackage]{DataDepsGenerators};
@@ -48,12 +48,14 @@ indirect/.style={decoration={snake}, decorate, very thick, purple}
 	
 	\pkg[mypackage]{InternedStrings};
 	\pkg[]{Strs};
+	\pkg[]{CSV};
+	
 
 	\pkg{MLDatasets};
 %	\pkg[mypackage]{ExpectationStubs};
 	\pkg{HTTP};
-	\pkg[]{WordNet};
-	\pkg[mypackage]{Embeddings};
+	\pkg[nudge=(right:15mm)]{WordNet};
+	\pkg[mypackage, nudge=(right:4mm)]{Embeddings};
 
 
 	\pkg[mypackage]{WordTokenizers};
@@ -63,6 +65,8 @@ indirect/.style={decoration={snake}, decorate, very thick, purple}
 	\repo{CRAN};
 	\repo{DataDryad};
 	\repo{GitHub};
+	\repo{European Data Portal};
+	\repo[]{Open.Canada.ca};
 	\repo{Data.gov};
 	\repo{Data.gov.au};
 	\repo{DataOne};
@@ -76,10 +80,14 @@ indirect/.style={decoration={snake}, decorate, very thick, purple}
 	\repo{Zenodo};
 	\repo{FigShare};
 	
-
+	
+	\node[sibling distance=0mm](gap){};
 	
 	\graph{
 		(researchcode) <- {(MLDatasets), (Embeddings), (WordNet), (CorpusLoaders)} <- (DataDeps);
+		(DataDeps) ->[bend left, looseness=0, in=167, out=0] (researchcode);
+
+	 
 		{(CorpusLoaders) <- {(MultiResolutionIterators), (WordTokenizers), (InternedStrings)}};
 		(DataDeps) <- {(HTTP), (SHA)};
 		(DataDeps) <-[supports] (MD5);
@@ -87,7 +95,7 @@ indirect/.style={decoration={snake}, decorate, very thick, purple}
 		(DataDeps) <-[indirect] (DataDepsGenerators) <- {
 			(GitHub) <- {(538), (BuzzFeedNews)},
 			(UCI ML Repository),
-			(CRAN) <- {(Data.gov.au), (Data.gov)},
+			(CRAN) <- {(Open.Canada.ca), (Data.gov.au), (Data.gov), (European Data Portal)},
 			(DataCite) <- {(Zenodo), (FigShare)},
 			(DataDryad),
 			(DataOne) <- {(ArcticDataCenter), (TERN), (KnowledgeNetworkforBiocomplexity)},
@@ -95,8 +103,9 @@ indirect/.style={decoration={snake}, decorate, very thick, purple}
 	
 		(WordTokenizers) <-[supports] (RevTok);
 		(InternedStrings) <-> [supports] (Strs);
+		(InternedStrings) ->[supports] (CSV);
 		
-		(DataDeps) ->[bend left, looseness=2.5, out=90, in=130] (researchcode);
+
 
 	};
 
