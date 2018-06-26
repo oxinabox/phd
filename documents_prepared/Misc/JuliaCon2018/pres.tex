@@ -9,9 +9,9 @@
 \usepackage[subpreambles=false]{standalone}
 
 
-\newlength\xunit
+\usepackage[at]{easylist}
 
-
+%\newlength\xunit
 \input{brownbeamer}
 
 
@@ -35,29 +35,42 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newcommand{\inlinecode}[1]{\mbox{\alert{\texttt{#1}}}}
+\newcommand{\inlinecode}[1]{\mbox{\alert{\texttt{\detokenize{#1}}}}}
+\newenvironment{code}
+{%BEGIN
+\endgraf\verbatim
+}
+{ % END
+\endverbatim
+}
+
+
+\newcommand{\datadep}[1]{\inlinecode{datadep"#1"}}
 
 % all notes should just be simple item notes.
 % I neither need nor want more functionality
 \let\oldnote\note
 \renewcommand{\note}{\oldnote[item]}
 
+\renewcommand{\emph}{\alert}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 %%%%%%%%%%%%%%%%%%%%%
 
+
+\institute{School of Electical, Electronic and Computer Engineering\\The University of Western Australia}
+\date{}
 \title{DataDeps.jl}
 \subtitle{and other foundational tools for data driven research\\(Especially NLP)}
-\author{
-	\includegraphics[height=2cm]{juliaml}
+\author{\includegraphics[height=2cm]{juliaml}
 	\includegraphics[height=2cm]{juliatext}
 	\includegraphics[height=2cm]{juliastring}
 	\\
 	\vspace{5mm}
 	\textbf{Lyndon White}}
-\institute{School of Electical, Electronic and Computer Engineering\\The University of Western Australia}
-\date{}
+
 \logo{\hfill\includegraphics[scale=0.12]{uwa}\hfill\hspace{0.5cm}}
 
 \begin{document}
@@ -68,21 +81,45 @@
 \logo{}
 
 
+\begin{frame}[fragile]{}
+	\begin{code}
+		blbla
+	\end{code}
+\end{frame}
+
+
+
 \begin{frame}{}
 	\resizebox{\textwidth}{!}{\input{coreidea.tex}}
 \end{frame}
 
 
 \begin{frame}{}
+	%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
 	\resizebox{\textwidth}{!}{\clipbox{190pt 170pt 250pt 0pt}{\input{coreidea.tex}}}
 \end{frame}
 
+\begin{frame}{DataDeps.jl}
+		%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
+%	\resizebox{\textwidth}{!}{\clipbox{190pt 420pt 390pt 0pt}{\input{coreidea.tex}}}
+	\resizebox{\textwidth}{!}{\clipbox{190pt 320pt 400pt 0pt}{\input{coreidea.tex}}}
+\end{frame}
+
+\begin{frame}{DataDepsGenerators.jl}
+		%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
+	\resizebox{\textwidth}{!}{\clipbox{0pt 0pt 0pt 290pt}{\input{coreidea.tex}}}
+\end{frame}
+
+\begin{frame}{CorpusLoaders.jl}
+		%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
+	\resizebox{\textwidth}{!}{\clipbox{370pt 310pt 250pt 70pt}{\input{coreidea.tex}}}
+\end{frame}
 
 \begin{frame}{Vabdewakke's 6 Degree's of Replicability}
 	\begin{enumerate}
 		%\item 0: The results cannot be reproduced by an independent researcher.
 		
-		\item The results \alert{cannot seem to be reproduced}.
+		\item The results \alert{cannot seem to be} reproduced.
 		
 		\item The results could be reproduced by, \alert{requiring extreme effort.}
 		
@@ -112,5 +149,227 @@
 	\note{I have spent 5 of my 15 valuable minutes faffing around about sorting out the data.}
 	\note{I think this timeline is fairly reasonable, of course an ideal julia project with everything already working in CI would do a lot better. But if you've got these steps, your already blocked from CI.}
 \end{frame}
+
+
+\begin{frame}[fragile]{You can't trust hardcoded paths; \\ but they are nice to work with.}
+	
+	\begin{easylist}[itemize]
+		@ Ideally we'ld just use \alert{hard-coded, absolute} paths
+		@ Absolute paths work with all applications
+		@ Hard-coding the paths in code means less typing
+		@ But they break if anything is moved. \note{relative paths are less so}
+		@ Making the path be passed in as an argument to the script solves this
+		@@ but now user has to be typing it in to run it.
+		@@ So harder to use.
+		@@ You could include a bash-script that invokes it with the path, but now you're just hard coding it somewhere else
+	\end{easylist}
+\end{frame}
+
+\begin{frame}[fragile]{You could making the path be passed in as an argument. But...}
+	
+	\begin{easylist}[itemize]
+		@ Now user has to be typing it in to run it.
+		\note{Recall the valuable time spent to workout how to tell the script where the data is?}
+		@ So it is harder to use.
+		@ You could include a bash-script that invokes it with the path, but now you're just hard-coding it somewhere else
+	\end{easylist}
+\end{frame}
+
+
+\begin{frame}[fragile]{\datadep{Census 2018/populations.csv} \\ A path you can trust}
+	\begin{easylist}[itemize]
+		@ Always resolves to an absolute path to that file
+		\note{at runtime}
+		@ Even if that means it has to download it first
+		@ But before resorting to downloading checks a large number of places
+		@@  \inlinecode{<PKG>/deps/data}, 
+		@@ \inlinecode{~/.julia/datadeps},
+		@@ \inlinecode{/usr/share/datadeps}, etc.
+		\note{this is the DataDeps load path}
+		\note{The places to check can be configured of course}
+		@ You know that if you use a datadep path it will resolve to a file that exists.
+	\end{easylist}
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Current Usages of DataDeps.jl}
+	\structure{MLDatasets.jl}
+	\begin{easylist}[itemize]
+		@ Provides easy access to a bunch of ML datasets
+		@ \inlinecode{xs, ys = MNIST.traindata()}
+		@ Gives you regular julia arrays
+	\end{easylist}
+	\vfill
+	\structure{CorpusLoaders.jl}
+	\begin{easylist}[itemize]
+	@ Provides easy access to linguistic corpora
+	@ \inlinecode{corpus_gen = load(WikiCorpus())}
+	@ gives you a multi-resolution iterator
+	\end{easylist}	
+\end{frame}
+
+\begin{frame}[fragile]{Current Usages of DataDeps.jl}	
+	\structure{Embeddings.jl}
+	\begin{easylist}[itemize]
+		@ Provides access to hundreds of pretrained word~embedding models.
+		@ \inlinecode{load_embeddings(FastText_Text{:fr})}
+		@ gives you a table of French word embeddings.
+	\end{easylist}
+	
+	\vfill
+	\structure{WordNet.jl}
+	\begin{easylist}[itemize]
+		@ Look up lexical relations and definitions.
+		@ \inlinecode{lemma = db['a', "glad"]}
+		@ \inlinecode{antonyms(db, synsets(db, lemma)[1])}
+	\end{easylist}
+\end{frame}
+
+
+\begin{frame}[fragile]{DataDep Registration Block}
+	\small
+	\begin{code}
+	register(DataDep("WordNet 3.0",
+		"""
+		Dataset: WordNet 3.0
+		Website: https://wordnet.princeton.edu/wordnet
+		
+		George A. Miller (1995). 
+		WordNet: A Lexical Database for English.
+		Communications of the ACM Vol. 38, No. 11: 39-41.
+		
+		License:
+		This software and database is being provided to you,
+		the LICENSEE, by Princeton University under
+		the following license...
+		""",
+		"http://wordnetcode.princeton.edu/3.0/WNdb-3.0.tar.gz",
+		"658b1ba191f5f98c2e9bae3e25...";
+		post_fetch_method = unpack
+	))
+	\end{code}
+	\vfill\vfill\vfill\null
+\end{frame}
+
+\begin{frame}[fragile]{Registration Block: Breakdown}
+	\small
+	\begin{code}
+		register(DataDep("DataDepName",
+		"""
+		Free Text Field Displayed to user before download.
+		Use to give credit, and tell people about licensing.
+		Or other messages.
+		""",
+		"Download URL",
+		"file hash (if you skip this, it will be printed on download)";
+		post_fetch_method = function to run on downloaded files
+		))
+	\end{code}
+	\vfill\vfill\vfill\null
+\end{frame}
+
+\begin{frame}[fragile]{Registration Block: Recursive Example}
+	\small
+	\begin{code}
+		using MD5
+		
+		register(DataDep("DataDepNameRec",
+		"""
+		Warning these files are all together 39.8GB
+		""",
+		["http://example.com/readme.txt",
+	     ["http://example.com/data1.zip",
+	      "http://example.com/data2.tar.gz",
+	     ]
+		],
+		(md5, "658b1ba191f5f98c2e9bae3e25")
+		post_fetch_method = [identity, unpack]
+		))
+	\end{code}
+	\vfill\vfill\vfill\null
+	\note{post fetch method and the checksum are applies recursively.
+		The checksum xors the hash it if it is not recursed.
+		the post fetch method is applied element-wise.}
+	\note{Also you can specify the function used to generate the checksum}
+\end{frame}
+
+
+\section{DataDepGenerators.jl}
+\begin{frame}[fragile]{Developers still have to write registration blocks}
+	\begin{easylist}[itemize]
+		@ DataDeps.jl shifts the work from manually to automatic
+		@ But defining the work still has to be done.
+		@ Writing a registration block normally means copy and pasting from a website.
+		@@ Download URL
+		@@ Author Name
+		@@ Publication Date
+		@@ License
+	\end{easylist}
+\end{frame}
+
+\begin{frame}[fragile]{For published data this information is all available from some API}
+\end{frame}
+
+\begin{frame}[fragile]{WordTokenizers.jl}
+	\note{Honestly I stole stuff left, right and center for this.}
+	Configurable \inlinecode{tokenize}r and \inlinecode{sentence_segment}er.\\
+	Abuses \inlinecode{eval} and \alert{\#265} so that you can change the tokenizer being used globally.\\
+	Also compatible with externally defined tokenizers like RevTok.jl.
+	\vfill	
+	Nabbed the original Penn Tokenizer sed-script.\\
+	Wrote some code that converts basic \alert{sed language} into \alert{julia AST}.\\
+	Ported some of NLTK's tokenizers into sed.
+	\vfill
+
+	\vfill
+	Rule-based sentence splitter based on Sampo Pyysalo \& Yoshimasa Tsuruoka's perl script.
+	\vfill
+	Regex is just really good at working with English.	
+\end{frame}
+
+\begin{frame}[fragile]{InternedStrings.jl: All these duplicate strings are using all my memory}
+	\begin{easylist}[itemize]
+		@ Strings are immutable, so we only need one copy of each
+		@ We can maintain a pool of \inlinecode{WeakRef}s to each string allocated.
+		@ \inlinecode{str = intern(str)}
+		@@ Add the \inlinecode{str} to the pool if not already
+		@@ replace \inlinecode{str} with an element of the pool
+		@ Because the pool only has \inlinecode{WeakRef}s strings can still be garbage collected.
+	\end{easylist}
+\end{frame}
+
+\begin{frame}[fragile]{MultiResolutionIterators.jl:\\ The structure of a Corpus}
+	\begin{easylist}[itemize]
+		@ \alert{Corpus}
+		@ made up of: \alert{Documents}
+		@ made up of: \alert{Paragraphs}
+		@ made up of: \alert{Sentences}
+		@ made up of: \alert{Words}  or \alert{Tokens}
+		@ made up of: \alert{Letters} or \alert{Characters}
+	\end{easylist}
+\end{frame}
+
+
+\def\madeupof{$\blacktriangleright$}
+\begin{frame}[fragile]{MultiResolutionIterators.jl: Not everyone wants every level of structure}
+	\alert{Full corpus structure} is\\
+	Documents \madeupof Paragraphs \madeupof Sentences \madeupof Words \madeupof Letters
+	\vfill
+	
+	A \alert{Corpus Linguist} may want\note{studying word usage}\\
+	a stream of: Sentences \madeupof Words
+	\vfill
+	An \alert{Information Retrieval} researcher may want\\
+	a stream of: {Documents} \madeupof {Words}
+		
+	\vfill
+	A \alert{char-RNN} language modeller might just want\\
+	a stream of Letters
+\end{frame}
+
+
+
+
 
 \end{document}
