@@ -16,7 +16,6 @@
 
 
 
-
 \bibliography{master.bib}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -33,6 +32,25 @@
 \usepackage{trimclip}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TIKZ stuff
+
+\tikzset{%
+	->,
+	align=center,
+	node distance=10cm, sibling distance=25mm, level distance=40mm,
+	every edge/.append style = {thick},
+	package/.style={draw, circle, very thick},
+	mypackage/.style={package, blue},
+	repo/.style={draw, very thick, purple},
+	supports/.style={dotted, very thick},
+	indirect/.style={decoration={snake}, decorate, very thick, purple}
+}
+
+\newcommand{\pkg}[2][]{\node[#1,package](#2) {#2.jl}}
+\newcommand{\repo}[2][]{\node[#1,repo](#2) {#2}}
+
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newcommand{\inlinecode}[1]{\mbox{\alert{\texttt{\detokenize{#1}}}}}
@@ -75,45 +93,272 @@
 
 \begin{document}
 
-
 %\centering %Center everywhere
 \frame{\maketitle}
 \logo{}
 
 
-\begin{frame}[fragile]{}
-	\begin{code}
-		blbla
-	\end{code}
-\end{frame}
-
-
-
-\begin{frame}{}
-	\resizebox{\textwidth}{!}{\input{coreidea.tex}}
-\end{frame}
-
-
-\begin{frame}{}
+\begin{frame}{Big Picture}
+	\centering
 	%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
-	\resizebox{\textwidth}{!}{\clipbox{190pt 170pt 250pt 0pt}{\input{coreidea.tex}}}
+	%\resizebox{\textwidth}{!}{\clipbox{190pt 170pt 250pt 0pt}{\input{coreidea.tex}}}
+	
+	\resizebox{\textwidth}{!}{\begin{tikzpicture}[layered layout, grow'=up,]
+	\node[nudge=(left:12mm)](researchcode){Research Code};
+	
+	\pkg[mypackage, nudge=(right:17mm)]{CorpusLoaders};
+	
+	\pkg[mypackage]{DataDeps};
+	\pkg[mypackage]{DataDepsGenerators};
+	%	\pkg[mypackage]{ReferenceTests};
+	\pkg[mypackage]{MD5};
+	\pkg[]{SHA};
+	
+	\node(MultiResolutionIterators)[mypackage]{Multi--\\Resolution--\\Iterators.jl};
+	
+	\pkg[mypackage]{InternedStrings};
+	\pkg[]{Strs};
+	\pkg[]{CSV};
+	
+	
+	\pkg{MLDatasets};
+	%	\pkg[mypackage]{ExpectationStubs};
+	\pkg{HTTP};
+	\pkg[nudge=(right:15mm)]{WordNet};
+	\pkg[mypackage, nudge=(right:4mm)]{Embeddings};
+	
+	
+	\pkg[mypackage]{WordTokenizers};
+	\pkg{RevTok};
+	
+	
+	\repo{CRAN};
+	\repo{DataDryad};
+	\repo{GitHub};
+	\repo{European Data Portal};
+	\repo[]{Open.Canada.ca};
+	\repo{Data.gov};
+	\repo{Data.gov.au};
+	\repo{DataOne};
+	\repo{538};
+	\repo{BuzzFeedNews};
+	\repo{UCI ML Repository};
+	\repo{ArcticDataCenter};
+	\repo{KnowledgeNetworkforBiocomplexity};
+	\repo{TERN};
+	\repo{DataCite};
+	\repo{Zenodo};
+	\repo{FigShare};
+	
+	
+	\node[sibling distance=0mm](gap){};
+	
+	\graph{
+		(researchcode) <- {(MLDatasets), (Embeddings), (WordNet), (CorpusLoaders)} <- (DataDeps);
+		(DataDeps) ->[bend left, looseness=0, in=167, out=0] (researchcode);
+		
+		
+		{(CorpusLoaders) <- {(MultiResolutionIterators), (WordTokenizers), (InternedStrings)}};
+		(DataDeps) <- {(HTTP), (SHA)};
+		(DataDeps) <-[supports] (MD5);
+		
+		(DataDeps) <-[indirect] (DataDepsGenerators) <- {
+			(GitHub) <- {(538), (BuzzFeedNews)},
+			(UCI ML Repository),
+			(CRAN) <- {(Open.Canada.ca), (Data.gov.au), (Data.gov), (European Data Portal)},
+			(DataCite) <- {(Zenodo), (FigShare)},
+			(DataDryad),
+			(DataOne) <- {(ArcticDataCenter), (TERN), (KnowledgeNetworkforBiocomplexity)},
+		};
+		
+		(WordTokenizers) <-[supports] (RevTok);
+		(InternedStrings) <-> [supports] (Strs);
+		(InternedStrings) ->[supports] (CSV);
+	};
+	\end{tikzpicture}}
+\end{frame}
+
+
+
+
+\begin{frame}{Julia Packages}
+	\centering
+	%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
+	%\resizebox{\textwidth}{!}{\clipbox{190pt 170pt 250pt 0pt}{\input{coreidea.tex}}}
+	
+	\resizebox{0.9\textwidth}{!}{\begin{tikzpicture}[layered layout,	grow'=up,]
+		\node[nudge=(left:12mm)](researchcode){Research Code};
+		
+		\pkg[mypackage, nudge=(right:17mm)]{CorpusLoaders};
+		
+		\pkg[mypackage]{DataDeps};
+		\pkg[mypackage]{DataDepsGenerators};
+		%	\pkg[mypackage]{ReferenceTests};
+		\pkg[mypackage]{MD5};
+		\pkg[]{SHA};
+		
+		\node(MultiResolutionIterators)[mypackage]{Multi--\\Resolution--\\Iterators.jl};
+		
+		\pkg[mypackage]{InternedStrings};
+		\pkg[]{Strs};
+		\pkg[]{CSV};
+		
+		
+		\pkg{MLDatasets};
+		%	\pkg[mypackage]{ExpectationStubs};
+		\pkg{HTTP};
+		\pkg[nudge=(right:15mm)]{WordNet};
+		\pkg[mypackage, nudge=(right:4mm)]{Embeddings};
+		
+		
+		\pkg[mypackage]{WordTokenizers};
+		\pkg{RevTok};
+		
+		\node[sibling distance=0mm](gap){};
+		
+		\graph{
+			(researchcode) <- {(MLDatasets), (Embeddings), (WordNet), (CorpusLoaders)} <- (DataDeps);
+			(DataDeps) ->[bend left, looseness=0, in=167, out=0] (researchcode);
+			
+			
+			{(CorpusLoaders) <- {(MultiResolutionIterators), (WordTokenizers), (InternedStrings)}};
+			(DataDeps) <- {(HTTP), (SHA)};
+			(DataDeps) <-[supports] (MD5);
+			
+			(DataDeps) <-[indirect] (DataDepsGenerators);
+			
+			(WordTokenizers) <-[supports] (RevTok);
+			(InternedStrings) <-> [supports] (Strs);
+			(InternedStrings) ->[supports] (CSV);
+			
+		};
+		\end{tikzpicture}}
 \end{frame}
 
 \begin{frame}{DataDeps.jl}
+	\centering
 		%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
-%	\resizebox{\textwidth}{!}{\clipbox{190pt 420pt 390pt 0pt}{\input{coreidea.tex}}}
-	\resizebox{\textwidth}{!}{\clipbox{190pt 320pt 400pt 0pt}{\input{coreidea.tex}}}
+%	\resizebox{\textwidth}{!}{\clipbox{190pt 320pt 400pt 0pt}{\input{coreidea.tex}}}
+	
+\resizebox{\textwidth}{!}{\begin{tikzpicture}[layered layout, grow'=up,]
+	\node[](researchcode){Research Code};
+	
+	
+	
+	\pkg[mypackage]{DataDeps};
+	\pkg[mypackage]{DataDepsGenerators};
+	\pkg[mypackage]{MD5};
+	\pkg[]{SHA};
+	\pkg{HTTP};
+		
+
+	\pkg[nudge=(right:40mm)]{WordNet};
+	\pkg[mypackage, nudge=(right:50mm)]{CorpusLoaders};
+	\pkg[mypackage, nudge=(left:0mm)]{Embeddings};
+	\pkg[nudge=(left:10mm)]{MLDatasets};
+
+	
+	\graph{
+		(researchcode) <- {(MLDatasets), (Embeddings), (WordNet), (CorpusLoaders)} <- (DataDeps);
+		(DataDeps) ->[bend left, looseness=0, in=167, out=0] (researchcode);
+		
+		(DataDeps) <- {(HTTP), (SHA)};
+		(DataDeps) <-[supports] (MD5);
+		
+		(DataDeps) <-[indirect] (DataDepsGenerators);	
+	};
+	\end{tikzpicture}}
 \end{frame}
 
 \begin{frame}{DataDepsGenerators.jl}
+	\centering
 		%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
-	\resizebox{\textwidth}{!}{\clipbox{0pt 0pt 0pt 290pt}{\input{coreidea.tex}}}
+%	\resizebox{\textwidth}{!}{\clipbox{0pt 0pt 0pt 290pt}{\input{coreidea.tex}}}
+\newcommand{\content}{
+	\node[layer sep = 5mm](researchcode){Research Code};
+	
+	\pkg[mypackage, layer sep = 5mm]{DataDeps};
+	\pkg[mypackage, layer sep = 25mm]{DataDepsGenerators};
+	
+	\repo{CRAN};
+	\repo{DataDryad};
+	\repo{GitHub};
+	\repo{European Data Portal};
+	\repo[]{Open.Canada.ca};
+	\repo{Data.gov};
+	\repo{Data.gov.au};
+	\repo{DataOne};
+	\repo{538};
+	\repo{BuzzFeedNews};
+	\repo{UCI ML Repository};
+	\repo{ArcticDataCenter};
+	\repo{KnowledgeNetworkforBiocomplexity};
+	\repo{TERN};
+	\repo{DataCite};
+	\repo{Zenodo};
+	\repo{FigShare};
+	
+	
+	\graph{
+		(researchcode) <- (DataDeps);
+		
+		(DataDeps) <-[indirect] (DataDepsGenerators) <- {
+			(GitHub) <- {(538), (BuzzFeedNews)},
+			(UCI ML Repository),
+			(CRAN) <- {(Open.Canada.ca), (Data.gov.au), (Data.gov), (European Data Portal)},
+			(DataCite) <- {(Zenodo), (FigShare)},
+			(DataDryad),
+			(DataOne) <- {(ArcticDataCenter), (TERN), (KnowledgeNetworkforBiocomplexity)},
+		};
+	};
+}
+
+\resizebox{\textwidth}{!}{
+	\only<1>{
+		\begin{tikzpicture}[layered layout, grow'=up,]
+			\content{}
+		\end{tikzpicture}
+	}
+	\only<2>{
+		\begin{tikzpicture}[%
+			layered layout, grow=left, sibling distance=15mm]
+			\content{}
+		\end{tikzpicture}
+	}
+}
 \end{frame}
 
 \begin{frame}{CorpusLoaders.jl}
 		%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
-	\resizebox{\textwidth}{!}{\clipbox{370pt 310pt 250pt 70pt}{\input{coreidea.tex}}}
+%	\resizebox{\textwidth}{!}{\clipbox{370pt 310pt 250pt 70pt}{\input{coreidea.tex}}}
+\centering
+\resizebox{0.7\textwidth}{!}{\begin{tikzpicture}[layered layout,	grow'=up,]
+		\node[](researchcode){Research Code};
+		
+		\pkg[mypackage]{CorpusLoaders};
+		
+		\pkg[mypackage]{DataDeps};
+		\node(MultiResolutionIterators)[mypackage]{Multi--\\Resolution--\\Iterators.jl};
+		
+		\pkg[mypackage]{InternedStrings};
+		\pkg[]{Strs};
+		\pkg[]{CSV};
+		
+		
+		\pkg[mypackage]{WordTokenizers};
+		\pkg{RevTok};
+		
+		
+		\graph{
+			(researchcode) <- {(CorpusLoaders)};
+			{(CorpusLoaders) <- {(DataDeps), (MultiResolutionIterators), (WordTokenizers), (InternedStrings)}};
+			(WordTokenizers) <-[supports] (RevTok);
+			(InternedStrings) <-> [supports] (Strs);
+			(InternedStrings) ->[supports] (CSV);
+		};
+		\end{tikzpicture}}
 \end{frame}
+
 
 \begin{frame}{Vabdewakke's 6 Degree's of Replicability}
 	\begin{enumerate}
@@ -229,64 +474,80 @@
 
 \begin{frame}[fragile]{DataDep Registration Block}
 	\small
-	\begin{code}
-	register(DataDep("WordNet 3.0",
-		"""
-		Dataset: WordNet 3.0
-		Website: https://wordnet.princeton.edu/wordnet
-		
-		George A. Miller (1995). 
-		WordNet: A Lexical Database for English.
-		Communications of the ACM Vol. 38, No. 11: 39-41.
-		
-		License:
-		This software and database is being provided to you,
-		the LICENSEE, by Princeton University under
-		the following license...
-		""",
-		"http://wordnetcode.princeton.edu/3.0/WNdb-3.0.tar.gz",
-		"658b1ba191f5f98c2e9bae3e25...";
-		post_fetch_method = unpack
+	\ttfamily
+	\color{Blue}
+	register(DataDep("DataDepName",\\
+	\color{Green}
+	"""\\
+	Free Text Field Displayed to user before download.\\
+	Use to give credit, and tell people about licensing.\\
+	Or other messages.\\
+	""",\\
+	\color{Orange}
+	"Download URL",\\
+	\color{Red}
+	"file hash (will be printed if not provided)";\\
+	\color{Purple}
+	post\_fetch\_method = function to run on downloaded files\\
+	\color{Blue}
 	))
-	\end{code}
 	\vfill\vfill\vfill\null
 \end{frame}
 
-\begin{frame}[fragile]{Registration Block: Breakdown}
+
+\begin{frame}[fragile]{ Registration Block Example}
 	\small
-	\begin{code}
-		register(DataDep("DataDepName",
-		"""
-		Free Text Field Displayed to user before download.
-		Use to give credit, and tell people about licensing.
-		Or other messages.
-		""",
-		"Download URL",
-		"file hash (if you skip this, it will be printed on download)";
-		post_fetch_method = function to run on downloaded files
-		))
-	\end{code}
+	\ttfamily
+	\color{Blue}
+	register(DataDep("WordNet 3.0",\\
+		\color{Green}
+		"""\\
+		Dataset: WordNet 3.0\\
+		Website: https://wordnet.princeton.edu/wordnet\\
+		\vspace{0.5em}
+		George A. Miller (1995). \\
+		WordNet: A Lexical Database for English.\\
+		Communications of the ACM Vol. 38, No. 11: 39-41.\\
+		\vspace{0.5em}
+		License:\\
+		This software and database is being provided to you,\\
+		the LICENSEE, by Princeton University under\\
+		the following license...\\
+		""",\\
+		\color{Orange}
+		"http://wordnetcode.princeton.edu/3.0/WNdb-3.0.tar.gz",\\
+		\color{Red}
+		"658b1ba191f5f98c2e9bae3e25...";\\
+		\color{Purple}
+		post\_fetch\_method = unpack\\
+		\color{Blue}
+	))
 	\vfill\vfill\vfill\null
 \end{frame}
 
 \begin{frame}[fragile]{Registration Block: Recursive Example}
-	\small
-	\begin{code}
-		using MD5
-		
-		register(DataDep("DataDepNameRec",
-		"""
-		Warning these files are all together 39.8GB
-		""",
-		["http://example.com/readme.txt",
-	     ["http://example.com/data1.zip",
-	      "http://example.com/data2.tar.gz",
-	     ]
-		],
-		(md5, "658b1ba191f5f98c2e9bae3e25")
-		post_fetch_method = [identity, unpack]
+		\ttfamily
+		using MD5\\
+		\vspace{0.5em}
+		\color{Blue}
+		register(DataDep("DataDepNameRec",\\
+		\color{Green}
+		"""\\
+		Warning these files are all together 39.8GB\\
+		""",\\
+		\color{Orange}
+		\verb![!"http://example.com/readme.txt",\\
+	     \verb!    [!"http://example.com/data1.zip",\\
+	      \verb!     !"http://example.com/data2.tar.gz",\\
+	     \verb!    ]!\\
+		\verb!]!,\\
+		\color{Red}
+		(md5, "d41d8cd98f00b204e9800998ecf8427e")\\
+		\color{Purple}
+		post\_fetch\_method = \verb![!identity, unpack\verb!]!\\
+		\color{Blue}
 		))
-	\end{code}
+
 	\vfill\vfill\vfill\null
 	\note{post fetch method and the checksum are applies recursively.
 		The checksum xors the hash it if it is not recursed.
@@ -310,6 +571,86 @@
 
 \begin{frame}[fragile]{For published data this information is all available from some API}
 \end{frame}
+
+\begin{frame}[fragile]{GitHub}
+	\begin{easylist}[itemize]
+		@ $85 \times 10^6$ repositories 
+		@@ Some of them are data
+		@@ Not a great place for data, but commonly used 
+		@ BuzzFeedNews: \note{"Mainstream News, responsible data citizens"}
+		@@ 1 Repo per dataset
+		@ 538: \note{Current Affairs site with serious data bent}
+		@@ 1 shared Repo with a folder for each dataset \note{which correpond to stories}
+		@ We generate URLs pointing at \url{https://cdn.rawgit.com/}
+		@@ This is backed by StackPath CDN
+		@@ It is generated to point at the latest commit at generation time
+	\end{easylist}
+\end{frame}
+
+
+\begin{frame}[fragile]{DataOne}
+	\begin{easylist}[itemize]
+		@ Data Observation Network for Earth 
+		@@ \alert{\textasciitilde  40} Earth and Environment Science repositories
+		@@ $1.2 \times 10^6$ Data Files
+		@@ Seems to have iffy metadata, varying between nodes.
+	\end{easylist}
+\end{frame}
+
+\begin{frame}[fragile]{DataDryad}
+	\begin{easylist}[itemize]
+		@ DataDryad
+		@@ $7.1 \times 10^5$ Data Files
+		@@ $1.15 \times 10^6$ Data Packages
+		@@ Seems to have iffy metadata, varying between nodes.
+	\end{easylist}
+\end{frame}
+
+\begin{frame}[fragile]{DataCite}
+	\begin{easylist}[itemize]
+		@ $11 \times 10^6$ DOIs issued 
+		@@ Mostly to datasets, though they count also figures as data
+		@@ If you have a DOI and it points at data, it is probably from DataCite
+		@ Problem is all their metadata is missing download URLs
+		@@ So user has to add them manually after
+		@ This is effectively the final fallback for anything with a DOI.
+	\end{easylist}
+\end{frame}
+
+%
+%
+%\begin{frame}[fragile]{Data Repositories}
+%\newcommand{\info}[2][]{node[#1,info](#2) {#2}}
+%\resizebox{\textwidth}{!}{\begin{tikzpicture}[%
+%		layered layout, grow=left, sibling distance=15mm,
+%		info/.style={very thick, green!50!black},
+%		]
+%
+%
+%\repo{GitHub};
+%\repo{538};
+%\repo{BuzzFeedNews};
+%
+%\graph{
+%		(GitHub) <- {
+%			{{85 million Repos} %
+%				<- {{Some of these contain data} %
+%				<- {It is not a great place for data, but it is common}},
+%			(538) <- {
+%					{Data Science driven Current Affairs site},
+%					{Each dataset for each story is a folder},
+%			},
+%			(BuzzFeedNews) <- {
+%				{News Site},
+%				{One github repo per dataset for a story},
+%			},
+%			%{We generate urls pointing at \url{https://cdn.rawgit.com/}} %
+%			%	<- {for the lasted commit at generation time},
+%		};			
+%}; %\graph
+%
+%\end{tikzpicture}}
+%\end{frame}
 
 \begin{frame}[fragile]{WordTokenizers.jl}
 	\note{Honestly I stole stuff left, right and center for this.}
