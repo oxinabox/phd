@@ -13,7 +13,8 @@
 
 %\newlength\xunit
 \input{brownbeamer}
-
+\setbeamercolor{math text}{fg=bluewrite}
+\setbeamercolor{math text displayed}{fg=bluewrite}
 
 
 \bibliography{master.bib}
@@ -437,6 +438,43 @@
 \end{frame}
 
 
+\begin{frame}[fragile]{What happens when you uses a datadep?}
+		\center
+		\resizebox{0.9\textwidth}{!}{
+		\begin{tikzpicture}[every text node part/.style={align=center}, auto,node distance=2, ->,
+		every edge/.append style={every node/.style={font=\footnotesize}}]
+		
+		
+		\node[blue](start) {\datadep{Name}\\ \textbf{Evaluated}}; 
+		
+		\node[draw, rectangle, below right= 0.5 of start] (search) {0.\\Search\\ \texttt{Load Path}};
+		\node[draw, rectangle, right= of search] (msg) {1.\\Display\\ message};
+		\node[draw, rectangle, below right= of msg] (fetch) {2.\\Perform\\ fetch method\\ (download)};
+		\node[draw, rectangle, below right= of fetch] (checksum) {3.\\Validate\\ using\\ checksum};
+		\node[draw, rectangle, below right= of checksum] (postfetch) {4.\\Perform \\post fetch method\\ e.g. unpack};
+		\node[green!60!black, below=of postfetch](end) {\textbf{Local Path}\\ \textbf{Returned}};
+		
+		\path (start) edge (search);
+		\path (search)  edge node[below]{datadep} node[sloped,above]{\textbf{Not Found}}  (msg);
+		\path (msg)	edge node[below, sloped]{remote paths} node[above right]{\textbf{Accept}}  (fetch);
+		\path (fetch)	edge[below, sloped] node{local paths}  (checksum);
+		\path (checksum)	edge node[below, sloped]{local paths} node[above right]{\textbf{Succeeded/Ignored}} (postfetch);
+		\path (postfetch)	edge (end);
+		
+		\path (search.south) edge node[above,right,yshift=0.6cm]{\textbf{Found}} node[below,sloped]{local path} (end.west);
+		
+		
+		\path (checksum.north) edge[bend right] node[above right] {Failed-Retry} (fetch.east);
+		
+		\node[red, below = 0.5 of msg, yshift=-0.6cm] (err1) {\textbf{Abort}};
+		\path (msg) edge node[left]{\textbf{Decline}} (err1);
+		
+		\node[red, below = 0.5 of checksum, yshift=-0.6cm] (err2) {\textbf{Abort}};
+		\path (checksum) edge node[left]{\textbf{Failed}}  (err2);
+		\end{tikzpicture}
+	}
+\end{frame}
+
 
 \begin{frame}[fragile]{Current Usages of DataDeps.jl}
 	\structure{MLDatasets.jl}
@@ -557,33 +595,99 @@
 
 
 \section{DataDepGenerators.jl}
+
 \begin{frame}[fragile]{Developers still have to write registration blocks}
 	\begin{easylist}[itemize]
-		@ DataDeps.jl shifts the work from manually to automatic
-		@ But defining the work still has to be done.
-		@ Writing a registration block normally means copy and pasting from a website.
-		@@ Download URL
-		@@ Author Name
-		@@ Publication Date
-		@@ License
+		@ DataDeps.jl shifts the work from \alert{manually to automatic}
+		@ But it still has to be done at once.
+		@ Writing a registration block normally means \alert{\mbox{copy-and-pasting}} from a website.
+		@@ Even copy pasting a dozen URLs is annoying
+		@@ Enough information for \alert{data providence} needs more
 	\end{easylist}
 \end{frame}
 
-\begin{frame}[fragile]{For published data this information is all available from some API}
+
+%\newcommand{\datadepsgeneratorsflowcolumn}{}
+\begin{frame}[fragile]{}
+	\frametitle<1>{For published data this information is available from some API}
+	\frametitle<2>{DataDepsGenerators creates static code}
+	\begin{columns}
+		\begin{column}{0.5\textwidth}
+			\only<1>{\begin{itemize}
+					\item Title
+					\item Author Name
+					\item Publication Date
+					\item Licensing info
+					\item Description
+					\item Citation for the linked journal paper
+					\item \alert{Download URLs}
+					\item \alert{File Hashes}
+			\end{itemize}}
+			\only<2>{\begin{itemize}
+					\vfill
+					\item This avoids propagating DataDepsGenerator's many \alert{heavy dependencies}.
+					\note{A small bunch of libraries for webscraping and parsing various formats}
+					\vfill\vfill\vspace{1cm}
+					\item Avoids issue \alert{unstability} of repo APIs/websites
+					\vfill
+					\note{it breaks if some websites/apis change}
+			\end{itemize}}
+		\end{column}
+		\begin{column}{0.5\textwidth}
+			\begin{tikzpicture}[every to/.append style = {ultra thick}]
+				\node(indata){Orignal Data};
+				\node[draw, below=0.8cm of indata](repo){Repository};
+				\node[draw, below=0.8cm of repo](datadepsgen) {DataDepsGenerators.jj};
+				\node[draw, below=0.8cm of datadepsgen](datadeps){DataDeps.jl};
+				\node(outdata)[below=0.8cm of datadeps]{Data, on your machine};
+				
+				\draw[bluewrite] (indata) to[right] node {Author uploads} (repo);
+				\draw[bluewrite] (repo) to[right] node {Metadata} (datadepsgen);
+				\draw[bluewrite] (datadepsgen) to node[xshift=-1mm] {Registration code-block} (datadeps);
+				\draw[bluewrite] (datadeps) to node[xshift=2.5mm] {Resolves as required} (outdata);
+			\end{tikzpicture}
+		\end{column}
+	\end{columns}
 \end{frame}
+
+\begin{frame}[fragile]{Why DOI's alone are not the answer to broken dataset links:}
+	\small
+	\begin{easylist}[itemize]
+		@ When we say DOI's are persistent we mean they never expire.
+		@@ Unlike web URL, you do not have to pay to renew.
+		@@ It won't be sold to someone else. It will always refer to your object.
+		@ DOI's point to landing pages, not data/paper downloads
+		@@ DOI's have attached metadata, but not direct links to the data (not even DataCite DOIs (yet))
+		@ A key reason DOI's don't point data/papers is because not all are available online
+		@@ Some obviously are pay walled
+		@@ But some can't be digitalized at all. E.g. DOI's have been issued to laboratory samples, or to data centres.		
+	\end{easylist}
+\end{frame}
+\begin{frame}[fragile]{DOI's are not the solution, but they are probably part of the solution}
+	\begin{easylist}[itemize]
+		@ The landing page is still just a website, it's domain name \alert{can expire}
+		@@ The data hosting is can expire (and hard-drives can fail).
+		@ Did I mention under normal circumstances you can't go from DOI to data URL at all anyway?
+		@ Still persistent metadata is also kind of nice to have
+		@@ At least if the data goes down you know what was lost, so we can seek it else-where.
+		@ Really, though we need to be applying periodic automatic link checking to all URLs we need not to break.
+		@@ DataDeps.jl makes that pretty easy, you can just set it up as part of \inlinecode{runtests.jl} and set Travis or AppVeyor to run scheduled tests.
+	\end{easylist}
+\end{frame}
+
 
 \begin{frame}[fragile]{GitHub}
 	\begin{easylist}[itemize]
 		@ $85 \times 10^6$ repositories 
-		@@ Some of them are data
+		@@ Some of them are data, (most are not)
 		@@ Not a great place for data, but commonly used 
-		@ BuzzFeedNews: \note{"Mainstream News, responsible data citizens"}
+		@ \alert{BuzzFeedNews}: \note{"Mainstream News, responsible data citizens"}
 		@@ 1 Repo per dataset
-		@ 538: \note{Current Affairs site with serious data bent}
+		@ \alert{fivethirtyeight}: \note{Current Affairs site with serious data bent}
 		@@ 1 shared Repo with a folder for each dataset \note{which correpond to stories}
-		@ We generate URLs pointing at \url{https://cdn.rawgit.com/}
-		@@ This is backed by StackPath CDN
-		@@ It is generated to point at the latest commit at generation time
+		@ We generate URLs pointing at \alert{\url{cdn.rawgit.com}}
+		@@ This is backed by \alert{StackPath CDN}
+		@@ It is generated to point at the \alert{latest commit} at generation time
 	\end{easylist}
 \end{frame}
 
@@ -597,12 +701,19 @@
 	\end{easylist}
 \end{frame}
 
-\begin{frame}[fragile]{DataDryad}
+\begin{frame}[fragile]{Others}
 	\begin{easylist}[itemize]
 		@ DataDryad
-		@@ $7.1 \times 10^5$ Data Files
-		@@ $1.15 \times 10^6$ Data Packages
-		@@ Seems to have iffy metadata, varying between nodes.
+		@@ Ecological research data
+		@@ $7.1 \times 10^4$ Data Files
+		@@ $2.2 \times 10^4$ Data Packages
+		@ Figshare
+		@@ Mostly Figures and Datasets
+		@@ $8 \times 10^5$ Files
+		@ UCI ML Repository
+		@@ $437$ Datasets
+		@@ Very commonly used in benchmarking basic ML
+		@@ Awful website, zero API
 	\end{easylist}
 \end{frame}
 
