@@ -47,17 +47,7 @@ This can be attributed to the more complex networks being more challenging to tr
 
 
 
-It can be seen that smoothing has very little effect on the performance of any of the neural network based distribution estimation models.
-All 3 term based models (SOWE, CNN, RNN) all perform very similarly whether or not the training data is smoothed.
-This is seen consistently in all the distribution estimation tasks  (\Cref{tbl:distfull}, \Cref{tbl:distord}, \Cref{tbl:distextrapo}).
-Conversely, the direct method which bypasses learning the functioning of terms is very substantially effected by the smoothing.
-This is because without smoothing it results in estimating the probability based on bins unfilled by any observation (Which is zero due to the cap on the minimum value. See \Cref{sec:direct-histogram}).
-This is particularly notable in the case of the direct, (unsmoothed) non-extrapolating result reported in \Cref{tbl:distextrapo}. As these were some of the rarest terms in the training set, they were thus more likely to not coincide with any terms from the testing set.
-Conversely, on this dataset the term models do quiet well, with or without smoothing. The SOWE model out out even performs the the Direct method.
-As the network can effectively learn the smoothness, not just from the observations of one color but from all of the observations.
-It learns that increasing the value of one bin should increase adjacent ones.
-As such it does not need the smoothing applied to the training data.
-\pdfcomment{Bring across some of the detail on the reason from the earleier paper}
+
 
 We see both for point estimation (\Cref{tbl:pointextrapo}) and for distribution estimation (\Cref{tbl:distextrapo}), when the network is forced to extrapolate to new combinations of color names, the SOWE and CNN can do so with a reasonable degree of correctness.
 The RNN results continue to perform badly when extrapolating, doing much worse than the already poor results on the non-extrapolating task.
@@ -82,7 +72,7 @@ We note that for the direct method, the distributions mean is almost identical t
 	header=has colnames,
 	column type={c},
 	ignore chars={"},
-	string replace={Direct}{\emph{Direct}}, % Workout how to make this work
+	string replace={Direct}{\emph{Direct}},
 	clear infinite,
 	empty cells with={--},
 	every head row/.style={before row=\toprule,	after row=\midrule},
@@ -108,14 +98,11 @@ We note that for the direct method, the distributions mean is almost identical t
 		},
 		columns/perpstd/.style={column name=$\frac{PP}{256^3}$},
 %
-		every row 1 column 1/.style={greycell},
 		every row 0 column 1/.style={greycell}
 	},%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	extrapodistresults/.append style={
-		every row 1 column 1/.style={greycell},
 		every row 0 column 1/.style={greycell},
-		every row 1 column 2/.style={greycell},
 		every row 0 column 2/.style={greycell},
 				%
 		columns={method, nxperpstd, xperpstd},
@@ -136,8 +123,7 @@ We note that for the direct method, the distributions mean is almost identical t
 \begin{table}
 	%	\resizebox{\columnwidth}{!}{
 	\pgfplotstabletypeset[distresults,
-		every row 2 column 1/.style={boldcell},
-		every row 3 column 1/.style={boldcell}
+		every row 1 column 1/.style={boldcell},
 	]{results/res_dist_full.csv}
 	%	}
 	\caption{\label{tbl:distfull} The results for the \textbf{full distribution estimation task}. Lower perplexity (PP) is better.}
@@ -149,8 +135,7 @@ We note that for the direct method, the distributions mean is almost identical t
 \begin{table}
 	%	\resizebox{\columnwidth}{!}{
 	\pgfplotstabletypeset[distresults,
-		every row 2 column 1/.style={boldcell},
-		every row 3 column 1/.style={boldcell}
+		every row 1 column 1/.style={boldcell},
 	]{results/res_dist_ord.csv}
 	%	}
 	\caption{\label{tbl:distord} The results for the \textbf{order distribution estimation task}. Lower perplexity (PP) is better. This is a subset of the full test set containing only tests where the order of the words matters.}
@@ -160,9 +145,8 @@ We note that for the direct method, the distributions mean is almost identical t
 \begin{table}
 	%	\resizebox{\columnwidth}{!}{
 \pgfplotstabletypeset[extrapodistresults,
-		every row 2 column 1/.style={boldcell},
-		every row 3 column 1/.style={boldcell},
-		every row 2 column 2/.style={boldcell}
+		every row 1 column 1/.style={boldcell},
+		every row 1 column 2/.style={boldcell}
 ]{results/res_dist_extrapo.csv}
 	%	}
 	\caption{\label{tbl:distextrapo} The results for the \textbf{extrapolation distribution estimation task}. Lower perplexity (PP) is better. This uses the extrapolation subset of the full test set. In the extrapolating results certain rare word combinations were removed from the training and development sets. In the non-extrapolating results the full training and development stet was used.}
@@ -174,7 +158,6 @@ We note that for the direct method, the distributions mean is almost identical t
 		columns/mse/.style={column name={$MSE$}},
 		%
 		every row 0 column 1/.style={greycell},
-		every row 5 column 1/.style={greycell},
 		every row 4 column 1/.style={greycell},
 	},%
 	extrapopointresults/.append style={
@@ -183,10 +166,8 @@ We note that for the direct method, the distributions mean is almost identical t
 		columns/extrapolatingmse/.style={column name=\shortstack{\small Extrapolating\\$MSE$}},
 %		
 		every row 0 column 1/.style={greycell},
-		every row 5 column 1/.style={greycell},
 		every row 4 column 1/.style={greycell},
 		every row 0 column 2/.style={greycell},
-		every row 5 column 2/.style={greycell},
 		every row 4 column 2/.style={greycell},
 	},
 }
@@ -209,10 +190,12 @@ We note that for the direct method, the distributions mean is almost identical t
 	\pgfplotstabletypeset[pointresults,
 		every row 1 column 1/.style={boldcell},
 		every row 2 column 1/.style={boldcell},
+		%3
+		%4
+		%
+		every row 5 column 1/.style={boldcell},
 		every row 6 column 1/.style={boldcell},
 		every row 7 column 1/.style={boldcell},
-		every row 8 column 1/.style={boldcell},
-		every row 9 column 1/.style={boldcell}
 	]{results/res_point_comb_ord.csv}
 	%	}
 	\caption{\label{tbl:pointord} The results for the \textbf{order point estimation task}. Lower mean squared error (MSE) is better. This is a subset of the full test set containing only tests where the order of the words matters.}
