@@ -140,7 +140,7 @@ A single point estimate, does not capture the nature of the problem adequately.
 The mean of a multimodal distribution (one with two peaks) will lie in the valley between the -- a less likely color.
 Similarly it will be off to the side of the mode, in an asymmetrical distribution.
 The other problem is that is that a point estimate does not capture the sensitivity.
-In an asymmetrical distribution, having  point slight off-center in one direction may result in very different probability,
+In an asymmetrical distribution, having  point slight off-centre in one direction may result in very different probability,
 this more generally holds for a narrow variance distribution.
 Conversely for a very wide variance distribution (for example one approaching the uniform distribution) the point estimate value may matter very little with all points providing similar probabilities.
 Color distributions are always one or more of multimodal or asymmetrical, and feature widely different variances for different names.
@@ -263,8 +263,9 @@ When working with the hue, all measures need to take into account the wrap-aroun
 When ever we refer to mean squared error, mean or mode on the HSV space in this paper, we are referring to the angularly corrected forms given in \Cref{sec:angularly-correct}.
 
 Unlike the RGB color space, the HSV channels do correspond to how humans perceive colors.
-However, it is not designed to be a perceptionally uniform color space across hue (unlike CIELab), which does suggest using mean squared error for the point estimates is not optimal.
-However, given the other issues outlined above with point estimates we do not judge this a major concern.
+However, it is not designed to be a perceptionally uniform color space across hue (unlike CIELab), which does suggest using squared error for the point estimates is not necessarily finding the perceptual average of the color color.
+However, given the other issues outlined above with point estimates that averaging at all is not ideal given the asymmetrical and multimodal nature, such that  even a more perceptual average would not solve this.
+We thus we do not judge this a major concern, and focus on it as a modelling task.
 Point estimates have only limited utility, and we include them as a secondary task for the assessment of the models capacities.
 There are no such issues for our distribution estimations.
 
@@ -721,7 +722,7 @@ It caused adjacent bins to have most similar probabilities, thus matching to the
 This is applied on-top of the histogram used for the training data.
 We use the Fast Fourier Transform (FFT) based KDE method of the \textcite{silverman1982algorithm}.
 We use a Gaussian kernel, and select the bandwidth per color description based on leave-one-out cross validation on the training data.
-A known issue with the FFT based KDE method is that it has a wrap-around effect near the boundaries where mass that would be assigned outside the boundaries is instead assigned to the bin on the other side.
+A known issue with the FFT-based KDE method is that it has a wrap-around effect near the boundaries where mass that would be assigned outside the boundaries is instead assigned to the bin on the other side.
 For the value and saturation channels we follow the standard solution of initially defining additional bins outside the true boundaries, then discard those bins and rescale the probability to one.
 For the hue channel this wrap-around effect is exactly as desired.
 
@@ -730,13 +731,14 @@ This is because it avoids empty bins, and effectually interpolates probabilities
 Thus improving the results
 We found in preliminary investigations that using KDE based method to be much better than add-one smoothing.
 
-We also investigated applying the KDE to the training data,  before training our neural network based distribution models.
+We also investigated applying the KDE to the training data,  before training our term-based neural network based distribution models.
 Results for this can be found in \Cref{sec:smoothed-results}.
 In brief, we found that smoothing the training data does not significantly effect the result of the neural network based models.
-We observed that this models
+As discussed in \Cref{sec:quantitative-results}, this is because the neural networks are able to learn the smoothness relationship of adjacent bins.
+
 
 Our KDE based operational upper bound for distribution estimation bypassed the natural language understanding part of the task,
-and directly uses non-parametric probability estimation methods to focus solely on modelling the distributions.
+and directly uses the standard non-parametric probability estimation method to focus solely on modelling the distributions.
 Matching its performance indicates that a model is effectively succeeding well at both the natural language understanding component and the distribution estimation component.
 
 
@@ -744,10 +746,11 @@ Matching its performance indicates that a model is effectively succeeding well a
 In a similar approach, we also a method that directly produces a point estimate from a color name.
 We define this by taking the mean of all the training observations for a given exact color name.
 The mean is taken in the angularly correct way (as discussed in \Cref{sec:angularly-correct}).
-Taking the mean of all the observations give the theoretically optimal solution to minimizing the mean squared error on the training data set.
+Taking the mean of all the observations give the theoretically optimal solution to minimizing the squared error on the training data set.
 As with our direct distribution estimation method, this bypasses the term based language understanding, and directly exploits the training data.
 It thus represents an approximate upper bound on the point estimation performance of the term based models.
-
+Though as discussed in \Cref{sec:intro}, the notion of mean and of minimizing the square error is not necessarily the correct way to characterize selecting the optimal point estimate for colors.
+It is however a consistent way to do so, and so we use it for our evaluations.
 
 
 \section{Results}
