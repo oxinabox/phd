@@ -98,11 +98,13 @@
 	\caption{Some examples of the output point estimates from the models trained on the full dataset} \label{fig:pointout}
 \end{figure}
 
-\Cref{fig:distout1} and \Cref{fig:distout2} show some examples of distribution estimates for the models trained on the full data sets.
+\Cref{fig:distout1} and shows some examples of distribution estimates for the models trained on the full data set.
 \Cref{fig:pointout} shows similar examples for point estimates.
-It can be seen the the model's outputs using term based estimations are generally similar to the direct outputs, as is intended.
+It can be seen the the model's outputs using term based estimations are generally similar to the the non-term-based Operational Upper-Bound, as is intended.
+This shows models are correctly fitting to estimate the colors.
 This aligns with the strong results found in that quantitative evaluations in \Cref{sec:quantitative-results}.
-The models are correctly fitting to estimate the colors.
+
+
 
 When considering the pairs of outputs that differ only in word order, such as \natlang{purple-pink} and \natlang{pink-purple} the models differ in behaviour.
 The Direct results show that the ground truth is that such color name pairs are subtly different but very similar.
@@ -113,17 +115,16 @@ The RNN produces the most strikingly different results.
 It seems the first term dominates the final output: \natlang{purple-pink} is more purple, and  \natlang{pink-purple} is more pink.
 We can see that the first time is not solely responsible for the final output however, as \natlang{purple-pink}, \natlang{purple} and \natlang{purplish} (tokenized as \natlang{purple}, \natlang{ish}) are all different.
 It is surprising that the RNN is dominated by the first term and not the latter terms\footnote{So much so that we double checked out implementation to be sure it wasn't processing the inputs backwards.} this shows the GRU is functioning to remember the earlier inputs.
-This is happening too strongly however, as it causes the colors to differ to much.
+This is happening too strongly however as is is causing incorrect outputs.
 
-
-The effect of the models on the smoothness when estimating distributions is interesting.
-As expected, applying the KDE based smoothing to the training data produces a smoother output.
-Further: the all the outputs of the neural network models are smoother than the correspond direct models.
-This is true both when trained on smoothed and on unsmoothed training data.
-The models are learning that adjacent bins should have similar output values, as this is a common feature of all the training data no matter the color.
-An effect of this is that while the models capture the highly asymmetrical shapes of most distributions well,
-they do not do well at capturing small dips.
-Larger multi-modes as seen in the achromatic colors like \natlang{white}, \natlang{grey}, \natlang{black}, \natlang{white}, are captured; but smaller dips such as the hue of \natlang{greenish} being mostlikely to be either side of the green spectrum are largely filled in.
+In \Cref{fig:distout1} can be seen that the term-based distribution estimation models are much smoother than corresponding histograms taken from the the training data.
+They are not as smooth as the Operational Upper-Bound, which explicitly uses KDE.
+However they are much smoother than would be expected were the output being being treated independently.
+Thus it is clear that the models are learning that adjacent bins should have similar output values.
+This is a common feature of all the training data no matter the color.
+This learned effect is in line with the fact that color is continuous, and is only being represented here as discrete.
+We note in relation to this learned smoothness: that while the models capture the highly asymmetrical shapes of most distributions well, they do not do well at capturing small dips.
+Larger multi-modes as seen in the achromatic colors like \natlang{white}, \natlang{grey}, \natlang{black}, \natlang{white}, are captured; but smaller dips such as the hue of \natlang{greenish} being most likely to be either side of the green spectrum are largely filled in.
 In general, it seems clear that the smoothing of the training data is not required for the neural network based models.
 
 
@@ -157,11 +158,7 @@ In general the overall quality of each model seems to be in line with that found
 
 
 \begin{figure}
-	\distfigs{{SOWE, SOWE-smoothed,CNN, CNN-smoothed}}{\oovcolors}
-	\tikzset{lastline/.style={opacity=0}}
-	\distfigs{{RNN, RNN-smoothed}}{\oovcolors}
-	\tikzset{lastline/.style={opacity=1}}
-	
+	\distfigs{{SOWE, CNN, RNN}}{\oovcolors}	
 	\caption{Some example distribution estimations for colors names which are completely outside the training data. The terms: \natlang{Brown}, \natlang{gray}, \natlang{Gray}, \natlang{Green}, and \natlang{Purple}, do not occur in any of the color data; however \natlang{brown}, \natlang{grey} \natlang{green}, and \natlang{purple} do occur.} \label{fig:oovdist}
 \end{figure}
 

@@ -89,20 +89,22 @@
 \maketitle
 
 \begin{abstract}
-When a speaker says the name of a color, the color that they picture is not necessarily the same as the listener imagines.
-
-Further we argue that color understanding is a grounded semantic task, but that grounding is not a trivial mapping of a single word or phrase to a single point in color-space as there are many different interpretations of what  color is mean by a particular color name.
-Proper understanding of color language requires the capacity to map a sequence of words to a probability distribution in color-space.
-As such we focus our investigation on distribution estimation from color name.
-A distribution is required as there is no clear agreement between people as to what a particular color describes -- different people have a different idea of what it means to be ``very dark orange''.
-To access if our conclusions about our methods hold more generally, we also assess them on the task of point estimation of color names.
-We find the results are consistent, though we argue this task is less useful.
-
 Color names are often made up of multiple words,
 as a task in natural language understanding we investigate in depth the capacity of neural networks based on sums of word embeddings (SOWE), recurrence (RNN) and convolution (CNN),  on their ability to make estimates of colors from sequences of terms.
 We contrast their performance to direct non-term based methods which form a rough upper-bound by directly using the training data.
 Surprisingly, the sum of word embeddings generally performs the best, coming close to this upper bound on almost all evaluations.
 It is trailed slightly by the CNN, and most substantially by the RNN.
+
+To further evaluated the models, and there capacity in this natural language understanding task we consider both the creation of point estimates of color as well as distribution estimates of color.
+We argue the latter has particular value as there is no clear agreement between people as to what a particular color describes -- different people have a different idea of what it means to be ``very dark orange''.
+We find consistent results across the point estimation and distribution estimation tasks.
+
+We investigate 3 different slices of the data, to assess if different properties hold.
+We define the full task to assess overall performance, full training and testset.
+We define the ordered task to assess performance when word order may matter, using a subset of the testset with only color descriptions that occur with the same words in different orders.
+We define the unseen combinations task to assess the ability of the models to make predictions for color names made up of words that have never been seen in that combination during training; restricting the training set to not contain certain combinations and the test-set to only contain those combinations.
+We find our results to be consistent across all subtasks.
+This is particularly interesting as the unordered sum of word embeddings performs best on the ordered evaluation task.
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
@@ -180,7 +182,7 @@ The investigations include investigating the estimation capacity of the models:
 \begin{itemize}
 	\item generally on all color names (full task)
 	\item for color names when the order of the words matters (order task)
-	\item for color names which never occur in the training data exactly, but for which all terms occur in the training data (extrapolation task
+	\item for color names which never occur in the training data exactly, but for which all terms occur in the training data (unseen combinations task)
 	\item for color names with terms that do not occur in the training data at all, but for which we know word embeddings for (embedding only task).
 \end{itemize}
 The last investigation is not carried out in depth, but is presented merely as a point of interest.
@@ -248,7 +250,7 @@ The work presented here closed that gap.
 \section{Method}
 
 \subsection{HSV color-space}
-We use the HSV color-space \parencite{smith1978color}, through-out this work.
+We use the HSV color-space \parencite{smith1978color} through-out this work.
 We use the format which the data is originally provided in.
 In this format: hue, saturation and value all range between zero and one.
 Note that hue is measured in \emph{turns}, rather than the more traditional degrees, or radians.
@@ -291,9 +293,6 @@ The mean of a set of hues ($\lbrace h_1,\,\ldots,\,h_N \rbrace$) is calculated a
 This gives the mean angle.
 (Note again: as we measure angle in turns we use the turn trigonometric functions in implementation, though this mean is the same expression or any units).
 
-
-
-
 \section{Distribution Estimation}
 \subsection{Conditional Independence Assumption}\label{sec:conditional-independence-assumption}
 We make the assumption that given the name of the color, the distribution of the H, S and V channels are independent.
@@ -303,10 +302,10 @@ This assumption of conditional independence allows considerable saving in comput
 Approximating the 3D joint distribution as the product of three 1D distributions decreases the space complexity from $O(n^3)$ to $O(n)$ in the discretized step that follows.
 
 Superficial checks were carried out on the accuracy of this assumption.
-Spearman's correlation on the training data suggests that for over three quarters of all color names, there is only weak correlation between the channels (\mbox{Q3 = 0.187}).
+Spearman's correlation on the training data suggests that for over three quarters of all color names, there is only weak correlation between the channels for most colors (\mbox{Q3 = 0.187}).
 However, this measure underestimates correlation for values that have circular relative value, such as hue.
-HSV had the lowest correlation by a large margin of the 16 color-spaces evaluated.
-Full details, including the table of correlations, are available in supplementary materials.
+Of the 16 color-spaces evaluated, HSV had the lowest correlation by a large margin.
+Full details, including the table of correlations, are available in supplementary materials (\Cref{sec:corrind}}).
 These results are suggestive, rather than solidly indicative, on the degree of correctness of the conditional independence assumption.
 We consider the assumption sufficient for this investigation.
 
@@ -315,8 +314,8 @@ For distribution estimation, our models are trained to output histograms.
 This is a discretized representation of the continuous distribution.
 Following standard practice interpolation-based methods can be used to handle it as a continuous distribution.
 By making use of the conditional independence assumption (see \Cref{sec:conditional-independence-assumption}), we output one 256-bin histogram per channel.
-We note as  24-bit color (as was used in the survey that collected the dataset) can have all information captured by a 256 bin discretization  per channel.
-24 bit color allows for a total of $2^{24}$ colors to be represented, and even onehot encoding for each of the 256 bin discretization channels allows for the same.
+We note that 24-bit color (as was used in the survey that collected the dataset) can have all information captured by a 256 bin discretization  per channel.
+24 bit color allows for a total of $2^{24}$ colors to be represented, and even one-hot encoding for each of the 256 bin discretization channels allows for the same.
 As such there is no meaningful loss of information when using histograms over a truely continuous estimation method, such as a Gaussian mixture model.
 Although such models may have other advantages (such as the a priori information added by specifying the distribution), we do not investigating them here, instead considering the simplest non-parametric estimation model (the histogram), which has the simple implementation in a neural network using a softmax output layer.
 
@@ -324,11 +323,9 @@ Although such models may have other advantages (such as the a priori information
 Discretizing the data in this way is is a useful solution used in several other machine learning systems.
 \textcite{oord2016pixel, DBLP:journals/corr/OordDZSVGKSK16} apply a similar discretization step and found their method to outperforming the more complex continuous distribution outputs.
 
-For training purposes we thus need to convert all the observations into histograms.
+For training purposes we thus convert all the observations into histograms.
 One set of histograms is produced per color description present in the dataset.
-We perform an uniform weight attribution of points to bins as described by \textcite{jones1984remark}. This method of tabulation is in-short to define the bins by there midpoints, and for a point observed between the centre of two bins then probability mass is allocated to each in proportion to how close the point is to the centre of each.
-
-
+We perform an uniform weight attribution of points to bins as described by \textcite{jones1984remark}. In-short, this method of tabulation is to define the bins by their midpoints, and for each point a point then probability mass is allocated the bins with midpoints to each side of the observation  in proportion to the distance.
 
 
 \subsection{Perplexity in Color-Space (Evaluation Metric for Distributions)}
@@ -374,9 +371,9 @@ The discretization and blurring process is done using KernalDensityEstimation.jl
 \footnote{KernalDensityEstimation.jl  is available from \url{https://github.com/JuliaStats/KernelDensity.jl}}
 
 
-\subsection{Datasets}
+\subsection{Evaluations}
 
-\subsubsection{Full Training and Testing set}
+\subsubsection{Full Task}
 We make use of the  Munroe dataset as prepared by \textcite{mcmahan2015bayesian} from the results of the XKCD color survey.
 The XKCD color survey \parencite{Munroe2010XKCDdataset}, collected over 3.4 million observations from over 222,500 respondents.
 McMahan and Stone take a subset from Munroe's full survey, by restricting it to the responses from native English speakers, 
@@ -385,41 +382,42 @@ This gives a total of 2,176,417 observations and 829 color names.
 They also define a standard test, development and train split.
 
 
-\subsubsection{Extrapolation Training and Testing Set} \label{sec:extrapodata}
-The primary goal in constructing using the term based models is to be able to make predictions for never before seen descriptions of colors.
+\subsubsection{Unseen Combinations Task} \label{sec:extrapodata}
+A primary interest in using the term based models is to be able to make predictions for never before seen descriptions of colors.
 For example, based on the learned understanding of \texttt{salmon} and of \texttt{bright}, from examples like \texttt{bright green} and \texttt{bright red}, we wish for the systems to make predictions about \texttt{bright salmon}, even though that description never occurs in the training data.
+The ability to make predictions like this shows term-based natural language understanding.
+It can't be done with the Operation Upper Bound model, which by-passes the term processing step.
 %
-To evaluate this generalisation capacity, we define an extrapolation sub-dataset for both testing and training.
-This is defined by selecting the rarest 100 color descriptions from the full dataset,
+To evaluate this generalisation capacity, we define new sub-datasets for both testing and training.
+We select the rarest 100 color descriptions from the full dataset,
 with the restriction that every token in a selected description must still have at least 8 uses in other descriptions in the training set.
 The selected examples include multi-token descriptions such as: \texttt{bright yellow green} and also single tokens that occur more commonly as modifiers than as stand-alone descriptions such as \texttt{pale}.
 
-The extrapolation training set is made up of the data from the full training set, excluding those  corresponding to the rare descriptions.
-Similar is done for the development set, so as no direct knowledge of the combined terms can leak during early-stopping.
-Conversely, the extrapolation test set is made up of only the observations from the full test set that do use those rare descriptions.
+The unseen combinations testing set has only observations from the full test set that do use those rare descriptions.
+We define a corresponding restricted training set made up of the data from the full training set, excluding those  corresponding to the rare descriptions.
+Similar is done for a restricted development set, so as no direct knowledge of the combined terms can leak during early-stopping.
 
 
-By training on the extrapolation training set and testing on the extrapolation test set, we can assess the capacity of the models to make predictions for color descriptions not seen in training (extrapolating result).
+By training on the restricted training set and testing on the unseen combinations, we can assess the capacity of the models to make predictions for color descriptions not seen in training.
 A similar approach was used in \textcite{DBLP:journals/corr/AtzmonBKGC16}.
-We contrast this to the same models when trained on the full training set, but tested on the extrapolation test set, to see how much accuracy was lost (non-extrapolating result).
+We contrast this to the same models when trained on the full training set to see how much accuracy was lost.
 
 
-\subsubsection{Order Testing set}
-It is known that the order of words in a color description to some extent matters.
-\natlang{greenish brown} and \natlang{brownish green} are distinct, if similar, colors.
+\subsubsection{Order Task}
+It is believed that the order of words in a color description to matters, at least to some extent.
+For example, \natlang{greenish brown} and \natlang{brownish green} are distinct, if similar, colors.
 To assess the models on there ability to make predictions when order matters we construct the order testset.
 This is a subset of the full test set containing only descriptions with terms that occur in multiple different orders.
 There are 76 such descriptions in the full dataset.
 Each of which has exactly one alternate ordering.
-This is unsurprising as while color descriptions may have more than 2 terms, normally one of the terms is a joining token such as \natlang{ish} or \natlang{-}.
-We only constructed a order testing set: not a corresponding training set, as this is an evaluation using the model trained on the full training data.
+This is unsurprising as while color descriptions may have more than 2 terms, normally one or more of the terms is a joining token such as \natlang{ish} or \natlang{-}.
+We only constructed a order testing set, and not a corresponding training set, as this is an evaluation using the model trained on the full training data.
 
 
 
 \subsection{Common Network Features}
-Dropout\parencite{srivastava2014dropout}  is used on all layers, other than the embedding layer, with threshold of 0.5 during training.
-The network is optimized using Adam
-\cite{kingma2014adam}, using a learning rate of 0.001.
+Drop-out\parencite{srivastava2014dropout}  is used on all layers, other than the embedding layer, with threshold of 0.5 during training.
+The network is optimized using Adam \parencite{kingma2014adam}, using a learning rate of 0.001.
 Early stopping is checked every 10 epochs using the development dataset.
 Distribution estimation methods are trained using full batch (where each observation is a distribution) for every epoch.
 Point Estimation trains using randomized mini-batches of size $2^16$ observations (which are each color-space triples).
@@ -429,13 +427,12 @@ All hidden-layers, except as otherwise precluded (in side the convolution, and i
 \subsubsection{Embeddings}\label{sec:embeddings} 
 All our neural network based solutions incorporate an embedding layer.
 This embedding layer maps from tokenized words to vectors.
-We make use of 300d pretrained FastText embeddings \textcite{bojanowski2016enriching}\footnote{Available from \url{https://fasttext.cc/docs/en/english-vectors.html}}.
+We make use of 300d pretrained FastText embeddings \parencite{bojanowski2016enriching}\footnote{Available from \url{https://fasttext.cc/docs/en/english-vectors.html}}.
 
 The embeddings are not trained during the task, but are kept fixed.
 As per the universal approximation theorem \parencite{leshno1993uat, SONODA2017uat} the layers above allow for arbitrary non-linear continuous transformation.
 By fixing the embeddings, and learning this transformation,
-we can produce estimates of colors from their embedding alone -- without any training data at all.
-This is shown in \Cref{sec:embeddingonly}.
+we can produce estimates of colors from their embedding alone, without any training data at all, as shown in \Cref{sec:embeddingonly}.
 
 \subsubsection{Tokenization}
 For all the term based methods, we perform tokenization.
@@ -460,6 +457,8 @@ There are many similar hyphenated tokens in the pretrained embeddings vocabulary
 
 
 \subsection{Input Modules} \Cref{sec:inputmod}
+For each of the models we investigate we define an input module.
+This is a portion of the over-all network which when is combined with an appropriate output module (see \Cref{sec:outputmod}) to perform either point estimation, or distribution estimation.
 
 
 \subsubsection{Recurrent Neural Network(RNN)}
@@ -501,7 +500,7 @@ Each word is first transformed to an embedding representation.
 This representation is trained with the rest of the network allowing per word information to be efficiently learned.
 The embedding is used as the input for a Gated Recurrent Unit (GRU) 
 The stream was terminated with an End of Stream (\natlang{<EOS>}) pseudo-token,
-as represented using a zero-vector.
+ represented using a zero-vector.
 The output of the last time-step is fed to a Rectified Linear Unit (ReLU).
 
 We make use of a GRU \parencite{cho2014properties},
@@ -512,8 +511,8 @@ so longer short term memory is not required.
 
 \subsubsection{Sum of Word Embeddings (SOWE)}
 Using a simple sum of word embeddings as a layer in a neural network is less typical than an RNN structure.
-Though it is well established as a useful representation, and has been used an input to other classifiers such as support vector machines. \pdfcomment{Cite some papers, e.g. mine where this is done.}
-Any number of word embeddings can be added to the sum.
+Though it is well established as a useful representation, and has been used an input to other classifiers such as support vector machines \parencite{White2015SentVecMeaning,novelperspective}.
+Any number of word embeddings can be added to the sum, thus allowing it to handle sequences of any length.
 However, it has no representation of the order.
 The structure we used is shown in \Cref{fig:sowemod}.
 
@@ -544,18 +543,17 @@ The structure we used is shown in \Cref{fig:sowemod}.
 	
 	\end{tikzpicture}
 	
-	\caption{The SOWE input module for the example input \natlang{light greenish blue}}
+	\caption{The SOWE input module for the example input \natlang{light bluish green}}
 	\label{fig:sowemod}
 \end{figure}
 
 
 
 \subsubsection{Convolutional Neural Network(CNN)}
-
-
-We apply a convolutional neural network to the task by applying 2D convolution over the stacked word embeddings.
+A convolutional neural network can be applied to the task by applying 2D convolution over the stacked word embeddings.
 \Cref{fig:cnnmod}
-We use 64 filters of size between 1 and the length of the longest padded embedding (5).
+We use 64 filters of size between one and the length of the longest padded embedding (5).
+\pdfcomment{I can't find who first did this. Rui spoke of it.}
 
 \begin{figure}
 	\begin{tikzpicture}
@@ -568,7 +566,6 @@ We use 64 filters of size between 1 and the length of the longest padded embeddi
 	}
 	
 	\node (hstack)[layer, above= of GRU3, xshift=1cm]{stack into grid};
-	
 	
 	\foreach[count=\i from 1] \word in {green, ish, blue, light}
 	{
@@ -598,82 +595,17 @@ We use 64 filters of size between 1 and the length of the longest padded embeddi
 	\label{fig:cnnmod}
 \end{figure}
 
+\subsection{Output Modules}\label{sec:outputmod}
+On top of the input module we define an output module to suit the neural network for the task fo either distribution estimation or point estimation.
+The input module defines how the terms are composed into the network.
+The output module defines how the network takes its hidden representation and produces an output.
 
-
-
-\subsection{Operational Upper-bounds}
-To establish an rough upper-limit on the modeling results we evaluate a direct method which bypasses
-These direct methods do not process term-by-term, they do not work with the language at all.
-They simply map from the exact input text (no tokenization) to the pre-calculated distribution or mean of the training data for the exact color name.
-This operational uppper bounds bypass the compositional language understanding part of the process.
-It is as if the input module (\Cref{sec:inputmod}) perfectly resolved the sequence of terms into a single item.
-
-
-They represent an approximate upper bound, as they fully exploit all information in the training data for each input.
-There is no attempting to determine how each term affects the result.
-We say approximate upper-bound, as it is not strictly impossible that the ML methods may happen to model the test data better than can be directly determined by training data as processed per exact color name.
-A term based model could out perform them, however this would require learning how the terms in the color name combine in a way that exceeds the information directly present in the training data per class.
-It is this capacity of learning how the terms combine that allow for the models to extrapolate the outputs for combinations of terms that never occur in the training data (\Cref{sec:extrapodata}).
-
-
-
-
-
-\subsubsection{Operational Upper-bound for Distribution Estimation: KDE}\label{sec:direct-histogram} \label{sec:kernel-density-based-smoothing}
-To determine an operational upper-bound for the distribution estimation tasks,
-we use kernel-density estimation in a formulation for non-parametric estimation \parencite{silverman1986density}.
-The KDE effectively produces a smoothed histogram.
-It caused adjacent bins to have most similar probabilities, thus matching to the mathematical notion of a continuous random variable.
-This is applied on-top of the histogram used for the training data.
-We use the Fast Fourier Transform (FFT) based KDE method of the \textcite{silverman1982algorithm}.
-We use a Gaussian kernel, and select the bandwidth per color description based on leave-one-out cross validation on the training data.
-A known issue with the FFT based KDE method is that it has a wrap-around effect near the boundaries where mass that would be assigned outside the boundaries is instead assigned to the bin on the other side.
-For the value and saturation channels we follow the standard solution of initially defining additional bins outside the true boundaries, then discard those bins and rescale the probability to one.
-For the hue channel this wrap-around effect is exactly as desired.
-
-In our evaluations using KDE rather than just the training histograms directly proved much more successful on all distribution estimation tasks.
-This is because it avoids empty bins, and effectually interpolates probabilities between observations.
-Thus improving the results
-We found in preliminary investigations that using KDE based method to be much better than add-one smoothing.
-
-We also investigated applying the KDE to the training data,  before training our neural network based distribution models.
-Results for this can be found in \Cref{sec:smoothed-results}.
-In brief, we found that smoothing the training data does not significantly effect the result of the neural network based models.
-We observed that this models
-
-Our KDE based operational upper bound for distribution estimation bypassed the natural language understanding part of the task,
-and directly uses non-parametric probability estimation methods to focus solely on modelling the distributions.
-Matching its performance indicates that a model is effectively succeeding well at both the natural language understanding component and the distribution estimation component.
-
-
-\subsubsection{Operational Upper-bound for Point estimation: Mean-point}
-In a similar approach, we also a method that directly produces a point estimate from a color name.
-We define this by taking the mean of all the training observations for a given exact color name.
-The mean is taken in the angularly correct way (as discussed in \Cref{sec:angularly-correct}).
-Taking the mean of all the observations give the theoretically optimal solution to minimizing the mean squared error on the training data set.
-As with our direct distribution estimation method, this bypasses the term based language understanding, and directly exploits the training data.
-It thus represents an approximate upper bound on the point estimation performance of the term based models.
-
-
-
-\subsection{Output Modules}
 \subsubsection{Distribution Estimation}
-
-For all the distribution estimation systems we investigate here, 
-we consider training both on the binned-data, and on the smoothed data (as described in \Cref{sec:kernel-density-based-smoothing}).
+The distributions are trained to produce the discretized representation as discussed in \Cref{sec:discretization}.
 Making use of the conditional independence assumption (see \Cref{sec:conditional-independence-assumption}), we output the three discretized distributions.
-This is done using 3 softmax output layers.
-
-The output module for distribution estimation 
-
-Contrasting to estimating continuous conditional distributions, 
-estimating a discrete conditional distributions is a significantly more studied application of neural networks
--- this is the basic function of any softmax classifier.
-To simplify the problem, we therefore transform it to be a discrete distribution estimation task, by discretizing the color-space.
-Discretization to a resolution of 64 and 256 bins per channel is considered.
-
-
-For the case of the machine learning models, the output is produced using softmax layers.
+This is done using the softmax output layers, as shown in \Cref{distoutmod} the three output layers.
+They share a common input, but have separate weights and biases.
+The loss function is given the sum of the cross-entropy for each of the three softmax outputs.
 
 
 \begin{figure}
@@ -697,7 +629,6 @@ For the case of the machine learning models, the output is produced using softma
 		};
 		\draw[->] (out\p) to (plot\p);
 	}
-	
 	\end{tikzpicture}
 	
 	\caption{The Distribution Output Module \label{fig:distoutmod}}
@@ -705,12 +636,12 @@ For the case of the machine learning models, the output is produced using softma
 	
 
 \subsubsection{Point Estimation}\label{sec:point-estimation}
-Our point estimation output model for the neural network is shown in \Cref{fig:pointoutmod}.
-The hidden-layer from the top of the input module is feed to an 4 single output neurons.\footnote{Equivalently these 4 single neurons can be expressed as a layer with 4 outputs and 2 different activation functions.}
-Two of these are used the sigmoid activation function (range 0:1) to produce the outputs for the saturation and value channels.
+Our point estimation output module is shown in \Cref{fig:pointoutmod}.
+The hidden-layer from the top of the input module is feed to an four single output neurons.\footnote{Equivalently these four single neurons can be expressed as a layer with four outputs and two different activation functions.}
+Two of these use the sigmoid activation function (range 0:1) to produce the outputs for the saturation and value channels.
 The other two use the tanh activation function (range -1:1), they produce the intermediate output that we call $y_{shue}$ and $y_{chue}$ for the sine and cosine of the hue channel respectively.
-We use these intermediate values when calculated this loss function as it results in a loss function that is continuous and correctly handles the wrap-around nature of the hue channel.
-
+The hue can be found as $y_{hue} =  \mathrm{atan2} \left(y_{shue}, y_{chue} \right)$.
+We use the intermediate values when calculated the loss function.
 During training we use the following loss function for each observation $y^\star$, and each corresponding prediction $y$.
 \begin{align}
 loss &= %
@@ -720,10 +651,7 @@ loss &= %
 &+ \left(y^\star_{val} - y_{val} \right)^2 %
 \end{align}
 This mean of this loss is taken over all observations in each mini-batch during training.
-
-
-
-
+This loss function is continuous and correctly handles the wrap-around nature of the hue channel \parencite{WhiteRepresentingAnglesSE}.
 
 \begin{figure}
 	\newcommand{\picwidth}{60pt}
@@ -760,16 +688,66 @@ This mean of this loss is taken over all observations in each mini-batch during 
 	\draw[->](Z2) to (s2);
 	\draw[->](s2) to node[right]{$y_{chue}$}  (AngHue.340);
 	
-	
-	
-	
-	
 	\end{tikzpicture}
 	
 	\caption{The Point Estimate Output Module.
 		Here $\mathrm{atan2}$ is the quadrant preserving arctangent, outputting as a regularized angle (as per in all evaluations).
 		 \label{fig:pointoutmod}}
 \end{figure}
+
+
+
+\subsection{Operational Upper-bounds}
+To establish an rough upper-limit on the modelling results we evaluate a direct method which bypasses the language understanding component of the task.
+These direct methods do not process term-by-term, they do not work with the language at all.
+They simply map from the exact input text (no tokenization) to the pre-calculated distribution or mean of the training data for the exact color name.
+This operational upper bounds bypass the compositional language understanding part of the process.
+It is as if the input module (as discussed in \Cref{sec:inputmod}) perfectly resolved the sequence of terms into a single item.
+
+
+They represent an approximate upper bound, as they fully exploit all information in the training data for each input.
+There is no attempting to determine how each term affects the result.
+We say approximate upper-bound, as it is not strictly impossible that the term-based methods may happen to model the test data better than can be directly determined by training data as processed per exact color name.
+This would require learning how the terms in the color name combine in a way that exceeds the information directly present in the training data per class.
+It is this capacity of learning how the terms combine that allow for the models to predict the outputs for combinations of terms that never occur in the training data (\Cref{sec:extrapodata}).
+Doing this in a way that generalizes to get better results than the direct exploitation of the training data, would require very well calibrated control of (over/under)-fitting.
+
+
+\subsubsection{Operational Upper-bound for Distribution Estimation: KDE}\label{sec:direct-histogram} \label{sec:kernel-density-based-smoothing}
+To determine an operational upper-bound for the distribution estimation tasks,
+we use kernel-density estimation (KDE) in a formulation for non-parametric estimation \parencite{silverman1986density}.
+The KDE effectively produces a smoothed histogram.
+It caused adjacent bins to have most similar probabilities, thus matching to the mathematical notion of a continuous random variable.
+This is applied on-top of the histogram used for the training data.
+We use the Fast Fourier Transform (FFT) based KDE method of the \textcite{silverman1982algorithm}.
+We use a Gaussian kernel, and select the bandwidth per color description based on leave-one-out cross validation on the training data.
+A known issue with the FFT based KDE method is that it has a wrap-around effect near the boundaries where mass that would be assigned outside the boundaries is instead assigned to the bin on the other side.
+For the value and saturation channels we follow the standard solution of initially defining additional bins outside the true boundaries, then discard those bins and rescale the probability to one.
+For the hue channel this wrap-around effect is exactly as desired.
+
+In our evaluations using KDE rather than just the training histograms directly proved much more successful on all distribution estimation tasks.
+This is because it avoids empty bins, and effectually interpolates probabilities between observations.
+Thus improving the results
+We found in preliminary investigations that using KDE based method to be much better than add-one smoothing.
+
+We also investigated applying the KDE to the training data,  before training our neural network based distribution models.
+Results for this can be found in \Cref{sec:smoothed-results}.
+In brief, we found that smoothing the training data does not significantly effect the result of the neural network based models.
+We observed that this models
+
+Our KDE based operational upper bound for distribution estimation bypassed the natural language understanding part of the task,
+and directly uses non-parametric probability estimation methods to focus solely on modelling the distributions.
+Matching its performance indicates that a model is effectively succeeding well at both the natural language understanding component and the distribution estimation component.
+
+
+\subsubsection{Operational Upper-bound for Point estimation: Mean-point}
+In a similar approach, we also a method that directly produces a point estimate from a color name.
+We define this by taking the mean of all the training observations for a given exact color name.
+The mean is taken in the angularly correct way (as discussed in \Cref{sec:angularly-correct}).
+Taking the mean of all the observations give the theoretically optimal solution to minimizing the mean squared error on the training data set.
+As with our direct distribution estimation method, this bypasses the term based language understanding, and directly exploits the training data.
+It thus represents an approximate upper bound on the point estimation performance of the term based models.
+
 
 
 \section{Results}
