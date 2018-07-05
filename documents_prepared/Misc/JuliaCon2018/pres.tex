@@ -1,6 +1,6 @@
 \RequirePackage{luatex85,shellesc}
 \documentclass[dvipsnames]{beamer}
-\usepackage{verbatim}
+\usepackage{fancyvrb}
 
 \usepackage{microtype}
 \usepackage{adjustbox}
@@ -47,21 +47,23 @@
 	indirect/.style={decoration={snake}, decorate, very thick, purple}
 }
 
-\newcommand{\pkg}[2][]{\node[#1,package](#2) {#2.jl}}
+\newcommand{\pkg}[2][]{\tikzset{#2/.append style={}}; \node[#1,package, #2](#2) {#2.jl}}
 \newcommand{\repo}[2][]{\node[#1,repo](#2) {#2}}
+
 
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newcommand{\inlinecode}[1]{\mbox{\alert{\texttt{\detokenize{#1}}}}}
-\newenvironment{code}
-{%BEGIN
-\endgraf\verbatim
-}
-{ % END
-\endverbatim
-}
+%\newenvironment{code}
+%{%BEGIN
+%\endgraf\verbatim
+%}
+%{ % END
+%\endverbatim
+%}
+\DefineVerbatimEnvironment{code}{Verbatim}{obeytabs,tabsize=4,gobble=2}
 
 
 \newcommand{\datadep}[1]{\inlinecode{datadep"#1"}}
@@ -75,6 +77,13 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Repeat a slide with a node highlighted
+\newcommand{\focusslide}[2]{
+	{
+	\tikzset{#2/.append style={text=white, font=\bfseries,  fill=bluewrite}}
+	\againframe{#1}
+	}
+}
 
 %%%%%%%%%%%%%%%%%%%%%
 
@@ -99,7 +108,7 @@
 \logo{}
 
 
-\begin{frame}{Big Picture}
+\begin{frame}[label=bigpicture]{Big Picture}
 	\centering
 	%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
 	%\resizebox{\textwidth}{!}{\clipbox{190pt 170pt 250pt 0pt}{\input{coreidea.tex}}}
@@ -182,7 +191,7 @@
 
 
 
-\begin{frame}{Julia Packages}
+\begin{frame}[label=packages]{Julia Packages}
 	\centering
 	%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
 	%\resizebox{\textwidth}{!}{\clipbox{190pt 170pt 250pt 0pt}{\input{coreidea.tex}}}
@@ -236,7 +245,7 @@
 		\end{tikzpicture}}
 \end{frame}
 
-\begin{frame}{DataDeps.jl}
+\begin{frame}[label=datadeps]{DataDeps.jl}
 	\centering
 		%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
 %	\resizebox{\textwidth}{!}{\clipbox{190pt 320pt 400pt 0pt}{\input{coreidea.tex}}}
@@ -271,7 +280,7 @@
 	\end{tikzpicture}}
 \end{frame}
 
-\begin{frame}{DataDepsGenerators.jl}
+\begin{frame}[label=datadepsgenerators]{DataDepsGenerators.jl}
 	\centering
 		%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
 %	\resizebox{\textwidth}{!}{\clipbox{0pt 0pt 0pt 290pt}{\input{coreidea.tex}}}
@@ -329,7 +338,7 @@
 }
 \end{frame}
 
-\begin{frame}{CorpusLoaders.jl}
+\begin{frame}[label=corpusloaders]{CorpusLoaders.jl}
 		%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
 %	\resizebox{\textwidth}{!}{\clipbox{370pt 310pt 250pt 70pt}{\input{coreidea.tex}}}
 \centering
@@ -339,7 +348,9 @@
 		\pkg[mypackage]{CorpusLoaders};
 		
 		\pkg[mypackage]{DataDeps};
-		\node(MultiResolutionIterators)[mypackage]{Multi--\\Resolution--\\Iterators.jl};
+		
+		\tikzset{MultiResolutionIterators/.append style={}};% for focusslide
+		\node(MultiResolutionIterators)[mypackage,MultiResolutionIterators]{Multi--\\Resolution--\\Iterators.jl};
 		
 		\pkg[mypackage]{InternedStrings};
 		\pkg[]{Strs};
@@ -360,7 +371,17 @@
 		\end{tikzpicture}}
 \end{frame}
 
+\begin{frame}{Australia, it is quiet far away}
+	\note{I believe perth is exactly 12 hours out of sync with Boston.}
+	\includegraphics[height=0.8\pageheight]{map}
+\end{frame}
+\begin{frame}{Australia, really it is quiet far away}
+	\note{A considerable distance you might say}
+	\centering
+	\includegraphics[height=0.8\pageheight]{world}
+\end{frame}
 
+\focusslide{datadeps}{DataDeps}
 \begin{frame}{Vabdewakke's 6 Degree's of Replicability}
 	\begin{enumerate}
 		%\item 0: The results cannot be reproduced by an independent researcher.
@@ -439,8 +460,8 @@
 
 
 \begin{frame}[fragile]{What happens when you uses a datadep?}
-		\center
-		\resizebox{0.9\textwidth}{!}{
+		\centering
+		\resizebox{\textwidth}{!}{
 		\begin{tikzpicture}[every text node part/.style={align=center}, auto,node distance=2, ->,
 		every edge/.append style={every node/.style={font=\footnotesize}}]
 		
@@ -594,7 +615,7 @@
 \end{frame}
 
 
-\section{DataDepGenerators.jl}
+\focusslide{datadepsgenerators}{DataDepsGenerators}
 
 \begin{frame}[fragile]{Developers still have to write registration blocks}
 	\begin{easylist}[itemize]
@@ -650,30 +671,7 @@
 	\end{columns}
 \end{frame}
 
-\begin{frame}[fragile]{Why DOI's alone are not the answer to broken dataset links:}
-	\small
-	\begin{easylist}[itemize]
-		@ When we say DOI's are persistent we mean they never expire.
-		@@ Unlike web URL, you do not have to pay to renew.
-		@@ It won't be sold to someone else. It will always refer to your object.
-		@ DOI's point to landing pages, not data/paper downloads
-		@@ DOI's have attached metadata, but not direct links to the data (not even DataCite DOIs (yet))
-		@ A key reason DOI's don't point data/papers is because not all are available online
-		@@ Some obviously are pay walled
-		@@ But some can't be digitalized at all. E.g. DOI's have been issued to laboratory samples, or to data centres.		
-	\end{easylist}
-\end{frame}
-\begin{frame}[fragile]{DOI's are not the solution, but they are probably part of the solution}
-	\begin{easylist}[itemize]
-		@ The landing page is still just a website, it's domain name \alert{can expire}
-		@@ The data hosting is can expire (and hard-drives can fail).
-		@ Did I mention under normal circumstances you can't go from DOI to data URL at all anyway?
-		@ Still persistent metadata is also kind of nice to have
-		@@ At least if the data goes down you know what was lost, so we can seek it else-where.
-		@ Really, though we need to be applying periodic automatic link checking to all URLs we need not to break.
-		@@ DataDeps.jl makes that pretty easy, you can just set it up as part of \inlinecode{runtests.jl} and set Travis or AppVeyor to run scheduled tests.
-	\end{easylist}
-\end{frame}
+
 
 
 \begin{frame}[fragile]{GitHub}
@@ -763,6 +761,28 @@
 %\end{tikzpicture}}
 %\end{frame}
 
+\begin{frame}{We are now going to take a very short break}
+	\centering
+	\includegraphics[width=\textwidth]{break}	
+\end{frame}
+
+\focusslide{corpusloaders}{CorpusLoaders}
+\begin{frame}[fragile]{WordTokenizers.jl}
+	\begin{easylist}[itemize]
+		@ Not much to say.
+		@ Honestly not a lot in it itself.
+		@@ Just a couple of parsers for a few formats
+		@ Mostly interesting as a vessel for driving its dependencies.
+	\end{easylist}
+	\vspace{1cm}
+	\begin{easylist}[itemize]
+		@ Notable differences from MLDatasets.jl
+		@@ Everything is lazy-loaded from disk via \inlinecode{Channels}.
+		@@ Everything is Multi-Resolution
+	\end{easylist}
+\end{frame}
+
+\focusslide{corpusloaders}{WordTokenizers}
 \begin{frame}[fragile]{WordTokenizers.jl}
 	\note{Honestly I stole stuff left, right and center for this.}
 	Configurable \inlinecode{tokenize}r and \inlinecode{sentence_segment}er.\\
@@ -780,6 +800,7 @@
 	Regex is just really good at working with English.	
 \end{frame}
 
+\focusslide{corpusloaders}{InternedStrings}
 \begin{frame}[fragile]{InternedStrings.jl: All these duplicate strings are using all my memory}
 	\begin{easylist}[itemize]
 		@ Strings are immutable, so we only need one copy of each
@@ -791,6 +812,7 @@
 	\end{easylist}
 \end{frame}
 
+\focusslide{corpusloaders}{MultiResolutionIterators}
 \begin{frame}[fragile]{MultiResolutionIterators.jl:\\ The structure of a Corpus}
 	\begin{easylist}[itemize]
 		@ \alert{Corpus}
@@ -801,6 +823,8 @@
 		@ made up of: \alert{Letters} or \alert{Characters}
 	\end{easylist}
 \end{frame}
+
+
 
 
 \def\madeupof{$\blacktriangleright$}
@@ -820,8 +844,132 @@
 	a stream of Letters
 \end{frame}
 
+\begin{frame}[fragile]{MultiResolutionIterators.jl: example}
+	\color{Green}
+	\begin{code}
+		julia> animal_info = [
+		[	["Turtles", "are", "reptiles", "."],
+			["They", "have", "shells", "."],
+			["They", "live", "in", "the", "water", "."]],
+		[	["Cats", "are", "mammals", "."],
+			["They", "live", "on", "the", "internet", "."]]
+		]
+		2-element Array{Array{Array{String,1},1},1}
+	\end{code}
+	\color{Orange}
+	\begin{code}
+		julia>  struct AnimalTextIndexer end;
+		julia> 	levelname_map(::AnimalTextIndexer) = [
+			:documents=>1,
+			:sentences=>2,
+			:words=>3, :tokens=>3,
+			:characters=>4, :letters=>4
+		]
+	\end{code}
+
+\end{frame}
+
+\newcommand{\ormark}{\vspace{-0.5em}\hfill \textasciitilde{} Or \textasciitilde{} \hfill \null \vspace{-0.5em}}
+\begin{frame}[fragile]{Information Retrieval wants\\ {Documents} \madeupof {Words}}
+	\color{Purple}
+	\small
+	\begin{code}
+		julia> flatten_levels(animal_info, 2)
+	\end{code}
+		\ormark{}
+	\begin{code}
+		julia> flatten_levels(animal_info,
+					lvls(indexer, :sentences))
+	\end{code}
+		\ormark{}
+	\begin{code}					
+		julia> flatten_levels(animal_info, 
+					(!lvls)(indexer, :documents, :words))
+	\end{code}
+	\color{Green}
+	\begin{code}
+		julia> full_consolidate(ans)
+		
+		2-element Array{Array{String,1},1}:
+		String["Turtles", "are", ".", ...,  "the", "water", "."]
+		String["Cats", "are", ..., "the", "internet", "."]
+	\end{code}
+\end{frame}
+
+\begin{frame}[fragile]{Char-RNN Topic Modelling wants\\ {Documents} \madeupof {Words}}
+	\color{Purple}
+	\begin{code}					
+		julia> join_levels(animal_info,
+					lvls(indexer,Dict(
+						:words=>" ",
+						:sentences=>" ")
+					 )
+				)
+	\end{code}
+	\color{Green}
+	\begin{code}	
+		julia> full_consolidate(ans)
+		
+		2-element Array{String,1}:
+		"Turtles are reptiles ... They live in the water ."
+		"Cats are mammals . They live on the internet ."
+	\end{code}
+\end{frame}
 
 
+\begin{frame}[fragile]{MultiResolutionIterators.jl}
+	\begin{easylist}[itemize]
+		@ Mix and match operations as needed
+		@ Easy to define any iterator function to work at levels
+		@ Overload \inlinecode{apply} to customize behaviour with particular iterator-types.
+	\end{easylist}
+	\vspace{1cm}
+	E.g. could make \inlinecode{MyVector} eager and type preserving
+	via \inlinecode{apply(f, v::MyVector) = MyVector(collect(f(v)))}
+		
+\end{frame}
 
+
+\begin{frame}[fragile]{What have we learned?}
+	\begin{easylist}[itemize]
+	@ Australia: Quiet distant, not near London
+	\pause
+	@ Data is important
+	@ Simplify your data management with DataDeps.jl
+	@ Simplify your DataDeps creation with DataDepsGenerators.jl
+	\pause
+	@ Data is useful for NLP
+	@ Packages exist to make working with NLP shaped data easier.
+	\end{easylist}
+\end{frame}
+
+\againframe{bigpicture}
+
+\section{Appendix/ Spare Rants}
+
+\begin{frame}[fragile]{Why DOI's alone are not the answer to broken dataset links:}
+	\small
+	\begin{easylist}[itemize]
+		@ When we say DOI's are persistent we mean they never expire.
+		@@ Unlike web URL, you do not have to pay to renew.
+		@@ It won't be sold to someone else. It will always refer to your object.
+		@ DOI's point to landing pages, not data/paper downloads
+		@@ DOI's have attached metadata, but not direct links to the data (not even DataCite DOIs (yet))
+		@ A key reason DOI's don't point data/papers is because not all are available online
+		@@ Some obviously are pay walled
+		@@ But some can't be digitalized at all. E.g. DOI's have been issued to laboratory samples, or to data centres.		
+	\end{easylist}
+\end{frame}
+\begin{frame}[fragile]{DOI's are not the solution, but they are probably part of the solution}
+	\begin{easylist}[itemize]
+		@ The landing page is still just a website, it's domain name \alert{can expire}
+		@@ The data hosting is can expire (and hard-drives can fail).
+		@ Did I mention under normal circumstances you can't go from DOI to data URL at all anyway?
+		@ Still persistent metadata is also kind of nice to have
+		@@ At least if the data goes down you know what was lost, so we can seek it else-where.
+		@ Really, though we need to be applying periodic automatic link checking to all URLs we need not to break.
+		@@ DataDeps.jl makes that pretty easy, you can just set it up as part of \inlinecode{runtests.jl} and set Travis or AppVeyor to run scheduled tests.
+	\end{easylist}
+\end{frame}
 
 \end{document}
