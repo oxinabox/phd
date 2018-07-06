@@ -1,5 +1,7 @@
 \RequirePackage{luatex85,shellesc}
 \documentclass[dvipsnames]{beamer}
+\usepackage[author={Lyndon White}]{pdfcomment}
+
 \usepackage{fancyvrb}
 
 \usepackage{microtype}
@@ -38,11 +40,12 @@
 \tikzset{%
 	->,
 	align=center,
-	node distance=10cm, sibling distance=25mm, level distance=40mm,
+	node distance=30mm, sibling distance=25mm, level distance=40mm,
 	every edge/.append style = {thick},
 	package/.style={draw, circle, very thick},
 	mypackage/.style={package, blue},
 	repo/.style={draw, very thick, purple},
+	info/.style={Green},
 	supports/.style={dotted, very thick},
 	indirect/.style={decoration={snake}, decorate, very thick, purple}
 }
@@ -55,7 +58,7 @@
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newcommand{\inlinecode}[1]{\mbox{\alert{\texttt{\detokenize{#1}}}}}
+\newcommand{\inlinecode}[1]{\mbox{\color{Purple}{\texttt{\detokenize{#1}}}}}
 %\newenvironment{code}
 %{%BEGIN
 %\endgraf\verbatim
@@ -382,6 +385,46 @@
 \end{frame}
 
 \focusslide{datadeps}{DataDeps}
+
+\newcommand{\questionanswer}{\only<1>{Questions}\only<2>{\textbf{Answers}}}
+\begin{frame}[fragile]{3 Key \questionanswer{} about Data: \\\#1 Storage Location}
+	\begin{easylist}[itemize]
+		@ Where do I put it? Should it be on the local disk (small) or the network file-store (slow)? \label{itm:where}
+		\only<2>{@@ \color{bluewrite} Anywhere on the DataDeps Load Path will work}
+		@ If I move it, am I going to have to reconfigure things?
+		\only<2>{@@ \color{bluewrite} Not if you are using a datadep path}
+		@ What if I put it all in the git repo?
+		\only<2>{@@ \color{bluewrite} git does not like large binary files.\\ 50KB \inlinecode{.csv} is ok; 50MB \inlinecode{.jld} is not.}
+	\end{easylist}
+\end{frame}
+
+\begin{frame}[fragile]{3 Key \questionanswer{} about Data: \\\#2 Redistribution}
+
+	\begin{easylist}[itemize]
+		 @ I don't own this data
+		 \only<2>{@@ \color{bluewrite} but it is publicly accessible, right?}
+		 @ am I allowed to redistribute it? \label{itm:ownredistribute}
+		 \only<2>{@@ \color{bluewrite} IANAL, but linking should be fine.} 
+		 @ How will I give credit, and ensure the users know who the original creator was?
+		 \only<2>{@@ \color{bluewrite} Tell them with a prompt when it is downloaded}
+	\end{easylist}
+	\vfill
+\end{frame}
+
+\begin{frame}[fragile]{3 Key \questionanswer{} about Data: \\\#3 Replication}
+	\begin{easylist}[itemize]
+		@ How can I be sure that someone running my code has the same data?
+		\only<2>{@@ \color{bluewrite} Make automatic data fetching part of the code}
+		@ What if they download the wrong data, or extract it incorrectly?
+		\only<2>{@@ \color{bluewrite} They can't make mistakes if it is automated}
+		@ What if it gets corrupted or has been modified and I am unaware?
+		\only<2>{@@ \color{bluewrite} Filehashs, SHA256, MD5 etc.}
+	\end{easylist}
+\end{frame}
+
+
+
+
 \begin{frame}{Vabdewakke's 6 Degree's of Replicability}
 	\begin{enumerate}
 		%\item 0: The results cannot be reproduced by an independent researcher.
@@ -671,7 +714,67 @@
 	\end{columns}
 \end{frame}
 
+\begin{frame}[fragile]{Many datasets have multiple possible APIs}
+	For example something that points at \alert{Figshare}\\
+	{\small \inlinecode{generate("https://doi.org/10.23640/07243.5525476.v1")}}
+	\vfill
+	\begin{easylist}[itemize]
+		@ It includes a DOI
+		@@ DataCite API
+		@@ JSON-LD DOI Content Negotiation service
+		@ It is a URL
+		@@ Embedded JSON-LD element
+		@@ FigShare API
+		@ Many others will be tried and will error out
+	\end{easylist}
+	\vfill
+	\pdfcomment{Do include the merged output on the next slide when that feature is working}
+\end{frame}
 
+\begin{frame}[fragile]{Many datasets have multiple possible APIs}
+	For example something points at \alert{DataDryad}\\
+	{\small 
+		\inlinecode{generate(}\\
+		\inlinecode{"http://datadryad.org/resource/doi:10.5061/dryad.gj651")}
+	}
+	\vfill
+	\begin{easylist}[itemize]
+		@ DataCite API
+		@ JSON-LD DOI Content Negotiation service
+		@ Embedded JSON-LD element
+		@ DataDryad Webscraper
+		@ DataOneV1 API
+		@ Many others will be tried and will error out
+	\end{easylist}
+	\vfill
+	\pdfcomment{Do include the merged output on the next slide when that feature is working}
+\end{frame}
+
+\begin{frame}{DataDepsGenerators combines all the Metadata Sources}
+	\centering
+	\resizebox{!}{0.8\pageheight}{\begin{tikzpicture}[layered layout, grow=down,]
+		\node(out){Complete Metadata\\For Registration Block};
+%		\repo[above right=of out]{DataCite};
+%		\repo[above = of out]{Others};
+%		\repo[above left=of out]{FigShare};
+%		\draw[->] (DataCite) to (out);
+%		\draw[->] (FigShare) to (out);
+%		\draw[->] (Others) to (out);
+
+		\repo[]{DataCite};
+		\repo[]{Others};
+		\repo[]{Figshare};
+	\graph{
+		(out) <- {{Figshare} <- {Has URL[Green], No Paper Ref.[Red]},
+			      {Others},
+			      (DataCite)<-{Has Paper Ref.[Green],  No URL[Red]}
+			    };
+	};
+	
+
+	\end{tikzpicture}}
+\end{frame}
+	
 
 
 \begin{frame}[fragile]{GitHub}
