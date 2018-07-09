@@ -1,4 +1,5 @@
 \documentclass[a0paper,dvipsnames, landscape]{tikzposter}
+\tikzposterlatexaffectionproofoff
 
 \usepackage[utf8]{inputenc}
 \usepackage{adjustbox}
@@ -70,18 +71,19 @@
 
 %%%%%%
 %PARTS
+	
 
 \pgfplotstableread[header=has colnames,
 	columns/TestSet/.style={string type},
 	]{%
-		TestSet	{First Mentioned} {ML Classical Feats.}	{ML Word Emb.} {Most Commonly Mentioned}
-		{A Song of Ice and Fire \\\small George R. R. Martin}	25	97.65625	97.265625	91.40625
-		{Six of Crows\\\small  Leigh Bardugo}	42.8571429	93.4065934	94.5054945	79.1208791
-		{Wheel of Time\\\small Robert Jordan}	4.3981481	73.6111111	68.0555556	65.9722222
+		TestSet	{First Mentioned}	{Most Commonly Mentioned}	{ML Classical Feats.}	{ML Word Emb.}
+		{Wheel of Time\\\small Robert Jordan}	4.3981481	65.9722222	73.6111111	68.0555556
+		{Six of Crows\\\small  Leigh Bardugo}	42.8571429	79.1208791	93.4065934	94.5054945
+		{A Song of Ice and Fire \\\small George R. R. Martin}	25	91.40625	97.65625	97.265625
 	}{\res}
 
 \newcommand{\resultsblock}{
-	\block{Results}{
+	\block{Results on popular series of novels}{
 		\begin{tikzpicture}
 		\begin{axis}[ybar,
 		xticklabels from table={\res}{TestSet},
@@ -92,24 +94,28 @@
 		enlarge x limits=0.3,
 		xticklabel style={text width=8em, align=center},
 		xtick = data,
-		width=0.87\linewidth, height= 15cm,
+		width=0.87\linewidth, height= 17cm,
 		bar width=1.9cm,
 		yticklabel={$\mathsf{\pgfmathprintnumber{\tick}}$\small\%},
 		ytick = {0, 25, 50, 75, 100},
 		ylabel = Accuracy,
 		xlabel = {\shortstack{Book\\ Series:}},
-		x label style={at={(axis description cs:-0.06,-0.05)},anchor=north},
+		x label style={at={(axis description cs:-0.06,-0.04)},anchor=north},
 		axis line style={draw=none},
 		x tick style={draw=none},
 		ytick pos=left,
 		nodes near coords={$\mathsf{\pgfmathprintnumber[precision=0]{\pgfplotspointmeta}}$\small\%}
 		]
 		%\addplot[style={bblue,fill=bblue,mark=none}] table[x expr=\coordindex, y={ML Word Emb.}] {\res};
-		\addplot[style={top color=Cyan, bottom color=Blue, draw=none, mark=none}] table[x expr=\coordindex, y={ML Word Emb.}] {\res};
-		\addplot[style={top color=Orange, bottom color=Brown, draw=none, mark=none}] table[x expr=\coordindex, y={ML Classical Feats.}] {\res};
-		\addplot[style={top color=Gray, bottom color=Purple, draw=none, mark=none}] table[x expr=\coordindex, y={Most Commonly Mentioned}] {\res};
 		\addplot[style={top color=Yellow, bottom color=Green, draw=none, mark=none}] table[x expr=\coordindex, y={First Mentioned}] {\res};
-		\legend{{\hspace{1cm}Word Embeddings},{\hspace{1cm}Classical Feats.},{\hspace{1cm}Most Commonly Mentioned\hspace{1cm}\null},{\hspace{1cm}First Mentioned}}
+		\addplot[style={top color=Gray, bottom color=Purple, draw=none, mark=none}] table[x expr=\coordindex, y={Most Commonly Mentioned}] {\res};
+		\addplot[style={top color=Orange, bottom color=Brown, draw=none, mark=none}] table[x expr=\coordindex, y={ML Classical Feats.}] {\res};
+		\addplot[style={top color=Cyan, bottom color=Blue, draw=none, mark=none}] table[x expr=\coordindex, y={ML Word Emb.}] {\res};
+
+		\legend{{\hspace{1cm}First Mentioned\hspace{1cm}\null},
+				{\hspace{1cm}Most Commonly Mentioned\hspace{1cm}\null},
+				{\hspace{1cm}Classical Feats.\hspace{1cm}\null},
+				{\hspace{1cm}Word Embeddings\hspace{1cm}\null}}
 		\end{axis}
 		\end{tikzpicture}
 	}
@@ -203,23 +209,23 @@
     \end{subcolumns}
 	
 
-	\def\screenshotwidth{620pt}
+	\def\screenshotwidth{640pt}
 	\newcommand{\screenshot}[2]{%
-		\innerblock{#1}{\centering\includegraphics[width=570pt]{screenshots/#2}}%
+		\innerblock{#1}{\centering\includegraphics[width=620pt]{screenshots/#2}}%
 	}
 	\block{What does it look like?}{
 		\hfill%
 		\begin{minipage}[c]{\screenshotwidth}
 			\screenshot{Upload your ebook}{startpage}
 		\end{minipage}%
-		\hfill%
+		\hfill\hfill%
 		\begin{minipage}[c]{\screenshotwidth}
 			\screenshot{Select which sections to keep}{controls}
 			\innerblock{}{\centering
 				Demonstration on \emph{``Words of Radiance''} by Brandon Sanderson.\\
 		  	Using the \mbox{classical} features method.}
 		\end{minipage}%
-		\hfill%
+		\hfill\hfill%
 		\begin{minipage}[c]{\screenshotwidth}
 			\screenshot{Sections are labelled by POV \& score}{results}
 		\end{minipage}
@@ -231,43 +237,44 @@
 
 	\column{0.33} %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 	\processblock{}
-
+	
+	\newcommand{\imp}[1]{{\Large \textbf{#1}}}
 	\block{Baseline methods for determining POV}{
 		\innerblock{First Mentioned Named Entity}{
-			\textbf{Features}: first occurrence of named entity token in the section\\
-			\textbf{Scoring}: earliest mentioned scores highest, $S_i=2^{-rank(f_i)}$\\
-			\textbf{Result}: terrible: other named entities often occur before the POV.
+			\imp{Features}: first occurrence of named entity token in the section.\\
+			\imp{Scoring}: earliest mentioned scores highest, $S_i=2^{-rank(f_i)}$\\
+			\imp{Result}: \imp{\color{Red}terrible}. Other named entities often occur before POV.
 		}
 		\gap
 		\innerblock{Most Commonly Mentioned Named Entity}{
-			\textbf{Features}: number of occurrences of named entity token in section \\
-			\textbf{Scoring}: most mentioned scores highest, $S_i=\frac{f_i}{\sum_{\forall j} f_j}$\\
-			\textbf{Result}: solid, but fooled by descriptions focusing on others.
+			\imp{Features}: count of occurrences of named entity token in section. \\
+			\imp{Scoring}: most mentioned scores highest, $S_i=\frac{f_i}{\sum_{\forall j} f_j}$\\
+			\imp{Result}: \imp{\color{LimeGreen}generally solid}, but fooled by descriptions focusing on others.
 		}
 	}
 
 
    	
-   	
+	
    	\block{Machine learning methods for determining POV}{
-   		\innerblock{Classical Features}{
-   			\textbf{Features}: position, and occurrence frequency,
-   			 plus  parts of speech cooccurring frequency. Total 200 dimensions.\\
-   			\textbf{Scoring}: use logistic regression model on if POV or not, $S_i=\frac{P(f_i)}{\sum_{\forall j} P(f_j)}$\\
-   			\textbf{Result}: really strong. Main characters occur near verbs and grammar. This gives an edge over frequency information alone.
+   		\innerblock{Classical Features + Logistic Regression}{
+   			\imp{Features}: position, and occurrence frequency,
+   			 plus parts of speech cooccurring frequency. Total 200 dims.\\
+   			\imp{Scoring}: use logistic regression model on if POV or not, $S_i=\frac{P(f_i)}{\sum_{\forall j} P(f_j)}$\\
+   			\imp{Result}: \imp{\color{green}generally great}. Main characters occur near verbs and \mbox{grammar}. This gives an edge over frequency information alone.
    		}
    		\gap
-   		\innerblock{Word Embeddings}{
-   			\textbf{Features}: Concatenated the mean of FastText word embeddings for adjacent words.
-   			Total 600 dimensions.
+   		\innerblock{Word Embeddings + RBF-SVM}{
+   			\imp{Features}: concatentation of FastText word embeddings for the adjacent words, averaged over all occurrences.
+   			Total 600 dims.
    			\\
-   			\textbf{Scoring}: use RBF-SVM model on if POV or not, $S_i=\frac{P(f_i)}{\sum_{\forall j} P(f_j)}$\\
-   			\textbf{Result}: really strong. However, due to high dimensionality needs sufficient training data from other labelled books.
+   			\imp{Scoring}: use RBF-SVM model on if POV or not, $S_i=\frac{P(f_i)}{\sum_{\forall j} P(f_j)}$\\
+   			\imp{Result}: \imp{\color{green}generally great}. However, due to high dimensionality needs sufficient training data from other labelled books.
    		}
    	}
    	
 \end{columns}
-\block{}{\centering \fontsize{80}{90}\selectfont  http://novelperspective.ucc.asn.au/}
+\block{}{\centering \fontsize{70}{90}\selectfont  http://novelperspective.ucc.asn.au/}
 
 
 \end{document}
