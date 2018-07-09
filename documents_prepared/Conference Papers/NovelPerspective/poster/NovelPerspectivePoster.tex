@@ -64,7 +64,7 @@
 		\centering
 		\color{titlefgcolor} {\bfseries \Huge NovelPersepective \par}
 		\vspace*{0.5em}
-		{\huge  Identifying Point of View Characters \par}
+		{\huge  Identifying point of view characters \par}
 		\vspace*{1em} {\LARGE {Lyndon White, Roberto Togneri, Wei Liu, Mohammed Bennamoun}}
 	}}
 
@@ -74,7 +74,7 @@
 \pgfplotstableread[header=has colnames,
 	columns/TestSet/.style={string type},
 	]{%
-		TestSet	{First Mentioned} {Most Commonly Mentioned}	{ML Classical Feats.}	{ML Word Emb.}
+		TestSet	{First Mentioned} {ML Classical Feats.}	{ML Word Emb.} {Most Commonly Mentioned}
 		{A Song of Ice and Fire \\\small George R. R. Martin}	25	97.65625	97.265625	91.40625
 		{Six of Crows\\\small  Leigh Bardugo}	42.8571429	93.4065934	94.5054945	79.1208791
 		{Wheel of Time\\\small Robert Jordan}	4.3981481	73.6111111	68.0555556	65.9722222
@@ -98,7 +98,7 @@
 		ytick = {0, 25, 50, 75, 100},
 		ylabel = Accuracy,
 		xlabel = {\shortstack{Book\\ Series:}},
-		x label style={at={(axis description cs:-0.06,-0.01)},anchor=north},
+		x label style={at={(axis description cs:-0.06,-0.05)},anchor=north},
 		axis line style={draw=none},
 		x tick style={draw=none},
 		ytick pos=left,
@@ -117,7 +117,7 @@
 
 %%
 \newcommand{\processblock}{
-    	\block{Process}{
+    	\block{The process for subsetting ebooks by POV}{
     		\resizebox{\linewidth}{!}{
     			\begin{tikzpicture}[
     			>=latex,
@@ -181,27 +181,28 @@
     \begin{subcolumns}
     	\subcolumn{0.5}
 	    \block{What? Why? Why are you doing this to books?}{\begin{minipage}{\linewidth}
-   	    		Many novels, especially epic fantasy, series a	written from the Point of View (POV) of many different characters. %      
+   	    		Many novels, especially epic fantasy series, are written from the Point of View (POV) of many different characters. %      
    	    		\gap
-   	    		They feature multiple parallel stories tracking the journey of each POV character in parallel.%
+   	    		They feature parallel sub-stories tracking the journey of each POV character.%
    	    		\gap
-   	    		As a reader sometimes one wishes to read just one characters story.%
+   	    		Readers sometimes wish to read just one characters story; particularly for example on a second read through.%
    	    		\gap
-   	    		Thus we have made a tool that allows the user to slice-up and restitch their ebooks around a POV character.%
+   	    		We have made a tool that allows the user to slice-up and restitch their ebooks around each POV character.%
    	    		\gap
-   	    		The challenging part is that most books to not label the sections with the name of the POV character, rather the reader works it out.
+   	    		The challenging part is that most books do not label the sections with the name of the POV character, rather the reader works it out.
    	    	\end{minipage}}
    	    	
    	    	
-		\block{Source Code}{\centering
-			Built on CherryPy, NLTK and Scikit-Learn\\
-			https://github.com/oxinabox/NovelPerspective\\
+		\block{The source code is publicly available}{\centering
 			MIT Licensed\\
+			https://github.com/oxinabox/NovelPerspective\\
+			Built on CherryPy, NLTK, Scikit-Learn, EbookLib and Calibre\\
 		}
     	\subcolumn{0.485}
 		\resultsblock{}
     \end{subcolumns}
 	
+
 	\def\screenshotwidth{620pt}
 	\newcommand{\screenshot}[2]{%
 		\innerblock{#1}{\centering\includegraphics[width=570pt]{screenshots/#2}}%
@@ -213,11 +214,14 @@
 		\end{minipage}%
 		\hfill%
 		\begin{minipage}[c]{\screenshotwidth}
-			\screenshot{Selection Interface}{controls}
+			\screenshot{Select which sections to keep}{controls}
+			\innerblock{}{\centering
+				Demonstration on \emph{``Words of Radiance''} by Brandon Sanderson.\\
+		  	Using the \mbox{classical} features method.}
 		\end{minipage}%
 		\hfill%
 		\begin{minipage}[c]{\screenshotwidth}
-			\screenshot{Sections are Labelled by POV}{results}
+			\screenshot{Sections are labelled by POV \& score}{results}
 		\end{minipage}
 		\hfill
 		\null
@@ -228,39 +232,40 @@
 	\column{0.33} %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 	\processblock{}
 
-	\block{Baseline Methods}{
-		\innerblock{First Mentioned}{
-			\textbf{Features}: First occurrence of name in text\\
-			\textbf{Scoring}: Earliest mentioned scores highest, $S_i=2^{-rank(f_i)}$\\
-			\textbf{Result}: Terrible, often other named entities mentioned earlier.
+	\block{Baseline methods for determining POV}{
+		\innerblock{First Mentioned Named Entity}{
+			\textbf{Features}: first occurrence of named entity token in the section\\
+			\textbf{Scoring}: earliest mentioned scores highest, $S_i=2^{-rank(f_i)}$\\
+			\textbf{Result}: terrible: other named entities often occur before the POV.
 		}
 		\gap
-		\innerblock{Most Commonly Mentioned}{
-			\textbf{Features}: Number of occurrences \\
-			\textbf{Scoring}: Most mentioned scores highest, $S_i=\frac{f_i}{\sum_{\forall j} f_j}$\\
-			\textbf{Result}: Solid, but fooled by descriptions focusing on others.
+		\innerblock{Most Commonly Mentioned Named Entity}{
+			\textbf{Features}: number of occurrences of named entity token in section \\
+			\textbf{Scoring}: most mentioned scores highest, $S_i=\frac{f_i}{\sum_{\forall j} f_j}$\\
+			\textbf{Result}: solid, but fooled by descriptions focusing on others.
 		}
 	}
-	
-    
-    	
-    	
-    	\block{Machine Learning Methods}{
-    		\innerblock{Classical Features}{
-    			\textbf{Features}: Positional, and occurrence features, plus counts of the part of speech on adjacent words. Total $200$ dimensions.\\
-    			\textbf{Scoring}: use logistic regression model on if POV or not, $S_i=\frac{P(f_i)}{\sum_{\forall j} P(f_j)}$\\
-    			\textbf{Result}: Really strong. Main characters occur near verbs and grammar.
-    		}
-    		\gap
-    		\innerblock{Word Embeddings}{
-    			\textbf{Features}: Concatenate the mean of FastText word embeddings for adjacent words
-    			Total $600$ dimensions.
-    			\\
-    			\textbf{Scoring}: use RBF-SVM model on if POV or not, $S_i=\frac{P(f_i)}{\sum_{\forall j} P(f_j)}$\\
-    			\textbf{Result}: Really strong, but due to high dimensionality needs sufficient training data.
-    		}
-    	}
-    	
+
+
+   	
+   	
+   	\block{Machine learning methods for determining POV}{
+   		\innerblock{Classical Features}{
+   			\textbf{Features}: position, and occurrence frequency,
+   			 plus  parts of speech cooccurring frequency. Total 200 dimensions.\\
+   			\textbf{Scoring}: use logistic regression model on if POV or not, $S_i=\frac{P(f_i)}{\sum_{\forall j} P(f_j)}$\\
+   			\textbf{Result}: really strong. Main characters occur near verbs and grammar. This gives an edge over frequency information alone.
+   		}
+   		\gap
+   		\innerblock{Word Embeddings}{
+   			\textbf{Features}: Concatenated the mean of FastText word embeddings for adjacent words.
+   			Total 600 dimensions.
+   			\\
+   			\textbf{Scoring}: use RBF-SVM model on if POV or not, $S_i=\frac{P(f_i)}{\sum_{\forall j} P(f_j)}$\\
+   			\textbf{Result}: really strong. However, due to high dimensionality needs sufficient training data from other labelled books.
+   		}
+   	}
+   	
 \end{columns}
 \block{}{\centering \fontsize{80}{90}\selectfont  http://novelperspective.ucc.asn.au/}
 
