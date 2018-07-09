@@ -41,7 +41,7 @@
 \usepackage[space]{grffile}
 
 
-\usepackage[subpreambles=false]{standalone}
+\usepackage[subpreambles=false,group=false]{standalone}
 
 \usepackage{amssymb}
 \usepackage{amsmath}
@@ -135,7 +135,7 @@ In other words, a color name should map to a distribution, not just a single poi
 For a given color name, any number of points in the color-space could be intended, with some being more or less likely than others.
 Or equivalently, up to interpretation, it may intend a region but the likelihood of what points are covered is variable and uncertain.
 This distribution is often multimodal and has high and asymmetrical variance, which further renders regression to a single point unsuitable.
-We do produce results point estimate results for interest in \Cref{sec:results-point-est}, however for any form of precise work the use of such systems is limited
+We do produce results point estimate results for interest, however we argue for any form of precise work the use of such systems is limited
 A single point estimate, does not capture the nature of the problem adequately.
 The mean of a multimodal distribution (one with two peaks) will lie in the valley between the -- a less likely color.
 Similarly it will be off to the side of the mode, in an asymmetrical distribution.
@@ -153,12 +153,12 @@ When we estimate a probability distribution over the color-space.
 To qualify our estimate of the distribution we discretize the space to produce into a histogram.
 This allows us to take advantage of the well-known softmax based methods for estimating a probability mass distribution using a neural network.
 
-An interesting consideration when considering this discretization is the smoothness estimate.
+An interesting consideration when considering this discretization is the smoothness of the estimate.
 The true space is continuous, even if we are discretizing it at resolution as high as the original color displays used to collect the data.
 Being continuous means that a small change in point the color-space should correspond to a small change in how likely that point is.
 Or more informally: histograms should look smooth, and not spiky.
-We investigate using a KDE based method for smoothing the training data, and further we conclude that the neural network based models are learning this smoothness with or without the smoothing of the training data.
-It is however essential when directly estimating from the training data, without a machine learning step that can learn this smoothness relation.
+We investigated using a KDE based method for smoothing the training data, and further we conclude that the neural network based models are learning this smoothness with or without the smoothing of the training data (Results for this are in \Cref{sec:smoothed-results}).
+It is however essential when directly estimating from the training data.
 
 
 Estimating color probabilities has a clear use as a subsystem in many systems.
@@ -457,7 +457,7 @@ As such we handle it by treating it as the single token \natlang{blue-purple} fo
 There are many similar hyphenated tokens in the pretrained embeddings vocabulary, however (with that exception) we do not use them as it reduced the sequential modelling task to the point of being uninteresting.
 
 
-\subsection{Input Modules} \Cref{sec:inputmod}
+\subsection{Input Modules} \label{sec:inputmod}
 For each of the models we investigate we define an input module.
 This is a portion of the over-all network which when is combined with an appropriate output module (see \Cref{sec:outputmod}) to perform either point estimation, or distribution estimation.
 
@@ -604,7 +604,7 @@ The output module defines how the network takes its hidden representation and pr
 \subsubsection{Distribution Estimation}
 The distributions are trained to produce the discretized representation as discussed in \Cref{sec:discretization}.
 Making use of the conditional independence assumption (see \Cref{sec:conditional-independence-assumption}), we output the three discretized distributions.
-This is done using the softmax output layers, as shown in \Cref{distoutmod} the three output layers.
+This is done using the softmax output layers, as shown in \Cref{fig:distoutmod} the three output layers.
 They share a common input, but have separate weights and biases.
 The loss function is given the sum of the cross-entropy for each of the three softmax outputs.
 
@@ -763,7 +763,7 @@ It is however a consistent way to do so, and so we use it for our evaluations.
 \subsection{Completely Unseen Color Estimation From Embedding Only}\label{sec:embeddingonly}
 As an interesting demonstration of how the models function by learning the transformation from the embedding space to the output we briefly considers the outputs for color-names that do not occur in the training data (or testing) at all.
 This is even more extreme than the unseen combinations task considered in \Cref{tbl:distextrapo} and \Cref{tbl:pointextrapo} where the terms appeared in training, but not the combination of terms.
-In the examples shown in \Cref{fig:oovdist} and \Cref{fig:oovpoint}, the terms are never occurred in the training data at all, but out models exploit the fact that they work by transforming the word-embedding space to predict the colors.
+In the examples shown in \Cref{fig:oovdist} and \Cref{fig:oovpoint}, the terms never occurred in the training data at all, but out models exploit the fact that they work by transforming the word-embedding space to predict the colors.
 There is no equivalent for this in the direct models.
 While \natlang{Grey} and \natlang{gray} never occur in the training data; \natlang{grey} does, and it is near-by in word-embedding space.
 Similar is true for the other colors that vary by capitalization.
@@ -776,23 +776,30 @@ The saturation of \natlang{Gray} is estimated too high, making it appear too blu
 \natlang{Purple} and \natlang{Green} produce generally reasonable estimates.
 The hue for \natlang{Brown} is estimated as having too much variance, allowing the color to swing into the red or yellowish-green parts of the spectrum.
 This suggests that in general all models are learning a more generally similar transformation of the space.
-In general the overall quality of each model seems to be in line with that found in the quantitative results for the full tests.
+In general the overall quality of each model seems to be in line with that found in the results for the full tests.
 
 
 \begin{figure}
-	\distfigs{{SOWE, CNN, RNN}}{\oovcolors}	
+	\distfigs{{SOWE/SOWE, CNN/CNN, RNN/RNN}}{\oovcolors}	
 	\caption{Some example distribution estimations for colors names which are completely outside the training data. The terms: \natlang{Brown}, \natlang{gray}, \natlang{Gray}, \natlang{Green}, and \natlang{Purple}, do not occur in any of the color data; however \natlang{brown}, \natlang{grey} \natlang{green}, and \natlang{purple} do occur.} \label{fig:oovdist}
 \end{figure}
 
 \begin{figure}
-	\pointfigs{{SOWE, CNN, RNN}}{oovcolors}{5}
+	\pointfigs{{SOWE/SOWE, CNN/CNN, RNN/RNN}}{oovcolors}{5}
 	\caption{Some example point estimates for colors names which are completely outside the training data. The terms: \natlang{Brown}, \natlang{gray}, \natlang{Gray}, \natlang{Green}, and \natlang{Purple}, do not occur in any of the color data; however \natlang{brown}, \natlang{grey} \natlang{green}, and \natlang{purple} do occur.} \label{fig:oovpoint}
 \end{figure}
 
 
 
 \section{Conclusion}
+We have presented three input modules (SOWE, CNN, RNN),
+and two output modules (distribution estimate, and point estimate)
+suitable for using machine learning to make estimates about color based on the terms making up its name.
+We contrasted these to a practical Operational Upper Bound model for each task which bypassed the term-wise natural language understanding component of the problem.
+We found the results for SOWE, and CNN were very strong, approaching this upper bound.
 
+
+A key take away from our results is that using a SOWE should be preferred over an RNN for short phrase natural language understanding tasks when order is not a very significant factor.
 The RNN is the standard type of model for this task.
 However, we find its performance to be significantly exceeded by the SOWE and CNN.
 The SOWE is an unordered model correspondent to a bag of words.
@@ -802,27 +809,12 @@ The RNN however must fully process the ordered nature of its inputs, as its outp
 It would be interesting to further contrast a bidirectional RNN.
 
 
-We believe that to improve results further for the distribution estimation models,
-it would benefit from not merging the training data into a single histogram per color.
-But rather converting each observation into a one-hot representation of its bin.
-We initially avoiding this solution as it precludes (directly) using KDE-based smoothing of the histograms.
-However our results in this work indicate that the machine learning distribution estimation models is not substantially effected by the use of KDE-based smoothing or not.
-While the single observations represented as one-hot would be less informative, there would be several orders of magnitude more of them, and the natural of training with random minibatches would result in a model that is less likely to get stuck in local minima, as so may achieve better results.
-\pdfcomment{Merges these parragraphs}
-We note that point estimation using more training items of lower information content each.
-The distribution estimation method combines all training observation points in to one training datum per color description.
-Where as the point estimation uses the points directly.
-This means that the distribution estimation networks have a smaller number of training items (one per full color name), but that each item is much richer in information, being the entire distribution.
-Where as the point estimation methods have more training items (one per raw observation) but that each only contains a single a point.
-The total information content of the training data for both is equal.
-However, we suspect that many low-information items processed via random minibatches will allow for more effective learning.
-
 
 A further interesting avenue for investigation would condition the model not only on the words used but also on the speaker.
 The original source of the data \textcite{Munroe2010XKCDdataset}, includes some demographic information which is not exploited by any known methods.
 It is expected that color-term usage may vary with subcultures.
 
-A key take away from our results is that using a SOWE should be preferred over an RNN for short phrase natural language understanding tasks when order is not a very significant factor.
+
 
 \clearpage
 \bibliographystyle{unsrtnat}
