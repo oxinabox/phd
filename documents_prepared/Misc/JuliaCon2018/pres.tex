@@ -422,7 +422,71 @@
 	\end{easylist}
 \end{frame}
 
+\begin{frame}[fragile]{DataDeps.jl is best for Data with the following properties.}
+	\Large
+	\begin{columns}
+		\begin{column}{0.5\textwidth}
+			\structure{DataDeps.jl\\}
+			Static\\
+			Public\\
+			File-Based\\
+			Any Format\\
+			Any Size\\
+		\end{column}
+		\begin{column}<2->{0.5\textwidth}  %%<--- here
+			\structure{Git\\}
+			Dynamic\\
+			Public or Private\\
+			File-Based\\
+			Plain Text Formats\\
+			<50MB\\
+		\end{column}
+	\end{columns}
+\end{frame}
 
+\begin{frame}[fragile]{\inlinecode{ManualDataDep}, using DataDeps.jl with git and other uses}
+	\begin{easylist}[itemize]
+		@ A manual datadep registration consists just of a name and a message.
+		@ It lets you use \datadep{Paths} for locating data without any automation
+		@@ If locating the file fails, it prompts the user with the message to install it. \note{So you can include instruction on how to do it manually}
+		\pause
+		@ Note that for every package the directory \inlinecode{<PKG>/deps/data} is on the datadeps \alert{load path}
+		@@ So for files that a good fit for \alert{git} you can include them in the Repo.
+		\pause
+		@ Note also this lets you work with dynamic data and private data
+		@@ as the syncing mechanism is external to DataDeps.jl	
+	\end{easylist}
+\end{frame}
+
+\begin{frame}[fragile]{\textcolor{Red}{Theoretical}, handling private data, with specific \inlinecode{fetch_method} method}
+		\small
+		\ttfamily
+		\color{Aquamarine}
+		using HTTP, OAUTH2\\
+		baseurl="https://\ldots/files"; authurl="https://\ldots/auth"; 
+		appid="\ldots"; appsecret="\ldots"\\
+		\color{Magenta}
+		function authed\_download(fileid, local)\\
+		\verb!    !authtok = getauthtok(authurl\\
+		\verb!        !ENV["GD\_ID"], appid, appsecret)\\
+		\verb!    !{url = joinpath(baseurl, fileid}\\
+ 		\verb!    HTTP.download(url, local, ["Authorization"=>authtok])!\\
+ 		end\\
+		\vspace{0.5em}
+		\color{Blue}
+		register(DataDep("Secret Science Data",\\
+		\color{Green}
+		"The data from my google drive of sciency stuff"
+		\color{Orange}
+		"12fileidencodedinbase64whywecanusepaths21ab", \# fileid\\
+		\color{Red}
+		"d41d8cd98f00b204e9800998ecf8427e"; \# hash\\
+		\color{Purple}
+		fetch\_method = authed\_download\\
+		\color{Blue}
+		))
+	
+\end{frame}
 
 
 \begin{frame}{Vabdewakke's 6 Degree's of Replicability}
