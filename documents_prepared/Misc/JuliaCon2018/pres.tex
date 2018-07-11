@@ -426,23 +426,63 @@
 	\Large
 	\begin{columns}
 		\begin{column}{0.5\textwidth}
-			\structure{DataDeps.jl\\}
-			Static\\
-			Public\\
+			\structure{DataDeps.jl\\ Requirements\\}
+			Static \hspace{1cm}{\small (preferred)}\\
+			Public \hspace{1cm}{\small (preferred)}\\
 			File-Based\\
 			Any Format\\
 			Any Size\\
 		\end{column}
-		\begin{column}<2->{0.5\textwidth}  %%<--- here
-			\structure{Git\\}
-			Dynamic\\
-			Public or Private\\
-			File-Based\\
-			Plain Text Formats\\
-			<50MB\\
+		\begin{column}{0.5\textwidth}
+			\begin{onlyenv}<2> 
+				\structure{Static\\}
+				No automatic redownloading\\
+				Checksum fails\\
+				\vspace{1cm}
+				\inlinecode{ManualDataDep}\\ or hacks\\
+			\end{onlyenv}
+			\begin{onlyenv}<3> 
+				\structure{Public\\}
+				Default \inlinecode{fetch_method} has no inbuilt knowledge of \emph{auth-systems}.\\
+				It is just HTTP[/S]\\
+				\vspace{1cm}
+				\inlinecode{ManualDataDep}\\ or hacks\\
+			\end{onlyenv}
+			\begin{onlyenv}<4> 
+				\structure{File Based\\}
+				DataDeps.jl is for files.\\
+				\emph{Any Files}\\
+				\vspace{1cm}
+				If your data is from an API then use it?
+				\note{There is normally a good reason why data would only be available via a streaming API}
+			\end{onlyenv}
+			\begin{onlyenv}<5> 
+				\structure{Git\\}
+				Dynamic\\
+				Public or Private\\
+				File-Based\\
+				Plain Text Formats\\
+				<50MB\\
+			\end{onlyenv}
 		\end{column}
 	\end{columns}
 \end{frame}
+
+
+\begin{frame}[fragile]{How does DataDeps handle files of Any type ?}
+	\centering
+	\vfill
+	{\Large Answer: It doesn't}\\
+	\vfill
+	\large
+	It is only about getting you the files\\
+	How can it know what arcane format you used?\\
+	\vfill
+	Interpreting that data is left to you and \alert{FileIO.jl} etc
+	\note{\emph{Quilt} and \emph{frictionlessdata} work only with tables}
+	\vfill
+\end{frame}
+
 
 \begin{frame}[fragile]{\inlinecode{ManualDataDep}, using DataDeps.jl with git and other uses}
 	\begin{easylist}[itemize]
@@ -458,27 +498,26 @@
 	\end{easylist}
 \end{frame}
 
-\begin{frame}[fragile]{\textcolor{Red}{Theoretical}, handling private data, with specific \inlinecode{fetch_method} method}
+\begin{frame}[fragile]{Handling private data, with specific \inlinecode{fetch_method} method}
 		\small
 		\ttfamily
 		\color{Aquamarine}
 		using HTTP, OAUTH2\\
-		baseurl="https://\ldots/files"; authurl="https://\ldots/auth"; 
-		appid="\ldots"; appsecret="\ldots"\\
+		const appid="ProjectXYZ:apps:datadeps:support"
 		\color{Magenta}
-		function authed\_download(fileid, local)\\
-		\verb!    !authtok = getauthtok(authurl\\
-		\verb!        !ENV["GD\_ID"], appid, appsecret)\\
-		\verb!    !{url = joinpath(baseurl, fileid}\\
+		function authed\_download(url, local)\\
+		\verb!    !authtok = getauthtok("https://evil.eg.au/auth"\\
+		\verb!            !ENV["USER\_ID"], appid, !ENV["APPSECRET"])\\
  		\verb!    HTTP.download(url, local, ["Authorization"=>authtok])!\\
  		end\\
 		\vspace{0.5em}
 		\color{Blue}
 		register(DataDep("Secret Science Data",\\
 		\color{Green}
-		"The data from my google drive of sciency stuff"
+		"Evil world domination plans. Do not share."
 		\color{Orange}
-		"12fileidencodedinbase64whywecanusepaths21ab", \# fileid\\
+		\verb|[|"https://evil.eg.au/files/deathray.stl",\\
+		\verb| |"https://evil.eg.au/files/EvilLeageOfEvil\_letter.md"\verb|]|\\
 		\color{Red}
 		"d41d8cd98f00b204e9800998ecf8427e"; \# hash\\
 		\color{Purple}
