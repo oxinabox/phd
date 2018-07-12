@@ -82,19 +82,174 @@ The success of the main work indicates that the assumption does not cause substa
 
 \section{KDE based smoothing of Training Data}\label{sec:smoothed-results}
 
-
-
 It can be seen that smoothing has very little effect on the performance of any of the neural network based distribution estimation models.
 All 3 term based models (SOWE, CNN, RNN) all perform very similarly whether or not the training data is smoothed.
-This is seen consistently in all the distribution estimation tasks  (\Cref{tbl:distfull}, \Cref{tbl:distord}, \Cref{tbl:distextrapo}).
-Conversely, the direct method which bypasses learning the functioning of terms is very substantially effected by the smoothing.
-This is because without smoothing it results in estimating the probability based on bins unfilled by any observation (Which is zero due to the cap on the minimum value. See \Cref{sec:direct-histogram}).
-This is particularly notable in the case of the direct, (unsmoothed) non-extrapolating result reported in \Cref{tbl:distextrapo}. As these were some of the rarest terms in the training set, they were thus more likely to not coincide with any terms from the testing set.
-Conversely, on this dataset the term models do quiet well, with or without smoothing. The SOWE model out out even performs the the Direct method.
+This is seen consistently in all the distribution estimation tasks.
+Contrast \Cref{tbl:distfull-smoothed}, \Cref{tbl:distord-smoothed}, \Cref{tbl:distextrapo-smoothed}
+to the tables for the unsmoothed results
+\Cref{tbl:distfull}, \Cref{tbl:distord}, \Cref{tbl:distextrapo}.
+
+If however, smoothing is not applied to the Operational Upper Bound, it works far worse.
+In  \Cref{tbl:distfull-smoothed,tbl:distord-smoothed,tbl:distextrapo-smoothed} the Direct result refers to using the training histograms almost directly, without any smoothing or term-based input processing.
+This is the same as the Operation Upper Bound, minus the KDE.
+It works very poorly (by comparison).
+This is because the bins values are largely independent: a very high probability in one bin does not affect the probability of the adjacent bin -- which by chance of sampling my be lower than the trust distribution would have it.
+
+This is particularly notable in the case of the direct, full training set result on the unseen combinations task reported  in \Cref{tbl:distextrapo-smoothed}. As these were some of the rarest terms in the training set, several did not coincide with any bins for observations in testing set.
+This is because without smoothing it results in estimating the probability based on bins unfilled by any observation.
+We do cap that empty bin probability at $\epsilon_{64} \approxeq 2\times 10^{-16}$ to prevent undefined perplexity.
+(We found capping the lower probability for bins like this to be far more effective than add-on smoothing).
+
+Conversely, on this dataset the neural network models do quiet well, with or without smoothing.
 As the network can effectively learn the smoothness, not just from the observations of one color but from all of the observations.
 It learns that increasing the value of one bin should increase adjacent ones.
 As such it does not need the smoothing applied to the training data.
 
+\pgfkeys{
+	/pgf/number format/.cd, fixed, precision=3, fixed zerofill=true
+}
+
+\pgfplotstableset{
+	col sep=comma,
+	header=has colnames,
+	column type={c},
+	ignore chars={"},
+	string replace={Direct}{\emph{Direct}},
+	clear infinite,
+	empty cells with={--},
+	every head row/.style={before row=\toprule,	after row=\midrule},
+	columns/method/.style={reset styles, string type, column name=Method},
+	%
+	boldcell/.style = {
+		postproc cell content/.append style={
+			@cell content/.add={\mathversion{tabularbold}}{}
+		}
+	},
+	%
+	greycell/.style = {
+		postproc cell content/.append style={
+			@cell content/.add={\color{gray}}{}
+		}		
+	}
+}
+\pgfplotstableset{distresults/.append style={%
+		columns={method, perpstd},
+		columns/perp/.style={column name=$PP$},
+		create on use/perpstd/.style={
+			create col/expr={\thisrow{perp}/(256*256*256)},
+		},
+		columns/perpstd/.style={column name=$\frac{PP}{256^3}$},
+		%
+		every row 0 column 1/.style={greycell}
+	},%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	extrapodistresults/.append style={
+		every row 0 column 1/.style={greycell},
+		every row 0 column 2/.style={greycell},
+		%
+		columns={method, nxperpstd, xperpstd},
+		columns/nxperpstd/.style={column name={\shortstack{\small Full\\Training Set\\$\frac{PP}{256^3}$}}},
+		columns/xperpstd/.style={column name={\shortstack{\small Restricted\\Training Set\\$\frac{PP}{256^3}$}}},
+		%		
+		create on use/xperpstd/.style={
+			create col/expr={\thisrow{extrapolatingperp}/(256*256*256)},
+		},
+		create on use/nxperpstd/.style={
+			create col/expr={\thisrow{nonextrapolatingperp}/(256*256*256)},
+		},
+	}
+}
+
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[distresults,
+	every row 1 column 1/.style={greycell},
+	]{results/smoothed/res_dist_full.csv}
+	%	}
+	\caption{\label{tbl:distfull-smoothed}  The results for the \textbf{full distribution estimation task} using smoothed training data. Lower perplexity (PP) is better. This corresponds to the main results \Cref{tbl:distfull}.}
+\end{table}
+
+
+
+
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[distresults,
+	every row 1 column 1/.style={greycell},
+	]{results/smoothed/res_dist_ord.csv}
+	%	}
+	\caption{\label{tbl:distord-smoothed}  The results for the \textbf{order distribution estimation task} using smoothed training data. Lower perplexity (PP) is better. This is a subset of the full test set containing only tests where the order of the words matters. This corresponds to the main results \Cref{tbl:distord}.}
+\end{table}
+
+
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[extrapodistresults,
+	every row 1 column 1/.style={greycell},
+	every row 1 column 2/.style={greycell},
+	]{results/smoothed/res_dist_extrapo.csv}
+	%	}
+	\caption{\label{tbl:distextrapo-smoothed}  The results for the \textbf{unseen combinations distribution estimation task} using smoothed training data. Lower perplexity (PP) is better. This uses the extrapolation subset of the full test set. In the extrapolating results certain rare word combinations were removed from the training and development sets. In the non-extrapolating results the full training and development stet was used. This corresponds to the main results \Cref{tbl:distextrapo}.}
+\end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%\pgfplotstableset{pointresults/.append style={%
+%		columns={method,mse},
+%		columns/mse/.style={column name={$MSE$}},
+%		%
+%		every row 0 column 1/.style={greycell},
+%		every row 4 column 1/.style={greycell},
+%	},%
+%	extrapopointresults/.append style={
+%		columns={method, nonextrapolatingmse, extrapolatingmse},
+%		columns/nonextrapolatingmse/.style={column name=\shortstack{\small Full\\Training Set\\$MSE$}},
+%		columns/extrapolatingmse/.style={column name=\shortstack{\small Restricted\\Training Set\\$MSE$}},
+%		%		
+%		every row 0 column 1/.style={greycell},
+%		every row 4 column 1/.style={greycell},
+%		every row 0 column 2/.style={greycell},
+%		every row 4 column 2/.style={greycell},
+%	},
+%}
+%
+%
+%\begin{table}
+%	%	\resizebox{\columnwidth}{!}{
+%	\pgfplotstabletypeset[pointresults,
+%	every row 2 column 1/.style={boldcell},
+%	every row 1 column 1/.style={boldcell}
+%	]{results/smoothed/res_point_comb_full.csv}
+%	%	}
+%	\caption{\label{tbl:pointfull-smoothed}  The results for the \textbf{full point estimation task} using smoothed training data. Lower mean squared error (MSE) is better. This corresponds to the main results \Cref{tbl:pointfull}.}
+%\end{table}
+%
+%
+%
+%\begin{table}
+%	%	\resizebox{\columnwidth}{!}{
+%	\pgfplotstabletypeset[pointresults,
+%	every row 1 column 1/.style={boldcell},
+%	every row 2 column 1/.style={boldcell},
+%	%3
+%	%4
+%	%
+%	every row 5 column 1/.style={boldcell},
+%	every row 6 column 1/.style={boldcell}
+%	]{results/smoothed/res_point_comb_ord.csv}
+%	%	}
+%	\caption{\label{tbl:pointord-smoothed}  The results for the \textbf{order point estimation task} using smoothed training data. Lower mean squared error (MSE) is better. This is a subset of the full test set containing only tests where the order of the words matters. This corresponds to the main results \Cref{tbl:pointord}.}
+%\end{table}
+%
+%
+%\begin{table}
+%	%	\resizebox{\columnwidth}{!}{
+%	\pgfplotstabletypeset[extrapopointresults,
+%	every row 1 column 1/.style={boldcell},
+%	every row 2 column 2/.style={boldcell},
+%	]{results/smoothed/res_point_comb_extrapo.csv}
+%	%	}
+%	\caption{\label{tbl:pointextrapo-smoothed}  The results for the \textbf{unseen combinations point estimation task} using smoothed training data. Lower mean squared error (MSE) is better. This uses the extrapolation subset of the full test set. In the extrapolating results certain rare word combinations were removed from the training and development sets. In the non-extrapolating results the full training and development stet was used. This corresponds to the main results \Cref{tbl:pointextrapo}.}
+%\end{table}
 
 
 \end{document}
