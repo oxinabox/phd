@@ -22,6 +22,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage{tikz}
 \usetikzlibrary{positioning}
+\usetikzlibrary{chains}
 \usetikzlibrary{decorations.pathmorphing}
 \usetikzlibrary{graphs,graphs.standard,graphdrawing,arrows}
 \usegdlibrary{layered, trees, force}
@@ -360,6 +361,49 @@
 		\end{tikzpicture}}
 \end{frame}
 
+\begin{frame}[fragile]{Code depends on data\\ Especially research code}
+	\begin{easylist}[itemize]
+		@ To manage your julia dependencies you use 
+		@@ \alert{Pkg}
+		@ To manage your binary dependencies you use 
+		@@ \alert{BinDeps}, 
+		@@ \alert{Conda} etc
+		@@ or preferably \alert{BinaryProvider}
+	\end{easylist}
+\end{frame}
+
+
+\begin{frame}[fragile]{How are you managing your data dependencies?}
+	\vfill
+	\begin{easylist}[itemize]
+		@ Instructions in the \alert{README.md} \note{I.e. I am not}
+		@@ So how does your CI work out? 
+		\pause
+		@ Sticking a \inlinecode{download} command, in \inlinecode{build.jl} \note{or elsewhere in code}
+		@@ So it gets downloaded even if not used? \note{This is particularly problematic for packages that provide access to multiple datasets.}
+		\pause
+		@ Just putting it in the \alert{git repo}
+		@@ I am glad it isn't too large for git.
+		\pause
+	\end{easylist}
+	\vfill
+	\centering
+	{\Large \alert{These are all options.\\ But can we do better?}}
+	\vfill\vfill
+\end{frame}
+
+\begin{frame}[fragile]{DataDeps doesn't protect you from \\link breakages.\\ But at least you know when it is broken}
+	\begin{easylist}[itemize]
+		@ Nothing can truly protect against link-rot
+		@@ Not even \emph{DOIs}
+		@@ The data must physically exist somewhere on a hard-disk. And someone must be \emph{maintaining}that
+		\pause
+		@ If you are downloading your data automatically you can check it is still there via \emph{automated testing}
+		@@ \emph{TravisCI} and \emph{AppVeyor} offer scheduled testing options.
+		\note{Some people say you shouldn't test on your real data, but I say if you can do it without running out of time or disk space, do it. It is easiest.}
+		\note{Any tests are better than no tests.}
+	\end{easylist}
+\end{frame}
 
 \begin{frame}{Vabdewakke's 6 Degree's of Replicability}
 	\begin{enumerate}
@@ -381,17 +425,39 @@
 \end{frame}
 
 
-\begin{frame}{What happens when I try and reproduce someone's research code?}
-	\begin{description}
-		\item[1min] Find the website from the paper, and \alert{download the code}
-		\item[2min] Read enough of the README to get rough bearings
-		\item[\textbf{1min}] Find out where to get the data from and \alert{download the data}
-		\item[\textbf{2min}] Try and remember how to use \inlinecode{tar -xzfvalphabetsoup} etc.
-		\item[\textbf{2min}] Workout how to tell script \alert{where data is} \note{Hardcoded path? Argument?}
-		\item[2min] Setup any software dependencies etc.
-		\item[3min] Run the code and make sure it isn't crashing etc.
-		\item[2min] Interpret the output
-	\end{description}
+\begin{frame}{What happens when I try and run someone's research code?}
+	\begin{tikzpicture}[start chain, node distance=5mm,
+		act/.append style ={on chain, join},
+		every label/.append style ={draw},
+		down/.style = {node distance=10mm, on chain=going below}
+	]
+		\node[act, label=1min]{Find and \\ Download\\Code};
+		\node[act, label=2mins]{Read\\ Enough of \\Readme};
+		\node[act, bluewrite, label={[bluewrite]1mins}]{Find and\\Download\\Data};
+		\node[act, bluewrite, label={[bluewrite]2mins}]{Workout\\how to\\\inlinecode{tar -xzfetc}};
+		
+		\begin{scope}[continue chain=going left]
+		
+		\node[act, bluewrite, down, label={[bluewrite]-90:2mins}]{Workout\\How to tell script\\where data is};	 
+		\node[act, label={-90:2mins}]{Setup any \\ software \\ dependencies};
+		\node[act, label={2mins}]{Run the code\\ Make sure not crashing};
+		\node[act, down, label={-90:3mins}]{Interpret\\Output};
+		
+		\end{scope}
+		
+		
+		
+	\end{tikzpicture}
+%	\begin{description}
+%		\item[1min] Find the website from the paper, and \alert{download the code}
+%		\item[2min] Read enough of the README to get rough bearings
+%		\item[\textbf{1min}] Find out where to get the data from and \alert{download the data}
+%		\item[\textbf{2min}] Try and remember how to use \inlinecode{tar -xzfvalphabetsoup} etc.
+%		\item[\textbf{2min}] Workout how to tell script \alert{where data is} \note{Hardcoded path? Argument?}
+%		\item[2min] Setup any software dependencies etc.
+%		\item[3min] Run the code and make sure it isn't crashing etc.
+%		\item[2min] Interpret the output
+%	\end{description}
 	\note{I have spent 5 of my 15 valuable minutes faffing around about sorting out the data.}
 	\note{I think this timeline is fairly reasonable, of course an ideal julia project with everything already working in CI would do a lot better. But if you've got these steps, your already blocked from CI.}
 \end{frame}
@@ -401,13 +467,9 @@
 	
 	\begin{easylist}[itemize]
 		@ Ideally we'ld just use \alert{hard-coded, absolute} paths
-		@ Absolute paths work with all applications
-		@ Hard-coding the paths in code means less typing
-		@ But they break if anything is moved. \note{relative paths are less so}
-		@ Making the path be passed in as an argument to the script solves this
-		@@ but now user has to be typing it in to run it.
-		@@ So harder to use.
-		@@ You could include a bash-script that invokes it with the path, but now you're just hard coding it somewhere else
+		@ Absolute paths work with all \emph{applications}
+		@ Hard-coding the paths in code means user doesn't have to input them.
+		@ But they \emph{break} if anything is \emph{moved}. \note{relative paths are less so}
 	\end{easylist}
 \end{frame}
 
@@ -417,7 +479,7 @@
 		@ Now user has to be typing it in to run it.
 		\note{Recall the valuable time spent to workout how to tell the script where the data is?}
 		@ So it is harder to use.
-		@ You could include a bash-script that invokes it with the path, but now you're just hard-coding it somewhere else
+		@ You could include a bash-script that invokes it with the path, but now you're just \emph{hard-coding}it somewhere else
 	\end{easylist}
 \end{frame}
 
@@ -437,6 +499,24 @@
 	\end{easylist}
 \end{frame}
 
+\begin{frame}[fragile]{Automatic fetching is really convenient}
+	Some things that have happened to me lately:
+	\begin{easylist}[itemize]
+		
+		@ Supervisor tells me shared workstation hard-drive is dangerously full
+		\only<1>{@@ \emph{Delete all of them}}
+		\only<1>{@@ knowing that the \emph{ones I am still using} will be fetched as required.}
+		\pause
+		@ Want to start up copy of work on \emph{another server} to run an extra set of experiments in parallel.
+		\only<2>{@@ Literally, just clone the \emph{project repo}}
+		\only<2>{@@ the data will \emph{make its own way} there}
+		\pause
+		@ Realize that I've \emph{modified} one of the data \emph{files by mistake}
+		\only<3>{@@ \inlinecode{rm(datadep"Foo", recursive=true)}}
+		@@ Next time it is needed a \emph{new copy} will be downloaded.}
+	\end{easylist}
+	
+\end{frame}
 
 \begin{frame}[fragile]{What happens when you uses a datadep?}
 		\center
