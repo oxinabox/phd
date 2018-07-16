@@ -28,16 +28,6 @@
 \usepackage{graphicx}
 
 
-
-\pgfplotstableread[header=has colnames,
-columns/TestSet/.style={string type},
-]{%
-TestSet	{Most Commonly Mentioned}	{ML Classical Feats.}	{ML Word Emb.}
-\shortstack{ASOIAF\\\tiny A Song of Ice and Fire \\\tiny George R. R. Martin}	0.9140625	0.9765625	0.97265625
-\shortstack{SOC\\\tiny Six of Crows\\\tiny  Leigh Bardugo}	0.791208791	0.934065934	0.945054945
-\shortstack{WOT\\\tiny Wheel of Time\\\tiny Robert Jordan}	0.659722222	0.736111111	0.680555556
-}{\res}
-
 \renewcommand{\familydefault}{\sfdefault}
 
 
@@ -104,37 +94,58 @@ TestSet	{Most Commonly Mentioned}	{ML Classical Feats.}	{ML Word Emb.}
 }\\
 \vspace{0.05cm}
 
-{\large Core idea: Train a binary classifier to determine if a name token is that of the POV character, based on a feature vector representing that token's usage.\\
+{\large Core idea: Train a binary classifier to determine if a name token is that of the POV character, based on \\a feature vector representing that token's usage.\\
 	Use this as a POV-likelihood score for that named entity.\\}
 \vspace{0.2cm}
 
+
+\pgfplotstableread[header=has colnames,
+columns/TestSet/.style={string type},
+]{%
+	TestSet	{First Mentioned}	{Most Commonly Mentioned}	{ML Classical Feats.}	{ML Word Emb.}
+	{\\Wheel of Time}	4.3981481	65.9722222	73.6111111	68.0555556
+	{\\Six of Crows}	42.8571429	79.1208791	93.4065934	94.5054945
+	{A Song of Ice and Fire}	25	91.40625	97.65625	97.265625
+}{\res}
+
+
 \begin{tikzpicture}
-\begin{axis}[ybar,
-xticklabels from table={\res}{TestSet},
-legend style={at={(0.5,-0.7)}, anchor=north,legend columns=-1, draw=none},
-%	enlargelimits=0.3,
-ymin = 0, ymax=1,
-enlarge x limits=0.2,
-xticklabel style={text width=8em, align=center},
-xtick = data,
-width=0.7\textwidth, height= 3.5cm,
-bar width=0.6cm,
-yticklabel={$\mathsf{\pgfmathparse{\tick*100}\pgfmathprintnumber{\pgfmathresult}}$\small\%},
-ytick = {0, 0.25, 0.50, 0.75, 1.00},
-ylabel = Accuracy,
-xlabel = {Book Series:},
-x label style={at={(axis description cs:-0.17,-0.06)},anchor=north},
-axis line style={draw=none},
-x tick style={draw=none},
-ytick pos=left,
-]
-%\addplot[style={bblue,fill=bblue,mark=none}] table[x expr=\coordindex, y={ML Word Emb.}] {\res};
-\addplot[style={top color=Cyan, bottom color=Blue, draw=none, mark=none}] table[x expr=\coordindex, y={ML Word Emb.}] {\res};
-\addplot[style={top color=Orange, bottom color=Brown, draw=none, mark=none}] table[x expr=\coordindex, y={ML Classical Feats.}] {\res};
-\addplot[style={top color=Gray, bottom color=Purple, draw=none, mark=none}] table[x expr=\coordindex, y={Most Commonly Mentioned}] {\res};
-\legend{{Word Emb.},{Classical Feats.},{Baseline}}
-\end{axis}
+	\begin{axis}[ybar,ymajorgrids,
+	xticklabels from table={\res}{TestSet},
+	legend style={at={(0.5,-0.7)}, anchor=north,legend columns=2, draw=none},
+	legend image post style={xscale=1, yscale=1},
+	%	enlargelimits=0.3,
+	ymin = 0, ymax=100,
+	enlarge x limits=0.2,
+	xticklabel style={text width=8em, align=center},
+	xtick = data,
+	width=0.85\textwidth, height= 3.5cm,
+	bar width=0.6cm,
+	yticklabel={$\mathsf{\pgfmathprintnumber{\tick}}$\small\%},
+	ytick = {0, 25, 50, 75, 100},
+	ylabel = Accuracy,
+	xlabel = {\shortstack{Book\\ Series:}},
+	x label style={at={(axis description cs:-0.1,-0.04)},anchor=north},
+	axis line style={draw=none},
+	x tick style={draw=none},
+	ytick pos=left,
+	%nodes near coords={$\mathsf{\pgfmathprintnumber[precision=0]{\pgfplotspointmeta}}$\small\%}
+	]
+	%\addplot[style={bblue,fill=bblue,mark=none}] table[x expr=\coordindex, y={ML Word Emb.}] {\res};
+	\addplot[style={top color=Yellow, bottom color=Green, draw=none, mark=none}] table[x expr=\coordindex, y={First Mentioned}] {\res};
+	\addplot[style={top color=Gray, bottom color=Purple, draw=none, mark=none}] table[x expr=\coordindex, y={Most Commonly Mentioned}] {\res};
+	\addplot[style={top color=Orange, bottom color=Brown, draw=none, mark=none}] table[x expr=\coordindex, y={ML Classical Feats.}] {\res};
+	\addplot[style={top color=Cyan, bottom color=Blue, draw=none, mark=none}] table[x expr=\coordindex, y={ML Word Emb.}] {\res};
+	
+	\legend{{\small\hspace{0.1cm}First Mentioned N.E.\hspace{0.5cm}\null},
+		\small{\hspace{0.1cm}Most Common N.E \hspace{0.5cm}\null},
+		\small{\hspace{0.1cm} LogReg + Classical Feats.\hspace{0.5cm}\null},
+		\small{\hspace{0.1cm}SVM + Word Embs.\hspace{0.5cm}\null}}
+	\end{axis}
 \end{tikzpicture}
+
+
+
 
 {\LARGE {http://novelperspective.ucc.asn.au/}
 \vspace{0.2cm}
@@ -148,7 +159,7 @@ White, fill=Blue,
 Lyndon White, PhD Candidate \\
 The University of Western Australia\\
 \vspace{0.1cm}
-{lyndon.white@ucc.gu.uwa.edu.au}\\
+{lyndon.white@ucc.asn.au}\\
 {https://white.ucc.asn.au}\\
 \vspace{0.2cm}
 Talk to me about NLP, ML and Data Science\newline in JuliaLang

@@ -1,6 +1,8 @@
 \RequirePackage{luatex85,shellesc}
 \documentclass[dvipsnames]{beamer}
-\usepackage{verbatim}
+\usepackage[author={Lyndon White}]{pdfcomment}
+
+\usepackage{fancyvrb}
 
 \usepackage{microtype}
 \usepackage{adjustbox}
@@ -39,30 +41,33 @@
 \tikzset{%
 	->,
 	align=center,
-	node distance=10cm, sibling distance=25mm, level distance=40mm,
+	node distance=30mm, sibling distance=25mm, level distance=40mm,
 	every edge/.append style = {thick},
 	package/.style={draw, circle, very thick},
 	mypackage/.style={package, blue},
 	repo/.style={draw, very thick, purple},
+	info/.style={Green},
 	supports/.style={dotted, very thick},
 	indirect/.style={decoration={snake}, decorate, very thick, purple}
 }
 
-\newcommand{\pkg}[2][]{\node[#1,package](#2) {#2.jl}}
+\newcommand{\pkg}[2][]{\tikzset{#2/.append style={}}; \node[#1,package, #2](#2) {#2.jl}}
 \newcommand{\repo}[2][]{\node[#1,repo](#2) {#2}}
 
 
 
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newcommand{\inlinecode}[1]{\mbox{\alert{\texttt{\detokenize{#1}}}}}
-\newenvironment{code}
-{%BEGIN
-\endgraf\verbatim
-}
-{ % END
-\endverbatim
-}
+\newcommand{\inlinecode}[1]{\mbox{\color{Purple}{\texttt{\detokenize{#1}}}}}
+%\newenvironment{code}
+%{%BEGIN
+%\endgraf\verbatim
+%}
+%{ % END
+%\endverbatim
+%}
+\DefineVerbatimEnvironment{code}{Verbatim}{obeytabs,tabsize=4,gobble=2}
 
 
 \newcommand{\datadep}[1]{\inlinecode{datadep"#1"}}
@@ -76,6 +81,13 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Repeat a slide with a node highlighted
+\newcommand{\focusslide}[2]{
+	{
+	\tikzset{#2/.append style={text=white, font=\bfseries,  fill=bluewrite}}
+	\againframe{#1}
+	}
+}
 
 %%%%%%%%%%%%%%%%%%%%%
 
@@ -100,7 +112,7 @@
 \logo{}
 
 
-\begin{frame}{Big Picture}
+\begin{frame}[label=bigpicture]{Big Picture}
 	\centering
 	%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
 	%\resizebox{\textwidth}{!}{\clipbox{190pt 170pt 250pt 0pt}{\input{coreidea.tex}}}
@@ -183,7 +195,7 @@
 
 
 
-\begin{frame}{Julia Packages}
+\begin{frame}[label=packages]{Julia Packages}
 	\centering
 	%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
 	%\resizebox{\textwidth}{!}{\clipbox{190pt 170pt 250pt 0pt}{\input{coreidea.tex}}}
@@ -237,7 +249,7 @@
 		\end{tikzpicture}}
 \end{frame}
 
-\begin{frame}{DataDeps.jl}
+\begin{frame}[label=datadeps]{DataDeps.jl}
 	\centering
 		%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
 %	\resizebox{\textwidth}{!}{\clipbox{190pt 320pt 400pt 0pt}{\input{coreidea.tex}}}
@@ -272,7 +284,7 @@
 	\end{tikzpicture}}
 \end{frame}
 
-\begin{frame}{DataDepsGenerators.jl}
+\begin{frame}[label=datadepsgenerators]{DataDepsGenerators.jl}
 	\centering
 		%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
 %	\resizebox{\textwidth}{!}{\clipbox{0pt 0pt 0pt 290pt}{\input{coreidea.tex}}}
@@ -330,7 +342,7 @@
 }
 \end{frame}
 
-\begin{frame}{CorpusLoaders.jl}
+\begin{frame}[label=corpusloaders]{CorpusLoaders.jl}
 		%	〈	llx	〉 〈	lly	〉 〈	urx	〉 〈	ury	〉
 %	\resizebox{\textwidth}{!}{\clipbox{370pt 310pt 250pt 70pt}{\input{coreidea.tex}}}
 \centering
@@ -340,7 +352,9 @@
 		\pkg[mypackage]{CorpusLoaders};
 		
 		\pkg[mypackage]{DataDeps};
-		\node(MultiResolutionIterators)[mypackage]{Multi--\\Resolution--\\Iterators.jl};
+		
+		\tikzset{MultiResolutionIterators/.append style={}};% for focusslide
+		\node(MultiResolutionIterators)[mypackage,MultiResolutionIterators]{Multi--\\Resolution--\\Iterators.jl};
 		
 		\pkg[mypackage]{InternedStrings};
 		\pkg[]{Strs};
@@ -361,6 +375,15 @@
 		\end{tikzpicture}}
 \end{frame}
 
+\begin{frame}{Australia, it is quiet far away}
+	\note{I believe perth is exactly 12 hours out of sync with Boston.}
+	\includegraphics[height=0.8\pageheight]{map}
+\end{frame}
+\begin{frame}{Australia, really it is quiet far away}
+	\note{A considerable distance you might say}
+	\centering
+	\includegraphics[height=0.8\pageheight]{world}
+\end{frame}
 \begin{frame}[fragile]{Code depends on data\\ Especially research code}
 	\begin{easylist}[itemize]
 		@ To manage your julia dependencies you use 
@@ -404,6 +427,150 @@
 		\note{Any tests are better than no tests.}
 	\end{easylist}
 \end{frame}
+
+\focusslide{datadeps}{DataDeps}
+
+\newcommand{\questionanswer}{\only<1>{Questions}\only<2>{\textbf{Answers}}}
+\begin{frame}[fragile]{3 Key \questionanswer{} about Data: \\\#1 Storage Location}
+	\begin{easylist}[itemize]
+		@ Where do I put it? Should it be on the local disk (small) or the network file-store (slow)? \label{itm:where}
+		\only<2>{@@ \color{bluewrite} Anywhere on the DataDeps Load Path will work}
+		@ If I move it, am I going to have to reconfigure things?
+		\only<2>{@@ \color{bluewrite} Not if you are using a datadep path}
+		@ What if I put it all in the git repo?
+		\only<2>{@@ \color{bluewrite} git does not like large binary files.\\ 50KB \inlinecode{.csv} is ok; 50MB \inlinecode{.jld} is not.}
+	\end{easylist}
+\end{frame}
+
+\begin{frame}[fragile]{3 Key \questionanswer{} about Data: \\\#2 Redistribution}
+
+	\begin{easylist}[itemize]
+		 @ I don't own this data
+		 \only<2>{@@ \color{bluewrite} but it is publicly accessible, right?}
+		 @ am I allowed to redistribute it? \label{itm:ownredistribute}
+		 \only<2>{@@ \color{bluewrite} IANAL, but linking should be fine.} 
+		 @ How will I give credit, and ensure the users know who the original creator was?
+		 \only<2>{@@ \color{bluewrite} Tell them with a prompt when it is downloaded}
+	\end{easylist}
+	\vfill
+\end{frame}
+
+\begin{frame}[fragile]{3 Key \questionanswer{} about Data: \\\#3 Replication}
+	\begin{easylist}[itemize]
+		@ How can I be sure that someone running my code has the same data?
+		\only<2>{@@ \color{bluewrite} Make automatic data fetching part of the code}
+		@ What if they download the wrong data, or extract it incorrectly?
+		\only<2>{@@ \color{bluewrite} They can't make mistakes if it is automated}
+		@ What if it gets corrupted or has been modified and I am unaware?
+		\only<2>{@@ \color{bluewrite} Filehashs, SHA256, MD5 etc.}
+	\end{easylist}
+\end{frame}
+
+\begin{frame}[fragile]{DataDeps.jl is for Data with the following properties.}
+	\Large
+	\begin{columns}
+		\begin{column}{0.5\textwidth}
+			\structure{DataDeps.jl\\ Requirements\\}
+			Static \hspace{1cm}{\small (preferred)}\\
+			Public \hspace{1cm}{\small (preferred)}\\
+			File-Based\\
+			Any Format\\
+			Any Size\\
+		\end{column}
+		\begin{column}{0.5\textwidth}
+			\begin{onlyenv}<2> 
+				\structure{Static\\}
+				No automatic redownloading\\
+				Checksum fails\\
+				\vspace{1cm}
+				\inlinecode{ManualDataDep}\\ or hacks\\
+			\end{onlyenv}
+			\begin{onlyenv}<3> 
+				\structure{Public\\}
+				Default \inlinecode{fetch_method} has no inbuilt knowledge of \emph{auth-systems}.\\
+				It is just HTTP[/S]\\
+				\vspace{1cm}
+				\inlinecode{ManualDataDep}\\ or hacks\\
+			\end{onlyenv}
+			\begin{onlyenv}<4> 
+				\structure{File Based\\}
+				DataDeps.jl is for files.\\
+				\emph{Any Files}\\
+				\vspace{1cm}
+				If your data is from an API then use it?
+				\note{There is normally a good reason why data would only be available via a streaming API}
+			\end{onlyenv}
+			\begin{onlyenv}<5> 
+				\structure{Git\\ Requirements\\}
+				Dynamic\\
+				Public or Private\\
+				File-Based\\
+				Plain Text Formats\\
+				<50MB\\
+			\end{onlyenv}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+
+\begin{frame}[fragile]{How does DataDeps handle files of Any type ?}
+	\centering
+	\vfill
+	{\Large Answer: It doesn't}\\
+	\vfill
+	\large
+	It is only about getting you the files\\
+	How can it know what arcane format you used?\\
+	\vfill
+	Interpreting that data is left to you and \alert{FileIO.jl} etc
+	\note{\emph{Quilt} and \emph{frictionlessdata} work only with tables}
+	\vfill
+\end{frame}
+
+
+\begin{frame}[fragile]{\inlinecodI e{ManualDataDep}, using DataDeps.jl with git and other uses}
+	\begin{easylist}[itemize]
+		@ A manual datadep registration consists just of a name and a message.
+		@ It lets you use \datadep{Paths} for locating data without any automation
+		@@ If locating the file fails, it prompts the user with the message to install it. \note{So you can include instruction on how to do it manually}
+		\pause
+		@ Note that for every package the directory \inlinecode{<PKG>/deps/data} is on the datadeps \alert{load path}
+		@@ So for files that a good fit for \alert{git} you can include them in the Repo.
+		\pause
+		@ Note also this lets you work with dynamic data and private data
+		@@ as the syncing mechanism is external to DataDeps.jl	
+	\end{easylist}
+\end{frame}
+
+\begin{frame}[fragile]{Handling private data, with specific \inlinecode{fetch_method} method}
+		\small
+		\ttfamily
+		\color{Aquamarine}
+		using HTTP, OAUTH2\\
+		const appid="ProjectXYZ:apps:datadeps:support"
+		\color{Magenta}
+		function authed\_download(url, local)\\
+		\verb!    !authtok = getauthtok("https://evil.eg.au/auth"\\
+		\verb!            !ENV["USER\_ID"], appid, !ENV["APPSECRET"])\\
+ 		\verb!    HTTP.download(url, local, ["Authorization"=>authtok])!\\
+ 		end\\
+		\vspace{0.5em}
+		\color{Blue}
+		register(DataDep("Secret Science Data",\\
+		\color{Green}
+		"Evil world domination plans. Do not share."
+		\color{Orange}
+		\verb|[|"https://evil.eg.au/files/deathray.stl",\\
+		\verb| |"https://evil.eg.au/files/EvilLeageOfEvil\_letter.md"\verb|]|\\
+		\color{Red}
+		"d41d8cd98f00b204e9800998ecf8427e"; \# hash\\
+		\color{Purple}
+		fetch\_method = authed\_download\\
+		\color{Blue}
+		))
+	
+\end{frame}
+
 
 \begin{frame}{Vabdewakke's 6 Degree's of Replicability}
 	\begin{enumerate}
@@ -519,8 +686,8 @@
 \end{frame}
 
 \begin{frame}[fragile]{What happens when you uses a datadep?}
-		\center
-		\resizebox{0.9\textwidth}{!}{
+		\centering
+		\resizebox{\textwidth}{!}{
 		\begin{tikzpicture}[every text node part/.style={align=center}, auto,node distance=2, ->,
 		every edge/.append style={every node/.style={font=\footnotesize}}]
 		
@@ -674,7 +841,7 @@
 \end{frame}
 
 
-\section{DataDepGenerators.jl}
+\focusslide{datadepsgenerators}{DataDepsGenerators}
 
 \begin{frame}[fragile]{Developers still have to write registration blocks}
 	\begin{easylist}[itemize]
@@ -730,30 +897,67 @@
 	\end{columns}
 \end{frame}
 
-\begin{frame}[fragile]{Why DOI's alone are not the answer to broken dataset links:}
-	\small
+\begin{frame}[fragile]{Many datasets have multiple possible APIs}
+	For example something that points at \alert{Figshare}\\
+	{\small \inlinecode{generate("https://doi.org/10.23640/07243.5525476.v1")}}
+	\vfill
 	\begin{easylist}[itemize]
-		@ When we say DOI's are persistent we mean they never expire.
-		@@ Unlike web URL, you do not have to pay to renew.
-		@@ It won't be sold to someone else. It will always refer to your object.
-		@ DOI's point to landing pages, not data/paper downloads
-		@@ DOI's have attached metadata, but not direct links to the data (not even DataCite DOIs (yet))
-		@ A key reason DOI's don't point data/papers is because not all are available online
-		@@ Some obviously are pay walled
-		@@ But some can't be digitalized at all. E.g. DOI's have been issued to laboratory samples, or to data centres.		
+		@ It includes a DOI
+		@@ DataCite API
+		@@ JSON-LD DOI Content Negotiation service
+		@ It is a URL
+		@@ Embedded JSON-LD element
+		@@ FigShare API
+		@ Many others will be tried and will error out
 	\end{easylist}
+	\vfill
+	\pdfcomment{Do include the merged output on the next slide when that feature is working}
 \end{frame}
-\begin{frame}[fragile]{DOI's are not the solution, but they are probably part of the solution}
+
+\begin{frame}[fragile]{Many datasets have multiple possible APIs}
+	For example something points at \alert{DataDryad}\\
+	{\small 
+		\inlinecode{generate(}\\
+		\inlinecode{"http://datadryad.org/resource/doi:10.5061/dryad.gj651")}
+	}
+	\vfill
 	\begin{easylist}[itemize]
-		@ The landing page is still just a website, it's domain name \alert{can expire}
-		@@ The data hosting is can expire (and hard-drives can fail).
-		@ Did I mention under normal circumstances you can't go from DOI to data URL at all anyway?
-		@ Still persistent metadata is also kind of nice to have
-		@@ At least if the data goes down you know what was lost, so we can seek it else-where.
-		@ Really, though we need to be applying periodic automatic link checking to all URLs we need not to break.
-		@@ DataDeps.jl makes that pretty easy, you can just set it up as part of \inlinecode{runtests.jl} and set Travis or AppVeyor to run scheduled tests.
+		@ DataCite API
+		@ JSON-LD DOI Content Negotiation service
+		@ Embedded JSON-LD element
+		@ DataDryad Webscraper
+		@ DataOneV1 API
+		@ Many others will be tried and will error out
 	\end{easylist}
+	\vfill
+	\pdfcomment{Do include the merged output on the next slide when that feature is working}
 \end{frame}
+
+\begin{frame}{DataDepsGenerators combines all the Metadata Sources}
+	\centering
+	\resizebox{!}{0.8\pageheight}{\begin{tikzpicture}[layered layout, grow=down,]
+		\node(out){Complete Metadata\\For Registration Block};
+%		\repo[above right=of out]{DataCite};
+%		\repo[above = of out]{Others};
+%		\repo[above left=of out]{FigShare};
+%		\draw[->] (DataCite) to (out);
+%		\draw[->] (FigShare) to (out);
+%		\draw[->] (Others) to (out);
+
+		\repo[]{DataCite};
+		\repo[]{Others};
+		\repo[]{Figshare};
+	\graph{
+		(out) <- {{Figshare} <- {Has URL[Green], No Paper Ref.[Red]},
+			      {Others},
+			      (DataCite)<-{Has Paper Ref.[Green],  No URL[Red]}
+			    };
+	};
+	
+
+	\end{tikzpicture}}
+\end{frame}
+	
 
 
 \begin{frame}[fragile]{GitHub}
@@ -843,6 +1047,28 @@
 %\end{tikzpicture}}
 %\end{frame}
 
+\begin{frame}{We are now going to take a very short break}
+	\centering
+	\includegraphics[width=\textwidth]{break}	
+\end{frame}
+
+\focusslide{corpusloaders}{CorpusLoaders}
+\begin{frame}[fragile]{WordTokenizers.jl}
+	\begin{easylist}[itemize]
+		@ Not much to say.
+		@ Honestly not a lot in it itself.
+		@@ Just a couple of parsers for a few formats
+		@ Mostly interesting as a vessel for driving its dependencies.
+	\end{easylist}
+	\vspace{1cm}
+	\begin{easylist}[itemize]
+		@ Notable differences from MLDatasets.jl
+		@@ Everything is lazy-loaded from disk via \inlinecode{Channels}.
+		@@ Everything is Multi-Resolution
+	\end{easylist}
+\end{frame}
+
+\focusslide{corpusloaders}{WordTokenizers}
 \begin{frame}[fragile]{WordTokenizers.jl}
 	\note{Honestly I stole stuff left, right and center for this.}
 	Configurable \inlinecode{tokenize}r and \inlinecode{sentence_segment}er.\\
@@ -860,6 +1086,7 @@
 	Regex is just really good at working with English.	
 \end{frame}
 
+\focusslide{corpusloaders}{InternedStrings}
 \begin{frame}[fragile]{InternedStrings.jl: All these duplicate strings are using all my memory}
 	\begin{easylist}[itemize]
 		@ Strings are immutable, so we only need one copy of each
@@ -871,6 +1098,7 @@
 	\end{easylist}
 \end{frame}
 
+\focusslide{corpusloaders}{MultiResolutionIterators}
 \begin{frame}[fragile]{MultiResolutionIterators.jl:\\ The structure of a Corpus}
 	\begin{easylist}[itemize]
 		@ \alert{Corpus}
@@ -881,6 +1109,8 @@
 		@ made up of: \alert{Letters} or \alert{Characters}
 	\end{easylist}
 \end{frame}
+
+
 
 
 \def\madeupof{$\blacktriangleright$}
@@ -900,8 +1130,132 @@
 	a stream of Letters
 \end{frame}
 
+\begin{frame}[fragile]{MultiResolutionIterators.jl: example}
+	\color{Green}
+	\begin{code}
+		julia> animal_info = [
+		[	["Turtles", "are", "reptiles", "."],
+			["They", "have", "shells", "."],
+			["They", "live", "in", "the", "water", "."]],
+		[	["Cats", "are", "mammals", "."],
+			["They", "live", "on", "the", "internet", "."]]
+		]
+		2-element Array{Array{Array{String,1},1},1}
+	\end{code}
+	\color{Orange}
+	\begin{code}
+		julia>  struct AnimalTextIndexer end;
+		julia> 	levelname_map(::AnimalTextIndexer) = [
+			:documents=>1,
+			:sentences=>2,
+			:words=>3, :tokens=>3,
+			:characters=>4, :letters=>4
+		]
+	\end{code}
+
+\end{frame}
+
+\newcommand{\ormark}{\vspace{-0.5em}\hfill \textasciitilde{} Or \textasciitilde{} \hfill \null \vspace{-0.5em}}
+\begin{frame}[fragile]{Information Retrieval wants\\ {Documents} \madeupof {Words}}
+	\color{Purple}
+	\small
+	\begin{code}
+		julia> flatten_levels(animal_info, 2)
+	\end{code}
+		\ormark{}
+	\begin{code}
+		julia> flatten_levels(animal_info,
+					lvls(indexer, :sentences))
+	\end{code}
+		\ormark{}
+	\begin{code}					
+		julia> flatten_levels(animal_info, 
+					(!lvls)(indexer, :documents, :words))
+	\end{code}
+	\color{Green}
+	\begin{code}
+		julia> full_consolidate(ans)
+		
+		2-element Array{Array{String,1},1}:
+		String["Turtles", "are", ".", ...,  "the", "water", "."]
+		String["Cats", "are", ..., "the", "internet", "."]
+	\end{code}
+\end{frame}
+
+\begin{frame}[fragile]{Char-RNN Topic Modelling wants\\ {Documents} \madeupof {Words}}
+	\color{Purple}
+	\begin{code}					
+		julia> join_levels(animal_info,
+					lvls(indexer,Dict(
+						:words=>" ",
+						:sentences=>" ")
+					 )
+				)
+	\end{code}
+	\color{Green}
+	\begin{code}	
+		julia> full_consolidate(ans)
+		
+		2-element Array{String,1}:
+		"Turtles are reptiles ... They live in the water ."
+		"Cats are mammals . They live on the internet ."
+	\end{code}
+\end{frame}
 
 
+\begin{frame}[fragile]{MultiResolutionIterators.jl}
+	\begin{easylist}[itemize]
+		@ Mix and match operations as needed
+		@ Easy to define any iterator function to work at levels
+		@ Overload \inlinecode{apply} to customize behaviour with particular iterator-types.
+	\end{easylist}
+	\vspace{1cm}
+	E.g. could make \inlinecode{MyVector} eager and type preserving
+	via \inlinecode{apply(f, v::MyVector) = MyVector(collect(f(v)))}
+		
+\end{frame}
 
+
+\begin{frame}[fragile]{What have we learned?}
+	\begin{easylist}[itemize]
+	@ Australia: Quiet distant, not near London
+	\pause
+	@ Data is important
+	@ Simplify your data management with DataDeps.jl
+	@ Simplify your DataDeps creation with DataDepsGenerators.jl
+	\pause
+	@ Data is useful for NLP
+	@ Packages exist to make working with NLP shaped data easier.
+	\end{easylist}
+\end{frame}
+
+\againframe{bigpicture}
+
+\section{Appendix/ Spare Rants}
+
+\begin{frame}[fragile]{Why DOI's alone are not the answer to broken dataset links:}
+	\small
+	\begin{easylist}[itemize]
+		@ When we say DOI's are persistent we mean they never expire.
+		@@ Unlike web URL, you do not have to pay to renew.
+		@@ It won't be sold to someone else. It will always refer to your object.
+		@ DOI's point to landing pages, not data/paper downloads
+		@@ DOI's have attached metadata, but not direct links to the data (not even DataCite DOIs (yet))
+		@ A key reason DOI's don't point data/papers is because not all are available online
+		@@ Some obviously are pay walled
+		@@ But some can't be digitalized at all. E.g. DOI's have been issued to laboratory samples, or to data centres.		
+	\end{easylist}
+\end{frame}
+\begin{frame}[fragile]{DOI's are not the solution, but they are probably part of the solution}
+	\begin{easylist}[itemize]
+		@ The landing page is still just a website, it's domain name \alert{can expire}
+		@@ The data hosting is can expire (and hard-drives can fail).
+		@ Did I mention under normal circumstances you can't go from DOI to data URL at all anyway?
+		@ Still persistent metadata is also kind of nice to have
+		@@ At least if the data goes down you know what was lost, so we can seek it else-where.
+		@ Really, though we need to be applying periodic automatic link checking to all URLs we need not to break.
+		@@ DataDeps.jl makes that pretty easy, you can just set it up as part of \inlinecode{runtests.jl} and set Travis or AppVeyor to run scheduled tests.
+	\end{easylist}
+\end{frame}
 
 \end{document}

@@ -1,11 +1,8 @@
-\documentclass[twoside,11pt]{article}
-\usepackage{jmlr2e}
-
-%\usepackage[all=normal,wordspacing=tight,tracking=tight, paragraphs=tight]{savetrees}
+\documentclass[dvinames]{jors}
 
 %%%%%%%%%%%
 %Graphics
-\usepackage[dvinames]{xcolor}
+\usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{tikz}
 \usetikzlibrary{positioning,arrows,shapes}
@@ -16,6 +13,16 @@
 	>=latex
 }
 %%%%%%%%%%%
+
+\usepackage[backend=bibtex, url=false,
+style=authoryear-ibid 
+]{biblatex}
+
+\bibliography{master}
+\newcommand{\citep}[1]{\parencite{#1}}
+\newcommand{\citet}[1]{\textcite{#1}}
+
+%%%%%%%%%%%%%%%%%%%
 
 \usepackage{enumitem}
 \setlist{nosep}
@@ -28,25 +35,19 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-% Heading arguments are {volume}{year}{pages}{date submitted}{date published}{paper id}{author-full-names}
-%\jmlrheading{1}{2000}{1-48}{4/00}{10/00}{meila00a}{Marina Meil\u{a} and Michael I. Jordan}
-
-% Short headings should be running head and authors last names
-
-\ShortHeadings{DataDeps.jl}{White, Togneri, Liu and Bennamoun}
-\firstpageno{1}
-
 \begin{document}
 
 \title{DataDeps.jl: Repeatable Data Setup \\ for Reproducible Data Science}
-\author{%
-	\name Lyndon White \email lyndon.white@research.uwa.edu.au\\
-	\name Roberto Togneri \email roberto.togneri@uwa.edu.au\\
-	\name Wei Liu \email wei.liu@uwa.edu.au\\
-	\name Mohammed Bennamoun \email mohammed.bennamoun@uwa.edu.au\\
-	35 Stirling Hwy, Crawley 6009 \hfill The University of Western Australia 
+\author{Lyndon White, %
+	Roberto Togneri, %
+	Wei Liu, %
+	Mohammed Bennamoun%
+	\\ 
+	\url{lyndon.white@research.uwa.edu.au}, \\%
+	\url{{roberto.togneri,wei.liu,mohammed.bennamoun}@uwa.edu.au}\\
+	The University of Western Australia,\\
+	35 Stirling Highway, Crawley, Western Australia
 }
-\editor{}
 
 
 \maketitle
@@ -59,9 +60,9 @@
 	DataDeps.jl simplifies extending research software by automatically managing the dependencies and makes it easier to run another author's code, thus enhancing the reproducibility of data science research.
 \end{abstract}
 
-\begin{keywords}
-data management;  reproducible science; continuous integration, JuliaLang, software practices, %dependency management, open source software
-\end{keywords}
+\textbf{keywords}
+data management;  reproducible science; continuous integration, software practices, dependency management, open source software, \mbox{JuliaLang}
+
 
 \section{Introduction}
 
@@ -88,11 +89,11 @@ This involves reading the instructions, locating the download link, transferring
 These tasks are automatable and therefore should be automated, as per the practice  ``Let the computer do the work'' \citep{10.1371/journal.pbio.1001745}.
 
 
-DataDeps.jl handles the data dependencies, while Pkg
- and BinDeps.jl\footnote{\url{https://docs.julialang.org/en/stable/stdlib/pkg/}, \url{https://github.com/JuliaLang/BinDeps.jl}}
+DataDeps.jl handles the data dependencies, while Pkg\footnote{\url{https://github.com/JuliaLang/Pkg.jl}} 
+and BinDeps.jl,\footnote{\url{https://github.com/JuliaLang/BinDeps.jl}}
  (etc.) handle the software dependencies.
 This makes automated testing possible, e.g., using services such as 
-TravisCI or AppVeyor.\footnote{\url{https://travis-ci.org/}, \url{https://ci.appveyor.com/}}
+TravisCI\footnote{\url{https://travis-ci.org/}} or AppVeyor.\footnote{\url{https://ci.appveyor.com/}}
 Automated testing is already ubiquitous amongst julia users, but rarely for parts where data is involved.
 A particular advantage over manual data setup, is that automation allow scheduled tests for URL decay \citep{wren2008url}.
 If the full deployment process can be automated, given resources, research can be fully and automatically replicated on a clean continuous integration environment.
@@ -134,9 +135,10 @@ The three key problems that it is particularly intended to address are:
 			\node{\textbf{Packages}}; \\
 			\node{\textbf{needing data}}; \\
 			\node[draw,ellipse]{WordNet.jl}; \\
+			\node[draw,ellipse]{Embeddings.jl}; \\
 			\node{\phantom{M} \ldots \phantom{M}};\\
 		};
-		\node[ellipse, draw, inner sep = 3, below = 3 of datadeps] (researchcode) {Research Scripts/Software};
+		\node[ellipse, draw, inner sep = 3, below = 4 of datadeps] (researchcode) {Research Scripts/Software};
 		
 		\path[->,draw] (datadeps) edge node[sloped,above]{raw data} (packages);
 		\path[->,draw] (packages) edge node[sloped,above]{functionality} (researchcode);
@@ -158,7 +160,8 @@ Packages such as MLDatasets.jl\footnote{\url{https://github.com/JuliaML/MLDatase
  provide more convenient accesses with suitable preprocessing for commonly used datasets.
 These packages currently use DataDeps.jl as a back-end.
 Research code also might use DataDeps.jl indirectly by making use of packages, such as WordNet.jl\footnote{\url{https://github.com/JuliaText/WordNet.jl}}
-  which currently uses DataDeps.jl to ensure it has the data it depends on to function (see \Cref{sec:research-tool-wordnetjl}).
+  which currently uses DataDeps.jl to ensure it has the data it depends on to function (see \Cref{sec:research-tool-wordnetjl}); 
+or Embeddings.jl which uses it to load pretrained machine-learning models.
 Packages and research code alike depend on data, and DataDeps.jl exists to fill that need.
 
 
@@ -244,6 +247,74 @@ and also handling data versioning.
 At present DataDeps.jl does not handle versioning, being focused on static data.
 
 
+\subsection{Quality Control}
+
+Using AppVeyor and Travis CI testing is automatically performed using the latest stable release of Julia, for the Linux, Windows, and Mac environments.
+The DataDeps.jl tests include unit tests of key components, as well as comprehensive system/integration tests of different configurations of data dependencies.
+These latter tests also form high quality examples to supplement the documentation for users to looking to see how to use the package.
+The user can trigger these tests to ensure everything is working on their local machine by the standard julia mechanism: running \texttt{Pkg.test(``DataDeps'')} respectively.
+
+
+The primary mechanism for user feedback is via Github issues on the repository.
+Bugs and feature requests, even purely by the author, are tracked using the Github issues.
+
+
+\section{Availability}
+\subsection{Operating system}
+DataDeps.jl is verified to work on Windows 7+, Linux, Mac OSX.
+
+\subsection{Programming language}
+Julia v0.6 (0.7 support and 1.0 support forthcoming)
+
+\subsection{Dependencies}
+DataDeps.jl's dependencies are managed by the julia package manager.
+It depends on SHA.jl for the default generation and checking of checksums; 
+on Reexport.jl to reexport SHA.jl's methods;
+and on HTTP.jl for determining filenames based on the HTTP header information.
+
+\section*{List of contributors}
+\begin{itemize}
+	\item Lyndon White (The University of Western Australia) Primary Author
+	\item Christof Stocker (Unaffiliated), Contributor, significant design discussions.
+	\item Sebastin Santy (Birla Institute of Technology and Science), Google Summer of Code Student working on DataDepsGenerators.jl
+	
+\end{itemize}
+%\textcolor{blue}{Please list anyone who helped to create the software (who may also not be an author of this paper), including their roles and affiliations.}
+
+\subsection{Software location:}
+
+
+
+\begin{description}[noitemsep,topsep=0pt]
+	\item[Name:] oxinabox/DataDeps.jl
+	\item[Persistent identifier:] \url{https://github.com/oxinabox/DtaDeps.jl/}
+	\item[Licence:] MIT
+	\item[Date published:] 28/11/2017
+	\item[Documentation Language] English
+	\item[Programming Language] Julia
+	\item[Code repository] GitHub
+\end{description}
+
+
+\section{Reuse potential}
+%\textcolor{blue}{Please describe in as much detail as possible the ways in which the software could be reused by other researchers both within and outside of your field. This should include the use cases for the software, and also details of how the software might be modified or extended (including how contributors should contact you) if appropriate. Also you must include details of what support mechanisms are in place for this software (even if there is no support).}
+
+DataDeps.jl exists only to be reused, it is a ``backend'' library.
+The cases in which is should be reused are well discussed above.
+It is of benefit to any application, research tool, or scientific script that has a dependency on data for it's functioning or for generation of its result.
+
+DataDeps.jl is extendible via the normal julia methods of subtyping, and composition.
+Additional kinds of \texttt{AbstractDataDep} can be created, for example to add an additional validation step, while still reusing the behaviour defined.
+Such new types can be created in their own packages, or contributed to the open source DataDeps.jl package.
+
+
+Julia is a relatively new language with a rapidly growing ecosystem of packages.
+It is seeing a lot of up take in many fields of computation sciences, data science and other technical computing.
+By establishing tools like DataDeps.jl now, which support the easy reuse of code,
+we hope to promote greater resolvability of packages being created later.
+Thus in turn leading to more reproducible data and computational science in the future.
+
+
 \subsection{Case Studies}\label{sec:case-studies}
 \paragraph{Research Paper: \citet{White2015BOWgen}}
 We criticize our own prior work here, so as to avoid casting aspersions on others. We consider it's limitations and how it would have been improved had it used DataDeps.jl.
@@ -277,17 +348,33 @@ The user must know to pass in the \emph{grand-parent} directory of the database 
 Using DataDeps.jl all these issues have now been solved.
 
 
-\section {Concluding Remarks}
-DataDeps.jl aims to help solve reproducibility issues in data driven research by automating the data setup step.
-It is hoped that by supporting good practices, with tools like DataDeps.jl, now for the still young Julia programming language
-better scientific code can be written in the future .
+\section*{Acknowledgements}
+Thank particularly to Christof Stocker, the creator of MLDatasets.jl (and numerous other packages), in particular for his bug reports, feature requests and code reviews; and for the initial discussion leading to the creation of this tool.
 
 
-\section{Availability and Requirements}
-DataDeps.jl works on  Windows 7+, Linux, and Mac OS X, with Julia 0.6.
-It depends on HTTP.jl, Reexport.jl, and SHA.jl, which are automatically installed.
-The source code, documentation, and issue tracker are at \url{https://github.com/oxinabox/DataDeps.jl}.
+\section*{Competing interests}
+The authors declare that they have no competing interests.
+
+\section {Concluding Remarks} 
+DataDeps.jl aims to help solve reproducibility issues in data driven research by automating the data setup step. 
+It is hoped that by supporting good practices, with tools like DataDeps.jl, now for the still young Julia programming language 
+better scientific code can be written in the future . 
 
 \newpage
-\bibliography{master}
+\printbibliography
+%
+%
+%\vspace{2cm}
+%
+%\rule{\textwidth}{1pt}
+%
+%{ \bf Copyright Notice} \\
+%Authors who publish with this journal agree to the following terms: \\
+%
+%Authors retain copyright and grant the journal right of first publication with the work simultaneously licensed under a  \href{http://creativecommons.org/licenses/by/3.0/}{Creative Commons Attribution License} that allows others to share the work with an acknowledgement of the work's authorship and initial publication in this journal. \\
+%
+%Authors are able to enter into separate, additional contractual arrangements for the non-exclusive distribution of the journal's published version of the work (e.g., post it to an institutional repository or publish it in a book), with an acknowledgement of its initial publication in this journal. \\
+%
+%By submitting this paper you agree to the terms of this Copyright Notice, which will apply to this submission if and when it is published by this journal.
+
 \end{document}
