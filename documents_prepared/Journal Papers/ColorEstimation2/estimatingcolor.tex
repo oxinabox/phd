@@ -1,4 +1,5 @@
 \documentclass[11pt,a4paper]{article}
+\usepackage{microtype}
 \usepackage[author={Lyndon}]{pdfcomment}
 
 \usepackage{booktabs}
@@ -7,7 +8,6 @@
 
 \DeclareMathVersion{tabularbold}
 \SetSymbolFont{operators}{tabularbold}{OT1}{cmr}{b}{n}
-
 
 
 \usepackage{url}
@@ -78,11 +78,11 @@
 \newcommand{\datapairs}{$\langle\text{color-name},\,(h,s,v)\rangle$}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %opening
-\title{From color names to colors \\(distribution and point estimation)}
+\title{Representation Learning of Colors from Color Names: \\ Distribution and Point Estimation}
 \author{Lyndon White, %
 	Roberto Togneri, %
 	Wei Liu, %
-	 Mohammed Bennamoun%
+	Mohammed Bennamoun%
 	\\ 
 	\url{lyndon.white@research.uwa.edu.au}, \\%
 	\url{{roberto.togneri,wei.liu,mohammed.bennamoun}@uwa.edu.au}\\
@@ -101,42 +101,36 @@ Color names are often made up of multiple words,
 as a task in natural language understanding we investigate in depth the capacity of neural networks based on sums of word embeddings (SOWE), recurrence (RNN) and convolution (CNN),  on their ability to make estimates of colors from sequences of terms.
 We consider both the creation of point estimates of color as well as distribution estimates of color.
 We argue the latter has particular value as there is no clear agreement between people as to what a particular color describes -- different people have a different idea of what it means to be ``very dark orange''.
-Surprisingly, the sum of word embeddings generally performs the best on almost all evaluations..
+Surprisingly, the sum of word embeddings generally performs the best on almost all evaluations.
 It is trailed slightly by the CNN, and most substantially by the RNN.
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
 
-Color understanding is an important subtask in natural language understanding.
-For example, in a natural language enabled human-machine interface, when asked to select the \texttt{dark bluish green} object, each object can be ranked based on how likely its color is according to the distribution.
-This way if extra information eliminates the most-likely object, the second most likely object can immediately be determined.
-Further, if the probability of the color of the object being described by the user input is known, a threshold can be set to report that no object is found, or to ask for additional information.
-More generally, the distribution based on the color name alone can be used as a prior probability and combined with additional context information to yield better predictions.
-\pdfcomment{add more examples}
-However, it is a challenging domain, due to ambiguity, multiple roles taken by the same words, the many modifiers, and shades of meaning.
-In many ways it is a grounded microcosm of natural language understanding.
-Due to its difficulty, texts containing color descriptions such as \texttt{the flower has petals that are bright pinkish purple with white stigma} are used as demonstrations for state of the art image generation systems \parencite{reed2016generative, 2015arXiv151102793M}.
-The core focus of the work we present here is addressing these linguistic phenomena around the short-phrase descriptions of a color, which can be represented as a single patch in a color-space such as HSV \parencite{smith1978color}.
-Issues of illumination and perceived color based on context are considered out of the scope.
-
-
 Consider that the word \texttt{tan} may mean one of many colors for different people in different circumstances: ranging from the bronze of a tanned sunbather, to the brown of tanned leather;
 \texttt{green} may mean anything from \texttt{aquamarine} to \texttt{forest green};
 and even \texttt{forest green} may mean the rich shades of a rain-forest, or the near grey of Australian bushland.
-Thus the \emph{color intended} cannot be uniquely inferred from a color name.
-Without further context, it does nevertheless remain possible to estimate likelihoods of which colors are  intended based on the population's use of the words.
+Thus the \emph{color intended} cannot be uniquely inferred from a color name. Without further context, it does nevertheless remain possible to estimate likelihoods of which colors are intended based on the population's use of the words.
+
+Color understanding, in other words, generating color from text, is an important subtask in natural language understanding, indispensable for {\it executable semantic parsing}. 
+For example, in a natural language enabled human-machine interface, when asked to select the \texttt{dark bluish green} object, it would be much useful if we could rank each object based on how likely its color is matching against a learned distribution of the color name \texttt{dark bluish green}. 
+This way if the most-likely object is eliminated, the second most likely one can be determined. A threshold can be set to terminate the search. These are not possible when we have only exact semantics. 
 
 
-
-Proper understanding of color names requires considering \emph{the color intended} as a random variable.
+However, it is a challenging domain, due to ambiguity, multiple roles taken by the same words, the many modifiers, and shades of meaning.
+In many ways it is a grounded microcosm of natural language understanding.
+Due to its difficulty, texts containing color descriptions such as \texttt{the flower has petals that are bright pinkish purple with white stigma} are used as demonstrative capability of the-state-of-the-art image generation systems \parencite{reed2016generative, 2015arXiv151102793M}.
+The core focus of the work we present here is addressing these linguistic phenomena around the short-phrase descriptions of a color, which can be represented as a single patch in a color-space such as HSV \parencite{smith1978color}.
+Issues of illumination and perceived color based on context are considered out of the scope.
+\subsection{Distribution vs. Point Estimation}
+As illustrated, proper understanding of color names requires considering \emph{the color intended} as a random variable.
 In other words, a color name should map to a distribution, not just a single point or region.
 For a given color name, any number of points in the color-space could be intended, with some being more or less likely than others.
 Or equivalently, up to interpretation, it may intend a region but the likelihood of what points are covered is variable and uncertain.
 This distribution is often multimodal and has high and asymmetrical variance, which further renders regression to a single point unsuitable.
 Having said that, we do produce point estimate results for completeness, though we argue the true usefulness of such estimates is limited.
-A single point estimate, does not capture the diverse nature of the color names adequately.
 
-Moreover, it is impossible to find the single best point estimation method.
+A single point estimate, does not capture the diverse nature of the color names adequately. Moreover, it is impossible to find the single best point estimation method.
 For example: for a bimodal distribution, using the distribution mean as a point estimate will select a point in the the valley between the peaks, which is less likely.
 Similarly for an asymmetrical distributions, where the mean will be off to one side of the peak.
 Conversely, using the distribution mode, will select the highest (most likely) peaks, but will on average be more incorrect (as measured by mean squared error).
@@ -148,36 +142,25 @@ Conversely for a very wide variance distribution (for example one approaching th
 Color distributions are almost always multimodal or asymmetrical, and feature widely different variances for different names.
 While by definition the mean color point minimizes the squared error, it may not actually be a  meaningful point estimate.
 As such, we feel producing a point estimate has limited value.
-However we do consider the task, as it remains an interesting challenge for assessing our proposed methods' capacities
+However we do consider the task, as it remains an interesting challenge for assessing our proposed methods' capacities.
 
-
-The generation of color from text has not received a significant amount of attention in prior work.
-The only similar work we are aware of is \textcite{DBLP:journals/corr/KawakamiDRS16};
+Generation of color from text has not received much attention in prior work.
+The only similar work to the best of our knowledge is \textcite{DBLP:journals/corr/KawakamiDRS16};
 which only considers point estimation,
-and which uses a dataset that does not contain enough observations to learn (or assess) probability distributions based on the populations usage of the color names.
+and uses a dataset that contains a limited number of observations for learning probability distributions from population usages of the color names.
 The generation of probability distributions in color space, to our knowledge has not been considered at all by any prior work.
-Conversely, there has been several works on the reverse problem \parencite{mcmahan2015bayesian,meomcmahanstone:color,2016arXiv160603821M}: the generation of a textual name for a color from color space point.
+There has been several works on the reverse problem \parencite{mcmahan2015bayesian,meomcmahanstone:color,2016arXiv160603821M}: the generation of a textual name for a color from a point in a color space.
 From the set of work on the reverse problem there is a clear trend on data-driven approaches in recent years where more color names and observations are used.
-In this research we use the same dataset \parencite{Munroe2010XKCDdataset}
-which contains 2,176,417 \datapairs{} pairs.
 
-The primary aim of this work is to map a sequence words that describe a color to a probability distribution over a color-space,
-a task fundamental to the proper understanding of color language.
-We also consider the point estimation of colors, even though its value is arguably limited as discussed earlier.
-To qualify our estimate of the distribution, we discretize the space to produce a histogram.
-This allows us to take advantage of the well-known softmax based methods for estimating a probability mass distribution using a neural network.
 
-An interesting challenge when considering this discretization is the smoothness of the estimate.
-The true space is continuous, even if we are discretizing it at a resolution as high as the original color displays used to collect the data.
-Being continuous means that a small change in point location in the color-space should correspond to a small change in how likely that point is according the the probability distribution.
-Informally, this means the histograms should look smooth, and not spiky.
-We investigated using a Kernel Density Estimation (KDE) based method for smoothing the training data, and further we conclude that the neural network based models are able to learn this smoothness with or without the smoothing of the training data.% (Results for this are in \Cref{sec:smoothed-results}).
-Such smoothing is however essential when directly estimating from the training data.
-
+%The primary aim of this work is to map a sequence words that describe a color to a probability distribution over a color-space,
+%a task fundamental to the proper understanding of color language.
+%We also consider the point estimation of colors, even though its value is arguably limited as discussed earlier.
 
 
 \subsection{Contributions}
-Problem statement: given a set of \datapairs{} pairs, we need to learn a mapping from any color-name, seen or unseen to a color-value or a distribution in HSV space.
+{\bf Problem statement}: given a set of \datapairs{} pairs, we need to learn a mapping from any color-name, seen or unseen to a color-value or a distribution in HSV space.
+
 In this paper, we propose an neural network based architecture that consists of an 
 \textbf{input module}, which learns a vector representations of color-names,
  and a connected \textbf{output module}, which produces either a probability distribution or point estimate.
@@ -187,17 +170,28 @@ To carry out representational learning of color-names, three different color-nam
 The capacity of these input models is of primary interest to this work.
 
 To evaluate and compare the three learning models, we designed a series of experiments to assess their capability in capturing compositionality of languages used in sub-space of color description.
-These include : \pdfcomment{I'm by do use dot points or something}
+These include:
 (1) assessment on all color names (full task);
 (2) assessment on  color names when the order of the words matters (order task);
 (3) assessment on color names which never occur in the training data in that exact form, but for which all terms occur in the training data (unseen combinations task);
 (4) qualitative demonstration of outputs for color names with terms that do not occur in the training data at all, but for which we know word embeddings for (embedding only task).
 
+An interesting challenge when considering this discretization is the smoothness of the estimate.
+The true space is continuous, even if we are discretizing it at a resolution as high as the original color displays used to collect the data.
+Being continuous means that a small change in point location in the color-space should correspond to a small change in how likely that point is according the the probability distribution.
+Informally, this means the histograms should look smooth, and not spiky.
+We investigated using a Kernel Density Estimation (KDE) based method for smoothing the training data, and further we conclude that the neural networks learn this smoothness.
+%In this research we use the same dataset used for \textcolor{red}{color name generation}  \parencite{Munroe2010XKCDdataset}
+%which contains 2,176,417 \datapairs{} pairs.
+To qualify our estimate of the distribution, we discretize the HSV color space to produce a histogram.
+This allows us to take advantage of the well-known softmax based methods for estimating a probability mass distribution using a neural network.
+
+
 We conclude that the SOWE model is generally the best model for all tasks both for distribution and point estimation.
 It is followed closely by the CNN; with the RNN performing significantly worse.
 We believe that due to the nature of color understanding as a microcosm of natural language understanding, the results of our investigations have some implications for the capacity of the models for their general use in short phrase understanding.
 
-To the best of knowledge, this is the first of such investigation in mapping color names to values that can generate visual representation, which bring the future of natural language controlled computer graphics generation one step closer to reality.  
+To the best of knowledge, this is the first of such investigation in term-wise mapping color names to values that can generate visual representation, which bring the future of natural language controlled computer graphics generation and executable semantic parsing one step closer to reality.  
 
 
 \section{Related Work}\label{sec:related-work}
@@ -219,8 +213,10 @@ In particular making uses of the large Munroe dataset \textcite{Munroe2010XKCDda
 This allows a data driven approach towards the modelling.
 
 
-\textcite{mcmahan2015bayesian} and \textcite{meomcmahanstone:color} present color naming methods, mapping from colors to to their names, the reverse of our task.
+\textcite{mcmahan2015bayesian} and \textcite{meomcmahanstone:color} present color naming methods.
+There work primarily focuses on mapping from colors to to their exact names, the reverse of our task.
 These works are based on defining fuzzy rectangular distributions in the color-space to cover the distribution estimated from the data, which are used in a Bayesian system to non-compositionally determine the color name.
+
 
 \textcite{2016arXiv160603821M} maps a point in the color-space, to a sequence of probability estimates over color words.
 They extends beyond, all prior color naming systems to produce a compositional color namer based on the Munroe dataset.
@@ -250,13 +246,15 @@ From this, a Gaussian distributed score function is calculated, over a high dime
 While this method does work with a probability distribution, as a step in its goal,
 this distribution is always both symmetric and unimodal -- albeit in a high-dimensional color-space.
 
-
-
+\textcite{acl2018WinnLighter} demonstrates a neural network for producing point estimates of how colors change based on the use of comparative terms such as \natlang{lighter}.
+The network's input is  word embedding for a comparative adjective, and a point in RGB color space; the model outputs a point in predicted RGB space that is the modified version of the input color point according to the given adjective.
+For example mapping from green to a darker green is: $((164,227,77), \text{darker}) \mapsto (141, 190, 61)$.
+The color adjectives may have up to two words, to allowed for expressions such as \natlang{more neon}.
+This is allowed by taking as the fixed sized input two embeddings -- when only one input is required, the other is replaced by zero vector.
+Their training and evaluation is based on data sourced from the  Munroe dataset.
 
 
 The work presented here closed that gap.
-
-
 
 
 \section{Method}
@@ -311,20 +309,12 @@ This shows how color names are transformed into distribution or point estimates 
 
 \subsection{Training Data Preparation }\label{sec:prep}
 \subsubsection{Input Data Preparation}\label{sec:input-data-preparation}
-
-\subsubsection{Embeddings}\label{sec:embeddings} 
-All our neural network based solutions incorporate an embedding layer.
-This embedding layer maps from tokenized words to vectors.
-We make use of 300d pretrained FastText embeddings \parencite{bojanowski2016enriching}\footnote{Available from \url{https://fasttext.cc/docs/en/english-vectors.html}}.
-
-The embeddings are not trained during the task, but are kept fixed.
-As per the universal approximation theorem \parencite{leshno1993uat, SONODA2017uat} the layers above allow for arbitrary non-linear continuous transformation.
-By fixing the embeddings, and learning this transformation,
-we can produce estimates of colors from their embedding alone, without any training data at all, as shown in \Cref{sec:embeddingonly}.
+We desire a color prediction model which takes as input a sequence of words that make up the colors name; rather than simply mapping from the whole phrase.
+Towards this end, color names are first tokenized into individual words.
+For the input into our neural network based models, those words a represented with pretrained word embeddings.
 
 \subsubsection{Tokenization}
-For all the term based methods, we perform tokenization.
-During tokenization a color name is split into terms, with consistent spelling.
+During tokenization a color name is split into terms with consistent spelling.
 For example, \natlang{bluish kahki} would become the sequence of 3 tokens: [\natlang{blue}, \natlang{ish}, \natlang{khaki}].
 Other than spelling, the tokenization results in the splitting of affixes and combine tokens.
 Combining tokens and related affixes affect how multiple colors can be combined.
@@ -339,10 +329,19 @@ Some further examples showing how combining tokens and affixes are used and toke
 \end{itemize}
 The final example of \natlang{blurple} is a special-case.
 It is the only portmanteau in the dataset, and we do not have a clear way to tokenize it into a series of terms which occur in our pretrained embedding's vocabulary (see \Cref{sec:embeddings}).
-The portmanteau \natlang{blurple} is not in common use in any training set used for creating word embeddings, so no pretrained embedding is available.
+The portmanteau \natlang{blurple} is not in common use in any training set used for creating word embeddings, so no pretrained embedding is available. \footnote{Methods do exist for generating embeddings for out of vocabulary words, particularly with FastText embeddings \parencite{bojanowski2016enriching}. But we do not investigate those here.}
 As such we handle it by treating it as the single token \natlang{blue-purple} for purposes of finding an embedding.
 There are many similar hyphenated tokens in the pretrained embeddings vocabulary, however (with that exception) we do not use them as it reduced the sequential modelling task to the point of being uninteresting.
 
+\subsubsection{Embeddings}\label{sec:embeddings} 
+All our neural network based solutions incorporate an embedding layer.
+This embedding layer maps from tokenized words to vectors.
+We make use of 300d pretrained FastText embeddings \parencite{bojanowski2016enriching}\footnote{Available from \url{https://fasttext.cc/docs/en/english-vectors.html}}.
+
+The embeddings are not trained during the task, but are kept fixed.
+As per the universal approximation theorem \parencite{leshno1993uat, SONODA2017uat} the layers above allow for arbitrary non-linear continuous transformation.
+By fixing the embeddings, and learning this transformation,
+we can produce estimates of colors from their embedding alone, without any training data at all, as shown in \Cref{sec:embeddingonly}.
 
 \subsection{Output Data Preparation}\label{sec:output-data-preparation}
 To train the distribution estimation models we need preprocess the training data into a distribution.
@@ -569,15 +568,6 @@ The loss function is given the sum of the cross-entropy for each of the three so
 \end{figure}
 
 
-
-
-%%
-
-
-
-
-
-
 \subsubsection{Point Estimation}\label{sec:point-estimation}
 Our point estimation output module is shown in \Cref{fig:pointoutmod}.
 The hidden-layer from the top of the input module is feed to an four single output neurons.\footnote{Equivalently these four single neurons can be expressed as a layer with four outputs and two different activation functions.}
@@ -734,7 +724,7 @@ Similar is done for a restricted development set, so as no direct knowledge of t
 
 
 By training on the restricted training set and testing on the unseen combinations, we can assess the capacity of the models to make predictions for color descriptions not seen in training.
-A similar approach was used in \textcite{DBLP:journals/corr/AtzmonBKGC16}.
+A similar approach was used in \textcite{acl2018WinnLighter} and in \textcite{DBLP:journals/corr/AtzmonBKGC16}.
 We contrast this to the same models when trained on the full training set to see how much accuracy was lost.
 
 
@@ -883,7 +873,7 @@ This means the CNN can readily take advantage of both fully ordered information,
 The RNN however must fully process the ordered nature of its inputs, as its output comes only from the final node.
 It would be interesting to further contrast a bidirectional RNN.
 
-
+In a broader context, we envisage the distribution learned for a color name can be used as a prior probability and when combining with additional context information, this can be used for better prediction in areas such as document classification and sentiment detection.
 
 A further interesting avenue for investigation would condition the model not only on the words used but also on the speaker.
 The original source of the data \textcite{Munroe2010XKCDdataset}, includes some demographic information which is not exploited by any known methods.

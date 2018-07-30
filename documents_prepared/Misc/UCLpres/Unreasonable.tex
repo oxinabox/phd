@@ -22,6 +22,9 @@
 \bibliography{master.bib}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+
 \usepackage{tikz}
 \usetikzlibrary{positioning}
 \usetikzlibrary{chains}
@@ -71,23 +74,14 @@
 %%%%%%%%%%%%%%%%
 \newcommand{\countertitle}[1]{{\centering \Large \color{bluewrite} #1}}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Repeat a slide with a node highlighted
-\newcommand{\focusslide}[2]{
-	{
-	\tikzset{#2/.append style={text=white, font=\bfseries,  fill=bluewrite}}
-	\againframe{#1}
-	}
-}
 
 %%%%%%%%%%%%%%%%%%%%%
 
 
 \institute{School of Electical, Electronic and Computer Engineering\\The University of Western Australia}
 \date{}
-\title{On the unreasonable shallowness\\ of natural language}
-\subtitle{AKA Adding up word embeddings works far too well}
+\title{Natural language is really simple, unreasonably often}
+\subtitle{Adding up word embeddings works far too well}
 \author{
 %	\includegraphics[height=2cm]{juliaml}
 %	\includegraphics[height=2cm]{juliatext}
@@ -116,7 +110,7 @@
 \end{frame}
 
 \begin{frame}{but sometimes it isn't}
-	\countertitle{And so simple methods obiously work}
+	\countertitle{And so simple methods work}
 \end{frame}
 
 \begin{frame}{and often it looks like it is complicated but isn't}
@@ -124,9 +118,97 @@
 \end{frame}
 
 
-
-\begin{frame}{SkipGram etc. are basically iterative algoirthims for weighted collocation matrix factorization.}
+\begin{frame}{SkipGram etc. are basically iterative algorithms for weighted collocation matrix factorization.}
 	\countertitle{When trying to factorize very large matrices numerical linear algebraticians often use iterative methods.}
+\end{frame}
+
+
+
+\begin{frame}{Bag of words information is not lost in sums of word embeddings}
+	\begin{itemize}
+		\item A bag of words captures all unigram information in a sentence/document etc
+		
+	\end{itemize}
+	\countertitle{We can reliably recover all words from a sum of word embeddings}
+\end{frame}
+
+
+
+
+\begin{frame}[fragile]{Consider Machine Captioning Evaluation}
+Correlation with human ranking in the COMPOSITE captioning evaluation dataset. \cite{Aditya2017}
+
+\pgfplotstableread[header=has colnames,
+	columns/Method/.style={string type},
+	columns/Type/.style={string type}
+]{%
+Method	Kendall	Type
+BLEU	0.191	{basic ngram}
+ROGUE-L	0.213	{basic ngram}
+\emph{GloVE}	0.337	{MOWE}
+METEOR	0.341	{fancy ngram}
+CIDEr	0.342	{fancy ngram}
+SPICE	0.349	{semantic parsing}
+\emph{Word2Vec}	0.349	{MOWE}
+%SPICE+CIDEr	0.357	{semantic parsing}
+\emph{FastText}	0.364	{MOWE}
+}{\compositeCaptionEval}
+
+
+\begin{tikzpicture}
+\begin{axis}[ybar,ymajorgrids,
+xticklabels from table={\compositeCaptionEval}{Method},
+legend style={at={(0.5,-0.7)}, anchor=north,legend columns=2, draw=none},
+legend image post style={xscale=1, yscale=1},
+%	enlargelimits=0.3,
+ymin=0.1, ymax=0.4,
+enlarge x limits=0.2,
+xticklabel style={rotate=90},
+xtick = data,
+width=0.85\textwidth, height= 5cm,
+bar width=0.6cm,
+%yticklabel={$\mathsf{\pgfmathprintnumber{\tick}}$\small\%},
+ylabel = {Kendall's $\tau$},
+axis line style={draw=none},
+x tick style={draw=none},
+ytick = {0.10, 0.15, ..., 0.4},
+ytick pos=left,
+%nodes near coords={$\mathsf{\pgfmathprintnumber[precision=2]{\pgfplotspointmeta}}$},
+]
+
+\addplot[style={top color=Orange, bottom color=Blue, draw=none, mark=none}] table[x expr=\coordindex, y=Kendall]{\compositeCaptionEval};
+
+\end{axis}
+\end{tikzpicture}
+
+{\small
+\textasteriskcentered Forthcoming publication Naeha Sharif, Lyndon White, Mohammed Bennamoun and Syed Afaq Ali Shah.
+}
+
+\note{This is a hard task, somewhere between abstractive summarization and machine translation, and the assessment is also difficult.}
+\note{The similarity to abstractive summarization makes it particular bad -- it is not clear what should be said}
+\note{Shown here is a comparason of minimum cosine similarity to reference MOWE for different embeddings with more traditional metrics}
+\note{See that the performance of the traditional ngram based metrics BLEU for MT and ROGUE for summarization kinda suck}
+\note{Next best is the worst performing out of word embedding models GloVE.}
+\note{It gets out performed by METEOR and CIDEr, which I would summarize as fancy ngram methods, with synonyms and weights.}
+\note{Then comes SPICE. SPICE is very sophisticated, it does parsing and builds this semantic graph, then does graph comparasons.}
+\note{But it is beated by Word2Vec, and by FastText}
+\note{There are a few reasons why FastText is better than word2vec -- it could be the capturing of morphemes for example. But I'd probably attribute it to a few more years of engineering and a whole lot more data.}
+\end{frame}
+
+\begin{frame}{What is going on? How can a unigram method be beating everything?}
+	
+	\countertitle{Captioning quality can be assessed on \textbf{fluency} and on \textbf{adequacy}}
+\end{frame}
+
+\begin{frame}{All captions in COMPOSITE are \textbf{fluent}}
+	\begin{itemize}
+		\item We are really good at language modelling now.
+		\item In theory our RNN language models can capture all needed state
+		\item COMPOSITE captions are a mix of \emph{human generated} and \emph{state-of-the-art machine generated}.
+	\end{itemize}
+	
+	\countertitle{Trying to capture fluency in your captioning metric is thus not important}
 \end{frame}
 
 
