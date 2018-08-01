@@ -381,19 +381,23 @@ As such there is no meaningful loss of information when using histograms over a 
 Although such models may have other advantages (such as the a priori information added by specifying the distribution), we do not investigate them here, instead considering the simplest non-parametric estimation model (the histogram), which has the simple implementation in a neural network using a softmax output layer.
 
 Discretizing the data in this way is a useful solution used in several other machine learning systems.
-\textcite{oord2016pixel, DBLP:journals/corr/OordDZSVGKSK16} apply a similar discretization step and found that their method to outperformed the more complex continuous distribution outputs.
+\textcite{oord2016pixel, DBLP:journals/corr/OordDZSVGKSK16} apply a similar discretization step and found that their method to outperform the more complex truly continuous distribution outputting systems.
 
 For training purposes we thus convert all the observations into histograms.
 One set of training histograms is produced per color description present in the dataset -- that is to say a training histogram is create for \natlang{brownish green}, \natlang{greenish brown}, \natlang{green} etc.
 We perform uniform weight attribution of points to bins as described by \textcite{jones1984remark}.
-In-short, this method of tabulation is to define the bins by their midpoints,
-and for each point observe probability mass is allocated to the bins with midpoints to each side of the observation in proportion to the distance from the observation to the bin's midpoint.
+In-short, this method of tabulation is to define the bins by their midpoints, and to allocate probability mass to each bin based on how close an observe point is to the adjacent midpoints.
+A point precisely on a midpoint would have all its probability mass allocated to that bin;
+whereas a point halfway between midpoints would have 50\% of its mass allocated to each.
+This is the form of tabulation commonly used during the first step of performing kernel density estimation, prior to the application of the kernel.
 
 
 \subsection{Color Name Representation Learning (Input Modules)}\label{sec:inputmod}
 For each of the models we investigate we define an input module.
-This is a portion of the over-all network which when is combined with an appropriate output module (see \Cref{sec:outputmod}) to perform either point estimation, or distribution estimation.
-
+This module handles the input of the color name, which is provided as a sequence of tokens.
+It produces a fixed sized dense representation of the color name,
+which is the input to the output module \Cref{sec:outputmod}).
+In all models the input and output modules are trained concurrently as a single system.
 
 \subsubsection{Recurrent Neural Network(RNN)}\label{sec:rnnmod}
 \begin{figure}
@@ -432,7 +436,7 @@ due to the variable length of the input.
 The general structure of this network, shown in \Cref{fig:rnnmod} is similar to \textcite{2016arXiv160603821M}, or indeed to most other word sequence learning models.
 Each word is first transformed to an embedding representation.
 This representation is trained with the rest of the network allowing per word information to be efficiently learned.
-The embedding is used as the input for a Gated Recurrent Unit (GRU) 
+The embedding is used as the input for a Gated Recurrent Unit (GRU).
 The stream was terminated with an End of Stream (\natlang{<EOS>}) pseudo-token,
 represented using a zero-vector.
 The output of the last time-step is fed to a Rectified Linear Unit (ReLU).
@@ -445,7 +449,7 @@ so longer short term memory is not required.
 
 \subsubsection{Sum of Word Embeddings (SOWE)}\label{sec:sowemod}
 Using a simple sum of word embeddings as a layer in a neural network is less typical than an RNN structure.
-Though it is well established as a useful representation, and has been used an input to other classifiers such as support vector machines \parencite{White2015SentVecMeaning,novelperspective}.
+Though it is well established as a useful representation, and has been used as an input to other classifiers such as support vector machines (e.g. as in \textcite{White2015SentVecMeaning,novelperspective}).
 Any number of word embeddings can be added to the sum, thus allowing it to handle sequences of any length.
 However, it has no representation of the order.
 The structure we used is shown in \Cref{fig:sowemod}.
@@ -484,9 +488,10 @@ The structure we used is shown in \Cref{fig:sowemod}.
 
 
 \subsubsection{Convolutional Neural Network(CNN)}\label{sec:cnnmod}
-A convolutional neural network can be applied to the task by applying 2D convolution over the stacked word embeddings.
-\Cref{fig:cnnmod}
-We use 64 filters of size between one and the length of the longest padded embedding (5).
+A convolutional neural network (shown in \Cref{fig:cnnmod}) can be applied to the task by applying 2D convolution over the stacked word embeddings.
+We use 64 filters of size between one and five.
+Five is number of tokens in the longest color-name,
+so this allows it to learn full length relations.
 \pdfcomment{I can't find who first did this. Rui spoke of it.}
 
 \begin{figure}
@@ -534,7 +539,7 @@ We use 64 filters of size between one and the length of the longest padded embed
 
 
 \subsection{Distribution and Point Estimation (Output Modules)}\label{sec:outputmod}
-On top of the input module we define an output module to suit the neural network for the task fo either distribution estimation or point estimation.
+On top of the input module, we define an output module to suit the neural network for the task of either distribution estimation or point estimation.
 The input module defines how the terms are composed into the network.
 The output module defines how the network takes its hidden representation and produces an output.
 
@@ -542,9 +547,9 @@ The output module defines how the network takes its hidden representation and pr
 \subsubsection{Distribution Estimation}\label{sec:distmod}
 The distributions are trained to produce the discretized representation as discussed in \Cref{sec:discretization}.
 Making use of the conditional independence assumption (see \Cref{sec:conditional-independence-assumption}), we output the three discretized distributions.
-This is done using the softmax output layers, as shown in \Cref{fig:distoutmod} the three output layers.
+As shown in \Cref{fig:distoutmod}, this is done using three softmax output layers -- one per channel.
 They share a common input, but have separate weights and biases.
-The loss function is given the sum of the cross-entropy for each of the three softmax outputs.
+The loss function is given by the sum of the cross-entropy for each of the three softmax outputs.
 
 
 \begin{figure}
@@ -576,11 +581,11 @@ The loss function is given the sum of the cross-entropy for each of the three so
 
 \subsubsection{Point Estimation}\label{sec:point-estimation}
 Our point estimation output module is shown in \Cref{fig:pointoutmod}.
-The hidden-layer from the top of the input module is feed to an four single output neurons.\footnote{Equivalently these four single neurons can be expressed as a layer with four outputs and two different activation functions.}
+The hidden-layer from the top of the input module is fed to  four single output neurons.\footnote{Equivalently these four single neurons can be expressed as a layer with four outputs and two different activation functions.}
 Two of these use the sigmoid activation function (range 0:1) to produce the outputs for the saturation and value channels.
-The other two use the tanh activation function (range -1:1), they produce the intermediate output that we call $y_{shue}$ and $y_{chue}$ for the sine and cosine of the hue channel respectively.
+The other two use the tanh activation function (range -1:1), and produce the intermediate output that we call $y_{shue}$ and $y_{chue}$ for the sine and cosine of the hue channel respectively.
 The hue can be found as $y_{hue} =  \mathrm{atan2} \left(y_{shue}, y_{chue} \right)$.
-We use the intermediate values when calculated the loss function.
+We use the intermediate values when calculating the loss function.
 During training we use the following loss function for each observation $y^\star$, and each corresponding prediction $y$.
 \begin{align}
 loss &= %
@@ -630,7 +635,7 @@ This loss function is continuous and correctly handles the wrap-around nature of
 	\end{tikzpicture}
 	
 	\caption{The Point Estimate Output Module.
-		Here $\mathrm{atan2}$ is the quadrant preserving arctangent, outputting as a regularized angle (as per in all evaluations).
+		Here $\mathrm{atan2}$ is the quadrant preserving arctangent, outputting the angle in turns.
 		\label{fig:pointoutmod}}
 \end{figure}
 
@@ -641,12 +646,12 @@ This loss function is continuous and correctly handles the wrap-around nature of
 \subsection{Perplexity in Color-Space}
 Perplexity is a measure of how well the distribution, estimated by the model, matches reality according to the observations in the test set.
 Perplexity is commonly used for evaluating language models. However here it is being used to evaluate the discretized distribution estimate.
-It can loosely be thought of as to how well the model's distribution does in terms of the size of an equivalent uniform distribution.
-Note that this metrics does not assume conditional independence of the color channels.
+It can be loosely thought of as to how well the model's distribution does in terms of the size of an equivalent uniform distribution.
+Note that this metric does not assume conditional independence of the color channels.
 
 Here $\tau$ is the test-set made up of pairs consisting of a color name $t$, and color-space point $\tilde{x}$;
-and  $p(\tilde{x}\mid t)$  the output of the evaluated model.
-Perplexity is defined:
+and  $p(\tilde{x}\mid t)$ is the output of the evaluated model.
+Perplexity is defined as:
 \begin{equation}
 PP(\tau) = \exp_2{\left(
 	\frac{-1}{|\tau|} 
@@ -661,34 +666,33 @@ where $n_{res}$ is the total number of bins in the discretization scheme.
 For all the results we present here $n_{res} = 256^3$.
 This standardized perplexity gives the easily interpretable values \emph{usually} between zero and one.
 It is equivalent to comparing the relative performance of the model to that of a uniform distribution of the same total resolution.
-$\frac{PP(\tau)}{n_{res}}=1$ means the result is equal what we would have to if we had distributed the probability mass uniformly into all bins in a 3D histogram.
-$\frac{PP(\tau)}{n_{res}}=0.5$ means the result twice as good as if we were to simply use an uniform distribution: it is equivalent to saying that the correct bin is selected as often as it would be had an uniform distribution with half as many bins (ie larger bins with twice the area) were used.
+$\frac{PP(\tau)}{n_{res}}=1$ means the result is equal to what we would see if we had distributed the probability mass uniformly into all bins in a 3D histogram.
+$\frac{PP(\tau)}{n_{res}}=0.5$ means the result twice as good as if we were to simply use a uniform distribution: it is equivalent to saying that the correct bin is selected as often as it would be had a uniform distribution with half as many bins been used (i.e. larger bins with twice the area).
 The standardised perplexity is also invariant under different output resolutions.
 Though for brevity we only  present results with 256 bins per channel, our preliminary results for using other resolutions are similar under standardized perplexity.
 
-\pdfcomment{Should mention cross entropy and KL divergence here? Closely related to perplexity}
+%\pdfcomment{Should mention cross entropy and KL divergence here? Closely related to perplexity}
 
 \subsection{Angularly Correct Calculations on HSV}\label{sec:angularly-correct}
 We use the HSV color-space \parencite{smith1978color} through-out this work.
-We use the format which the data is originally provided in.
 In this format: hue, saturation and value all range between zero and one.
-Note that hue is measured in \emph{turns}, rather than the more traditional degrees, or radians.
-Having hue be measured between zero and one, like the other channels, makes the modelling task more consistent.
+Note that we measure hue in \emph{turns}, rather than the more traditional degrees, or radians.
+Having hue measured between zero and one, like the other channels, makes the modelling task more consistent.
 Were the hue to range between $0$ and $2\pi$ (radians) or between $0$ and $360$ (degrees) it would be over-weighted compared to the other channels.
 This regular space means that errors on all channels can be considered equally.
-Unlike many other colors spaces (CIELab, Luv etc.) the gamut is square and all values of all channels corresponds to realizable colors.
+Unlike many other colors spaces (CIELab, Luv etc.) the gamut is square and all combinations of values from the different channels corresponds to realizable colors.
 
 
 When performing calculations with the HSV color-space it is important to take into account that hue is an angle.
 As we are working with the color-space regularized to range between zero and one for all channels,
-this means a hue of one and a hue of zero are equivalent (as we measure in turns, in radian's this would be $0$ and $2\pi$).
+this means that a hue of one and a hue of zero are equivalent (as we measure in turns, in radians this would be $0$ and $2\pi$).
 
 The square error of two hue values is thus calculated as:
 \begin{equation}
 SE(h_1, h_2) = \min \big( \left(h_1 - h_2 \right)^2, \, \left(h_1 - h_2 -1 \right)^2  \big)
 \end{equation}
-This takes into account the error could be calculated clockwise or counter-clockwise.
-(Note that the $-1$ term related to using units of turns, were we using radians it would be $-2\pi$)
+This takes into account that the error could be calculated clockwise or counter-clockwise.
+(Note that the $-1$ term is related to using units of turns, were we using radians it would be $-2\pi$)
 
 
 The mean of a set of hues ($\lbrace h_1,\,\ldots,\,h_N \rbrace$) is calculated as:
@@ -699,7 +703,63 @@ The mean of a set of hues ($\lbrace h_1,\,\ldots,\,h_N \rbrace$) is calculated a
 \Bigg)%
 \end{equation}
 This gives the mean angle.
-(Note again: as we measure angle in turns we use the turn trigonometric functions in implementation, though this mean is the same expression or any units).
+%(Note again: as we measure angle in turns we use the turn trigonometric functions in implementation, though this mean is the same expression or any units).
+
+
+
+\subsection{Operational Upper-bounds}
+To establish a rough upper-limit on the modelling results we evaluate a direct method which bypasses the language understanding component of the task.
+These direct methods do not process each term in the name:, they do not work with the language at all.
+They simply map from the exact input text (no tokenization) to the pre-calculated distribution or mean of the training data for the exact color name.
+This operational upper bound bypass the compositional language understanding part of the process.
+It is as if the input module (as discussed in \Cref{sec:inputmod}) perfectly resolved the sequence of terms into a single item.
+
+
+They represent an approximate upper bound, as they fully exploit all information in the training data for each input.
+There is no attempt to determine how each term affects the result.
+We say approximate upper-bound, as it is not strictly impossible that the term-based methods may happen to model the test data better than can be directly determined by training data as processed per exact color name.
+This would require learning how the terms in the color name combine in a way that exceeds the information directly present in the training data per class.
+It is this capacity of learning how the terms combine that allow for the models to predict the outputs for combinations of terms that never occur in the training data (\Cref{sec:extrapodata}).
+Doing this in a way that generalizes to get better results than the direct exploitation of the training data, would require very well calibrated control of (over/under)fitting.
+
+
+\subsubsection{Operational Upper-bound for Distribution Estimation: KDE}\label{sec:direct-histogram} \label{sec:kernel-density-based-smoothing}
+To determine an operational upper-bound for the distribution estimation tasks,
+we use kernel-density estimation (KDE) in a formulation for non-parametric estimation \parencite{silverman1986density} .
+The KDE effectively produces a smoothed histogram from the training data as processed in \Cref{sec:discretization}.
+It caused adjacent bins to have most similar probabilities, thus matching to the mathematical notion of a continuous random variable.
+This is applied on-top of the histogram used for the training data.
+We use the Fast Fourier Transform (FFT) based KDE method of the \textcite{silverman1982algorithm}.
+We use a Gaussian kernel, and select the bandwidth per color description based on leave-one-out cross validation on the training data.
+A known issue with the FFT-based KDE method is that it has a wrap-around effect near the boundaries where mass that would be assigned outside the boundaries is instead assigned to the bin on the other side.
+For the value and saturation channels we follow the standard solution of initially defining additional bins outside the true boundaries, then discard those bins and rescale the probability to one.
+For the hue channel this wrap-around effect is exactly as desired.
+
+In our evaluations using KDE rather than just the training histograms directly proved much more successful on all distribution estimation tasks.
+This is because it avoids empty bins, and effectually interpolates probabilities between observations.
+We found in preliminary investigations that using KDE based method to be much better than add-one smoothing.
+
+We also investigated applying the KDE to the training data,  before training our term-based neural network based distribution models.
+Results for this can be found in \Cref{sec:smoothed-results}.
+In brief, we found that smoothing the training data does not significantly effect the result of the neural network based models.
+As discussed in \Cref{sec:quantitative-results}, this is because the neural networks are able to learn the smoothness relationship of adjacent bins.
+
+
+Our KDE based operational upper bound for distribution estimation bypassed the natural language understanding part of the task,
+and directly uses the standard non-parametric probability estimation method to focus solely on modelling the distributions.
+Matching its performance indicates that a model is effectively succeeding well at both the natural language understanding component and the distribution estimation component.
+
+
+\subsubsection{Operational Upper-bound for Point Estimation: Mean-point}
+In a similar approach, we also propose a method that directly produces a point estimate from a color name.
+We define this by taking the mean of all the training observations for a given exact color name.
+The mean is taken in the angularly correct way (as discussed in \Cref{sec:angularly-correct}).
+Taking the mean of all the observations gives the theoretically optimal solution to minimizing the squared error on the training data set.
+As with our direct distribution estimation method, this bypasses the term based language understanding, and directly exploits the training data.
+It thus represents an approximate upper bound on the point estimation performance of the term based models.
+Though as discussed in \Cref{sec:intro}, the notion of mean and of minimizing the square error is not necessarily the correct way to characterize selecting the optimal point estimate for colors.
+It is however a consistent way to do so, and so we use it for our evaluations.
+
 
 
 \subsection{Evaluation Strategies}
@@ -717,7 +777,7 @@ They also define a standard test, development and train split.
 A primary interest in using the term based models is to be able to make predictions for never before seen descriptions of colors.
 For example, based on the learned understanding of \texttt{salmon} and of \texttt{bright}, from examples like \texttt{bright green} and \texttt{bright red}, we wish for the systems to make predictions about \texttt{bright salmon}, even though that description never occurs in the training data.
 The ability to make predictions like this shows term-based natural language understanding.
-It can't be done with the Operation Upper Bound model, which by-passes the term processing step.
+It can't be done with the Operational Upper Bound model, which by-passes the term processing step.
 %
 To evaluate this generalisation capacity, we define new sub-datasets for both testing and training.
 We select the rarest 100 color descriptions from the full dataset,
@@ -726,7 +786,7 @@ The selected examples include multi-token descriptions such as: \texttt{bright y
 
 The unseen combination testing set has only observations from the full test set that do use those rare descriptions.
 We define a corresponding restricted training set made up of the data from the full training set, excluding those  corresponding to the rare descriptions.
-Similar is done for a restricted development set, so as no direct knowledge of the combined terms can leak during early-stopping.
+Similar restriction is done to create a restricted development set, so that no direct knowledge of the combined terms can leak during early-stopping.
 
 
 By training on the restricted training set and testing on the unseen combination, we can assess the capacity of the models to make predictions for color descriptions not seen in training.
@@ -735,70 +795,15 @@ We contrast this to the same models when trained on the full training set to see
 
 
 \subsubsection{Order Task}
-It is believed that the order of words in a color description to matters, at least to some extent.
+It is believed that the order of words in a color description matters, at least to some extent.
 For example, \natlang{greenish brown} and \natlang{brownish green} are distinct, if similar, colors.
 To assess the models on their ability to make predictions when order matters we construct the order test set.
 This is a subset of the full test set containing only descriptions with terms that occur in multiple different orders.
 There are 76 such descriptions in the full dataset.
 Each of which has exactly one alternate ordering.
 This is unsurprising as while color descriptions may have more than 2 terms, normally one or more of the terms is a joining token such as \natlang{ish} or \natlang{-}.
-We only constructed a order testing set, and not a corresponding training set, as this is an evaluation using the model trained on the full training data.
+We only construct an order testing set, and not a corresponding training set, as this is an evaluation using the model trained on the full training data.
 
-
-
-\subsection{Operational Upper-bounds}
-To establish an rough upper-limit on the modelling results we evaluate a direct method which bypasses the language understanding component of the task.
-These direct methods do not process term-by-term, they do not work with the language at all.
-They simply map from the exact input text (no tokenization) to the pre-calculated distribution or mean of the training data for the exact color name.
-This operational upper bounds bypass the compositional language understanding part of the process.
-It is as if the input module (as discussed in \Cref{sec:inputmod}) perfectly resolved the sequence of terms into a single item.
-
-
-They represent an approximate upper bound, as they fully exploit all information in the training data for each input.
-There is no attempting to determine how each term affects the result.
-We say approximate upper-bound, as it is not strictly impossible that the term-based methods may happen to model the test data better than can be directly determined by training data as processed per exact color name.
-This would require learning how the terms in the color name combine in a way that exceeds the information directly present in the training data per class.
-It is this capacity of learning how the terms combine that allow for the models to predict the outputs for combinations of terms that never occur in the training data (\Cref{sec:extrapodata}).
-Doing this in a way that generalizes to get better results than the direct exploitation of the training data, would require very well calibrated control of (over/under)-fitting.
-
-
-\subsubsection{Operational Upper-bound for Distribution Estimation: KDE}\label{sec:direct-histogram} \label{sec:kernel-density-based-smoothing}
-To determine an operational upper-bound for the distribution estimation tasks,
-we use kernel-density estimation (KDE) in a formulation for non-parametric estimation \parencite{silverman1986density}.
-The KDE effectively produces a smoothed histogram.
-It caused adjacent bins to have most similar probabilities, thus matching to the mathematical notion of a continuous random variable.
-This is applied on-top of the histogram used for the training data.
-We use the Fast Fourier Transform (FFT) based KDE method of the \textcite{silverman1982algorithm}.
-We use a Gaussian kernel, and select the bandwidth per color description based on leave-one-out cross validation on the training data.
-A known issue with the FFT-based KDE method is that it has a wrap-around effect near the boundaries where mass that would be assigned outside the boundaries is instead assigned to the bin on the other side.
-For the value and saturation channels we follow the standard solution of initially defining additional bins outside the true boundaries, then discard those bins and rescale the probability to one.
-For the hue channel this wrap-around effect is exactly as desired.
-
-In our evaluations using KDE rather than just the training histograms directly proved much more successful on all distribution estimation tasks.
-This is because it avoids empty bins, and effectually interpolates probabilities between observations.
-Thus improving the results
-We found in preliminary investigations that using KDE based method to be much better than add-one smoothing.
-
-We also investigated applying the KDE to the training data,  before training our term-based neural network based distribution models.
-Results for this can be found in \Cref{sec:smoothed-results}.
-In brief, we found that smoothing the training data does not significantly effect the result of the neural network based models.
-As discussed in \Cref{sec:quantitative-results}, this is because the neural networks are able to learn the smoothness relationship of adjacent bins.
-
-
-Our KDE based operational upper bound for distribution estimation bypassed the natural language understanding part of the task,
-and directly uses the standard non-parametric probability estimation method to focus solely on modelling the distributions.
-Matching its performance indicates that a model is effectively succeeding well at both the natural language understanding component and the distribution estimation component.
-
-
-\subsubsection{Operational Upper-bound for Point Estimation: Mean-point}
-In a similar approach, we also a method that directly produces a point estimate from a color name.
-We define this by taking the mean of all the training observations for a given exact color name.
-The mean is taken in the angularly correct way (as discussed in \Cref{sec:angularly-correct}).
-Taking the mean of all the observations give the theoretically optimal solution to minimizing the squared error on the training data set.
-As with our direct distribution estimation method, this bypasses the term based language understanding, and directly exploits the training data.
-It thus represents an approximate upper bound on the point estimation performance of the term based models.
-Though as discussed in \Cref{sec:intro}, the notion of mean and of minimizing the square error is not necessarily the correct way to characterize selecting the optimal point estimate for colors.
-It is however a consistent way to do so, and so we use it for our evaluations.
 
 
 
@@ -815,12 +820,12 @@ The discretization and the KDE for the Operational Upper Bound is done using Ker
 
 
 \subsection{Common Network Features}
-Drop-out\parencite{srivastava2014dropout}  is used on all layers, other than the embedding layer, with threshold of 0.5 during training.
-The network is optimized using Adam \parencite{kingma2014adam}, using a learning rate of 0.001.
+Drop-out\parencite{srivastava2014dropout}  is used on all ReLU layers and on the GRU in the RNN, with threshold of 0.5 during training.
+The network is optimized using Adam \parencite{kingma2014adam}, and a learning rate of 0.001.
 Early stopping is checked every 10 epochs using the development dataset.
-Distribution estimation methods are trained using full batch (where each observation is a distribution) for every epoch.
-Point Estimation trains using randomized mini-batches of size $2^{16}$ observations (which are each color-space triples).
-All hidden-layers, except as otherwise precluded (in side the convolution, and in the penultimate layer of the point estimation networks) have the same width 300, as does the embedding layer.
+Distribution estimation methods are trained using the full batch (where each observation is a distribution) for every epoch.
+Point Estimation methods are trained using randomized mini-batches of $2^{16}$ observations (which are each color-space triples).
+All hidden-layers, except as otherwise precluded (inside the convolution, and in the penultimate layer of the point estimation networks) have the same width 300, as does the embedding layer.
 
 
 
@@ -832,11 +837,11 @@ All hidden-layers, except as otherwise precluded (in side the convolution, and i
 
 
 \subsection{Completely Unseen Color Estimation From Embedding Only}\label{sec:embeddingonly}
-As an interesting demonstration of how the models function by learning the transformation from the embedding space to the output we briefly considers the outputs for color-names that do not occur in the training data (or testing) at all.
+As an interesting demonstration of how the models function by learning the transformation from the embedding space to the output we briefly considered the outputs for color-names that do not occur in the training data (or testing) at all.
 This is even more extreme than the unseen combination task considered in \Cref{tbl:distextrapo} and \Cref{tbl:pointextrapo} where the terms appeared in training, but not the combination of terms.
-In the examples shown in \Cref{fig:oovdist} and \Cref{fig:oovpoint}, the terms never occurred in the training data at all, but out models exploit the fact that they work by transforming the word-embedding space to predict the colors.
+In the examples shown in \Cref{fig:oovdist} and \Cref{fig:oovpoint}, the terms never occurred in the training data at all, but our models exploit the fact that they work by transforming the word-embedding space to predict the colors.
 There is no equivalent for this in the direct models.
-While \natlang{Grey} and \natlang{gray} never occur in the training data; \natlang{grey} does, and it is near-by in word-embedding space.
+While \natlang{Grey} and \natlang{gray} never occur in the training data; \natlang{grey} does, and it is near-by in the word-embedding space.
 Similar is true for the other colors that vary by capitalization.
 We only present a few examples of single term colors here, and no quantitative investigation, as this is merely a matter of interest.
 
@@ -871,10 +876,10 @@ We found the results for SOWE, and CNN were very strong, approaching this upper 
 
 
 A key take away from our results is that using a SOWE should be preferred over an RNN for short phrase natural language understanding tasks when order is not a very significant factor.
-The RNN is the standard type of model for this task.
+The RNN is the standard type of model for problems with sequential input, such as color names made up of multiple words as we considered here.
 However, we find its performance to be significantly exceeded by the SOWE and CNN.
-The SOWE is an unordered model correspondent to a bag of words.
-The CNN over word embeddings is correspondent to a bag of ngrams, in our case as bag of all 1,2,3,4 and 5-grams.
+The SOWE is an unordered model roughly corresponding to a bag of words.
+The CNN over word embeddings similarly roughly correspondents to a bag of ngrams, in our case a bag of all 1,2,3,4 and 5-grams.
 This means the CNN can readily take advantage of both fully ordered information, using the filters of length 5, down to unordered information using the filters of length one.
 The RNN however must fully process the ordered nature of its inputs, as its output comes only from the final node.
 It would be interesting to further contrast a bidirectional RNN.
@@ -884,7 +889,6 @@ In a broader context, we envisage the distribution learned for a color name can 
 A further interesting avenue for investigation would condition the model not only on the words used but also on the speaker.
 The original source of the data \textcite{Munroe2010XKCDdataset}, includes some demographic information which is not exploited by any known methods.
 It is expected that color-term usage may vary with subcultures.
-
 
 
 \clearpage
