@@ -1,5 +1,7 @@
 \RequirePackage{luatex85,shellesc}
 \documentclass[dvipsnames]{beamer}
+\usepackage[subpreambles=false]{standalone}
+
 \usepackage[author={Lyndon White}]{pdfcomment}
 
 \usepackage{fancyvrb}
@@ -7,18 +9,19 @@
 \usepackage{microtype}
 \usepackage{adjustbox}
 
-\usepackage{amsmath}
-\usepackage{mathtools}
-
-\usepackage[subpreambles=false]{standalone}
-
-
-\usepackage[at]{easylist}
 
 %\newlength\xunit
 \input{brownbeamer}
 \setbeamercolor{math text}{fg=bluewrite}
 \setbeamercolor{math text displayed}{fg=bluewrite}
+
+
+\usepackage{amsmath}
+\usepackage{mathtools}
+\input{preamble-math}
+
+
+\usepackage[at]{easylist}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -45,6 +48,8 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TIKZ stuff
+
+\input{preamble-tikz}
 
 \tikzset{%
 	->,
@@ -161,12 +166,14 @@
 
 
 
-\newcommand{\ut}[2]{\underbrace{\text{\textcolor{brownwrite}{#1}}}_{\mathclap{\text{#2}}}}
-\newcommand{\ot}[2]{\overbrace{\text{\textcolor{brownwrite}{#1}}}^{\mathclap{\text{#2}}}}
+\newcommand{\mathtextcolor}{\color{brownwrite}}
+\newcommand{\ut}[2]{\underbrace{\text{\mathtextcolor{}{#1}}}_{\mathclap{\text{#2}}}}
+\newcommand{\ot}[2]{\overbrace{\text{\mathtextcolor{}{#1}}}^{\mathclap{\text{#2}}}}
 \begin{frame}{and often it looks like it is complicated\\ but isn't}
 	\vfill 
 	\begin{columns}
 		\begin{column}{0.5\textwidth}
+			\renewcommand{\mathtextcolor}{\color[rgb]{0.043,0.535,0.529}}
 			\begin{equation*}
 				\ut{dark}{basic modifier}
 				\quad \ot{green}{color modifier}
@@ -175,6 +182,7 @@
 			\end{equation*}
 			
 			\vfill
+			\renewcommand{\mathtextcolor}{\color[rgb]{0.063,0.651,0.455}}
 			
 			\begin{equation*}
 				\ut{dark}{basic modifier}
@@ -186,6 +194,7 @@
 	
 		\begin{column}{0.5\textwidth}
 			\vfill
+			\renewcommand{\mathtextcolor}{\color[rgb]{1,0.398,0.314}}
 			\begin{equation*}
 			\quad \ot{rudd}{\shortstack{color modifier\\ (red)}}
 			\!\!\!\ut{y}{meta modifier}
@@ -195,8 +204,6 @@
 		\end{column}
 	\end{columns}
 
-	
-	
 
 	\note{When it comes to color names, you can define a sophisticated grammar, ISCC-NBS defines a fairly basic one. But it isn't really sufficient to capture everything going on with a realistically sized vocabulary}
 	
@@ -206,12 +213,128 @@
 	\vfill
 \end{frame}
 
-
-\begin{frame}{SkipGram etc. are basically iterative algorithms for weighted collocation matrix factorization.}
-	\countertitle{When trying to factorize very large matrices numerical linear algebraticians often use iterative methods.}
+\begin{frame}{SkipGram is the most well known of recent word embedding methods}
+	
+	\begin{columns}
+		\begin{column}{0.5\textwidth}
+			\begin{tikzpicture}[]
+			
+			
+			\coordinate(w1) at (0,0);
+			\node[draw,circle,green,left=0.8 of w1](ww1) at (0,0) {$w_{i}$};
+			
+			
+			\coordinate[above left=of w1, xshift=-0.95cm, yshift=-1cm] (CC0);% at (Cn);
+			\embtable{C}{CC0}{\tiny Input Embs}
+			
+			\draw[->] (ww1) -- ({C}3.east);
+			
+			
+			\node(L2)[layer, above = 3 of w1,
+			%	label={[label distance=0] 0: i.e. \\ $\i \softmax(\ldots)_{\n w_j}$}
+			]{
+				$\frac{\exp{\i V_{\n w_j, :} \i C_{w_i}}}%
+				{\sum_{\forall v \in \set V} \exp{\i V_{v, :} \i C_{\n w_i}}}$
+			};
+			
+			\draw[->]  ({C}3.east) -- node[labe]{$\i C_{\n w_i}$} (L2);
+			
+			
+			\node(out)[above = 1.5 of L2]{$P^\star(\n w_j \mid \n w_i)$};
+			\draw[->] (L2) edge (out);
+			
+			
+			\coordinate[above = 3 of {C}n] (VV0);
+			\embtable[T]{V}{VV0}{\tiny Output Embs}
+			
+			
+			%	\pgfmathsetmacro\ang{(\ii * -2 + -180+20 };
+			%	\draw[->] (V\ii.east) -- (L2.\ang);
+			%\draw[->] ({V}n.east) -- (L2.south west);
+			
+			
+			%\draw[->] (out.204) -- ({V}6.east);
+			\node(ww2)[draw,circle, green, left=0.2 of out]{$\n w_j$};
+			\draw[->] (ww2) -- ({V}6.east);
+			\draw[->] ({V}6.east)-- node[auto, labe]{$\i V_{\n w_j,:}$} (L2.170);
+			\end{tikzpicture}
+		\end{column}
+	
+		\begin{column}{0.5\textwidth}
+			\only<1>{
+				\begin{align*}
+				P^\star&(\n w_j \mid \n w_i) = \i {\softmax \left( V\,\i C_{\n w_i}) \right)}_{\n w_j} \label{equ:skipgram}\\
+				&=\frac{\exp{\i V_{\n w_j, :} \i C_{\n w_i}}}%
+					{\sum_{\forall k \in \set V} \exp{\i V_{k, :} \i C_{\n w_i}}}
+				\end{align*}\\
+				\vspace{1cm}
+				Maximise $P^\star(\n w_j \mid \n w_i)$
+				for combinations of words\\ $\n w_j$, $\n w_i$
+				that actually co-occur.\\
+				\vspace{1cm}
+			}
+			\only<2>{
+				$P^\star(\n w_j \mid \n w_i)$ is maximised
+				 when $\i V_{\n w_j, :} \i C_{\n w_i}$
+				 is maximized.\\
+				 \vspace{1.7cm}
+				 i.e. when the \emph{dot-product} of the \emph{input embeddings} and the \emph{output embeddings} of collocated words\\ approaches $1$
+			}
+		\end{column}
+	\end{columns}
+	
 \end{frame}
 
+\newcommand{\monoto}{\varpropto}%{\raisebox{-0.2em}{\overset{\approx}{\propto}}}
+\begin{frame}{SkipGram is a iterative algorithm for weighted collocation matrix factorization.}
+	\begin{columns}
+		\begin{column}{0.65\textwidth}
+			$V$ is a $300\times |\set V|$ {\small input embeddings matrix}\\
+			$C$ is a $|\set V|\times 300$ {\small output embeddings matrix}\\
+			$X$ is a $|\set V|\times |\set V|$ {\small collocation count matrix}\\
+			$f$ is some monotonic weighting function.\\
+			(\cite{levy2015lsaisbasicallyskipgramswithexperimentstoprove})
+		\end{column}
+		\begin{column}{0.3\textwidth}
+			\begin{align*}
+				Loss & \monoto -X \odot \exp{V C}\\
+				& \monoto{} VC - \log X\\
+				& \monoto{} VC - f(X)
+			\end{align*}
+			Loss is minimized when  $VC \approx f(X)$
+		\end{column}
+	\end{columns}
 
+	
+	\note{Chasing down exactly what that weighting function $f$ is is a bit hairy, as there are many implementation factors like negative sampling, subsampling, etc that go into it. Levy et al, and several others have done it, and it comes out as a proxy for mutual information}
+	
+	\note{Oh look is is GloVE}
+	
+	\countertitle{When trying to factorize very large matrices numerical linear algebraticians often use iterative methods.}
+	\vfill
+\end{frame}
+
+\begin{frame}{So SkipGrams are a \\ dimensionality reduction algorithm,\\ that tries remember collocated words}
+	\begin{itemize}
+		\item \emph{PCA} is a dimensionality reduction algorithm, that tries to remember the most variant factors
+		\item Compressing knowledge of collocated words into a dense vector, gives us \emph{Firth's Criterion}.
+	\end{itemize}
+	
+\end{frame}
+
+\begin{frame}{Matrix product with onehot vector is\\ indexed slicing}
+	Consider the \emph{onehot} representation of some word $w$,\\
+	as $\iv e_w=\big[0, \ldots, \underbrace{1}_{\mathclap{w\text{th position}}},0 \ldots, 0\big]$\\
+	\vspace{0.5cm}
+	It's word embedding is given by
+	$\i C_{w} = C^\intercal e_w$
+\end{frame}
+
+\begin{frame}{Sum of word embeddedings is the same as \\ matrix product with bag of words}
+\end{frame}
+
+\begin{frame}{Concatenatation followed by matrix product\\ is the same as \\matrix product followed by addition}
+\end{frame}
 
 \begin{frame}{Bag of words information is not lost in sums of word embeddings}
 	\begin{itemize}
@@ -224,7 +347,7 @@
 
 
 
-\begin{frame}[fragile]{Consider machine generation captioning evaluation}
+\begin{frame}[fragile]{Consider machine captioning evaluation}
 	Correlation with human ranking in the COMPOSITE captioning evaluation dataset. \cite{Aditya2017}
 	
 	\pgfplotstableread[header=has colnames,
@@ -271,7 +394,7 @@
 	\end{tikzpicture}
 	
 	{\small
-	\textasteriskcentered Forthcoming publication Naeha Sharif, Lyndon White, Mohammed Bennamoun and Syed Afaq Ali Shah.
+	\textasteriskcentered Forthcoming publication \emph{Naeha Sharif, Lyndon White, Mohammed Bennamoun and Syed Afaq Ali Shah}.
 	}
 	
 	\note{This is a hard task, somewhere between abstractive summarization and machine translation, and the assessment is also difficult.}
