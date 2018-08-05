@@ -34,12 +34,29 @@
 \usepackage{pgfplots}
 \usepackage{pgfplotstable}
 
+\pgfplotsset{
+	barbase/.style={
+		ybar,ymajorgrids, 
+		width=0.95\textwidth, height= 5cm,
+		bar width=0.6cm,
+		axis line style={draw=none},
+		x tick style={draw=none},
+		ytick = {0.10, 0.15, ..., 0.4},
+		ytick pos=left,
+	}
+}
+
+
+%%%%%%%%%%%%%%%%%%
+
 \usepackage{tikz}
 \usetikzlibrary{positioning}
 \usetikzlibrary{chains}
 \usetikzlibrary{decorations.pathmorphing}
 %\usetikzlibrary{graphs,graphs.standard,graphdrawing,arrows}
 %\usegdlibrary{layered, trees, force}
+
+
 
 \usepackage{graphicx}
 \graphicspath{{./figs/}, {./}}
@@ -85,7 +102,12 @@
 %%%%%%%%%%%%%%%%
 \newcommand{\countertitle}[1]{\vfill\vfill{\centering \Large \color{bluewrite} #1}\vspace{-0.5cm}}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%
+
+\newcommand{\mquote}[1]{\textit{``#1''}}
+
+%%%%%
 
 \newcommand{\natlang}[1]{\textcolor{Purple}{\texttt{#1}}}
 
@@ -212,6 +234,23 @@
 	
 	\countertitle{and so using complicated methods leads to worse performance.}
 	\vfill
+\end{frame}
+
+\begin{frame}{You can just add up word embeddings and uses it as a representation}
+	\begin{block}{\citehere{acl2018bleuopposedmeaning}}
+		\mquote{On classification tasks,  our [LSTM encoder-decoder] models
+		are outperformed even by GloVe-BOW, except
+		for the NLI tasks\ldots}
+	\end{block}
+	
+	\begin{block}{\citehere{ac2018probingsentencevectors}}
+		\mquote{Our first striking result is the good overall performance
+			of Bag-of-Vectors, confirming early insights
+			that aggregated word embeddings capture
+			surprising amounts of sentence information\ldots}
+	\end{block}
+
+
 \end{frame}
 
 \begin{frame}{SkipGram is the most well known of recent word embedding methods}
@@ -368,15 +407,117 @@
 	\vfill
 \end{frame}
 
-\begin{frame}{Bag of words information is not lost in sums of word embeddings}
-	\begin{itemize}
-		\item A bag of words captures all unigram information in a sentence/document etc
-		
-	\end{itemize}
+
+\pgfplotstableread[col sep=comma,header=has colnames]{data/selection_len_scores.csv}{\sellenscores}
+\begin{frame}[fragile]{Bag of words information is not lost in sums of word embeddings}
+	\only<1>{
+		\begin{itemize}
+			\item A bag of words captures all unigram information in a sentence/document etc
+			\item A greedy method can (mostly) recover the BOW from a SOWE\\
+			\citehere{White2015BOWgen}\vspace{-0.5cm}
+			\begin{enumerate}
+				\item Greedily add nearest word to remaining the SOWE to bag
+				\item Check each word in bag and swap it for a better one
+				\item Repeat until no change.
+			\end{enumerate}
+			\normalsize
+			\item Thus, SOWE captures similar \emph{most} unigram information.
+			\item little cancellation or obscuring sums.
+			\note{Further, the SOWE space is (in some sense) \emph{nice}}
+		\end{itemize}
+	}
+	\only<2>{
+		\begin{tikzpicture}
+		\begin{axis}[xlabel=Ground Truth Sentence Length,
+		ylabel=Mean Jaccard Index,
+		legend style={at={(0.5,1)}, anchor=south,legend columns=3, draw=none},
+		width=10cm,height=4cm,cycle list name=exotic]
+		\addplot table [y=brown_glove50_jaccard_mean,x=ground_len]{\sellenscores};
+		\addplot table [y=brown_glove100_jaccard_mean,x=ground_len]{\sellenscores};
+		\addplot table [y=brown_glove200_jaccard_mean,x=ground_len]{\sellenscores};
+		\addplot table [y=brown_glove300_jaccard_mean,x=ground_len]{\sellenscores};%
+		\addplot table [y=books_0_01_glove300_jaccard_mean,x=ground_len]{\sellenscores};
+		\legend{\small 50D Brown, \small 100D Brown, \small 200D Brown, \small 300D Brown, \small 300D Books}					
+		\end{axis}
+	\end{tikzpicture}
+	}
+	\vspace{-0.5cm}
+
 	\countertitle{We can reliably recover all words from a sum of word embeddings}
 \end{frame}
 
+\begin{frame}{Sentence embeddings space should partition readily according to paraphrases}
+	\begin{itemize}
+		\item \emph{Paraphrases} are defined by \emph{bidirectional entailment}.
+		\item This is an \emph{equivalence relation}
+		\item It thus gives rise to a \emph{partition} of \emph{natural language space}.
+	\end{itemize}
+	\countertitle{}
+\end{frame}
 
+\begin{frame}{What does it mean to partition readily?}
+	Many ways to define.
+	\note{This is a bit like assessing quality of clusters. And there is prove-ably no ideal cluster qualuty measure}
+	
+	\begin{description}%[labelsep=1em]
+		\item[Convex]\qquad No twists, bulges, holes, jumps etc.
+		\item[Seperable]\qquad Should not overlap, should be separate      			
+		\item[Concentrated]\quad  Sentences with same meaning go to small area.     			
+	\end{description}
+	\countertitle{Notice: these are the same criteria needed linear SVM to work well.}
+\end{frame}
+
+\pgfplotstableread[col sep=comma]{
+	Name,MSRP,Opiniosis, void
+	PV--DM, 78, 38.26,0
+	PV--DBOW, 89.93, 32.19,0
+	URAE, 51.14, 20.87,0
+%	MOWE, 97.91, 69.30,0
+	SOWE, 98.02, 68.75,0
+	BOW, 98.37, 65.23,0
+	PCA--BOW, 97.96, 54.43,0
+}\resultstable
+
+\begin{frame}[fragile]{When assessing ability to match partitions using a linear SVM classification task}
+	\begin{tikzpicture}
+		\begin{axis}[barbase,
+		nodes near coords, nodes near coords align={vertical},
+		nodes near coords={\small \hspace{1mm} \pgfmathprintnumber[precision=0]{\pgfplotspointmeta}\%},
+		ytick= {0,25,50,75,100},
+		yticklabels={0\%,25\%,50\%,75\%,100\%},%\pgfmathprintnumber{\tick}\,\%,
+		ybar=1pt,% interval= 0.7,
+		ylabel=Accuracy,
+		ymin=0, ymax=115,
+		%    		enlarge y limits=0.2,
+		enlarge x limits=0.1,
+		xtick=data,
+		xticklabels={PV\\DM,PV\\DBOW,URAE,SOWE,BOW,PCA\\BOW},
+		xticklabel pos=lower,
+		xticklabel style={align=center},
+		legend style={at={(0.5,-0.4)}, anchor=north,legend columns=2, draw=none},
+		legend image code/.code={%
+			\draw[#1] (0cm,-0.2cm) rectangle (0.5cm,0.3cm);
+		}
+		]
+		\addplot[style={top color=Red, bottom color=Green, draw=none, mark=none}] table [y=MSRP,x expr=\coordindex, meta=Name] {\resultstable};
+		\addplot [style={top color=Orange, bottom color=Blue, draw=none, mark=none}] table [y=Opiniosis,x expr=\coordindex]{\resultstable};
+		\legend{MSRP\hspace{1cm}, Opinosis};
+		\end{axis}
+	\end{tikzpicture}
+	\vspace{-0.7cm}
+	\countertitle{Knowing word content is really useful}
+\end{frame}
+
+\begin{frame}{What is going on here?}
+	\begin{block}{PV-DM / PV-DBOW \\ \citehere{le2014distributed}}
+	\mquote{It shows that the paragraph vectors, when evaluated correctly, do not work better than bag-of-words (bag-of-ngrams being even better)}\\
+		\hfill -- Tomas Mikolov (23/11/17) w.r.t \cite{mesnil2014ensemble}
+	\end{block}
+
+\end{frame}
+
+\begin{frame}{}
+\end{frame}
 
 
 \begin{frame}[fragile]{Consider machine captioning evaluation}
@@ -398,25 +539,20 @@
 	\emph{FastText}	0.364	{MOWE}
 	}{\compositeCaptionEval}
 	
+
 	
 	\begin{tikzpicture}
-	\begin{axis}[ybar,ymajorgrids,
+	\begin{axis}[barbase,
 	xticklabels from table={\compositeCaptionEval}{Method},
 	legend style={at={(0.5,-0.7)}, anchor=north,legend columns=2, draw=none},
 	legend image post style={xscale=1, yscale=1},
 	%	enlargelimits=0.3,
+	ylabel = {Kendall's $\tau$},
 	ymin=0.1, ymax=0.4,
 	enlarge x limits=0.2,
 	xticklabel style={rotate=90},
 	xtick = data,
-	width=0.85\textwidth, height= 5cm,
-	bar width=0.6cm,
 	%yticklabel={$\mathsf{\pgfmathprintnumber{\tick}}$\small\%},
-	ylabel = {Kendall's $\tau$},
-	axis line style={draw=none},
-	x tick style={draw=none},
-	ytick = {0.10, 0.15, ..., 0.4},
-	ytick pos=left,
 	%nodes near coords={$\mathsf{\pgfmathprintnumber[precision=2]{\pgfplotspointmeta}}$},
 	]
 	
@@ -497,6 +633,11 @@
 		
 	\end{itemize}
 	\countertitle{But in-practice, it probably is}
+\end{frame}
+
+\begin{frame}{Word order is more predictable than you may think}
+	
+	\countertitle{Further, other orderings are likely (near) paraphrases.}
 \end{frame}
 
 
