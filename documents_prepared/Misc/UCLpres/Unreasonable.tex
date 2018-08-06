@@ -114,10 +114,10 @@
 %%%%%%%%%%%%%%%%%%%%%
 
 
-\institute{School of Electical, Electronic and Computer Engineering\\The University of Western Australia}
+\institute{Department of Electical, Electronic and Computer Engineering\\The University of Western Australia}
 \date{}
 \title{Natural language is \\ unreasonably simple, unreasonably often}
-\subtitle{Adding up word embeddings works far too well, why is that?}
+\subtitle{Adding up word embeddings works far too well,\\ why is that?}
 \author{
 %	\includegraphics[height=2cm]{juliaml}
 %	\includegraphics[height=2cm]{juliatext}
@@ -236,21 +236,42 @@
 	\vfill
 \end{frame}
 
+
 \begin{frame}{You can just add up word embeddings and uses it as a representation}
-	\begin{block}{\citehere{acl2018bleuopposedmeaning}}
+	\begin{block}{\normalsize \citehere{acl2018bleuopposedmeaning}}
 		\mquote{On classification tasks,  our [LSTM encoder-decoder] models
-		are outperformed even by GloVe-BOW, except
-		for the NLI tasks\ldots}
+			are outperformed even by GloVe-BOW, except
+			for the NLI tasks\ldots}
 	\end{block}
 	
-	\begin{block}{\citehere{ac2018probingsentencevectors}}
+	\begin{block}{\normalsize \citehere{ac2018probingsentencevectors}}
 		\mquote{Our first striking result is the good overall performance
 			of Bag-of-Vectors, confirming early insights
 			that aggregated word embeddings capture
 			surprising amounts of sentence information\ldots}
 	\end{block}
+\end{frame}
 
-
+\begin{frame}{Content is king}
+	\vspace{-0.5cm}
+	Considering further \cite{ac2018probingsentencevectors}
+	\only<1>{\begin{itemize}
+			\item They looked at $3 \times 8  + 5$ models \note{8 different training varients of 3 types of sophisticaed models, plus 5 baselines}
+			\item \emph{10 probing tasks} were used to evaluate the models.
+			\item Of the \emph{baseline} models SOWE was often the best.
+			\item It was rarely better than the best performing \emph{sophisticated model}
+			\item \emph{Except} on Word Content \note{Actually, most of the baseline models are better than the fancy models on the word content task, but SOWE beats them on most of tasks.}
+		\end{itemize}
+	}
+	\only<2>{
+		When the probing task results are correlated against 12 down stream tasks.\\
+		\includegraphics[height=0.6\pageheight]{probing-cor}
+	}
+	\note{This is not the say that SOWE wins at downstream tasks; I've not seen those results. But it does highlight just how very important capturing surface information is -- lose track of that, and your losing important information.}
+	
+	\vspace{-0.5cm}
+	
+	\countertitle{The words people use are the most important part of what they are saying}
 \end{frame}
 
 \begin{frame}{SkipGram is the most well known of recent word embedding methods}
@@ -299,13 +320,13 @@
 			\draw[->] ({V}6.east)-- node[auto, labe]{$\i V_{\n w_j,:}$} (L2.170);
 			\end{tikzpicture}
 		\end{column}
-	
+		
 		\begin{column}{0.5\textwidth}
 			\only<1>{
 				\begin{align*}
 				P^\star&(\n w_j \mid \n w_i) = \i {\softmax \left( V\,\i C_{\n w_i}) \right)}_{\n w_j} \label{equ:skipgram}\\
 				&=\frac{\exp{\i V_{\n w_j, :} \i C_{\n w_i}}}%
-					{\sum_{\forall k \in \set V} \exp{\i V_{k, :} \i C_{\n w_i}}}
+				{\sum_{\forall k \in \set V} \exp{\i V_{k, :} \i C_{\n w_i}}}
 				\end{align*}\\
 				\vspace{1cm}
 				Maximise $P^\star(\n w_j \mid \n w_i)$
@@ -315,10 +336,10 @@
 			}
 			\only<2>{
 				$P^\star(\n w_j \mid \n w_i)$ is maximised
-				 when $\i V_{\n w_j, :} \i C_{\n w_i}$
-				 is maximized.\\
-				 \vspace{1.7cm}
-				 i.e. when the \emph{dot-product} of the \emph{input embeddings} and the \emph{output embeddings} of collocated words\\ approaches $1$
+				when $\i V_{\n w_j, :} \i C_{\n w_i}$
+				is maximized.\\
+				\vspace{1.7cm}
+				i.e. when the \emph{dot-product} of the \emph{input embeddings} and the \emph{output embeddings} of collocated words\\ approaches $1$
 			}
 		\end{column}
 	\end{columns}
@@ -337,14 +358,14 @@
 		\end{column}
 		\begin{column}{0.3\textwidth}
 			\begin{align*}
-				Loss & \monoto -X \odot \exp{V C}\\
-				& \monoto{} VC - \log X\\
-				& \monoto{} VC - f(X)
+			Loss & \monoto -X \odot \exp{V C}\\
+			& \monoto{} VC - \log X\\
+			& \monoto{} VC - f(X)
 			\end{align*}
 			Loss is minimized when  $VC \approx f(X)$
 		\end{column}
 	\end{columns}
-
+	
 	
 	\note{Chasing down exactly what that weighting function $f$ is is a bit hairy, as there are many implementation factors like negative sampling, subsampling, etc that go into it. Levy et al, and several others have done it, and it comes out as a proxy for mutual information}
 	
@@ -354,6 +375,8 @@
 	\vfill
 \end{frame}
 
+
+
 \begin{frame}{So SkipGrams are a \\ dimensionality reduction algorithm,\\ that tries remember collocated words}
 	\begin{itemize}
 		\item Contrast: \emph{PCA} is a dimensionality reduction algorithm, that tries to \emph{remember the most variant factors}
@@ -362,6 +385,7 @@
 	\end{itemize}
 	
 \end{frame}
+
 
 \begin{frame}{Matrix product with onehot vector is\\ indexed slicing}
 	Consider the \emph{onehot} representation of some word $w$,\\
@@ -383,11 +407,11 @@
 \begin{frame}{Concatenation followed by matrix product\\ is the same as \\matrix product followed by addition}
 	\vspace{-0.7cm}
 	\begin{equation*}
-		\left[\begin{array}{cc}
-		U & V\end{array}\right]\left[\begin{array}{c}
-		\v a\\
-		\v b
-		\end{array}\right] = U\v a + V \v b
+	\left[\begin{array}{cc}
+	U & V\end{array}\right]\left[\begin{array}{c}
+	\v a\\
+	\v b
+	\end{array}\right] = U\v a + V \v b
 	\end{equation*}
 	Thus
 	\begin{align*}
@@ -422,7 +446,7 @@
 			\end{enumerate}
 			\normalsize
 			\item Thus, SOWE captures similar \emph{most} unigram information.
-			\item little cancellation or obscuring sums.
+			%\item little cancellation or obscuring sums.
 			\note{Further, the SOWE space is (in some sense) \emph{nice}}
 		\end{itemize}
 	}
@@ -439,10 +463,10 @@
 		\addplot table [y=books_0_01_glove300_jaccard_mean,x=ground_len]{\sellenscores};
 		\legend{\small 50D Brown, \small 100D Brown, \small 200D Brown, \small 300D Brown, \small 300D Books}					
 		\end{axis}
-	\end{tikzpicture}
+		\end{tikzpicture}
 	}
 	\vspace{-0.5cm}
-
+	
 	\countertitle{We can reliably recover all words from a sum of word embeddings}
 \end{frame}
 
@@ -456,13 +480,15 @@
 \end{frame}
 
 \begin{frame}{What does it mean to partition readily?}
-	Many ways to define.
+	There are many ways one could define the quality of a space, on its ability to be partitioned according to anther linked space's partitions.\\
+	%	Without restrictions an arbitrary bijection could be allowed.\\
+	%	But that would not be a 
 	\note{This is a bit like assessing quality of clusters. And there is prove-ably no ideal cluster qualuty measure}
 	
 	\begin{description}%[labelsep=1em]
 		\item[Convex]\qquad No twists, bulges, holes, jumps etc.
 		\item[Seperable]\qquad Should not overlap, should be separate      			
-		\item[Concentrated]\quad  Sentences with same meaning go to small area.     			
+		\item[Concentrated]\quad small area		
 	\end{description}
 	\countertitle{Notice: these are the same criteria needed linear SVM to work well.}
 \end{frame}
@@ -472,7 +498,7 @@
 	PV--DM, 78, 38.26,0
 	PV--DBOW, 89.93, 32.19,0
 	URAE, 51.14, 20.87,0
-%	MOWE, 97.91, 69.30,0
+	%	MOWE, 97.91, 69.30,0
 	SOWE, 98.02, 68.75,0
 	BOW, 98.37, 65.23,0
 	PCA--BOW, 97.96, 54.43,0
@@ -480,66 +506,99 @@
 
 \begin{frame}[fragile]{When assessing ability to match partitions using a linear SVM classification task}
 	\begin{tikzpicture}
-		\begin{axis}[barbase,
-		nodes near coords, nodes near coords align={vertical},
-		nodes near coords={\small \hspace{1mm} \pgfmathprintnumber[precision=0]{\pgfplotspointmeta}\%},
-		ytick= {0,25,50,75,100},
-		yticklabels={0\%,25\%,50\%,75\%,100\%},%\pgfmathprintnumber{\tick}\,\%,
-		ybar=1pt,% interval= 0.7,
-		ylabel=Accuracy,
-		ymin=0, ymax=115,
-		%    		enlarge y limits=0.2,
-		enlarge x limits=0.1,
-		xtick=data,
-		xticklabels={PV\\DM,PV\\DBOW,URAE,SOWE,BOW,PCA\\BOW},
-		xticklabel pos=lower,
-		xticklabel style={align=center},
-		legend style={at={(0.5,-0.4)}, anchor=north,legend columns=2, draw=none},
-		legend image code/.code={%
-			\draw[#1] (0cm,-0.2cm) rectangle (0.5cm,0.3cm);
-		}
-		]
-		\addplot[style={top color=Red, bottom color=Green, draw=none, mark=none}] table [y=MSRP,x expr=\coordindex, meta=Name] {\resultstable};
-		\addplot [style={top color=Orange, bottom color=Blue, draw=none, mark=none}] table [y=Opiniosis,x expr=\coordindex]{\resultstable};
-		\legend{MSRP\hspace{1cm}, Opinosis};
-		\end{axis}
+	\begin{axis}[barbase,
+	nodes near coords, nodes near coords align={vertical},
+	nodes near coords={\small \hspace{1mm} \pgfmathprintnumber[precision=0]{\pgfplotspointmeta}\%},
+	ytick= {0,25,50,75,100},
+	yticklabels={0\%,25\%,50\%,75\%,100\%},%\pgfmathprintnumber{\tick}\,\%,
+	ybar=1pt,% interval= 0.7,
+	ylabel=Accuracy,
+	ymin=0, ymax=115,
+	%    		enlarge y limits=0.2,
+	enlarge x limits=0.1,
+	xtick=data,
+	xticklabels={PV\\DM,PV\\DBOW,URAE,SOWE,BOW,PCA\\BOW},
+	xticklabel pos=lower,
+	xticklabel style={align=center},
+	legend style={at={(0.5,-0.4)}, anchor=north,legend columns=2, draw=none},
+	legend image code/.code={%
+		\draw[#1] (0cm,-0.2cm) rectangle (0.5cm,0.3cm);
+	}
+	]
+	\addplot[style={top color=Red, bottom color=Green, draw=none, mark=none}] table [y=MSRP,x expr=\coordindex, meta=Name] {\resultstable};
+	\addplot [style={top color=Orange, bottom color=Blue, draw=none, mark=none}] table [y=Opiniosis,x expr=\coordindex]{\resultstable};
+	\legend{MSRP\hspace{1cm}, Opinosis};
+	\end{axis}
 	\end{tikzpicture}
 	\vspace{-0.7cm}
 	\countertitle{Knowing word content is really useful}
 \end{frame}
 
+
+
 \begin{frame}{What is going on here?}
 	\begin{block}{PV-DM / PV-DBOW \\ \citehere{le2014distributed}}
-	\mquote{It shows that the paragraph vectors, when evaluated correctly, do not work better than bag-of-words (bag-of-ngrams being even better)}\\
+		\mquote{It shows that the paragraph vectors, when evaluated correctly, do not work better than bag-of-words (bag-of-ngrams being even better)}\\
 		\hfill -- Tomas Mikolov (23/11/17) w.r.t \cite{mesnil2014ensemble}
 	\end{block}
-
+	
+	\begin{block}{URAE\\
+			\citehere{SocherEtAl2011:PoolRAE}
+		}
+		Only 200D so not entirely fair.\\
+		Based on binary constituency parse structure\\
+		Deep, compressing each layer, 2 inputs to one output.
+	\end{block}
 \end{frame}
 
-\begin{frame}{}
+\begin{frame}{What is going on here?}
+	\begin{block}{BOW \\ Bag of Words}
+		Several thousand dimensions\\
+		1000D spaces tend to be very separable\\
+		No synonym capacity\\
+	\end{block}
+	\begin{block}{PCA BOW \\ Principle Component Analysis \cite{hotelling1933analysis}}
+		Drop down to 300D to match others\\
+		PCA is inferior to GloVE as a dimensionality reduction technique,
+		for semantic preservation.
+	\end{block}
 \end{frame}
 
 
 \begin{frame}[fragile]{Consider machine captioning evaluation}
 	Correlation with human ranking in the COMPOSITE captioning evaluation dataset. \cite{Aditya2017}
 	
+	\begin{itemize}
+		\item For each image, there are 5 captions.
+		\item A mix of \emph{human} generated
+		\item  and \emph{machine} generated.
+		\item this is an evaluation of \emph{evaluation metrics}
+		
+	\end{itemize}
+	\note{To steal someone else's joke. This is a second order evaluation. A first order evaluation is the application of a metric; a third order evaluation is what you are doing now.}
+	\countertitle{Task is to rate the captions in the same order as the human rankers.}
+\end{frame}
+
+
+\begin{frame}[fragile]{Look what wins}
+	\vspace{-0.5cm}
 	\pgfplotstableread[header=has colnames,
-		columns/Method/.style={string type},
-		columns/Type/.style={string type}
+	columns/Method/.style={string type},
+	columns/Type/.style={string type}
 	]{%
-	Method	Kendall	Type
-	BLEU	0.191	{basic ngram}
-	ROGUE-L	0.213	{basic ngram}
-	\emph{GloVE}	0.337	{MOWE}
-	METEOR	0.341	{fancy ngram}
-	CIDEr	0.342	{fancy ngram}
-	SPICE	0.349	{semantic parsing}
-	\emph{Word2Vec}	0.349	{MOWE}
-	%SPICE+CIDEr	0.357	{semantic parsing}
-	\emph{FastText}	0.364	{MOWE}
+		Method	Kendall	Type
+		BLEU	0.191	{basic ngram}
+		ROGUE-L	0.213	{basic ngram}
+		\emph{GloVE}	0.337	{MOWE}
+		METEOR	0.341	{fancy ngram}
+		CIDEr	0.342	{fancy ngram}
+		SPICE	0.349	{semantic parsing}
+		\emph{Word2Vec}	0.349	{MOWE}
+		%SPICE+CIDEr	0.357	{semantic parsing}
+		\emph{FastText}	0.364	{MOWE}
 	}{\compositeCaptionEval}
 	
-
+	
 	
 	\begin{tikzpicture}
 	\begin{axis}[barbase,
@@ -562,25 +621,26 @@
 	\end{tikzpicture}
 	
 	{\small
-	\textasteriskcentered Forthcoming publication \emph{Naeha Sharif, Lyndon White, Mohammed Bennamoun and Syed Afaq Ali Shah}.
+		\textasteriskcentered Forthcoming publication \emph{Naeha Sharif, Lyndon White, Mohammed Bennamoun and Syed Afaq Ali Shah}.
 	}
-	
-	\note{This is a hard task, somewhere between abstractive summarization and machine translation, and the assessment is also difficult.}
-	\note{The similarity to abstractive summarization makes it particular bad -- it is not clear what should be said}
-	\note{Shown here is a comparason of minimum cosine similarity to reference MOWE for different embeddings with more traditional metrics}
-	\note{See that the performance of the traditional ngram based metrics BLEU for MT and ROGUE for summarization kinda suck}
-	\note{Next best is the worst performing out of word embedding models GloVE.}
-	\note{It gets out performed by METEOR and CIDEr, which I would summarize as fancy ngram methods, with synonyms and weights.}
-	\note{Then comes SPICE. SPICE is very sophisticated, it does parsing and builds this semantic graph, then does graph comparasons.}
-	\note{But it is beated by Word2Vec, and by FastText}
-	\note{There are a few reasons why FastText is better than word2vec -- it could be the capturing of morphemes for example. But I'd probably attribute it to a few more years of engineering and a whole lot more data.}
-
-\end{frame}
-
-\begin{frame}{What is going on? How can a unigram method be beating everything?}
-	
+	\vspace{0.01cm}
+%	
+%	\note{This is a hard task, somewhere between abstractive summarization and machine translation, and the assessment is also difficult.}
+%	\note{The similarity to abstractive summarization makes it particular bad -- it is not clear what should be said}
+%	\note{Shown here is a comparason of minimum cosine similarity to reference MOWE for different embeddings with more traditional metrics}
+%	\note{See that the performance of the traditional ngram based metrics BLEU for MT and ROGUE for summarization kinda suck}
+%	\note{Next best is the worst performing out of word embedding models GloVE.}
+%	\note{It gets out performed by METEOR and CIDEr, which I would summarize as fancy ngram methods, with synonyms and weights.}
+%	\note{Then comes SPICE. SPICE is very sophisticated, it does parsing and builds this semantic graph, then does graph comparasons.}
+%	\note{But it is beated by Word2Vec, and by FastText}
+%	\note{There are a few reasons why FastText is better than word2vec -- it could be the capturing of morphemes for example. But I'd probably attribute it to a few more years of engineering and a whole lot more data.}
+%	
 	\countertitle{Captioning quality can be assessed on \textbf{fluency} and on \textbf{adequacy}}
 \end{frame}
+
+
+
+
 
 \begin{frame}{All captions in COMPOSITE are \textbf{fluent}}
 	\begin{itemize}
@@ -591,6 +651,7 @@
 	\vfill
 	\countertitle{Trying to capture fluency in your captioning metric is thus not important}
 \end{frame}
+
 
 \begin{frame}{The proper way to look at adequacy is to build a semantic graph, and apply reasoning to it}
 	% TODO replace this with nice figures I made myself
@@ -608,9 +669,10 @@
 			\note{Or more generally that a neural network can leverage.}
 		\end{column}
 	\end{columns}
-
+	
 	\countertitle{This semantic graph must be derived from the \textbf{right words} in the \textbf{right order}}
 \end{frame}
+
 
 \begin{frame}{Semantic graph comes from syntactic graph}
 	\begin{itemize}
@@ -618,6 +680,7 @@
 		\item In theory, \emph{different} words in \emph{different} orders could give the \emph{same} semantic graph
 		\item and the \emph{same} words in a \emph{different} order could give a \emph{different} semantic graph.
 	\end{itemize}
+	\countertitle{syntactic graph comes from token order}
 \end{frame}
 
 \begin{frame}{Due to ambiguity in possible word order semantic meaning should not be derivable from averaged lexical meaning representation}
@@ -653,6 +716,7 @@
 \begin{frame}{Maybe we are not really doing natural language understanding}
 	\countertitle{but practically we are certainly doing something useful}
 \end{frame}
+
 
 
 \end{document}

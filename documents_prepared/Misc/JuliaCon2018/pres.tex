@@ -134,7 +134,7 @@
 		
 		\item The results can be easily reproduced with \alert{at most \textbf{15 minutes} of user effort}, requiring some proprietary source packages (MATLAB, etc.).
 		
-		\item The results can be easily reproduced  with \alert{at most \textbf{15 min} of user effort}, requiring only standard, freely available tools (C compiler, etc.).		
+		\item The results can be easily reproduced  with \alert{at most \textbf{15 minutes} of user effort}, requiring only standard, freely available tools (C compiler, etc.).		
 	\end{enumerate}
 	\note{Vabdewakke actual has a rating zero for "no, just no can not reproduce."}
 	\note{What is the key determining factor here? User effort. How do we get down to 15 minutes of user effort?}
@@ -481,22 +481,22 @@
 	\begin{description}
 		\item[Storage Location:] where will I put it?
 		\item[Redistribution:] am I allowed to distribute this?
-		\item[Replication:] how do I makes sure they get the same data I used?
+		\item[Replication:] how do I ensure they get the same data I used?
 	\end{description}
 \end{frame}
 
-\begin{frame}[fragile]{3 Key \questionanswer{} about Data: \\\#1 Storage Location}
+\begin{frame}<2->[fragile]{3 Key \questionanswer{} about Data: \\\#1 Storage Location}
 	\begin{easylist}[itemize]
 		@ \emph{Where do I put it?} Should it be on the local disk (small) or the network file-store (slow)? \label{itm:where}
 		\only<2>{@@ \color{bluewrite} Anywhere on the DataDeps Load Path will work}
 		@ If I \emph{move it}, am I going to have to reconfigure things?
 		\only<2>{@@ \color{bluewrite} Not if you are using a datadep path}
-		@ What if I put it all in the \emph{git repo}?
-		\only<2>{@@ \color{bluewrite} git does not like large binary files.\\ 50KB \inlinecode{.csv} is ok; 50MB \inlinecode{.jld} is not.}
+		%@ What if I put it all in the \emph{git repo}?
+		%\only<2>{@@ \color{bluewrite} git does not like large binary files.\\ 50KB \inlinecode{.csv} is ok; 50MB \inlinecode{.jld} is not.}
 	\end{easylist}
 \end{frame}
 
-\begin{frame}[fragile]{3 Key \questionanswer{} about Data: \\\#2 Redistribution}
+\begin{frame}<2->[fragile]{3 Key \questionanswer{} about Data: \\\#2 Redistribution}
 
 	\begin{easylist}[itemize]
 		 @ I don't \emph{own} this data
@@ -509,7 +509,7 @@
 	\vfill
 \end{frame}
 
-\begin{frame}[fragile]{3 Key \questionanswer{} about Data: \\\#3 Replication}
+\begin{frame}<2->[fragile]{3 Key \questionanswer{} about Data: \\\#3 Replication}
 	\begin{easylist}[itemize]
 		@ How can I be sure that someone running my code has the \emph{same data}?
 		\only<2>{@@ \color{bluewrite} Make automatic data fetching part of the code}
@@ -524,8 +524,7 @@
 	\structure{Developer/Researcher}
 	\begin{easylist}[itemize]
 		@ Writes a DataDep \emph{registration block} in the \inlinecode{__init__()} function.
-		@ uses \datadep{Name/file.ext} anywhere they would want a path to be input
-	\end{easylist}
+		@ uses \datadep{Name/file.ext} anywhere they would use a path to a file.	\end{easylist}
 	\vfill
 	\structure{User/Replicater}
 	\begin{easylist}[itemize]
@@ -574,27 +573,11 @@
 	}
 \end{frame}
 
-\begin{frame}[fragile]{\datadep{Census 2018/populations.csv} \\ A path you can trust}
-	\begin{easylist}[itemize]
-		@ Always resolves to an absolute path to that file
-		\note{at runtime}
-		@ Even if that means it has to download it first
-		@ But before resorting to downloading checks a large number of places
-		@@  \inlinecode{<PKG>/deps/data}, 
-		@@ \inlinecode{~/.julia/datadeps},
-		@@ \inlinecode{/usr/share/datadeps}, etc.
-		\note{this is the DataDeps load path}
-		\note{The places to check can be configured of course}
-		@ You know that if you use a datadep path it will resolve to a file that exists.
-	\end{easylist}
-	\vspace{1cm}
-	Note that every \emph{datadep} corresponds to a \emph{folder}.
-\end{frame}
 
 \begin{frame}[fragile]{Automatic fetching is really convenient}
 	Some things that have happened to me lately:
 	\begin{easylist}[itemize]
-		@ Supervisor tells me shared workstation hard-drive is dangerously full
+		@ Supervisor tells me that the shared workstation hard-drive is dangerously full
 		\only<1>{@@ I \emph{delete all my datadeps folders}}
 		\only<1>{@@ knowing that the \emph{ones I am still using} will be fetched as required.}
 		\pause
@@ -602,7 +585,7 @@
 		\only<2>{@@ Literally, I just cloned the \emph{project repo}}
 		\only<2>{@@ knowing the data will \emph{make its own way} there}
 		\pause
-		@ I realized that I've \emph{modified} one of the data \emph{files by mistake}
+		@ I realized that I've \emph{modified} one of the data  files \emph{by mistake}
 		\only<3>{@@ \inlinecode{rm(datadep"Foo", recursive=true)}}
 		@@ Next time it is needed a \emph{new copy} will be downloaded.
 	\end{easylist}
@@ -624,8 +607,8 @@
 			\begin{onlyenv}<2> 
 				\structure{Static\\}
 				No automatic redownloading\\
-				\vspace{1cm}
-				Can't check file hash\\
+				when server version  changes.
+				\note{that is kinda impossible to detect without doing the download}
 				%\vspace{1cm}
 				%\inlinecode{ManualDataDep}\\ or hacks\\
 			\end{onlyenv}
@@ -751,13 +734,13 @@
 \begin{frame}[fragile]{Handling private data, with specific \inlinecode{fetch_method} method}
 	\small
 	\ttfamily
-	\color{Aquamarine}
+	\color{Aquamarine!50!black}
 	using HTTP, OAUTH2\\
 	const appid="ProjectXYZ:apps:datadeps:support"
 	\color{Magenta}\\
 	function authed\_download(url, local)\\
 	\verb!    !authtok = getauthtok("https://evil.eg.au/auth"\\
-	\verb!            !ENV["USER\_ID"], appid, !ENV["APPSECRET"])\\
+	\verb!            !ENV["USER\_ID"], appid, ENV["APPSECRET"])\\
 	\verb!    HTTP.download(url, local, ["Authorization"=>authtok])!\\
 	end\\
 	\vspace{0.5em}
@@ -1247,6 +1230,22 @@
 \end{frame}
 
 
+\begin{frame}[fragile]{\datadep{Census 2018/populations.csv} \\ A path you can trust}
+	\begin{easylist}[itemize]
+		@ Always resolves to an absolute path to that file
+		\note{at runtime}
+		@ Even if that means it has to download it first
+		@ But before resorting to downloading checks a large number of places
+		@@  \inlinecode{<PKG>/deps/data}, 
+		@@ \inlinecode{~/.julia/datadeps},
+		@@ \inlinecode{/usr/share/datadeps}, etc.
+		\note{this is the DataDeps load path}
+		\note{The places to check can be configured of course}
+		@ You know that if you use a datadep path it will resolve to a file that exists.
+	\end{easylist}
+	\vspace{1cm}
+	Note that every \emph{datadep} corresponds to a \emph{folder}.
+\end{frame}
 
 
 
