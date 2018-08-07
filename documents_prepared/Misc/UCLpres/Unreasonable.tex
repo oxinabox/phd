@@ -56,7 +56,9 @@
 %\usetikzlibrary{graphs,graphs.standard,graphdrawing,arrows}
 %\usegdlibrary{layered, trees, force}
 
-
+\usepackage{arrayjobx}
+\usepackage{xifthen}
+\usepackage{textcomp}
 
 \usepackage{graphicx}
 \graphicspath{{./figs/}, {./}}
@@ -699,9 +701,75 @@
 \end{frame}
 
 \begin{frame}{Word order is more predictable than you may think}
-	
-	\countertitle{Further, other orderings are likely (near) paraphrases.}
+	\begin{itemize}
+		\item Consider some sentence; can you rearrange the \\
+		\emph{words} and \emph{punctuation} and make \emph{new sentence}
+		\item Is it \emph{grammatical}?
+		\item Is it a \emph{paraphrase}?
+		\item Is it \emph{likely} (or \emph{sensible}) based on world knowledge?
+		\item Was it following some standard transform, like just swapping to proper nouns?
+	\end{itemize}
+	\pause
 \end{frame}
+
+\begin{frame}{You can recover most probable sentence order from bag of words}
+	\citehere{White2016a}
+	\begin{itemize}
+		\item Using a \emph{language model} you can evaluate the probability of any given order for a bag of words.
+		\item With an appropriate \emph{optimization/search} technique you can find the most likely order
+		\item This particular work was a simple \emph{trigram language model}
+		\note{If this works then a better language model can do better}
+	\end{itemize}
+	\countertitle{Not a great way to generate sentences, though}
+\end{frame}
+
+\begin{frame}{For trigram language models, word ordering is a variation of travelling salesman}
+	\resizebox{0.9\textwidth}{!}{\input{figs/ordergraphpaper.tex}}
+
+\note{This is not really relivent to our discussion here but it is just some kinda cool math.}
+
+\end{frame}
+
+
+\begin{frame}{How well can word order actually be recovered?} %Hack: I can't get \only working within a plot so just repeat it 3 times
+	
+	
+	\pgfplotstableread[col sep=comma,ignore chars={"}]{data/ordering_length_scores.csv}{\ordlenscores}
+	\pgfplotstableread[col sep=comma,ignore chars={"}]{data/ordering_length_scores_oracle.csv}{\ordlenscoresoracle}
+	
+	\pgfplotsset{
+		fullresplot/.style = {
+			xlabel=Ground Truth Sentence Length,
+			ylabel=Portion Exactly Matched,
+			width=0.9\textwidth,height=0.5\textwidth,
+			legend style={fill=none,at={(0.5,-0.31)},anchor=north, legend columns=2},
+			cycle list name=exotic
+		}
+	}
+	
+	\only<1>{%	
+		\begin{tikzpicture}
+		\begin{axis}[fullresplot]
+		only<1->{\addplot table [y=Perfect Sentences,x=ground_length]{\ordlenscoresoracle};}
+		
+		\legend{Oracle BOW}
+		\end{axis}
+		\end{tikzpicture}	
+	}
+	\only<2>{%	
+		\begin{tikzpicture}
+		\begin{axis}[fullresplot]
+		only<1->{\addplot table [y=Perfect Sentences,x=ground_length]{\ordlenscoresoracle};}
+		only<2->{\addplot table [y=Perfect Sentences,x=ground_length]{\ordlenscores};}
+		
+		
+		\legend{Oracle BOW, BOW from SOWE}
+		\end{axis}
+		\end{tikzpicture}	
+	}
+	
+\end{frame}
+
 
 
 \begin{frame}{Some might say the problems we are assessing on are not sufficiently difficult}
