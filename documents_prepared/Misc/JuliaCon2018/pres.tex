@@ -122,7 +122,7 @@
 
 
 
-\begin{frame}{Vabdewakke's 6 Degree's of Replicability}
+\begin{frame}{Vadewakke's 6 Degree's of Replicability}
 	\begin{enumerate}
 		%\item 0: The results cannot be reproduced by an independent researcher.
 		
@@ -187,7 +187,8 @@
 	\resizebox{\textwidth}{!}{\begin{tikzpicture}[layered layout, grow'=up,]
 	\node[nudge=(left:13mm)](researchcode){Research Code};
 	
-	\pkg[mypackage, nudge=(right:30mm)]{CorpusLoaders};
+	\pkg[mypackage, nudge=(right:20mm)]{CorpusLoaders};
+	
 	
 	\pkg[mypackage]{DataDeps};
 	\pkg[mypackage]{DataDepsGenerators};
@@ -200,12 +201,13 @@
 	\pkg[mypackage]{InternedStrings};
 	\pkg[]{Strs};
 	\pkg[]{CSV};
+	\pkg[]{TextAnalysis};
 	
 	
 	\pkg{MLDatasets};
 	%	\pkg[mypackage]{ExpectationStubs};
 	\pkg{HTTP};
-	\pkg[nudge=(right:25mm)]{WordNet};
+	\pkg[nudge=(right:15mm)]{WordNet};
 	\pkg[mypackage, nudge=(right:4mm)]{Embeddings};
 	
 	
@@ -231,14 +233,14 @@
 	\repo{FigShare};
 	
 	
-	\node[sibling distance=0mm](gap){};
 	
 	\graph{
 		(researchcode) <- {(MLDatasets), (Embeddings), (WordNet), (CorpusLoaders)} <- (DataDeps);
 		(DataDeps) ->[bend left, looseness=0, in=167, out=0] (researchcode);
 		
 		
-		{(CorpusLoaders) <- {(MultiResolutionIterators), (WordTokenizers), (InternedStrings)}};
+		{(CorpusLoaders) <- {(MultiResolutionIterators), (InternedStrings), (WordTokenizers)}};
+		(TextAnalysis) <- (WordTokenizers);
 		(DataDeps) <- {(HTTP), (SHA)};
 		(DataDeps) <-[supports] (MD5);
 		
@@ -281,7 +283,7 @@
 		\pkg[mypackage]{InternedStrings};
 		\pkg[]{Strs};
 		\pkg[]{CSV};
-		
+		\pkg[]{TextAnalysis};
 		
 		\pkg{MLDatasets};
 		%	\pkg[mypackage]{ExpectationStubs};
@@ -300,7 +302,9 @@
 			(DataDeps) ->[bend left, looseness=0, in=167, out=0] (researchcode);
 			
 			
-			{(CorpusLoaders) <- {(MultiResolutionIterators), (WordTokenizers), (InternedStrings)}};
+			{(CorpusLoaders) <- {(MultiResolutionIterators), (InternedStrings), (WordTokenizers)}};
+			(TextAnalysis) <- (WordTokenizers);
+			
 			(DataDeps) <- {(HTTP), (SHA)};
 			(DataDeps) <-[supports] (MD5);
 			
@@ -422,7 +426,7 @@
 		\pkg[mypackage]{InternedStrings};
 		\pkg[]{Strs};
 		\pkg[]{CSV};
-		
+		\pkg[]{TextAnalysis};
 		
 		\pkg[mypackage]{WordTokenizers};
 		\pkg{RevTok};
@@ -430,7 +434,8 @@
 		
 		\graph{
 			(researchcode) <- {(CorpusLoaders)};
-			{(CorpusLoaders) <- {(DataDeps), (MultiResolutionIterators), (WordTokenizers), (InternedStrings)}};
+			{(CorpusLoaders) <- {(DataDeps), (MultiResolutionIterators), (InternedStrings), (WordTokenizers)}};
+			(TextAnalysis) <- (WordTokenizers);
 			(WordTokenizers) <-[supports] (RevTok);
 			(InternedStrings) <-> [supports] (Strs);
 			(InternedStrings) ->[supports] (CSV);
@@ -455,13 +460,13 @@
 	\begin{easylist}[itemize]
 		@ Instructions in the \alert{README.md} \note{I.e. I am not}
 		@@ So how does your CI work out? 
-		\pause
+		%\pause
 		@ Sticking a \inlinecode{download} command, in \inlinecode{build.jl} \note{or elsewhere in code}
 		@@ So it gets downloaded even if not used? \note{This is particularly problematic for packages that provide access to multiple datasets.}
-		\pause
+		%\pause
 		@ Just putting it in the \alert{git repo}
 		@@ I am glad it isn't too large for git.
-		\pause
+		%\pause
 	\end{easylist}
 	\vfill
 	\centering
@@ -646,28 +651,6 @@
 
 
 
-\begin{frame}[fragile]{DataDep Registration Block}
-	\small
-	\ttfamily
-	\color{Blue}
-	register(DataDep("DataDepName",\\
-	\color{Green}
-	"""\\
-	Free text message displayed to user before download.\\
-	Use to give credit, and tell people about licensing.\\
-	Or other messages.\\
-	""",\\
-	\color{Orange}
-	"http:// Download URL",\\
-	\color{Red}
-	"file hash (will be printed if not provided)";\\
-	\color{Purple}
-	post\_fetch\_method = function to run on downloaded files\\
-	\color{Blue}
-	))
-	\vfill\vfill\vfill\null
-\end{frame}
-
 
 \begin{frame}[fragile]{ Registration Block Example}
 	\small
@@ -760,7 +743,10 @@
 \end{frame}
 
 
-
+\begin{frame}{We are now going to take a very short break}
+	\centering
+	\includegraphics[width=\textwidth]{break}	
+\end{frame}
 
 \focusslide{datadepsgenerators}{DataDepsGenerators}
 
@@ -818,20 +804,6 @@
 	\end{columns}
 \end{frame}
 
-\begin{frame}[fragile]{Many datasets have multiple possible APIs}
-	For example something that points at \alert{Figshare}\\
-	{\small \inlinecode{generate("https://doi.org/10.23640/07243.5525476.v1")}}
-	\vfill
-	\begin{easylist}[enumerate]
-		@ DataCite API
-		@ JSON-LD DOI Content Negotiation service
-		@ It is a URL
-		@ Embedded JSON-LD element
-		@ FigShare API
-	\end{easylist}
-	Many others will be tried and will error out
-	\vfill
-\end{frame}
 
 \begin{frame}[fragile]{Many datasets have multiple possible APIs}
 	For example something points at \alert{DataDryad}\\
@@ -847,7 +819,6 @@
 		@ DataDryad Webscraper
 		@ DataOneV1 API
 	\end{easylist}
-	Many others will be tried and will error out
 	\vfill
 \end{frame}
 
@@ -914,15 +885,11 @@
 %\end{tikzpicture}}
 %\end{frame}
 
-\begin{frame}{We are now going to take a very short break}
-	\centering
-	\includegraphics[width=\textwidth]{break}	
-\end{frame}
+
 
 \focusslide{corpusloaders}{CorpusLoaders}
 \begin{frame}[fragile]{CorpusLoaders.jl}
 	\begin{easylist}[itemize]
-		@ In it itself.
 		@ Just a couple of \emph{parsers} for a few formats
 		@@ I'ld like to have more.
 		@ and the DataDep \emph{registrations} for the corresponding data.
@@ -945,7 +912,7 @@
 		@ Code ported from existing sources
 		@@ Especially \emph{NLTK} \note{but NLTK stole them first}
 		@@ Most of these are Regex scripts that have been \emph{kicking around} for a long time. \note{ported several times to different languages}
-		@ Uses \emph{metaprogramming} to generate julia AST from \emph{sedscripts}
+		@ Uses \emph{metaprogramming} to generate julia AST from \emph{sed~scripts}
 	\end{easylist}
 	
 	\note{Honestly I stole stuff left, right and center for this.}
@@ -1090,6 +1057,30 @@
 \againframe{bigpicture}
 
 \section{Appendix / Spare Rants}
+
+
+\begin{frame}[fragile]{DataDep Registration Block}
+	\small
+	\ttfamily
+	\color{Blue}
+	register(DataDep("DataDepName",\\
+	\color{Green}
+	"""\\
+	Free text message displayed to user before download.\\
+	Use to give credit, and tell people about licensing.\\
+	Or other messages.\\
+	""",\\
+	\color{Orange}
+	"http:// Download URL",\\
+	\color{Red}
+	"file hash (will be printed if not provided)";\\
+	\color{Purple}
+	post\_fetch\_method = function to run on downloaded files\\
+	\color{Blue}
+	))
+	\vfill\vfill\vfill\null
+\end{frame}
+
 
 \begin{frame}[fragile]{How does DataDeps handle files of any type?}
 	\centering
@@ -1329,5 +1320,19 @@
 	\includegraphics[height=0.8\pageheight]{map}
 \end{frame}
 
+
+\begin{frame}[fragile]{Many datasets have multiple possible APIs}
+	For example something that points at \alert{Figshare}\\
+	{\small \inlinecode{generate("https://doi.org/10.23640/07243.5525476.v1")}}
+	\vfill
+	\begin{easylist}[enumerate]
+		@ DataCite API
+		@ JSON-LD DOI Content Negotiation service
+		@ Embedded JSON-LD element
+		@ FigShare API
+	\end{easylist}
+	Many others will be tried and will error out
+	\vfill
+\end{frame}
 
 \end{document}
