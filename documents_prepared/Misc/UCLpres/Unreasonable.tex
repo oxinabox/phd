@@ -33,7 +33,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage{pgfplots}
 \usepackage{pgfplotstable}
-
+\usepackage{booktabs}
 \pgfplotsset{
 	barbase/.style={
 		ybar,ymajorgrids, 
@@ -76,18 +76,15 @@
 	align=center,
 	node distance=30mm, sibling distance=25mm, level distance=40mm,
 	every edge/.append style = {thick},
-	package/.style={draw, circle, very thick},
-	mypackage/.style={package, blue},
-	repo/.style={draw, very thick, purple},
-	info/.style={Green},
-	supports/.style={dotted, very thick},
-	indirect/.style={decoration={snake}, decorate, very thick, purple}
+	word/.style= {
+		bluewrite,
+		font=\itshape,
+	},
+	layer/.style= {
+		rectangle, 
+		draw
+	},
 }
-
-\newcommand{\pkg}[2][]{\tikzset{#2/.append style={}}; \node[#1,package, #2](#2) {#2.jl}}
-\newcommand{\repo}[2][]{\node[#1,repo](#2) {#2}}
-
-
 
 
 
@@ -238,6 +235,43 @@
 	\vfill
 \end{frame}
 
+\begin{frame}{Analogy Algebra is a bit silly}
+	\begin{columns}
+		\begin{column}{0.5\textwidth}
+			\resizebox{\textwidth}{!}{\begin{tikzpicture}
+			\node(a) {$\i C_{aunt}$};
+			\node(b)[above right = of a] {$\i C_{uncle}$};
+			\node(c)[below right = of a] {$\i C_{queen}$};
+			\node(d)[above right = of c] {$\i C_{king}$};
+			
+			\draw[->] (b) -- (a) node[labe,midway]{$\i C_{aunt}-\i C_{uncle}$};
+			\draw[->] (d) -- (c) node[labe,midway]{$\i C_{queen}-\i C_{king}$};
+			\end{tikzpicture}}			
+		\end{column}
+		\begin{column}{0.5\textwidth}
+			\citehere{gladkova2016analogy}\\
+			\vspace{1cm}
+			\emph{40 subcategories} of knowledge.
+		\end{column}
+	\end{columns}
+	
+	\countertitle{Notice: it is a \textbf{sufficient} condition for good separability with consistency}
+\end{frame}
+
+\begin{frame}{Two (overlapping) types of problems}
+	\vfill
+	{\Huge 
+	Natural Language Generation
+	}\\
+%	Decoding RNNs\\
+	\vfill
+	\vfill
+	{\color{bluewrite} \Huge
+	Natural Language Understanding
+	}
+%	Encoding RNNs
+	\countertitle{We're interested in the latter}
+\end{frame}
 
 \begin{frame}{You can just add up word embeddings and uses it as a representation}
 	\begin{block}{\normalsize \citehere{acl2018bleuopposedmeaning}}
@@ -254,9 +288,17 @@
 	\end{block}
 \end{frame}
 
+\begin{frame}{Some reasons why lexical semantics is capturing what looks like sentence semantics.}
+	\cite{ac2018probingsentencevectors}\\
+	Most words have same \emph{temporal tense} as sentence.\\
+	\emph{Nouns and adjectives} both tend to mark \emph{quantities} of same things.\\
+	The presence of some words \emph{(Why, Where, etc)} strongly hints at the \emph{structure of the sentence}.
+	\countertitle{Redundant encoding of information in the words}
+\end{frame}
+
 \begin{frame}{Content is king}
 	\vspace{-0.5cm}
-	Considering further \cite{ac2018probingsentencevectors}
+	Considering further \cite{ac2018probingsentencevectors}\\
 	\vspace{0.5cm}
 	\only<1>{\begin{itemize}
 			\item They looked at $3 \times 8  + 5$ models \note{8 different training varients of 3 types of sophisticaed models, plus 5 baselines}
@@ -434,6 +476,11 @@
 	\vfill
 \end{frame}
 
+\begin{frame}{We are now going to take a very short break}
+	\centering
+	\includegraphics[width=\textwidth]{break}	
+\end{frame}
+
 
 \pgfplotstableread[col sep=comma,header=has colnames]{data/selection_len_scores.csv}{\sellenscores}
 \begin{frame}[fragile]{Bag of words information is not lost in sums of word embeddings}
@@ -441,7 +488,7 @@
 		\begin{itemize}
 			\item A bag of words captures all unigram information in a sentence/document etc
 			\item A greedy method can (mostly) recover the BOW from a SOWE\\
-			\citehere{White2015BOWgen}\vspace{-0.5cm}
+			\citehere{White2015BOWgen}
 			\begin{enumerate}
 				\item Greedily add nearest word to remaining the SOWE to bag
 				\item Check each word in bag and swap it for a better one
@@ -615,7 +662,7 @@
 	xticklabel style={rotate=90},
 	xtick = data,
 	%yticklabel={$\mathsf{\pgfmathprintnumber{\tick}}$\small\%},
-	%nodes near coords={$\mathsf{\pgfmathprintnumber[precision=2]{\pgfplotspointmeta}}$},
+	nodes near coords={\small \color{brownwrite} $\mathsf{\pgfmathprintnumber[precision=3]{\pgfplotspointmeta}}$},
 	]
 	
 	\addplot[style={top color=Orange, bottom color=Blue, draw=none, mark=none}] table[x expr=\coordindex, y=Kendall]{\compositeCaptionEval};
@@ -640,8 +687,6 @@
 %	
 	\countertitle{Captioning quality can be assessed on \textbf{fluency} and on \textbf{adequacy}}
 \end{frame}
-
-
 
 
 
@@ -710,7 +755,6 @@
 		\item Is it \emph{likely} (or \emph{sensible}) based on world knowledge?
 		\item Was it following some standard transform, like just swapping to proper nouns?
 	\end{itemize}
-	\pause
 \end{frame}
 
 \begin{frame}{You can recover most probable sentence order from bag of words}
@@ -803,6 +847,252 @@
 
 
 
+\begin{frame}{RNN input module}
+	\resizebox{0.95\textwidth}{!}{\begin{tikzpicture}
+	\node (hiddenoutput)[layer] at (0,0) {ReLU};
+	\node (output)[dotted, layer, above=1 of hiddenoutput] {Output Module};
+	\draw[->] (hiddenoutput) to (output);
+	
+	\node (GRU1)[layer, below = 1.5 of hiddenoutput]{GRU};
+	
+	\foreach[count=\i from 1] \j in {2,...,5}
+	{
+		\node (GRU\j)[layer, left = of GRU\i]{GRU};
+		\draw[->] (GRU\j) to (GRU\i);
+	}
+	
+	\foreach[count=\i from 1] \word in {$\langle EOS \rangle$, green, ish, blue, light}
+	{
+		\node (emb\i)[layer, below = 1 of GRU\i]  {Embedding};
+		\node (word\i)[word, below = 1.5 of emb\i]{\word};
+		\draw[->] (word\i) to  (emb\i);
+		\draw[->] (emb\i) to (GRU\i);
+		\node[draw,dashed,fit= (emb\i)  (word\i)  (GRU\i)] {};
+	}
+	
+	
+	\draw[->] (GRU1) to (hiddenoutput);
+	\end{tikzpicture}}
+\end{frame}
+
+\begin{frame}{CNN input module}
+	\resizebox{!}{0.8\pageheight}{\begin{tikzpicture}
+
+\node (GRU1)[]{};
+
+\foreach[count=\i from 1] \j in {2,...,5}
+{
+	\node (GRU\j)[left = 3 of GRU\i]{};
+}
+
+\node (hstack)[layer, above= 0.5 of GRU3, xshift=1cm]{stack into grid};
+
+\foreach[count=\i from 1] \word in {green, ish, blue, light}
+{
+	\node (emb\i)[layer, below = 0.5 of GRU\i]  {Embedding};
+	\node (word\i)[word, below = 0.5 of emb\i]{\word};
+	\draw[->] (word\i) to  (emb\i);
+	\draw[->] (emb\i) to (hstack);
+}
+
+\node (conv)[layer, above= 0.5 of hstack]{2D Convolution};
+\node (innerconv)[layer, above= 0.5 of conv]{ReLU};
+\node (pool)[layer, above= 0.5 of innerconv]{MaxPooling};
+\node (hiddenoutput)[layer, above= 0.5 of pool] {ReLU};
+\node (output)[dotted, layer, above=1 of hiddenoutput] {Output Module};
+\draw[->] (hstack) to (conv);
+\draw[->] (conv) to (innerconv);
+\draw[->] (innerconv) to (pool);
+\draw[->] (pool) to (hiddenoutput);
+\draw[->] (hiddenoutput) to (output);
+
+%	\draw[->] (hstack) to (hiddenoutput);
+%	\draw[->] (hiddenoutput) to (output);
+
+\end{tikzpicture}}
+\end{frame}
+
+\begin{frame}{SOWE input module}
+	\resizebox{0.95\textwidth}{!}{\begin{tikzpicture}
+
+\node (GRU1)[]{};
+
+\foreach[count=\i from 1] \j in {2,...,5}
+{
+	\node (GRU\j)[left = 3 of GRU\i]{};
+}
+
+\node (sum)[layer, above= 0.5 of GRU3, xshift=1cm]{$\sum$};
+
+\foreach[count=\i from 1] \word in {green, ish, blue, light}
+{
+	\node (emb\i)[layer, below = 0.5 of GRU\i]  {Embedding};
+	\node (word\i)[word, below = 0.5 of emb\i]{\word};
+	\draw[->] (word\i) to  (emb\i);
+	\draw[->] (emb\i) to (sum);
+}
+
+\node (hiddenoutput)[layer, above=1 of sum] {ReLU};
+\node (output)[dotted, layer, above=1 of hiddenoutput] {Output Module};
+\draw[->] (sum) to (hiddenoutput);
+\draw[->] (hiddenoutput) to (output);
+
+\end{tikzpicture}}
+\end{frame}
+
+
+\newcommand{\distfigs}[2]{
+	\begin{tikzpicture}%
+	\foreach[count=\mdlii from 0] \mdlfile/\mdlname in #1 {%
+		\node at (3.1*\mdlii cm, -1cm) {\sffamily \mdlname};%
+		\foreach[count=\colii from 0] \colorname in #2 {%
+			\xdef\topy{1.1*\colii}
+			\node at (3.1*\mdlii cm, \topy cm) %
+			{\includegraphics[height=0.95cm]{%
+					figs/demo/dist/\mdlfile/\colorname}%
+			};%
+			
+		}%
+		\xdef\topy{\topy+1}
+		\node at (3.1*\mdlii cm, -1cm) {\sffamily \mdlname};%
+	%	\node at (3.1*\mdlii cm, \topy) {\sffamily \mdlname};%
+	}%
+	%
+	
+	%	\draw[dashed] (1.555, -1.1) -- (1.555, \topy);%
+	%	\draw[lastline] (3*1.555,-1.1) -- (3*1.555, \topy);%
+	%	\draw[dashed,lastline] (5*1.555,-1.1) -- (5*1.555, \topy);%
+	%
+	\end{tikzpicture}%
+}%
+
+\begin{frame}{Some example outputs from the model}
+		\resizebox{1.1\textwidth}{!}{
+		\distfigs{{Direct/{Training Data}, %Direct-smoothed/{\shortstack{Operational \\ Upper-Bound}},
+	    SOWE/SOWE,
+	    %CNN/CNN,
+	    RNN/RNN}}{{brownish green,greenish brown,greenish,grey}}
+	}
+%	\countertitle{HSV color channels given the name are  conditionally independent}
+\end{frame}
+
+
+
+
+\pgfplotstableset{
+	col sep=comma,
+	header=has colnames,
+	column type={c},
+	ignore chars={"},
+	clear infinite,
+	empty cells with={--},
+	every head row/.style={before row=\toprule,	after row=\midrule},
+	columns/method/.style={reset styles, string type, column name=Method},
+}
+\pgfplotstableset{distresults/.append style={%
+		create on use/perpstd/.style={
+			create col/expr={\thisrow{perp}/(256*256*256)},
+		},
+	},%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	extrapodistresults/.append style={
+		%%		
+		create on use/xperpstd/.style={
+			create col/expr={\thisrow{extrapolatingperp}/(256*256*256)},
+		},
+		create on use/nxperpstd/.style={
+			create col/expr={\thisrow{nonextrapolatingperp}/(256*256*256)},
+		},
+	}
+}
+
+%%%%%%%%%% Full
+
+\pgfplotsset{perpplot/.style = {
+barbase,
+xticklabels = {{$\approx$ \color{bluewrite} UBound}, SOWE, CNN, RNN},
+ylabel = {\shortstack{Perplexity \\(out of $\approx 16\times 10^6$)}},%{$\frac{PP}{256^3}$\\},
+ymin=0,% ymax=0.4,
+%xticklabel style={rotate=90},
+xtick = data,
+yticklabels={,,},
+ytick scale label code/.code={},
+%yticklabel={$\mathsf{\pgfmathprintnumber{\tick}}$\small\%},
+nodes near coords={\small $\mathsf{\pgfmathprintnumber[precision=3]{\pgfplotspointmeta}}$}
+}}
+
+\begin{frame}{Full Distribution Estimation}
+	%	\resizebox{\columnwidth}{!}{
+	%\pgfplotstabletypeset[distresults,
+	%]{data/regular/res_dist_full.csv}
+	%	}
+	\pgfplotstableread[distresults]{data/regular/res_dist_full.csv}{\fulldistest}
+	
+	\begin{tikzpicture}
+	\begin{axis}[perpplot]
+	
+	\addplot[style={top color=Blue, bottom color=Orange, draw=none, mark=none}] table[x expr=\coordindex, y=perp]{\fulldistest};
+	
+	\end{axis}
+	\end{tikzpicture}
+	\countertitle{Lower perplexity is better}
+\end{frame}
+
+
+
+\begin{frame}{Order Distribution Estimation}
+	\pgfplotstableread[distresults
+	]{data/regular/res_dist_ord.csv}{\orddistest}
+	
+	\begin{tikzpicture}
+	\begin{axis}[perpplot]
+	
+	\addplot[style={top color=Blue, bottom color=Orange, draw=none, mark=none}] table[x expr=\coordindex, y=perp]{\orddistest};
+	
+	\end{axis}
+	\end{tikzpicture}
+	\countertitle{Lower perplexity is better}
+\end{frame}
+
+
+\begin{frame}{Unseen Combinations of Terms Dist Est}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstableread[extrapodistresults,
+	]{data/regular/res_dist_extrapo.csv}{\extrapodistest}
+	%	}
+		\begin{tikzpicture}
+	\begin{axis}[perpplot,
+	xticklabels = {SOWE, CNN, RNN},
+	]
+	
+	\addplot[style={top color=Blue, bottom color=Orange, draw=none, mark=none}] table[x expr=\coordindex, y=extrapolatingperp]{\extrapodistest};
+	
+	\end{axis}
+	\end{tikzpicture}
+	\countertitle{Lower perplexity is better}
+\end{frame}
+
+\begin{frame}{OOV model outputs}
+	\resizebox{\textwidth}{!}{
+		\distfigs{{%
+				SOWE/SOWE,
+				CNN/CNN,
+				RNN/RNN}}{{%
+			%	brownish 1Green,
+		%	bluish gray,
+		1Brown,
+		1Green,
+		1Purple,
+		1Gray%	
+		}}
+	}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
 
 \begin{frame}{Some might say the problems we are assessing on are not sufficiently difficult}
 	\note{But that is a bit of a meaningly statement}
@@ -814,6 +1104,7 @@
 \end{frame}
 
 \begin{frame}{Maybe we are not really doing natural language understanding}
+	\note{I like to say Deep Learning for Shallow Understanding. But shallow understanding is really useful}
 	\begin{itemize}
 		\item Often NLP is an \emph{engineering} discipline
 		\item and Computational Linguistics is \emph{maybe a scientific} one
