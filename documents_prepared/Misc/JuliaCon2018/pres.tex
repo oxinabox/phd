@@ -122,7 +122,7 @@
 
 
 
-\begin{frame}{Vabdewakke's 6 Degree's of Replicability}
+\begin{frame}{Vandewalle's 6 Degree's of Replicability}
 	\begin{enumerate}
 		%\item 0: The results cannot be reproduced by an independent researcher.
 		
@@ -134,7 +134,7 @@
 		
 		\item The results can be easily reproduced with \alert{at most \textbf{15 minutes} of user effort}, requiring some proprietary source packages (MATLAB, etc.).
 		
-		\item The results can be easily reproduced  with \alert{at most \textbf{15 min} of user effort}, requiring only standard, freely available tools (C compiler, etc.).		
+		\item The results can be easily reproduced  with \alert{at most \textbf{15 minutes} of user effort}, requiring only standard, freely available tools (C compiler, etc.).		
 	\end{enumerate}
 	\note{Vabdewakke actual has a rating zero for "no, just no can not reproduce."}
 	\note{What is the key determining factor here? User effort. How do we get down to 15 minutes of user effort?}
@@ -187,7 +187,8 @@
 	\resizebox{\textwidth}{!}{\begin{tikzpicture}[layered layout, grow'=up,]
 	\node[nudge=(left:13mm)](researchcode){Research Code};
 	
-	\pkg[mypackage, nudge=(right:30mm)]{CorpusLoaders};
+	\pkg[mypackage, nudge=(right:20mm)]{CorpusLoaders};
+	
 	
 	\pkg[mypackage]{DataDeps};
 	\pkg[mypackage]{DataDepsGenerators};
@@ -200,12 +201,13 @@
 	\pkg[mypackage]{InternedStrings};
 	\pkg[]{Strs};
 	\pkg[]{CSV};
+	\pkg[]{TextAnalysis};
 	
 	
 	\pkg{MLDatasets};
 	%	\pkg[mypackage]{ExpectationStubs};
 	\pkg{HTTP};
-	\pkg[nudge=(right:25mm)]{WordNet};
+	\pkg[nudge=(right:15mm)]{WordNet};
 	\pkg[mypackage, nudge=(right:4mm)]{Embeddings};
 	
 	
@@ -231,14 +233,14 @@
 	\repo{FigShare};
 	
 	
-	\node[sibling distance=0mm](gap){};
 	
 	\graph{
 		(researchcode) <- {(MLDatasets), (Embeddings), (WordNet), (CorpusLoaders)} <- (DataDeps);
 		(DataDeps) ->[bend left, looseness=0, in=167, out=0] (researchcode);
 		
 		
-		{(CorpusLoaders) <- {(MultiResolutionIterators), (WordTokenizers), (InternedStrings)}};
+		{(CorpusLoaders) <- {(MultiResolutionIterators), (InternedStrings), (WordTokenizers)}};
+		(TextAnalysis) <- (WordTokenizers);
 		(DataDeps) <- {(HTTP), (SHA)};
 		(DataDeps) <-[supports] (MD5);
 		
@@ -281,7 +283,7 @@
 		\pkg[mypackage]{InternedStrings};
 		\pkg[]{Strs};
 		\pkg[]{CSV};
-		
+		\pkg[]{TextAnalysis};
 		
 		\pkg{MLDatasets};
 		%	\pkg[mypackage]{ExpectationStubs};
@@ -300,7 +302,9 @@
 			(DataDeps) ->[bend left, looseness=0, in=167, out=0] (researchcode);
 			
 			
-			{(CorpusLoaders) <- {(MultiResolutionIterators), (WordTokenizers), (InternedStrings)}};
+			{(CorpusLoaders) <- {(MultiResolutionIterators), (InternedStrings), (WordTokenizers)}};
+			(TextAnalysis) <- (WordTokenizers);
+			
 			(DataDeps) <- {(HTTP), (SHA)};
 			(DataDeps) <-[supports] (MD5);
 			
@@ -422,7 +426,7 @@
 		\pkg[mypackage]{InternedStrings};
 		\pkg[]{Strs};
 		\pkg[]{CSV};
-		
+		\pkg[]{TextAnalysis};
 		
 		\pkg[mypackage]{WordTokenizers};
 		\pkg{RevTok};
@@ -430,7 +434,8 @@
 		
 		\graph{
 			(researchcode) <- {(CorpusLoaders)};
-			{(CorpusLoaders) <- {(DataDeps), (MultiResolutionIterators), (WordTokenizers), (InternedStrings)}};
+			{(CorpusLoaders) <- {(DataDeps), (MultiResolutionIterators), (InternedStrings), (WordTokenizers)}};
+			(TextAnalysis) <- (WordTokenizers);
 			(WordTokenizers) <-[supports] (RevTok);
 			(InternedStrings) <-> [supports] (Strs);
 			(InternedStrings) ->[supports] (CSV);
@@ -455,13 +460,13 @@
 	\begin{easylist}[itemize]
 		@ Instructions in the \alert{README.md} \note{I.e. I am not}
 		@@ So how does your CI work out? 
-		\pause
+		%\pause
 		@ Sticking a \inlinecode{download} command, in \inlinecode{build.jl} \note{or elsewhere in code}
 		@@ So it gets downloaded even if not used? \note{This is particularly problematic for packages that provide access to multiple datasets.}
-		\pause
+		%\pause
 		@ Just putting it in the \alert{git repo}
 		@@ I am glad it isn't too large for git.
-		\pause
+		%\pause
 	\end{easylist}
 	\vfill
 	\centering
@@ -481,22 +486,22 @@
 	\begin{description}
 		\item[Storage Location:] where will I put it?
 		\item[Redistribution:] am I allowed to distribute this?
-		\item[Replication:] how do I makes sure they get the same data I used?
+		\item[Replication:] how do I ensure they get the same data I used?
 	\end{description}
 \end{frame}
 
-\begin{frame}[fragile]{3 Key \questionanswer{} about Data: \\\#1 Storage Location}
+\begin{frame}<2->[fragile]{3 Key \questionanswer{} about Data: \\\#1 Storage Location}
 	\begin{easylist}[itemize]
 		@ \emph{Where do I put it?} Should it be on the local disk (small) or the network file-store (slow)? \label{itm:where}
 		\only<2>{@@ \color{bluewrite} Anywhere on the DataDeps Load Path will work}
 		@ If I \emph{move it}, am I going to have to reconfigure things?
 		\only<2>{@@ \color{bluewrite} Not if you are using a datadep path}
-		@ What if I put it all in the \emph{git repo}?
-		\only<2>{@@ \color{bluewrite} git does not like large binary files.\\ 50KB \inlinecode{.csv} is ok; 50MB \inlinecode{.jld} is not.}
+		%@ What if I put it all in the \emph{git repo}?
+		%\only<2>{@@ \color{bluewrite} git does not like large binary files.\\ 50KB \inlinecode{.csv} is ok; 50MB \inlinecode{.jld} is not.}
 	\end{easylist}
 \end{frame}
 
-\begin{frame}[fragile]{3 Key \questionanswer{} about Data: \\\#2 Redistribution}
+\begin{frame}<2->[fragile]{3 Key \questionanswer{} about Data: \\\#2 Redistribution}
 
 	\begin{easylist}[itemize]
 		 @ I don't \emph{own} this data
@@ -509,7 +514,7 @@
 	\vfill
 \end{frame}
 
-\begin{frame}[fragile]{3 Key \questionanswer{} about Data: \\\#3 Replication}
+\begin{frame}<2->[fragile]{3 Key \questionanswer{} about Data: \\\#3 Replication}
 	\begin{easylist}[itemize]
 		@ How can I be sure that someone running my code has the \emph{same data}?
 		\only<2>{@@ \color{bluewrite} Make automatic data fetching part of the code}
@@ -524,8 +529,7 @@
 	\structure{Developer/Researcher}
 	\begin{easylist}[itemize]
 		@ Writes a DataDep \emph{registration block} in the \inlinecode{__init__()} function.
-		@ uses \datadep{Name/file.ext} anywhere they would want a path to be input
-	\end{easylist}
+		@ uses \datadep{Name/file.ext} anywhere they would use a path to a file.	\end{easylist}
 	\vfill
 	\structure{User/Replicater}
 	\begin{easylist}[itemize]
@@ -574,27 +578,11 @@
 	}
 \end{frame}
 
-\begin{frame}[fragile]{\datadep{Census 2018/populations.csv} \\ A path you can trust}
-	\begin{easylist}[itemize]
-		@ Always resolves to an absolute path to that file
-		\note{at runtime}
-		@ Even if that means it has to download it first
-		@ But before resorting to downloading checks a large number of places
-		@@  \inlinecode{<PKG>/deps/data}, 
-		@@ \inlinecode{~/.julia/datadeps},
-		@@ \inlinecode{/usr/share/datadeps}, etc.
-		\note{this is the DataDeps load path}
-		\note{The places to check can be configured of course}
-		@ You know that if you use a datadep path it will resolve to a file that exists.
-	\end{easylist}
-	\vspace{1cm}
-	Note that every \emph{datadep} corresponds to a \emph{folder}.
-\end{frame}
 
 \begin{frame}[fragile]{Automatic fetching is really convenient}
 	Some things that have happened to me lately:
 	\begin{easylist}[itemize]
-		@ Supervisor tells me shared workstation hard-drive is dangerously full
+		@ Supervisor tells me that the shared workstation hard-drive is dangerously full
 		\only<1>{@@ I \emph{delete all my datadeps folders}}
 		\only<1>{@@ knowing that the \emph{ones I am still using} will be fetched as required.}
 		\pause
@@ -602,7 +590,7 @@
 		\only<2>{@@ Literally, I just cloned the \emph{project repo}}
 		\only<2>{@@ knowing the data will \emph{make its own way} there}
 		\pause
-		@ I realized that I've \emph{modified} one of the data \emph{files by mistake}
+		@ I realized that I've \emph{modified} one of the data  files \emph{by mistake}
 		\only<3>{@@ \inlinecode{rm(datadep"Foo", recursive=true)}}
 		@@ Next time it is needed a \emph{new copy} will be downloaded.
 	\end{easylist}
@@ -624,8 +612,8 @@
 			\begin{onlyenv}<2> 
 				\structure{Static\\}
 				No automatic redownloading\\
-				\vspace{1cm}
-				Can't check file hash\\
+				when server version  changes.
+				\note{that is kinda impossible to detect without doing the download}
 				%\vspace{1cm}
 				%\inlinecode{ManualDataDep}\\ or hacks\\
 			\end{onlyenv}
@@ -662,28 +650,6 @@
 
 
 
-
-\begin{frame}[fragile]{DataDep Registration Block}
-	\small
-	\ttfamily
-	\color{Blue}
-	register(DataDep("DataDepName",\\
-	\color{Green}
-	"""\\
-	Free text message displayed to user before download.\\
-	Use to give credit, and tell people about licensing.\\
-	Or other messages.\\
-	""",\\
-	\color{Orange}
-	"http:// Download URL",\\
-	\color{Red}
-	"file hash (will be printed if not provided)";\\
-	\color{Purple}
-	post\_fetch\_method = function to run on downloaded files\\
-	\color{Blue}
-	))
-	\vfill\vfill\vfill\null
-\end{frame}
 
 
 \begin{frame}[fragile]{ Registration Block Example}
@@ -751,13 +717,13 @@
 \begin{frame}[fragile]{Handling private data, with specific \inlinecode{fetch_method} method}
 	\small
 	\ttfamily
-	\color{Aquamarine}
+	\color{Aquamarine!50!black}
 	using HTTP, OAUTH2\\
 	const appid="ProjectXYZ:apps:datadeps:support"
 	\color{Magenta}\\
 	function authed\_download(url, local)\\
 	\verb!    !authtok = getauthtok("https://evil.eg.au/auth"\\
-	\verb!            !ENV["USER\_ID"], appid, !ENV["APPSECRET"])\\
+	\verb!            !ENV["USER\_ID"], appid, ENV["APPSECRET"])\\
 	\verb!    HTTP.download(url, local, ["Authorization"=>authtok])!\\
 	end\\
 	\vspace{0.5em}
@@ -777,7 +743,10 @@
 \end{frame}
 
 
-
+\begin{frame}{We are now going to take a very short break}
+	\centering
+	\includegraphics[width=\textwidth]{break}	
+\end{frame}
 
 \focusslide{datadepsgenerators}{DataDepsGenerators}
 
@@ -787,7 +756,7 @@
 		@ But it still has to be done at once.
 		@ Writing a registration block normally means \alert{\mbox{copy-and-pasting}} from a website.
 		@@ Even copy pasting a dozen URLs is annoying
-		@@ Enough information for \alert{data providence} needs more
+		@@ Enough information for \alert{data provenance} needs more
 	\end{easylist}
 \end{frame}
 
@@ -835,20 +804,6 @@
 	\end{columns}
 \end{frame}
 
-\begin{frame}[fragile]{Many datasets have multiple possible APIs}
-	For example something that points at \alert{Figshare}\\
-	{\small \inlinecode{generate("https://doi.org/10.23640/07243.5525476.v1")}}
-	\vfill
-	\begin{easylist}[enumerate]
-		@ DataCite API
-		@ JSON-LD DOI Content Negotiation service
-		@ It is a URL
-		@ Embedded JSON-LD element
-		@ FigShare API
-	\end{easylist}
-	Many others will be tried and will error out
-	\vfill
-\end{frame}
 
 \begin{frame}[fragile]{Many datasets have multiple possible APIs}
 	For example something points at \alert{DataDryad}\\
@@ -864,7 +819,6 @@
 		@ DataDryad Webscraper
 		@ DataOneV1 API
 	\end{easylist}
-	Many others will be tried and will error out
 	\vfill
 \end{frame}
 
@@ -931,15 +885,11 @@
 %\end{tikzpicture}}
 %\end{frame}
 
-\begin{frame}{We are now going to take a very short break}
-	\centering
-	\includegraphics[width=\textwidth]{break}	
-\end{frame}
+
 
 \focusslide{corpusloaders}{CorpusLoaders}
 \begin{frame}[fragile]{CorpusLoaders.jl}
 	\begin{easylist}[itemize]
-		@ In it itself.
 		@ Just a couple of \emph{parsers} for a few formats
 		@@ I'ld like to have more.
 		@ and the DataDep \emph{registrations} for the corresponding data.
@@ -962,7 +912,7 @@
 		@ Code ported from existing sources
 		@@ Especially \emph{NLTK} \note{but NLTK stole them first}
 		@@ Most of these are Regex scripts that have been \emph{kicking around} for a long time. \note{ported several times to different languages}
-		@ Uses \emph{metaprogramming} to generate julia AST from \emph{sedscripts}
+		@ Uses \emph{metaprogramming} to generate julia AST from \emph{sed~scripts}
 	\end{easylist}
 	
 	\note{Honestly I stole stuff left, right and center for this.}
@@ -1079,6 +1029,24 @@
 \end{frame}
 
 
+
+\begin{frame}[fragile]{What have we learned?}
+	\begin{easylist}[itemize]
+	@ Data is \emph{important}
+	@ Simplify your \emph{data management} with DataDeps.jl
+	@ Simplify your \emph{registration block definitions} with DataDepsGenerators.jl
+	\pause
+	\vspace{1cm}
+	@ Data is \emph{useful} for NLP
+	@ Packages exist to make working with \emph{NLP shaped data} easier.
+	\end{easylist}
+\end{frame}
+
+\againframe{bigpicture}
+
+\section{Appendix / Spare Rants}
+
+
 \begin{frame}[fragile]{MultiResolutionIterators.jl}
 	\vspace{1cm}
 	Mix and match \emph{operations} as needed\\
@@ -1093,20 +1061,28 @@
 \end{frame}
 
 
-\begin{frame}[fragile]{What have we learned?}
-	\begin{easylist}[itemize]
-	@ Data is \emph{important}
-	@ Simplify your \emph{data management} with DataDeps.jl
-	@ Simplify your \emph{DataDeps definitions} with DataDepsGenerators.jl
-	\pause
-	@ Data is \emph{useful} for NLP
-	@ Packages exist to make working with \emph{NLP shaped data} easier.
-	\end{easylist}
+\begin{frame}[fragile]{DataDep Registration Block}
+	\small
+	\ttfamily
+	\color{Blue}
+	register(DataDep("DataDepName",\\
+	\color{Green}
+	"""\\
+	Free text message displayed to user before download.\\
+	Use to give credit, and tell people about licensing.\\
+	Or other messages.\\
+	""",\\
+	\color{Orange}
+	"http:// Download URL",\\
+	\color{Red}
+	"file hash (will be printed if not provided)";\\
+	\color{Purple}
+	post\_fetch\_method = function to run on downloaded files\\
+	\color{Blue}
+	))
+	\vfill\vfill\vfill\null
 \end{frame}
 
-\againframe{bigpicture}
-
-\section{Appendix / Spare Rants}
 
 \begin{frame}[fragile]{How does DataDeps handle files of any type?}
 	\centering
@@ -1247,6 +1223,22 @@
 \end{frame}
 
 
+\begin{frame}[fragile]{\datadep{Census 2018/populations.csv} \\ A path you can trust}
+	\begin{easylist}[itemize]
+		@ Always resolves to an absolute path to that file
+		\note{at runtime}
+		@ Even if that means it has to download it first
+		@ But before resorting to downloading checks a large number of places
+		@@  \inlinecode{<PKG>/deps/data}, 
+		@@ \inlinecode{~/.julia/datadeps},
+		@@ \inlinecode{/usr/share/datadeps}, etc.
+		\note{this is the DataDeps load path}
+		\note{The places to check can be configured of course}
+		@ You know that if you use a datadep path it will resolve to a file that exists.
+	\end{easylist}
+	\vspace{1cm}
+	Note that every \emph{datadep} corresponds to a \emph{folder}.
+\end{frame}
 
 
 
@@ -1330,5 +1322,19 @@
 	\includegraphics[height=0.8\pageheight]{map}
 \end{frame}
 
+
+\begin{frame}[fragile]{Many datasets have multiple possible APIs}
+	For example something that points at \alert{Figshare}\\
+	{\small \inlinecode{generate("https://doi.org/10.23640/07243.5525476.v1")}}
+	\vfill
+	\begin{easylist}[enumerate]
+		@ DataCite API
+		@ JSON-LD DOI Content Negotiation service
+		@ Embedded JSON-LD element
+		@ FigShare API
+	\end{easylist}
+	Many others will be tried and will error out
+	\vfill
+\end{frame}
 
 \end{document}
