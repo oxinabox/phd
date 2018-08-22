@@ -22,9 +22,91 @@ As such the error from discarding word order, is less than the error from using 
 Such a more complex model is harder to train, and those practical difficulties can dominate over a small amount of theoretical lack of capacity.
 
 
+There is a complementary aspect to LCOWE and language models.
+While LCOWE have no capacity to handle word order but excellent ability to capture word content;
+Pure language models have no ability to capture word content, but excellent ability to capture word order.
+Language modelling based tasks incorporating a representation stage, such as encoder-decoders \citep{cho-EtAl:2014:EMNLP2014}, do not capture word content as well as LCOWE \citep{ac2018probingsentencevectors}.
+They do however have state of the art order order representation.
+\todo{I would really like to talk about how word embeddings are useful for caption evaluation here.}
+
+Future work in this area would be to enhance an encoder-decode model by concatenating to the shared state a SOWE.
+\todo{REDO this figure with the Embedding layers shown and the SOWE shared representation laye radded}
 
 
 
+\begin{figure}
+\begin{tikzpicture}
+	\numdef{\N}{8}
+	\numdef{\labelwidth}{5.5cm}
+
+	\node(lbl)[text width= \labelwidth] {\textbf{SOWE Enhanced\\RNN Encoder-Decoder}\\%
+		Variable $n$ inputs: $\nv x_t$\\%
+		Variable $m$ outputs $\nn \hat{y}_t$\\%
+		Prompts: $\nv r_t$ (often $y_{t-1}$)
+	};
+	
+	\coordinate[yshift = -3.5cm] (L0) at (lbl.west);
+	\numdef{\NN}{4}
+	\foreach \I[count=\j from 0] in {1,...,\NN}{
+		\ifnumequal{\I}{\NN - 1}{%
+			\node(L\I)[dashed, layer, right = of L\j] {\ldots};
+			\node(w\I)[below = of L\I]{\ldots};
+		}%
+		{
+			\node(L\I)[layer, right = of L\j] {$\mathrm{RU_E}$};
+			\node(w\I)[below = of L\I]{\ifnumequal{\I}{\NN}{$\nv x_n$}{$\nv x_\I$}};
+			\draw[->] (w\I) -- (L\I);
+		}
+	}
+	\foreach \I[count=\j from 1] in {2,...,\NN} {
+		\draw[->] (L\j) edge node[labe] {state} (L\I);
+	}
+	
+	
+	
+	
+	\coordinate[above = 3 of L\NN] (Lp\NN);
+	\numdef{\NP}{\N - 1}
+	\foreach \j in {\NN,...,\NP}{
+		\numdef{\I}{\j+1}
+		\numdef{\y}{\I - \NN}
+		\ifnumequal{\I}{\N-1}{%
+			\node(Lp\I)[dotted, layer, right = of Lp\j] {\ldots};
+			\node(w\I)[below = of Lp\I]{\ldots};
+			\node(y\I)[above = of Lp\I]{\ldots};
+			\draw[->,dotted] (w\I) -- (Lp\I);
+			\draw[->,dotted] (Lp\I) -- (y\I);
+			\path[->,dotted] (L\NN.north) edge node[labe]{$\vv z$} (w\I.south west);
+		}%
+		{
+			\node(Lp\I)[layer, right = of Lp\j] {$\mathrm{RU_D}$};
+			\ifnumequal{\I}{\N}{
+				\node(w\I)[below = of Lp\I]{$[\vv z; \nv r_m]$};
+				\node(y\I)[above = of Lp\I]{$\nn \hat{y}_m$};
+			}
+			{
+				\node(w\I)[below = of Lp\I]{$[\vv z; \nv r_\y]$};
+				\node(y\I)[above = of Lp\I]{$\nn \hat{y}_\y$};
+			}
+			
+			\draw[->] (w\I) -- (Lp\I);
+			\draw[->] (Lp\I) -- (y\I);
+			\path[->] (L\NN.north) edge node[labe]{$\vv z$} (w\I.south west);
+		}
+	}
+	
+	
+	\numdef{\NNp1}{\NN + 1}
+	\foreach \I in {\NNp1,...,\NP} {
+		\numdef{\j}{\I+1}
+		\draw[->] (Lp\I) edge node[labe] {state} (Lp\j);
+	}
+\end{tikzpicture}
+
+\end{figure}
+
+
+\printbib
 
 
 \end{document}
