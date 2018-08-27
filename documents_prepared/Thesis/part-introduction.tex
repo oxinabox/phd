@@ -4,9 +4,7 @@
 
 \begin{document}
 
-
-
-	
+\part {Introduction}
 	
 \chapter{Introduction}
 
@@ -37,7 +35,7 @@ In the work presented this dissertation,
 we find that that even in tasks where it would seem that non-surface information incorporating word-order is required,
 we find in practice other issues cause the more powerful models that are (theoretically) able to handle these situations correctly may them to be never-the-less outperformed.
 This is particularly the case where the theoretical improvement from incorporating this information is small, relative to the practical complexity of the techniques required to leverage it.
-Such a case where where word order matters but the error from ignoring it is small, is particular illustrated in \Cref{ColorDist}.
+Such a case where where word order matters but the error from ignoring it is small, is particular illustrated in \Cref{ColorEst}.
 
 At a high-level the success of these techniques comes down to most human language being easy to understand and simple.
 This expectation of language being easily understood is highlight by \citep{grice1975logic}, which brings the expectation the communication is conducted following the cooperative principle
@@ -61,7 +59,7 @@ they are sufficiently rare that the simplicity of the linear combinations of emb
 
 
 The when applied in sentence/phrase representation contexts,
-such as discussed in \Cref{SentVecMeaning}, and \Cref{ColorDist}
+such as discussed in \Cref{SentVecMeaning}, and \Cref{ColorEst}
 this gives support to the notion that word order is often not a very significant feature in determining meaning.
 It seems clear that word order, and other factors of linguistic structure must contribute to the meaning of the phrase.
 However, our result suggest that it is often in a minor way, and that for many tasks these linear combinations are superior due to their simplicity and effectiveness.
@@ -75,7 +73,7 @@ This highlights the idea that for many  bags of words (which can be reconstructe
 This would explain why SOWE, and BOW, ignorance of word order does not prevent them from being useful representation of sentence.
 
 
-The successes of the sums of word embeddings discussed in \Cref{SentVecMeaning}, and \Cref{ColorDist} leads us to consider other uses of linear combinations for representation.
+The successes of the sums of word embeddings discussed in \Cref{SentVecMeaning}, and \Cref{ColorEst} leads us to consider other uses of linear combinations for representation.
 \Cref{NovelPerspective} and \Cref{RefittingSenses} consider tasks well outside of phrase representation where the order clearly does not matter.
 
 
@@ -97,17 +95,33 @@ TODO: INSERT RNN FAIL PAPER REFERENCE HERE
 
 
 
-\section{Works Within this dissertation}
+\section{Thesis Overview}
+This thesis tackles a number of natural language understanding problems, and in the solutions draws conclusions on the capacity of linear combinations of embeddings.
 
-To break this down by structure,
-we investigate using linear combinations of embeddings to represent:
-\begin{description}
-	\item[Sentences] \Cref{SentVecMeaning}
-	\item[Phrases] \Cref{ColorDist}
-	\item[Word Senses] \Cref{RefittingSenses}
-	\item[Contexts] \Cref{NovelPerspective}
-\end{description}
-With \Cref{BOWgen,SOWE2Sent} providing supporting motivational evidence of the capacity of the models with particular reference to the use in sentences.
+The representation of \emph{sentences} is investigated in \Cref{SentVecMeaning}, through a paraphrase grouping tasks.
+Similarly, the representation of \emph{phrases} is investigated in \Cref{ColorEst} through a color understanding (estimation) task.
+Given the observed properties found by sums of word embeddings,
+this leads to the investigation of if weighted sums of word sense embeddings might better resplendent a particular usage of a word in \Cref{RefittingSenses}.
+The capacity also lends to the investigation of using a sum of word embeddings to represent the contexts of all usages of a named entity, for the point of view character detection task investigated in \Cref{NovelPerspective}.
+We conclude with a complementary pair of works in  \Cref{BOWgen,SOWE2Sent}, which investigate the ability to recover bags of words and sentences, from sums of word embeddings representing sentences.
+These final works illustrate some of the reasons why the linear combinations work so well.
+
+\begin{table}
+	\begin{tabularx}{\textwidth}{llXX}
+		\toprule
+		\textbf{Chapter} & \textbf{Structure} & Task & \textbf{Embeddings}\\
+		\midrule
+		\Cref{SentVecMeaning} & Sentences & Paraphrase grouping &  Word2Vec \citep{mikolovSkip}\\
+		\Cref{ColorEst} & Short Phrases & Color understanding & FastText \citep{bojanowski2016enriching}\\
+		\Cref{RefittingSenses} & Word Senses & Similarity with context \& Word sense disambiguation %
+			& AdaGram \citep{AdaGrams} \& Bespoke greedy sense embeddings\\
+		\Cref{NovelPerspective} & Adj. Contexts & POV character detection & FastText \citep{bojanowski2016enriching}\\
+		\Cref{BOWgen} & Sentences & Recovering bags of words & GLoVE \citep{pennington2014glove} \\
+		\Cref{SOWE2Sent} & Sentences & Recovering sentences & GLoVE \citep{pennington2014glove} \\
+		\bottomrule
+	\end{tabularx}
+	\caption{Summary of the investigations published within this dissertation.}
+\end{table}
 
 
 \subsection{\Cref{SentVecMeaning}}
@@ -137,15 +151,81 @@ A limitation of this work is that it does not include the examination of any enc
 Another limmitation of the work is that the URAE use a pretrained model with only 200 dimensions, rather than 300 dimensions as was used in the other evaluations.
 
 
-Paraphrases provide one source of groundingm for evaluation of sentences.
+Paraphrases provide one source of grounding for evaluation of sentences.
 Color names are a subset of short phrases which also have a ground truth for meaning -- the color.
 They are thus useful for evaluating the performance of LICOWE on short phrases.
 
-\subsection{\Cref{ColorDist}} also considers the use of word embeddings as features, here to predict probability distributions and point estimates for colors given the color name. A Sum of Word Embeddings as an input layer is contrasted with processing the input (as word embeddings) through an RNN or CNN, as well as to a baseline. While this is a task where word order is significant, (``Brownish Green'' is a slightly different shade to ``Greenish Brown'') never the less SOWE do very well, likely due to the ease of training.
+\subsection{\Cref{ColorEst}}
+To evaluated the performance of input representations for short phrases, we considered a color understanding task.
+Color understanding is considered as grounded microcosm of natural language understanding \citep{2016arXiv160603821M}.
+It appears as a complicated sub-domain, with many of the same issues that plague natural language understanding in general:
+it features a lot of ambiguity, substantial morphological and syntax structure, and depends significantly on context that is not made available to the natural language understanding algorithms.
+Unlike natural language more generally, it has a comparatively small vocabulary, and it has grounded meaning.
+The meaning of a particular utterance, say \natlang{bluish green}, can be grounded to a point in color space, say in HSV (192°, 93\%, 72\%), based on the questioning the speaker.
+The general meaning of the a color phrase can be grounded to a distribution over color space, based on surveying the population of speakers.
 
-\subsection{\Cref{NovelPerspective}} considers the use of word embeddings as features to a binary classifier to detect named entities are the Point of View character. The mean of the word embeddings of the adjacent words for each occurrence of each named-entity is used as a feature vector for a binary classifier. We contrast it's performance to that of hand-engineered lexical features. It is concluded that the difference in performance is primarily related to dimensionality and the amount of training data for the binary task.
+Models were thus created to learn a mapping from natural language space, to points or distributions in color space.
+Three input representations were considered: a sum of word embeddings (SOWE), a convolutional neural network (CNN), and a recurrent neural network (RNN).
+The SOWE corresponds to a bag of words -- no knowledge of order.
+The CNN corresponds to a bag of ngrams -- it includes features of all length, thus can encode order.
+The RNN is a fully sequential model -- all inputs are processed in order and it must remember previous inputs.
 
-\subsection{\Cref{RefittingSenses}} defines a method to generate new word sense embeddings from an existing set of sense embeddings by using their a linear combination of the existing embeddings with weight based on how likely those senses are to occur in an example sentence. It finds the sense embeddings generated this way are more useful for similarity comparison, but not competitive for use in word sense disambiguation.
+It was expected that this task would benefit significantly from a knowledge of word order.
+For example, \natlang{bluish green} and \natlang{greenish blue} are visibly different colors.
+The former being greener than the later.
+However, it was found that the SOWE was the best performing input representation, 
+followed closely by the CNN , with the RNN performing much worse.
+This was even the case when the test set was restricted to only contain colors names for which multiple different word orders (representing different colors) were found in the training set.
+This can be attributed to the difficulty in training the more complicated models.
+In contrast to a simple feed-forward SOWE, in a RNN the gradient must propagate further from the output,
+and there is more weights to be learned in the gates.
+This difficulty dominated over the limitation in being able to model the color names correctly.
+We note that while \natlang{bluish green} and \natlang{greenish blue} are different colors, but they are never the less similar colors.
+As such, the error from treating them as the same, is less than the error caused by training difficulties.
+
+
+The solving problem of color estimation from natural language color name, has pragmatic uses.
+Color estimation from description has utility as a tool for improving human-computer interaction.
+For example allowing free(-er) text for specifying colors in plotting software, using point estimation.
+It also has utility as an education tool: people from different cultures, especially non-native English speakers, may not know exactly what color range is described by \natlang{dark salmon}, and our model allows for tools to be created to answer such queries using distribution estimation.
+
+
+A limitation of this study is the metrics used.
+For distribution estimation, the perplexity of the discretized distributions in color space is reported.
+It would be preferable to uses Kullback–Leibler divergence, which would allow comparisons to future works that output truly continuous distributions.
+Kullback–Leibler divergence is monotonically related the to discretized perplexity, however.
+For point estimation, using an evaluation metric such as a Delta-E, which is controlled for the varying sensitivity of human perception for different hues.
+Neither limitation has direct bearing on the assessment of the input representations.
+
+
+
+% also considers the use of word embeddings as features, here to predict probability distributions and point estimates for colors given the color name. A Sum of Word Embeddings as an input layer is contrasted with processing the input (as word embeddings) through an RNN or CNN, as well as to a baseline. While this is a task where word order is significant, (``Brownish Green'' is a slightly different shade to ``Greenish Brown'') never the less SOWE do very well, likely due to the ease of training.
+
+
+
+\subsection{\Cref{RefittingSenses}}
+With the demonstrated utility of linear combinations of embeddings for representing larger structures than words,
+it is worth investigating their utility for the internal structures of words.\todo{This is not right, I don't mean morphemes, I mean senses.}
+When it comes to representing word senses, it may be desirable to find a representation of the exact sense of a word being used in a particular example.
+A a very fine grained word sense for just that one use.
+If one has a collection of induced word senses, it seems reasonable to believe that the ideal word sense for a particular use, must lay somewhere between them in embedding space.
+Further more, if one knows the probably of each of the coarse induced senses being the correct sense for this use,
+then it makes sense that the location of the fine grained sense embedding would be closer to the more likely coarse sense,
+and further from the less likely coarse sense.
+As such we propose a method to define these specific case word senses based on a probability weighted sum of coarser word sense embeddings.
+We call the process of inducing the fine grained senes embedding refitting.
+
+Using this we define a similarity measure which we call RefittedSim, which we find to work better than AvgSimC \citep{Reisinger2010}.
+AvgSimC is a probability weighted set of similarity measures.
+Refitted sim is a similarity measure of a 
+\todo{Finish this}
+
+
+We define a method to generate new word sense embeddings from an existing set of sense embeddings using a single example of use.
+
+
+by using their a linear combination of the existing embeddings with weight based on how likely those senses are to occur in an example sentence.
+It finds the sense embeddings generated this way are more useful for similarity comparison, but not competitive for use in word sense disambiguation.
 
 
 A limitation of this study was that it did not perform the evaluation on state of the art word-sense embeddings.
@@ -153,11 +233,72 @@ As such, while it's comparisons between these embeddings are valid and shows imp
 it can not be readily compared to the current state-of-the-art on that task.
 
 
+
+\subsection{\Cref{NovelPerspective}}
+
+Given the success of LCOWEs for representing meaningful linquistic structures (sentences and phrases),
+a natural follow up question is on its capacity to represent combinations of words that do not feature this natural kind of structure.
+These would be more arbitrary bags of words; that never the less may be useful features for a particular task.
+The task investigated in this work was about identifying point of view characters in a novel.
+
+Given some literary text written in third person limited point of view, such as Robert Jordan's popular \textit{``Wheel of Time''} series of novels,
+it is useful to a reader (or person analysing the text), to identify which sections are from the perspective of which character.
+That is to say, we would like to classify the chapters of a book according to which character they are from the perspective of.
+This at first looks like a multiclass classification problem;
+however it is in-fact an information extraction problem.
+The set of possible classes for any given chapter is the set of all named entities in the book.
+Different booked have different characters,
+thus the set of named entities in the training data will not match that of an arbitrary book selected by a user.
+As such, the named entity tokens themselves can not be used in training for this task.
+Instead, it must be determined whether or not a named entity is the point of view character, based on how the named entity token is used.
+To do this, an representation of the context of use is needed.
+
+
+The task can be treated as a binary classification problem.
+Given some feature vector representing how a particular named entity token was used throughout a chapter,
+find the probability of that named entity being the point of view character.
+We considered two possible feature sets to use to generate the feature vectors for named entity token use.
+Both feature sets consider the context primarily in terms of the token (word) immediately prior to, and the token (word) immediately after the named entity.
+We define a 200 dimensional hand-crafted \emph{classical feature set} in terms of the counts of adjacent part of speech tags, position in the text, and token frequency.
+We define a \emph{mean of word embedding based feature set} as the concatenation of the mean of the word embedding for the words occurring immediately prior, to the mean of the word occurring immediately after.
+As this was using 300 dimensional embeddings, this gives a 600 dimensional feature vector.
+
+
+It was found that the two feature sets performed similarly, with both working very well.
+It seems like the primary difficulty was with the high dimensionality of the word embedding based feature set.
+Without sufficient training data, it over-fit quiet easily.
+It's performance dropped sharply on the testset, compared to it's oracle performance if trained on the testset,
+when the largest book series was removed.
+This likely could have been ameliorated by using lower dimensional embeddings.
+
+The good performance of the word embedding based feature set is surprising here as it does not include any frequency information.
+We used a mean, rather than a sum, of word embeddings to represent the context of named entity token use.
+In the classical feature set, we found that by far the most important feature was how often that named entity token was used.
+Indeed just reporting the most frequently mentioned named entity gave a very strong baseline.
+The lexical information captured by the MOWE is clearly similarly useful to the part of speech tag counts, and almost certainly makes more fine grained information available to the classifier.
+Thus allowing it to define good decisions boundaries for if the feature vector represents a point of view character or not.
+
+
+A limitation of this study is that different binary classifiers were used for the two feature sets.
+Ideally, the performance using a range of classifiers for both would have been reported.
+Our preliminary results suggested that the classifier choice was not significant.
+With logistic regression, SVM, and decision trees giving similarly high results for both feature sets.
+ 
+
+
+
+
+%considers the use of word embeddings as features to a binary classifier to detect named entities are the Point of View character. The mean of the word embeddings of the adjacent words for each occurrence of each named-entity is used as a feature vector for a binary classifier. We contrast it's performance to that of hand-engineered lexical features. It is concluded that the difference in performance is primarily related to dimensionality and the amount of training data for the binary task.
+
+
+
+
+
 \subsection{\Cref{BOWgen}}
 proposes as method to extract the original bag of words from a sum of word embeddings. Thus placing a bound on the information lost in the transformation of BOW to SOWE. This is done via a simple greedy algorithm with a correction step.
 
 \subsection{\Cref{SOWE2Sent}}
-extends this, investigating to what extend can the BOW generated by \Cref{BOWgen} be reordered to determine the original sentence. This placing a bound on the information lost from Sentence to SOWE. This is carried out by transforming the word ording problem into a mixed integer programming problem of finding the most likely sequence according to a trigram language model.
+extends this, investigating to what extend can the BOW generated by \Cref{BOWgen} be reordered to determine the original sentence. This placing a bound on the information lost from Sentence to SOWE. This is carried out by transforming the word ordering problem into a mixed integer programming problem of finding the most likely sequence according to a trigram language model.
 	
 
 
