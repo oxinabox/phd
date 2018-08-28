@@ -17,6 +17,15 @@ In the case of word embeddings, that quality criterion is generally along the li
 As such, linear combinations of embeddings take bag of words which is a strong surface form representation,
 take reduce it to a dense representation that captures lexical semantics.
 
+Throughout over the last three years that we have been considering this problem,
+others also have also found, often to their own surprise,
+the strength of simple linear combinations of embeddings.
+
+\citet{arora2016simple}'s work describes a ``\citetitle{arora2016simple}'',
+which is a linear combination of word embeddings.
+There proposed model is a more complicated combination that considered here.
+But never the least, is primarily a weighted sum of embeddings, with small adjustment based on linear dimensionality reduction methods.
+In particular when using the word embeddings of \citet{wieting2015towards}, they find this to be very competitive with more complex models which take into account word order.
 
 \citet{acl2018bleuopposedmeaning} found that taking a mean of word embeddings outperformed almost all their more sophisticated machine-translation-based sentence representations when used on classification and paraphrase detection tasks.
 This is not to say that linear combinations of embeddings are ideal models for all tasks.
@@ -30,6 +39,8 @@ With the exception of their word-content task, they did find more sophisticated 
 However, when correlating the performance of their probing task against real world tasks,
 they found that the word-content probing task was by far the most positively correlated with the real word tasks.
 This makes it clear how valuable surface information is in practical tasks.
+
+
 
 In the work presented this dissertation, 
 we find that that even in tasks where it would seem that non-surface information incorporating word-order is required,
@@ -134,7 +145,7 @@ Paraphrases are defined by a bidirectional entailment relationship between two s
 This is a equivalence relationship, it thus gives rise to a partitioning of all sentences in natural language space.
 If a sentence embedding is of high quality, it will be easy to define a corresponding partitioning of the embedding space.
 One way to determine how easy it is to define the corresponding partitioning it to attempt to do just that as a supervised classification task using a weak classifier.
-A weak classifier, such as the linear SVM we used, is required as a more powerful classifier (such as a deep neural network) could learn arbitary transforms.
+A weak classifier, such as the linear SVM we used, is required as a more powerful classifier (such as a deep neural network) could learn arbitrary transforms.
 The classification task is to take in a sentence embedding and predict which group of paraphrases it belongs to.
 Where the target paraphrase group is defined using other paraphrases with the same meaning as the candidate.
 
@@ -144,11 +155,16 @@ They were closely followed by the bag of words, which is advantaged by being muc
 The LCOWEs outperform the bag of words as they also capture  synonyms and other features of lexical relatedness.
 Slightly worse than the bag of words was the bag of words with PCA dimensionality reduction to 300 dimensions.
 This confirms our expectation that LCOWEs are a better form of dimensionality reduction for preserving meaning from a bag of words than PCA.
+
+
+
+The poor results of the paragraph vector models \citep{le2014distributed} is in line with the observation in the footnotes of the less well-known follow up work \citet{mesnil2014ensemble}.
+That the performance reported \citet{le2014distributed} can not be reliably repeated on other tasks, or even the same takes with a slightly different implementation.
  
 
-
 A limitation of this work is that it does not include the examination of any encoder-decoder based methods, such as Skip-Thought \citep{DBLP:journals/corr/KirosZSZTUF15}, or machine translation models.
-Another limmitation of the work is that the URAE use a pretrained model with only 200 dimensions, rather than 300 dimensions as was used in the other evaluations.
+Another limitation of the work is that the URAE use a pretrained model with only 200 dimensions, rather than 300 dimensions as was used in the other evaluations.
+
 
 
 Paraphrases provide one source of grounding for evaluation of sentences.
@@ -287,8 +303,6 @@ With logistic regression, SVM, and decision trees giving similarly high results 
  
 
 
-
-
 %considers the use of word embeddings as features to a binary classifier to detect named entities are the Point of View character. The mean of the word embeddings of the adjacent words for each occurrence of each named-entity is used as a feature vector for a binary classifier. We contrast it's performance to that of hand-engineered lexical features. It is concluded that the difference in performance is primarily related to dimensionality and the amount of training data for the binary task.
 
 
@@ -296,14 +310,57 @@ With logistic regression, SVM, and decision trees giving similarly high results 
 
 
 \subsection{\Cref{BOWgen}}
-proposes as method to extract the original bag of words from a sum of word embeddings. Thus placing a bound on the information lost in the transformation of BOW to SOWE. This is done via a simple greedy algorithm with a correction step.
+Given the consideration of a sum of word embeddings as dimensionality reduced form of a bag of words
+a important question is to how recoverable the bag of words is from the sum.
+A practical way to lower bound the loss of information
+is to demonstrate a deterministic method that can recover a portion of the bag of words.
+
+
+We propose as method to extract the original bag of words from a sum of word embeddings. Thus placing a bound on the information lost in the transformation of BOW to SOWE. This is done via a simple greedy algorithm with a correction step.
+The core of this method functions by iteratively searching the vocabulary of word embeddings for the nearest embedding to the sum,
+adding it's word to the bag of words and subtracting its embedding from the sum.
+It is thus only computationally viable with reasonably small vocabularies.
+This method works as each component word in the sum has a unique directional contribution in the high dimensional space.
+As one would expect, the works better the higher dimensional the embeddings are, and with fewer words.
+Even with relatively low dimensions it works quiet well.
+This shows use that embeddings are not for example constantly cancelling each other in the sum.
+
+
+\todo{Can I comment that "This method would not work as well on a mean of word embeddings", i s there something interesting to say about that?}
+
+
+
+An interesting alternative to this deterministic method would be to train a supervised model to project from SOWE to a fuzzy bag of words.
+This is similar to the word-content task considered by
+\citet{adi2017Probing}.
+In that task a binary classifier was trained to take a sentence representation and a word embedding for a single word that may or may not appear in the sentence.
+
 
 \subsection{\Cref{SOWE2Sent}}
-extends this, investigating to what extend can the BOW generated by \Cref{BOWgen} be reordered to determine the original sentence. This placing a bound on the information lost from Sentence to SOWE. This is carried out by transforming the word ordering problem into a mixed integer programming problem of finding the most likely sequence according to a trigram language model.
-	
+Given that it was demonstrated that the bag of word can be recovered,
+the obvious follow up question is if we can recover the the sentence.
+This \Cref{SOWE2Sent} is a small supplement to \Cref{BOWgen}.
+
+The word ordering problem tackled is given a bag of words,
+and a trigram language model determine the most-likely order for words.
+This allows bags of words to be turned into the most likely sentences.
+We define a deterministic algorithm to solve this using linear mixed integer programming.
+Using this algorithm we can use the partially recovered bags of words from \Cref{BOWgen} and determine how frequently they can be correctly ordered to find the original sentence.
+
+We find that surprisingly often they can.
+The majority of sentences of length up to 18 can be successfully recovered from a SOWE.
+With, as expected, the longer the sentence the more difficult the recovery.
+This suggests that the number of likely possible orderings for the words in a sentence is much lower than it may at first seem.
+Particularly since this method based on a simple trigram language does so well.
+It no doubt a more sophisticated neural network based language model would be significantly better.
 
 
+The algorithm used in our method is a minor extension of that of \citet{Horvat2014}.
+We take advantage of the slight differences between the word ordering problem and the generalised asymmetric travelling sales man problem.
+We can eliminate some branches that would not be possibly for a travelling salesman solver; by directly defining it as a mixed integer linear programming problem.
 
+The use of the methods of \Cref{BOWgen} and \Cref{SOWE2Sent},
+together with a system trained to output a approximation to a SOWE, is an interesting, though not really practical, method for natural language generation.
 
 \section{Some Math}
 \subsection{Word Embeddings}
