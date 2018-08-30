@@ -5,13 +5,34 @@
 \begin{document}
 \part{Conclusion}
 \chapter{Conclusion}
-The research presented here on linear combinations of embeddings has highlighted an interesting fact.
-It has been shown that this simple input representation technique is surprisingly powerful.
+Current research in natural language understanding relies on creating computer manipulatable representations of natural language for purposes of making inferences about meaning.
+
+
+While, the normal machine learning adage that given enough data and a model with sufficiently high representational capacity any problem can be solved always applies,
+we seem to have found a sweet spot, 
+where a model seemingly without sufficiently high representational capacity,
+never-the-less performs excellently on tasks with the amount of data that we have.
+
+
+The research presented here on linear combinations of embeddings has shown that this simple input representation technique is surprisingly powerful.
 This surprising power come from the value of surface level information in many practical natural language understanding tasks.
 The word content being the most obvious of these.
 This word content is presented in a dense and informative form in a LCOWE; in a way that captures and preserves lexical similarity information.
 While the LCOWE loses word order information, it very well preserves the word content.
 That content proved more useful for the tasks considered in this research.
+
+We considered a number of tasks to identify the utility of this representation in for different uses.
+\Cref{SentVecMeaning} investigated classifying paraphrases as means to investigate quality of SOWE as a sentence embedding method.
+\Cref{ColorEst} defined models for color estimation from short phrases.
+\Cref{RefittingSenses} considered if we could use weighted combinations of sense embeddings to better capture the sense used in a particular example.
+\Cref{NovelPerspective} considered taking the mean of the embeddings adjacent to named entity tokens across a fictional text as a feature to characterize how the named entity token was being used.
+We followed up these practical demonstrations of capacity,
+with further investigations into what can be recovered from the SOWE for the important category of sentence representations.
+\Cref{BOWgen} demonstrated a method that could partially recover bags of words.
+\Cref{SOWE2Sent} extended this to attempt to order those bags of words into sentences.
+This demonstrated that a surprising amount of information is still available in the summed embeddings; which helps to explain why they work so well.
+
+
 
 \section{Future work}
 
@@ -40,109 +61,127 @@ Pure language models have no ability to capture word content, but excellent abil
 Language modelling based tasks incorporating a representation stage, such as encoder-decoders \citep{cho-EtAl:2014:EMNLP2014}, do not capture word content as well as LCOWE \citep{ac2018probingsentencevectors}.
 They do, however, have state of the art order order representation.
 \todo{I would really like to talk about how word embeddings are useful for caption evaluation here.}
-
-Future work in this area would be to enhance an encoder-decode model by concatenating to the shared state a SOWE.
-\todo{REDO this figure with the Embedding layers shown and the SOWE shared representation laye radded}
-
-
-
-\begin{figure}
-\begin{tikzpicture}
-	\numdef{\N}{8}
-	\numdef{\labelwidth}{5.5cm}
-
-	\node(lbl)[text width= \labelwidth] {\textbf{SOWE Enhanced\\RNN Encoder-Decoder}\\%
-		Variable $n$ inputs: $\nv x_t$\\%
-		Variable $m$ outputs $\nn \hat{y}_t$\\%
-		Prompts: $\nv r_t$ (often $y_{t-1}$)
-	};
-	
-	\coordinate[yshift = -3.5cm] (L0) at (lbl.west);
-	\numdef{\NN}{4}
-	\foreach \I[count=\j from 0] in {1,...,\NN}{
-		\ifnumequal{\I}{\NN - 1}{%
-			\node(L\I)[dashed, layer, right = of L\j] {\ldots};
-			\node(w\I)[below = of L\I]{\ldots};
-		}%
-		{
-			\node(L\I)[layer, right = of L\j] {$\mathrm{RU_E}$};
-			\node(w\I)[below = of L\I]{\ifnumequal{\I}{\NN}{$\nv x_n$}{$\nv x_\I$}};
-			\draw[->] (w\I) -- (L\I);
-		}
-	}
-	\foreach \I[count=\j from 1] in {2,...,\NN} {
-		\draw[->] (L\j) edge node[labe] {state} (L\I);
-	}
-	
-	
-	
-	
-	\coordinate[above = 3 of L\NN] (Lp\NN);
-	\numdef{\NP}{\N - 1}
-	\foreach \j in {\NN,...,\NP}{
-		\numdef{\I}{\j+1}
-		\numdef{\y}{\I - \NN}
-		\ifnumequal{\I}{\N-1}{%
-			\node(Lp\I)[dotted, layer, right = of Lp\j] {\ldots};
-			\node(w\I)[below = of Lp\I]{\ldots};
-			\node(y\I)[above = of Lp\I]{\ldots};
-			\draw[->,dotted] (w\I) -- (Lp\I);
-			\draw[->,dotted] (Lp\I) -- (y\I);
-			\path[->,dotted] (L\NN.north) edge node[labe]{$\vv z$} (w\I.south west);
-		}%
-		{
-			\node(Lp\I)[layer, right = of Lp\j] {$\mathrm{RU_D}$};
-			\ifnumequal{\I}{\N}{
-				\node(w\I)[below = of Lp\I]{$[\vv z; \nv r_m]$};
-				\node(y\I)[above = of Lp\I]{$\nn \hat{y}_m$};
-			}
-			{
-				\node(w\I)[below = of Lp\I]{$[\vv z; \nv r_\y]$};
-				\node(y\I)[above = of Lp\I]{$\nn \hat{y}_\y$};
-			}
-			
-			\draw[->] (w\I) -- (Lp\I);
-			\draw[->] (Lp\I) -- (y\I);
-			\path[->] (L\NN.north) edge node[labe]{$\vv z$} (w\I.south west);
-		}
-	}
-	
-	
-	\numdef{\NNp1}{\NN + 1}
-	\foreach \I in {\NNp1,...,\NP} {
-		\numdef{\j}{\I+1}
-		\draw[->] (Lp\I) edge node[labe] {state} (Lp\j);
-	}
-\end{tikzpicture}
-
-\end{figure}
+%
+%Future work in this area would be to enhance an encoder-decode model by concatenating to the shared state a SOWE.
+%\todo{REDO this figure with the Embedding layers shown and the SOWE shared representation laye radded}
+%
+%
+%
+%\begin{figure}
+%\begin{tikzpicture}
+%	\numdef{\N}{8}
+%	\numdef{\labelwidth}{5.5cm}
+%
+%	\node(lbl)[text width= \labelwidth] {\textbf{SOWE Enhanced\\RNN Encoder-Decoder}\\%
+%		Variable $n$ inputs: $\nv x_t$\\%
+%		Variable $m$ outputs $\nn \hat{y}_t$\\%
+%		Prompts: $\nv r_t$ (often $y_{t-1}$)
+%	};
+%	
+%	\coordinate[yshift = -3.5cm] (L0) at (lbl.west);
+%	\numdef{\NN}{4}
+%	\foreach \I[count=\j from 0] in {1,...,\NN}{
+%		\ifnumequal{\I}{\NN - 1}{%
+%			\node(L\I)[dashed, layer, right = of L\j] {\ldots};
+%			\node(w\I)[below = of L\I]{\ldots};
+%		}%
+%		{
+%			\node(L\I)[layer, right = of L\j] {$\mathrm{RU_E}$};
+%			\node(w\I)[below = of L\I]{\ifnumequal{\I}{\NN}{$\nv x_n$}{$\nv x_\I$}};
+%			\draw[->] (w\I) -- (L\I);
+%		}
+%	}
+%	\foreach \I[count=\j from 1] in {2,...,\NN} {
+%		\draw[->] (L\j) edge node[labe] {state} (L\I);
+%	}
+%	
+%	
+%	
+%	
+%	\coordinate[above = 3 of L\NN] (Lp\NN);
+%	\numdef{\NP}{\N - 1}
+%	\foreach \j in {\NN,...,\NP}{
+%		\numdef{\I}{\j+1}
+%		\numdef{\y}{\I - \NN}
+%		\ifnumequal{\I}{\N-1}{%
+%			\node(Lp\I)[dotted, layer, right = of Lp\j] {\ldots};
+%			\node(w\I)[below = of Lp\I]{\ldots};
+%			\node(y\I)[above = of Lp\I]{\ldots};
+%			\draw[->,dotted] (w\I) -- (Lp\I);
+%			\draw[->,dotted] (Lp\I) -- (y\I);
+%			\path[->,dotted] (L\NN.north) edge node[labe]{$\vv z$} (w\I.south west);
+%		}%
+%		{
+%			\node(Lp\I)[layer, right = of Lp\j] {$\mathrm{RU_D}$};
+%			\ifnumequal{\I}{\N}{
+%				\node(w\I)[below = of Lp\I]{$[\vv z; \nv r_m]$};
+%				\node(y\I)[above = of Lp\I]{$\nn \hat{y}_m$};
+%			}
+%			{
+%				\node(w\I)[below = of Lp\I]{$[\vv z; \nv r_\y]$};
+%				\node(y\I)[above = of Lp\I]{$\nn \hat{y}_\y$};
+%			}
+%			
+%			\draw[->] (w\I) -- (Lp\I);
+%			\draw[->] (Lp\I) -- (y\I);
+%			\path[->] (L\NN.north) edge node[labe]{$\vv z$} (w\I.south west);
+%		}
+%	}
+%	
+%	
+%	\numdef{\NNp1}{\NN + 1}
+%	\foreach \I in {\NNp1,...,\NP} {
+%		\numdef{\j}{\I+1}
+%		\draw[->] (Lp\I) edge node[labe] {state} (Lp\j);
+%	}
+%\end{tikzpicture}
+%
+%\end{figure}
 
 
 
 \section{Some reflections upon semantic spaces}
 \begin{figure}
-	\begin{tikzpicture}
+	\centering
+	\begin{tikzpicture}[
+			every node/.style = {text width=60mm,  align=center},
+			pointdot/.style = {fill=purple, circle, minimum size=4pt,text width=0mm, inner sep=0pt}			
+			]
 		\node[draw](idea){Idea Space};
 		% Objects: ideas, thoughts
 		\node[draw, below = of idea](nl){Natural Language Space};
 		% Objects: utterances, sentences, words
 		\node[draw, below = of nl](emb){Representation Space};
 		% Objects: Embeddings
+		
+		\draw[purple] (idea.200) to (nl.north);
+		\draw[purple] (idea.-20) to (nl.north);
+		\node[pointdot] at (nl.north) {};
+		
+		\draw[] (nl) to (emb);
+		\draw[dashed,purple] (emb.20) to (nl.south);
+		\draw[dashed,purple] (emb.-200) to (nl.south);
+		\node[pointdot] at (nl.south) {};
+		
+		\node[pointdot,black] at (emb.north) {};
+		
 	\end{tikzpicture}
+	\caption{\label{fig:spaces} The representation space is a computationally manipulate representation of the idea space.
+	The natural language utterances come from points in the idea space; though due to ambiguity we can only truly hope to estimate distributions when the interpret them. A single point embedding as an approximation to a distribution with a single tight peak.}
 \end{figure}
 
-We can consider that there is a true semantic space of ideas that we try to recover when we try and understand something's meaning.
+We can consider that there is a true semantic space of ideas.
 When speaking, this space is projected down to natural languages space.
-To again quote Webber: ``A sentence is a group of words expressing a complete thought.''.
-This projection is imperfect -- it is lossy.
+To again quote Webber: ``A sentence is a group of words expressing a complete thought.'', it is not a complete thought, only the \emph{expression} of one.
+This projection from idea to utterance is imperfect -- it is lossy.
+Many ideas are expressed the same way, and language thus has a lot of ambiguity.
+When we try to understand the meaning of a natural language utterance we are trying to find the point in idea space that the speaker intend.
 Some times the natural language space alone, is enough to recover a good idea of the the point in idea space the speaker intends,
 but other times it is not.
-Instead, we can end up with the 
-
 
 The preimage of a point in natural language space (e.g. a sentence),
 is a probability distribution over idea space that could have lead to that utterance -- $P(meaning \mid utterance)$.
-This distribution could be combined with other factors (in a Baysian way); either from that natural language context, or the enviroment more broadly.
+This distribution could be combined with other factors (in a Bayesian way); either from that natural language context, or the enviroment more broadly.
 For example, to use a meaning that centres around word sense:
 we can identify two (of the many) senses of the word \natlang{apples}:
 one in reference to the fruit, the other in reference to the computers made by the eponymous company.
@@ -154,8 +193,6 @@ For example the statement could be in relation to only computers, or also to oth
 idea space is a continuous space, with every utterance corresponding to a unique point. It is an uncountably large space.
 In contrast natural language space is countably large, being composed of finite length combinations of of symbols taken from a finite alphabet.
 An uncountable number of points in idea space are projected down to a single point in natural language space.
-
-
 
 
 When designing a embedding method, for sentences, words or other structures,
@@ -176,17 +213,14 @@ This is viable when the region in idea space that the natural language point cou
 In that case the single point estimate in embedding space is an useful approximation.
 
 
-In the case of words with multiple meanings, 
-word-sense embeddings produce multiple sense embeddings -- ideally one corresponding to each peak in idea space.
+This has particularly clear utility for word sense embeddings,
+which are defined by multimodal distributions,
+with large peaks for each homonym, and smaller nearby peaks for each polyseme.
+Furthermore we can't rule out the speaker using the word incorrectly or metaphorically which gives rise to nonzero values elsewhere in idea space.
+Word-sense embeddings produce multiple sense embeddings -- ideally one corresponding to each peak in idea space.
 We know these peaks are only rough approximations to the true point in idea space for a given usage of a word.
 \Cref{RefittingSenses} attempts find other points in the embeddings space, that better corresponds to the true point in idea space for the particular use.
 
-
-Unsupervised methods, in particular word embeddings, but also more generally, are ungrounded.
-They found on principles such as Firth's distributional hypothesis:
-that word occurring in similar contexts have similar meaning. 
-The goal is not to capture I meaning in this space,
-but rather to create a space that is a good input to a supervised system that can learn a good correspondence from natural language space to idea space. 
 
 The color understanding task considered in \Cref{ColorDist} is interesting.
 While it is a typical natural language understanding system,
@@ -195,14 +229,20 @@ moves through a representation space (the output of one of the input modules: SO
 In this case the meaning space is explicit, it is the HSV color space.
 Using point estimation it outputs a point in meaning space
 
+Unsupervised methods, in particular word embeddings, but also more generally, are ungrounded.
+They are based only on natural language space observations.
+The goal is not to capture I meaning in this space,
+but rather to create a space that is a good input to a supervised system that can learn a good correspondence from natural language space to idea space. 
+It is for this reason that principles such as Firth's distributional hypothesis, that words occurring in similar contexts have similar meaning, 
+are so useful as a basis.
+While it does not allow the encoding of meaning, it allows thus encoding of similarity of meaning.
+This is ideally suited for creating a space that will make a good source representation for a supervised method applied for natural language understanding task.
+Were that task accomplished with a neural network, the later hidden layers, or the fine-turned embeddings would form a grounded representation of idea space.
 
 
-
-
-
-
-
-
+While the research presented in this dissertation has made use of the idea that we are working with a sample from a distribution over a proxy for meaning space,
+it is our belief that further advancements would benefit from fully considering
+word embeddings and other objects from representation spaces, not as discrete points but as distributions.
 
 
 
