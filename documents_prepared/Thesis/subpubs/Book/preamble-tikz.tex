@@ -1,0 +1,77 @@
+\usepackage{tikz}
+\usetikzlibrary{positioning, fit,  shapes, shapes.geometric, shapes.misc}
+\usepackage{ifthen}
+\usepackage{etoolbox}
+
+\usepackage{tikz-qtree}
+% settings for trees
+\tikzset{every internal node/.style={draw, circle, tight},}
+
+
+
+
+% Makes embedding look-up tables	
+% Arg1=base-name, Arg2=position, Arg3=Table caption
+% Optional Arg T if to transpose
+% Eg:
+%\coordinate[above left=of w1, xshift=-2cm] (CC0);% at (Cn);
+%\embtable{C}{CC0}{Embedding Table}
+%
+\newcommand{\embtable}[4][F]{
+	\coordinate ({#2}0) at (#3);
+	\node({#2}n)[draw,tight, below = 0mm of {#2}0, minimum width=4.2em] {\footnotesize $\vdots$};
+	\def\tblmax{6}
+	\foreach \ii in {1,...,\tblmax} {
+		\pgfmathtruncatemacro\prev{(\ii - 1)};
+		\pgfmathtruncatemacro\jj{(\tblmax -\ii)};
+		%
+		\node({#2}\ii)[draw,text=gray, tight,  minimum width=4.2em, above = 0 mm of {{#2}\prev}.north]
+			{$\bullet\bullet\bullet\bullet\bullet$};
+		\node({#2}lbl\ii)[left = 0mm of {#2}\ii]{\footnotesize 
+			\ifthenelse{\equal{#1}{T}}{$\i {#2}_{\jj,:}$}{$\i {#2}_\jj$}};
+	};
+	\node({#2})[above = 0mm of {#2}\tblmax, text width=5em] {\small \textsc{#4}};
+}
+
+\tikzset{
+	>=latex,%arrows
+	%
+	backgroundcolor/.style ={fill=white},
+	every node/.append style={
+		align=center,
+		minimum height=7mm,
+	},
+	labe/.append style={
+		auto,
+		blue,
+		align = center,
+		backgroundcolor,
+		fill opacity=0.6,
+		text opacity=1,
+		font={\footnotesize\itshape}	
+	},
+	layer/.append style={
+		draw,
+		align = center,
+		minimum height=7mm,
+	},
+	tight/.append style={
+		inner sep=0.2mm,
+		minimum height=0mm,
+	},
+	lookupbox/.append style={
+		draw=none,
+		append after command={
+		       	[shorten <= -0.5\pgflinewidth]
+		       	([shift={(-1.5\pgflinewidth,-0.5\pgflinewidth)}]\tikzlastnode.north east)
+		       	edge([shift={( 0.5\pgflinewidth,-0.5\pgflinewidth)}]\tikzlastnode.north west) 
+		       	([shift={( 0.5\pgflinewidth,-0.5\pgflinewidth)}]\tikzlastnode.north west)
+		       	edge([shift={( 0.5\pgflinewidth,-1.5\pgflinewidth)}]\tikzlastnode.south west)            
+		       	([shift={( -1.5\pgflinewidth,+0.5\pgflinewidth)}]\tikzlastnode.south east)
+		       	edge([shift={(-1.5\pgflinewidth,-0.5\pgflinewidth)}]\tikzlastnode.north east)
+		},
+		inner sep=0.7mm,
+		outer sep=0mm,
+		minimum width=25mm
+	}
+}

@@ -1,0 +1,195 @@
+\documentclass[12pt]{article}
+\usepackage[a5paper, margin=0.5cm]{geometry}
+
+\usepackage[default]{comfortaa}
+\usepackage[T1]{fontenc}
+
+
+\usepackage[dvipsnames]{xcolor}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usetikzlibrary{positioning,shapes,arrows, fit, shapes.geometric}
+
+\pgfplotsset{compat=1.8}
+
+\makeatletter
+\pgfplotsset{
+	/pgfplots/flexible xticklabels from table/.code n args={3}{%
+		\pgfplotstableread[#3]{#1}\coordinate@table
+		\pgfplotstablegetcolumn{#2}\of{\coordinate@table}\to\pgfplots@xticklabels
+		\let\pgfplots@xticklabel=\pgfplots@user@ticklabel@list@x
+	}
+}
+\makeatother
+
+\definecolor{ggreen}{HTML}{50CD50}
+\usepackage{graphicx}
+
+
+\renewcommand{\familydefault}{\sfdefault}
+
+
+\begin{document}
+\centering
+\thispagestyle{empty}
+\null
+\vspace{-0.3cm}
+{\Huge NovelPerspective\\}
+{\Large Identifying Point of View Characters\\}
+\vspace{0.1cm}
+%\hspace{-0.1cm}
+{\large Skip the boring character's chapters.\\}
+{\large Read each character's story without interruptions.}
+\vspace{0.2cm}
+
+\resizebox{\textwidth}{!}{
+	\begin{tikzpicture}[
+		>=latex,
+		every text node part/.style={align=center},
+		auto,
+		node distance=2.4, 
+		->,
+		every edge/.append style={very thick, Purple, every node/.style={font=\small}},
+		every node/.style={rounded corners=7pt, fancy, inner sep=7pt},
+		gather/.style = { very thick, purple, shorten <= 0.4cm},
+		fancy/.style= {draw=none, shade, 
+			color=White,
+			top color=Violet, bottom color=Purple
+		}
+	]	
+	\begin{scope}[yshift=3cm]		
+		\node(start1){};
+		\node(enrich)[draw, right=of start1] {POS \& NE \\ Tagging};
+		\node(features)[draw, right=of enrich] {Feature\\ Extraction};
+		\node(scoring)[draw, right=of features] {Character\\Scoring};				
+		\node(end)[right=of scoring] {};
+		
+		\path (start1) edge node[]{raw\\ text}  (enrich);
+		\path (enrich) edge node[above]{enriched\\text} (features);
+		\path (features) edge node[above]{character-name\\feature-vector\\pairs
+		} (scoring);
+		\path (scoring) edge node[above]{character-name\\score pairs
+		} (end);
+	\end{scope}
+	
+	\begin{scope}[xshift=-1cm]		
+		\node(start)[draw] {Upload\\ Your \\Ebook};
+		\node(convert)[draw, right=of start, xshift=0.1cm] {File\\Conversion\\(Calibre))};
+		\node(classify)[draw, right=of convert, xshift=-0.2cm] {POV\\Character\\Classification};
+		\node(select)[draw, right= of classify, xshift=0.5cm] {Select\\ Which To \\ Keep};
+		\node(download)[draw, right=of select] {Download \\ Subsetted \\ ebook};
+		
+		\path (start) edge[below] node[below]{ebook \\ + settings}  (convert);
+		\path (convert) edge[below] node[below]{content\\ of sections} (classify);
+		\path (classify) edge[below] node[below]{character\\score lists} (select);
+		\path (select) edge[below] node[below]{section\\selection} (download);	
+		
+		\draw[->, gather] (classify.north west) to[out=160, in=-50] (start1);
+		\draw[<-, gather] (classify.north east) to[out=20, in=-140] (end);
+	\end{scope}
+	
+	\end{tikzpicture}
+}\\
+\vspace{0.05cm}
+
+{\large Core idea: Train a binary classifier to determine if a name token is that of the POV character, based on \\a feature vector representing that token's usage.\\
+	Use this as a POV-likelihood score for that named entity.\\}
+\vspace{0.2cm}
+
+
+\pgfplotstableread[header=has colnames,
+columns/TestSet/.style={string type},
+]{%
+	TestSet	{First Mentioned}	{Most Commonly Mentioned}	{ML Classical Feats.}	{ML Word Emb.}
+	{\\Wheel of Time}	4.3981481	65.9722222	73.6111111	68.0555556
+	{\\Six of Crows}	42.8571429	79.1208791	93.4065934	94.5054945
+	{A Song of Ice and Fire}	25	91.40625	97.65625	97.265625
+}{\res}
+
+
+\begin{tikzpicture}
+	\begin{axis}[ybar,ymajorgrids,
+	xticklabels from table={\res}{TestSet},
+	legend style={at={(0.5,-0.7)}, anchor=north,legend columns=2, draw=none},
+	legend image post style={xscale=1, yscale=1},
+	%	enlargelimits=0.3,
+	ymin = 0, ymax=100,
+	enlarge x limits=0.2,
+	xticklabel style={text width=8em, align=center},
+	xtick = data,
+	width=0.85\textwidth, height= 3.5cm,
+	bar width=0.6cm,
+	yticklabel={$\mathsf{\pgfmathprintnumber{\tick}}$\small\%},
+	ytick = {0, 25, 50, 75, 100},
+	ylabel = Accuracy,
+	xlabel = {\shortstack{Book\\ Series:}},
+	x label style={at={(axis description cs:-0.1,-0.04)},anchor=north},
+	axis line style={draw=none},
+	x tick style={draw=none},
+	ytick pos=left,
+	%nodes near coords={$\mathsf{\pgfmathprintnumber[precision=0]{\pgfplotspointmeta}}$\small\%}
+	]
+	%\addplot[style={bblue,fill=bblue,mark=none}] table[x expr=\coordindex, y={ML Word Emb.}] {\res};
+	\addplot[style={top color=Yellow, bottom color=Green, draw=none, mark=none}] table[x expr=\coordindex, y={First Mentioned}] {\res};
+	\addplot[style={top color=Gray, bottom color=Purple, draw=none, mark=none}] table[x expr=\coordindex, y={Most Commonly Mentioned}] {\res};
+	\addplot[style={top color=Orange, bottom color=Brown, draw=none, mark=none}] table[x expr=\coordindex, y={ML Classical Feats.}] {\res};
+	\addplot[style={top color=Cyan, bottom color=Blue, draw=none, mark=none}] table[x expr=\coordindex, y={ML Word Emb.}] {\res};
+	
+	\legend{{\small\hspace{0.1cm}First Mentioned N.E.\hspace{0.5cm}\null},
+		\small{\hspace{0.1cm}Most Common N.E \hspace{0.5cm}\null},
+		\small{\hspace{0.1cm} LogReg + Classical Feats.\hspace{0.5cm}\null},
+		\small{\hspace{0.1cm}SVM + Word Embs.\hspace{0.5cm}\null}}
+	\end{axis}
+\end{tikzpicture}
+
+
+
+
+{\LARGE {http://novelperspective.ucc.asn.au/}
+\vspace{0.2cm}
+
+\begin{tikzpicture}
+\node[draw, text width=0.9\textwidth, %text height=3cm,
+ultra  thick, rounded corners=7pt,
+White, fill=Blue,
+](frame){
+\normalsize
+Lyndon White, PhD Candidate \\
+The University of Western Australia\\
+\vspace{0.1cm}
+{lyndon.white@ucc.asn.au}\\
+{https://white.ucc.asn.au}\\
+\vspace{0.2cm}
+Talk to me about NLP, ML and Data Science\newline in JuliaLang
+\hfill
+\includegraphics[width=1em]{ghlogos/juliaeditorsupport}
+\includegraphics[width=1em]{ghlogos/juliatext}
+\includegraphics[width=1em]{ghlogos/juliastring}
+\includegraphics[width=1em]{ghlogos/juliaml}
+\includegraphics[width=1em]{ghlogos/juliacollections}
+\includegraphics[width=1em]{ghlogos/juliadiffeq}
+\includegraphics[width=1em]{ghlogos/juliagraphics}
+\includegraphics[width=1em]{ghlogos/ucc}
+\hspace{3cm}\null
+\\
+};
+
+
+\begin{scope}[xshift=5.1cm]
+\def\bord{4pt}
+\def\ig{\includegraphics[height=3.3cm,keepaspectratio]{portrait}}
+\node [inner sep=0pt](mypicture) at (0,0) {\phantom{\ig}};
+\clip[rounded corners=5mm] ($(mypicture.south west)+(\bord,\bord)$) rectangle ($(mypicture.north east)-(\bord,\bord)$);
+\node[inner sep=0pt, xscale=-1](mypicture) at (0,0) {\ig};
+\end{scope}
+
+
+\end{tikzpicture}
+
+
+
+
+
+\end{document}
