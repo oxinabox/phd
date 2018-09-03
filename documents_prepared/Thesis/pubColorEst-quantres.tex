@@ -1,0 +1,258 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[author={Lyndon}]{pdfcomment}
+
+\usepackage{booktabs}
+
+\usepackage{booktabs}
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=1.14}
+
+\DeclareMathVersion{tabularbold}
+\SetSymbolFont{operators}{tabularbold}{OT1}{cmr}{b}{n}
+
+
+% Center all floats
+\makeatletter
+\g@addto@macro\@floatboxreset{\centering}
+\makeatother
+
+\usepackage{cleveref}
+
+\begin{document}
+
+\subsection{Quantitative Results}\label{sec:quantitative-results}
+
+Overall, we see that our models are able to learn to estimate colors based on sequences of terms.
+From the consideration of all the results shown in \Cref{tbl:pointfull,tbl:distfull,tbl:distord,tbl:pointord,tbl:pointextrapo,tbl:distextrapo}.
+The CNN and SOWE models perform almost as well as the operational upper-bound.
+With the SOWE having a marginal lead for distribution estimation,
+and the CNN and SOWE being nearly exactly equal for most point estimation tasks.
+We believe the reason for this is that the SOWE is an easier to learn model from a gradient descent perspective:
+it is a shallow model with only one true hidden layer.
+The RNN did not perform as well at these tasks.
+While it is only marginally behind the SOWE and CNN on the full point estimation task (\Cref{tbl:pointfull}), on all other tasks for both point estimation and distribution estimation it is significantly worse.
+This may indicate that it is hard to capture the significant relationships between terms in the sequence.
+However, as shown \Cref{sec:quantitative-results} it did learn generally acceptable colors, but it is not as close a match to the population's expectation.
+
+\subsubsection{Ordered Task}
+The performance of SOWE on the order tasks (\Cref{tbl:distord,tbl:pointord}) is surprising.
+For the distribution estimation it outperforms the CNN, and for point estimation it ties with the CNN.
+The CNN and RNN, can take into account word order, but the SOWE model cannot.
+The good results for SOWE suggest that the word-order is not very significant for color names.
+While word order matters, different colors with the same terms in different order are similar enough that it still performs very well.
+In theory the models that are capable of using word order have the capacity to ignore it, and thus could achieve a similar result.
+An RNN can learn to perform a sum of its inputs (the word embeddings),
+and the CNN can learn to weight all non-unigram filters to zero.
+In practice we see that for the RNN in particular this clearly did not occur.
+This can be attributed to the more complex networks being more challenging to train via gradient descent.
+It seems that color-naming is not a task where word order substantially matters,
+and thus the simpler SOWE model excels.
+
+
+
+\subsubsection{Unseen Combinations of Terms}
+The SOWE and CNN models are able to generalize well to making estimates for combinations of color terms that are not seen in training.
+\Cref{tbl:distextrapo,tbl:pointextrapo} show the results of the model on the test set made up of rare combinations of color names (as described in \Cref{sec:extrapodata}) for the restricted training set (which does not contain those terms).
+These results on this test set are compared with the same models when trained on the full training set.
+The Operation Upper Bound models are unable to produce estimates from the unseen combinations testing set as they do not process the color names term-wise.
+The RNN models continue to perform badly on the unseen combination of terms task for both point and distribution estimation.
+
+On distribution estimation (\Cref{tbl:distextrapo}) the SOWE results are only marginally worse for the restricted training set as they are for the full training set.
+The CNN results are worse again, but they are still better than the results on the full test-set.
+The distribution estimates are good on absolute terms, having low evaluated perplexity.
+
+In the point estimation task (\Cref{tbl:pointextrapo}) the order is flipped with the CNN outperforming the SOWE model.
+In-fact the CNN actually performs better with the restricted training set.
+This may be due to the CNN not fitting to the training data as well as the SOWE,
+as on the full training set (for this test set) we see the SOWE outperforms the CNN.
+This suggests that the CNN point estimation model may be better at capturing the shared information about term usages, at the expense of fitting to the final point.
+%\pdfcomment{Does this make sense?}
+Unlike for distribution estimates, the unseen color point estimates are worse than the overall results from the full task (\Cref{tbl:pointfull}), though the errors are still small on an absolute scale.
+
+
+
+\subsubsection{Extracting the mean from the distribution estimates}
+
+In the point estimation results discussed so far, have been from models trained specifically for point estimation (as described by \Cref{sec:point-estimation}).
+However, it is also possible to derive the mean from the distribution estimation models.
+Those results are also presented in \Cref{tbl:pointfull,tbl:pointord,tbl:pointextrapo}.
+In general these results perform marginally worse (using the MSE metric) than their corresponding modules using the point estimation output module.
+We note that for the operational upper-bound, the distributions mean is almost identical to the true mean of points, as expected.
+
+Beyond the output module there are a few key differences between the point estimation modules and the distribution estimate modules.
+When training distribution estimation models, all examples of a particular color name is grouped into a single high information training observation using the histogram as the output.
+Whereas when training for point estimation, each example is processed individually (using minibatches).
+This means that the distribution estimating models fit to all color names with equal priority. % \pdfcomment{Can a good analogy to microaveraging and macroaveraging be made?}.
+Whereas for point estimates, more frequently used color names have more examples, and so more frequent color names are fit with priority over rarer ones.
+Another consequence of using training per example using random minibatches, rather than aggregating and training with full batch, is increased resilience to to local minima.
+One of the upsides of the aggregated training used in distribution estimation is that it trains much faster as only a small number of high-information training examples are processed, rather than a much larger number of individual observations.
+It may be interesting in future work to consider training the distribution estimates per example using one-hot output representations; thus making the process similar to that used in the point estimate training.
+We suspect that such a method may have trouble learning the smoothness of the output space (as discussed in \Cref{sec:learnedsmoothness}).
+
+
+
+
+
+
+\pgfkeys{
+	/pgf/number format/.cd, fixed, precision=3, fixed zerofill=true
+}
+
+\pgfplotstableset{
+	col sep=comma,
+	header=has colnames,
+	column type={c},
+	ignore chars={"},
+	string replace={Direct}{\emph{Direct}},
+	clear infinite,
+	empty cells with={--},
+	every head row/.style={before row=\toprule,	after row=\midrule},
+	columns/method/.style={reset styles, string type, column name=Method},
+	%
+	boldcell/.style = {
+		postproc cell content/.append style={
+			@cell content/.add={\mathversion{tabularbold}}{}
+		}
+	},
+	%
+	greycell/.style = {
+		postproc cell content/.append style={
+			@cell content/.add={\color{gray}}{}
+		}		
+	}
+}
+\pgfplotstableset{distresults/.append style={%
+		columns={method, perpstd},
+		columns/perp/.style={column name=$PP$},
+		create on use/perpstd/.style={
+			create col/expr={\thisrow{perp}/(256*256*256)},
+		},
+		columns/perpstd/.style={column name=$\frac{PP}{256^3}$},
+%
+		every row 0 column 1/.style={greycell}
+	},%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	extrapodistresults/.append style={
+		every row 0 column 1/.style={greycell},
+		every row 0 column 2/.style={greycell},
+				%
+		columns={method, nxperpstd, xperpstd},
+		columns/nxperpstd/.style={column name={\shortstack{\small Full\\Training Set\\$\frac{PP}{256^3}$}}},
+		columns/xperpstd/.style={column name={\shortstack{\small Restricted\\Training Set\\$\frac{PP}{256^3}$}}},
+%		
+		create on use/xperpstd/.style={
+			create col/expr={\thisrow{extrapolatingperp}/(256*256*256)},
+		},
+		create on use/nxperpstd/.style={
+			create col/expr={\thisrow{nonextrapolatingperp}/(256*256*256)},
+		},
+	}
+}
+
+
+\pgfplotstableset{pointresults/.append style={%
+		columns={method,mse},
+		columns/mse/.style={column name={$MSE$}},
+		%
+		every row 0 column 1/.style={greycell},
+		every row 4 column 1/.style={greycell},
+	},%
+	extrapopointresults/.append style={
+		columns={method, nonextrapolatingmse, extrapolatingmse},
+		columns/nonextrapolatingmse/.style={column name=\shortstack{\small Full\\Training Set\\$MSE$}},
+		columns/extrapolatingmse/.style={column name=\shortstack{\small Restricted\\Training Set\\$MSE$}},
+		%		
+		every row 0 column 1/.style={greycell},
+		every row 4 column 1/.style={greycell},
+		every row 0 column 2/.style={greycell},
+		every row 4 column 2/.style={greycell},
+	},
+}
+
+%%%%%%%%%% Full
+
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[distresults,
+		every row 1 column 1/.style={boldcell},
+	]{results/regular/res_dist_full.csv}
+	%	}
+	\caption{\label{tbl:distfull} The results for the \textbf{full distribution estimation task}. Lower perplexity (PP) is better.}
+\end{table}
+
+
+
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[pointresults,
+	every row 2 column 1/.style={boldcell},
+	every row 1 column 1/.style={boldcell}
+	]{results/regular/res_point_comb_full.csv}
+	%	}
+	\caption{\label{tbl:pointfull} The results for the \textbf{full point estimation task}. Lower mean squared error (MSE) is better.}
+\end{table}
+
+%%%%%%% ORDER
+
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[distresults,
+		every row 1 column 1/.style={boldcell},
+	]{results/regular/res_dist_ord.csv}
+	%	}
+	\caption{\label{tbl:distord} The results for the \textbf{order distribution estimation task}. Lower perplexity (PP) is better. This is a subset of the full test set containing only tests where the order of the words matters.}
+\end{table}
+
+
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[pointresults,
+	every row 1 column 1/.style={boldcell},
+	every row 2 column 1/.style={boldcell},
+	%3
+	%4
+	%
+	every row 5 column 1/.style={boldcell},
+	every row 6 column 1/.style={boldcell}
+	]{results/regular/res_point_comb_ord.csv}
+	%	}
+	\caption{\label{tbl:pointord} The results for the \textbf{order point estimation task}. Lower mean squared error (MSE) is better. This is a subset of the full test set containing only tests where the order of the words matters.}
+\end{table}
+
+
+%%%%%%%% Extrapo
+
+
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+\pgfplotstabletypeset[extrapodistresults,
+		every row 1 column 1/.style={boldcell},
+		every row 1 column 2/.style={boldcell}
+]{results/regular/res_dist_extrapo.csv}
+	%	}
+	\caption{\label{tbl:distextrapo} The results for the \textbf{unseen combinations distribution estimation task}. Lower perplexity (PP) is better. This uses the extrapolation subset of the full test set. In the extrapolating results certain rare word combinations were removed from the training and development sets. In the non-extrapolating results the full training and development stet was used.}
+\end{table}
+
+
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[extrapopointresults,
+	every row 1 column 1/.style={boldcell},
+	every row 2 column 2/.style={boldcell},
+	]{results/regular/res_point_comb_extrapo.csv}
+	%	}
+	\caption{\label{tbl:pointextrapo} The results for the \textbf{unseen combinations point estimation task}. Lower mean squared error (MSE) is better. This uses the extrapolation subset of the full test set. In the extrapolating results certain rare word combinations were removed from the training and development sets. In the non-extrapolating results the full training and development stet was used.}
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
+
+
+
+
+
+\end{document}
