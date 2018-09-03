@@ -1,0 +1,78 @@
+\documentclass{standalone}
+
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usetikzlibrary{graphs} 
+%\usegdlibrary{layered}
+\usetikzlibrary{graphs,graphdrawing}
+\usegdlibrary{force, layered, trees}
+\usetikzlibrary{decorations.pathmorphing}
+\begin{document}
+
+\begin{tikzpicture}[align=center, 	decoration={bent,aspect=.4, amplitude=5},
+	note/.style= {blue,
+				  font=\tiny\itshape
+	},
+	notepoint/.style= {->,
+						note,
+						dashed,
+						decorate, shorten <= -32pt
+	},
+	section/.style = {draw,
+						dashed,
+						fill opacity=0.2,
+						font=\itshape,
+						rounded corners,
+						inner sep=3mm}
+]
+
+%AlignText/"" [draw];
+
+\graph[ layered layout, layer sep = 5mm, sibling distance=23mm,
+level 1/.style={sibling distance=15mm},
+%level 2/.style={sibling distance=40mm},
+%level 3/.style={sibling distance=10mm},
+%level 4/.style={sibling distance=10mm},
+%level 5/.style={sibling distance=10mm},
+%level 6/.style={sibling distance=10mm},
+%level 7/.style={sibling distance=10mm}
+]{
+ %grow down, branch right sep]{ %
+	
+	Context/"Context \\\small (sentence to be\\ disambiguated)";
+	WordSense/"Word Sense\\\small (The synset with \\the meaning of\\ this word in this context)";
+	UWSE/"Unsupervised \\Word Sense\\ Embeddings";
+	LWSE/"Lexically Aligned\\ Word Sense\\ Embeddings";
+
+%
+
+	{ [same layer] Lemma, POS, Word};
+	
+	
+	Context -> WSD -> WordSense;
+	
+	
+	""//{
+		"Offline: Lexical Refitting"[section, fill=blue] // {
+			{Lemma, POS} -> Synsets -> Glosses -> Refit,
+			Word -> UWSE -> Refit
+		},
+		Refit-> LWSE -> WSD	
+	};
+	
+	
+};
+
+
+%\node[note, left = 0.8 of WordSense, text width=2cm] (WSDText) {Use language model to find the probability of the context given the input of each	 lexically aligned word sense embedding, teturn the sense that gives highest probability of context};
+% \node[note, left = 0.3 of LWSE] (AlignText) {Use language model to find \\ the probability of each Gloss \\ given each embeddings. \\ Use this to find a new embeddings, \\ as a weighted sum of each unsupervised embedding \\ proportional how likely the gloss was to occur \\ when it is used input to the \\language model probability};
+
+%\draw[notepoint] (AlignText) -> (Align);
+%\draw[notepoint] (WSDText) -> (WSD);
+
+
+
+\end{tikzpicture}
+
+
+\end{document}

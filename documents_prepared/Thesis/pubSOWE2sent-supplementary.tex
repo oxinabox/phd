@@ -1,0 +1,157 @@
+
+\section{Supplementary Materials to Modelling Sentence Generation from Sum of Word Embedding Vectors as a Mixed Integer Programming Problem}
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%\\
+\newcommand{\namark}{\ding{54}}
+\newcommand{\passmark}{--}
+
+These supplementary materials show additional examples of the performance of our method against the works of \textcite{iyyer2014generating, Bowman2015SmoothGeneration}, as of our well as on sentences with ambiguous order. Bare in mind, exact reproduction is not the goal of either prior work; nor truly is it a goal of out work. Our goal being the regeneration of sentences while preserving meaning -- exact reproduction does of course meet that goal. The examples that follow should highlight the differences in the performance of the methods.
+
+
+
+
+
+\Cref{egiyyer,egbowman,egordered} show quantitative examples; including comparison to the existing works. In these tables \xmark{} and \cmark{} are used to show correctness of the output in the selection (Sel.) and in the ordering (Ord.) steps.
+
+The sentences shown in \Cref{egiyyer}, are difficult. The table features long complex sentences containing many proper nouns. These examples are sourced from \textcite{iyyer2014generating}. The output from their DT-RAE method is also shown for contrast. Only 3C is completed perfectly by our method. Of the remainder the MIP word ordering problem has no solutions, except in 3D, where it is wrong, but does produce an ordered sentence. In the others the language model constraints does not return any feasible ($P(\tau)>0$) ordering solutions. This failure may be attributed in a large part to the proper nouns.  Proper nouns are very sparse in any training corpus for language modelling. The Kneser-Ney smoothed trigrams back-off only down to bigrams, so if the words of the bigrams from the training corpus never appear adjacently in the training corpus, ordering fails. This is largely the case for very rare words. The other significant factor is the sentence length.
+
+The sentences in \Cref{egbowman}, are short and use common words -- they are easy to resynthesis. These examples come from \textcite{Bowman2015SmoothGeneration}. The output of their VAE based approach can be compared to that from our approach. Of the three there were two exact match's, and one failure.
+
+Normally mistakes made in the word selection step result in an unorderable sentence. Failures in selection are likely to result in a BOW that cannot be grammatically combined e.g. missing conjunctions. This results in no feasible solutions to the word ordering problem.
+
+The examples shown in \Cref{egordered} highlight sentences where the order is ambiguous -- where there are multiple reasonable solutions to the word ordering problem. In both cases the word selection performs perfectly, but the ordering is varied. In 5A, the \oracletitle{} sentence and the overall \twosteptitle{} sentence  in word order but not in word content. This is because under the trigram language model both sentences have exactly identical probabilities, so it comes to which solution is found first, which varies on the state of the MIP solver. In 5B the word order is switched -- ``from Paris to London'' vs ``to London from Paris'', which has the same meaning. But, it could also have switched the place names. In cases like this where two orderings are reasonable, the ordering method is certain to fail consistently for one of the orderings. Though it is possible to output the second (and third etc.) most probable ordering, which does ameliorate the failure somewhat. This is the key limitation which prevents this method from direct practical applications.
+
+\newpage
+
+
+	\newcommand{\collenone}{2.3cm}
+	\newcommand{\collentwo}{11.5cm}
+	\newcommand{\collenthree}{0.5cm}
+	\newcommand{\reftitle}{Reference}
+	\newcommand{\iref}{DT-RAE Ref.}
+	\newcommand{\ip}{DT-RAE Para.}
+	\newcommand{\bm}{VAE Mean}
+	\newcommand{\bs}{VAE Sample}
+	\begin{table*}
+		\small
+		\begin{tabular}{ p{\collenone} p{\collentwo} C{\collenthree} C{\collenthree} }
+			
+			\textbf{3A \hfill \reftitle}  & name this 1922 novel about leopold bloom written by james joyce . & \textbf{Sel.} & \textbf{Ord.} \\
+			\textbf{\oracletitle}  & written by name this . novel about 1922 bloom leopold james joyce & \passmark & \namark \\
+			\textbf{\twosteptitle}  & written novel by name james about leopold this bloom 1922 joyce . & \cmark & \namark \\
+			\textbf{\iref}  & name this 1906 novel about gottlieb\_fecknoe inspired by james\_joyce &  &  \\
+			\textbf{\ip}  & what is this william golding novel by its written writer &  &  \\
+			\hline
+			\textbf{3B \hfill \reftitle}  & ralph waldo emerson dismissed this poet as the jingle man and james russell lowell called him three-fifths genius and two-fifths sheer fudge . & \textbf{Sel.} & \textbf{Ord.} \\
+			\textbf{\oracletitle}  & sheer this as james two-fifths emerson fudge lowell poet genius waldo called russell the and ralph and him . dismissed jingle three-fifths man & \passmark & \namark \\
+			\textbf{\twosteptitle}  & him `` james great as emerson genius ralph the lowell and sheer waldo three-fifths man fudge dismissed jingle russell two-fifths and gwalchmai 2009 vice-versa \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ prominent called 21.25 explained & \xmark & \namark \\
+			\textbf{\iref}  & henry\_david\_thoreau rejected this author like the tsar boat and imbalance created known good writing and his own death &  &  \\
+			\textbf{\ip}  & henry\_david\_thoreau rejected him through their stories to go money well inspired stories to write as her writing &  &  \\
+			\hline
+			\textbf{3C \hfill \reftitle}  & this is the basis of a comedy of manners first performed in 1892 . & \textbf{Sel.} & \textbf{Ord.} \\
+			\textbf{\oracletitle}  & this is the basis of a comedy of manners first performed in 1892 . & \passmark & \cmark \\
+			\textbf{\twosteptitle}  & this is the basis of a comedy of manners first performed in 1892 . & \cmark & \cmark \\
+			\textbf{\iref}  & another is the subject of this trilogy of romance most performed in 1874 &  &  \\
+			\textbf{\ip}  & subject of drama from him about romance  &  &  \\
+			\hline
+			\textbf{3D \hfill \reftitle}  & in a third novel a sailor abandons the patna and meets marlow who in another novel meets kurtz in the congo . & \textbf{Sel.} & \textbf{Ord.} \\
+			\textbf{\oracletitle}  & kurtz and another meets sailor meets the marlow who abandons a third novel in a novel in the congo in patna . & \passmark & \xmark \\
+			\textbf{\twosteptitle}  & kurtz and another meets sailor meets the marlow who abandons a third novel in a novel in the congo in patna . & \cmark & \xmark \\
+			\textbf{\iref}  & during the short book the lady seduces the family and meets cousin he in a novel dies sister from the mr. &  &  \\
+			\textbf{\ip}  & during book of its author young lady seduces the family to marry old suicide while i marries himself in marriage &  &  \\
+			\hline
+			\textbf{3E \hfill \reftitle}  & thus she leaves her husband and child for aleksei vronsky but all ends sadly when she leaps in front of a train . & \textbf{Sel.} & \textbf{Ord.} \\
+			\textbf{\oracletitle}  & train front of child vronsky but and for leaps thus sadly all her she she in when aleksei husband ends a . leaves & \passmark & \namark \\
+			\textbf{\twosteptitle}  & she her all when child for leaves front but and train ends husband aleksei leaps of vronsky in a sadly micro-history thus , she the & \xmark & \namark \\
+			\textbf{\iref}  & however she leaves her sister and daughter from former fianc\'e and she ends unfortunately when narrator drives into life of a house &  &  \\
+			\textbf{\ip}  & leaves the sister of man in this novel &  &  \\
+		\end{tabular}
+		
+		
+		\caption{\label{egiyyer} A comparison our method, to the example sentences generated by the DT-RAE method of \textcite{iyyer2014generating}. \oracletitle{}  shows the word ordering step on the reference BOW. the Sel. and Ord. columns indicate if the output had the correct words selected, and ordered respectively. With \cmark{} indicating correct and \xmark{} indicating incorrect. \namark{} indicates not only that ordering was not correct, but that the MIP problem had no feasible solutions at all.
+			\iref{} shows the result of the method of \textcite{iyyer2014generating}, when the dependency tree of the output is provided to the generating process, whereas in \ip{} an arbitrary dependency tree is provided to the generating process. Note that the reference used as input to \twosteptitle{} and \oracletitle{} sentence was varied slightly from that used in \textcite{iyyer2014generating} and \textcite{White2015BOWgen}, in that terminating punctuation was not removed, and nor were multiword entity references grouped into single tokens.}
+	\end{table*}
+	
+	\renewcommand{\collenone}{2.3cm}
+	\renewcommand{\collentwo}{3cm}
+	\renewcommand{\collenthree}{0.5cm}
+	
+	\begin{table}
+		\small
+		
+		\begin{tabular}{ p{\collenone} p{\collentwo} C{\collenthree} C{\collenthree} }
+			
+			\textbf{4A \hfill \reftitle}  & we looked out at the setting sun . & \textbf{Sel.} & \textbf{Ord.} \\
+			\textbf{\oracletitle}  & we looked out at the setting sun . & \passmark & \cmark \\
+			\textbf{\twosteptitle}  & we looked out at the setting sun . & \cmark & \cmark \\
+			\textbf{\bm}  & they were laughing at the same time . &  &  \\
+			\textbf{\bs 1}  & ill see you in the early morning . &  &  \\
+			\textbf{\bs 2}  & i looked up at the blue sky . &  &  \\
+			\textbf{\bs 3}  & it was down on the dance floor . &  &  \\
+			\hline
+			\textbf{4B \hfill \reftitle}  & i went to the kitchen . & \textbf{Sel.} & \textbf{Ord.} \\
+			\textbf{\oracletitle}  & i went to the kitchen . & \passmark & \cmark \\
+			\textbf{\twosteptitle}  & i went to the kitchen . & \cmark & \cmark \\
+			\textbf{\bm}  & i went to the kitchen . &  &  \\
+			\textbf{\bs 1}  & i went to my apartment .  &  &  \\
+			\textbf{\bs 2}  & i looked around the room . &  &  \\
+			\textbf{\bs 3}  & i turned back to the table . &  &  \\
+			\hline
+			\textbf{4C \hfill \reftitle}  & how are you doing ? & \textbf{Sel.} & \textbf{Ord.} \\
+			\textbf{\oracletitle}  & how are you doing ? & \passmark & \cmark \\
+			\textbf{\twosteptitle}  & how 're do well ? & \xmark & \xmark \\
+			\textbf{\bm}  & what are you doing ? &  &  \\
+			\textbf{\bs 1}  & “ are you sure ? &  &  \\
+			\textbf{\bs 2}  & what are you doing, ? &  &  \\
+			\textbf{\bs 3}  & what are you doing ? &  &  \\
+		\end{tabular}
+		
+		\caption{\label{egbowman} A comparison of the output of the Two Step process proposed in this paper, to the example sentences generated by the VAE method of \textcite{Bowman2015SmoothGeneration}.}
+	\end{table}
+	
+	
+	\begin{table}
+		\small
+		\begin{tabular}{ p{\collenone} p{\collentwo} C{\collenthree} C{\collenthree} }
+			
+			\textbf{5A \hfill \reftitle}  & it was the worst of times , it was the best of times . & \textbf{Sel.} & \textbf{Ord.} \\
+			\textbf{\oracletitle}  & it was the worst of times , it was the best of times . & \passmark & \cmark \\
+			\textbf{\twosteptitle}  & it was the best of times , it was the worst of times . & \cmark & \xmark \\
+			\hline
+			\textbf{5B \hfill \reftitle}  & please give me directions from Paris to London . & \textbf{Sel.} & \textbf{Ord.} \\
+			\textbf{\oracletitle}  & please give me directions to London from Paris . & \passmark & \xmark \\
+			\textbf{\twosteptitle}  & please give me directions to London from Paris . & \cmark & \xmark \\
+			\hline
+		\end{tabular}
+		\caption{    \label{egordered} A pair of example sentences, where the correct order is particularly ambiguous.}
+	\end{table}
+	
+	
+%	\section{appendix}
+%	
+%	\begin{frame}{Experimental Setup: we used the Brown, and the Books Corpus}
+%		\footfullcite{francis1979brown}
+%		\footfullcite{moviebook}
+%		
+%		\begin{columns}[T]
+%			\begin{column}{0.5\textwidth}
+%				\textbf{Brown}
+%				\begin{itemize}
+%					\item 40,485 unique words
+%					\item 42,004 sentences
+%					\item Sentence Length Q3: \\\hfill 25 words
+%					\item Extracts from 500 varied works from 1961
+%				\end{itemize} 
+%			\end{column}
+%			\begin{column}{0.5\textwidth}
+%				\pause
+%				\textbf{Books}
+%				\begin{itemize}
+%					\item 178,694 unique words
+%					\item 66,464 sentences 
+%					\item Sentence Length Q3: \\\hfill 17 words
+%					\item 11,038 unpublished novels, we use just a small random subset
+%				\end{itemize}
+%			\end{column}
+%		\end{columns}
+%	\end{frame}
