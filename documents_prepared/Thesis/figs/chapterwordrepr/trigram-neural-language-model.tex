@@ -1,0 +1,51 @@
+\documentclass{standalone}
+
+\input{../../preamble-tikz.tex}
+
+\begin{document}
+
+
+
+\begin{tikzpicture}[]
+
+
+\node(w1) {$\n w_{i-1}$};
+\node(w2)[right = of w1] {$\n w_{i-2}$};
+
+
+
+\coordinate[above left=of w1, xshift=-2cm] (CC0);% at (Cn);
+\embtable{C}{CC0}{Embedding Table}
+
+%
+%\node(Cn)[draw,tight, below = 0mm of C0, minimum width=3.5em] {\footnotesize $\vdots$};
+%\def\tblmax{6}
+%\foreach \ii in {1,...,\tblmax} {
+%	\pgfmathtruncatemacro\prev{(\ii - 1)};
+%	\pgfmathtruncatemacro\jj{(\tblmax -\ii)};
+%	
+%	\node(C\ii)[draw, tight, minimum width=3.5em, above = 0 mm of {C\prev}.north]{\footnotesize$\varoast\varoast\varoast\varoast\varoast$};
+%	\node(Clbl\ii)[left = 0mm of C\ii]{\footnotesize $\i C_\jj$:};
+%};
+%\node(C)[above = 0mm of C\tblmax] {\small \textsc{Embedding Table}};
+
+
+\node(concat1)[layer, above = 5 of w1]{$\i C_{\n w_{i-1}}$};
+\node(concat2)[layer, right = 0 of concat1]{$\i C_{\n w_{i-2}}$};
+
+\draw[->] (w1) -- ({C}3.east);
+\draw[->]  ({C}3.east) -- (concat1.south);
+\draw[->] (w2) -- ({C}5.east);
+\draw[->]  ({C}5.east) -- (concat2.south);
+
+\node(L1)[layer, above = of concat1.north east]{$\varphi\left(U\dv z_{embs} + \v b\right)$};
+\draw[->]  (concat1.north east) -- node[labe]{$\dv z_{embs}$} (L1);
+
+\node(L2)[layer, above = of L1]{$\softmax\left(V \dv z_{hid} + \v k\right)$};
+\draw[->]  (L1) edge node[labe]{$\dv z_{hid}$} (L2);
+
+\node(out)[above = of L2]{$P(\n w_i \mid \n w_{i-1}, \n w_{i-2})$};
+\draw[->] (L2) -- (out);
+\end{tikzpicture}
+
+\end{document}
