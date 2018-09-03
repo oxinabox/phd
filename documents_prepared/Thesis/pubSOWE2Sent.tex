@@ -1,82 +1,10 @@
-\documentclass[compsoc]{IEEEtran}
-\usepackage[subpreambles=true]{standalone}
-%\usepackage{acl2012}
+%\documentclass{book}
+%\input{preamble.tex}
+%
+%
+%\begin{document}
 
-\usepackage{latexsym}
-
-%\usepackage{newtxtext}
-%\usepackage[scaled=.90]{helvet}
-%\usepackage{courier}
-%\usepackage{times}
-
-%\usepackage[T1]{fontenc}
-%\usepackage{fontspec}
-%\usepackage{microtype}
-%\usepackage{csquotes}
-%\usepackage{flushend}
-
-
-
-\usepackage{verbatim}
-\usepackage{grffile}
-
-\usepackage{tikz}
-\usetikzlibrary{positioning}
-\usepackage{xifthen}
-\usepackage{pgfplots}
-\pgfplotsset{compat=1.12}
-\usepackage{booktabs, array} % Generates table from .csv
-\usepackage{pgfplotstable}
-
-%%%%%%%%%%MATH
-
-%\usepackage{nccmath}
-\usepackage{amsthm}
-\usepackage[cmex10]{amsmath}
-\usepackage{amssymb}
-\usepackage{mathtools}
-\usepackage{multirow}
-\usepackage{resizegather}
-%\usepackage{amsfonts}
-
-\theoremstyle{plain}
-\newtheorem{thm}{\protect\theoremname}
-\theoremstyle{definition}
-\newtheorem{defn}[thm]{\protect\definitionname}
-\usepackage{csquotes}
-\usepackage[english]{babel}
-\providecommand{\definitionname}{Definition}
-\providecommand{\theoremname}{Theorem}
-
-\DeclareMathOperator*{\argmin}{argmin}
-
-%%%%%
-\usepackage[backend=bibtex,style=ieee,url=false, doi=false]{biblatex}
-\bibliography{master}
-
-%Plain Bibtex way, with the BST
-%\bibliographystyle{IEEEtrans}
-%\newcommand{\parencite}{\protect\cite}
-%\newcommand{\textcite}{\protect\cite}
-
-\usepackage{cleveref}
-
-
-
-%%%%%%%%%%%%%%%%%%%%%% Magic Float Layer Fix Settings 
-\renewcommand{\topfraction}{.85}
-\renewcommand{\bottomfraction}{.7}
-\renewcommand{\textfraction}{.15}
-\renewcommand{\floatpagefraction}{.8}
-\renewcommand{\dbltopfraction}{.9}
-\renewcommand{\dblfloatpagefraction}{.8}
-\setcounter{topnumber}{9}
-\setcounter{bottomnumber}{9}
-\setcounter{totalnumber}{20}
-\setcounter{dbltopnumber}{9}
-
-%%%%%%%%%%%%%%%%%
-
+{
 %%%%%%%%%
 %Consistency in naming 
 \newcommand{\oracletitle}{Ref.~BOW+Ord.}
@@ -105,42 +33,28 @@
 	percent style/.style={%
 		preproc/expr={100*##1},
 		postproc cell content/.append code={\pgfkeysalso{@cell content/.add={}{\%}}
-		}},
+	}},
 	every head row/.style={after row=\midrule},
 	columns/Process/.style={string type,column type=C{6.5em},
 		string replace*={Word Selection}{\selectiontitle},
 		string replace*={Ordering Only}{\oracletitle},
 		string replace*={Ordering}{\oracletitle},
 		string replace*={Two Step}{\twosteptitle},
-		}
 	}
+}
 
 
 %%%%%% Data
- 
+
 \pgfplotstableread[col sep=comma,ignore chars={"}]{data/ordering_length_scores.csv}{\ordlenscores}
 \pgfplotstableread[col sep=comma,ignore chars={"}]{data/ordering_length_scores_oracle.csv}{\ordlenscoresoracle}
-\pgfplotstableread[col sep=comma,header=has colnames]{data/selection_len_scores.csv}{\sellenscores}
+\pgfplotstableread[col sep=comma,header=has colnames]{data/sowe2sent_selection_len_scores.csv}{\sellenscores}
 
 
 
-%opening
-\title{Modelling Sentence Generation from Sum of Word Embedding Vectors as a Mixed Integer Programming Problem}
-
-\author{\IEEEauthorblockN{Lyndon White, Roberto Togneri, Wei Liu \and Mohammed Bennamoun}\\
-	\IEEEauthorblockA{The University of Western Australia\\
-		35 Stirling Highway, Crawley, Western Australia\\
-		\texttt{lyndon.white@research.uwa.edu.au}\\
-		\texttt{\{roberto.togneri, wei.liu, mohammed.bennamoun\}@uwa.edu.au}
-		}
-	}
-
-
-\graphicspath{{./figs/}}
-
-\begin{document}
-
-\maketitle
+	
+	
+\chapter{Modelling Sentence Generation from Sum of Word Embedding Vectors as a Mixed Integer Programming Problem}
 
 \begin{abstract}
 
@@ -242,7 +156,7 @@ To order the words we use a method based on the work of \textcite{Horvat2014}, w
 \textcite{Horvat2014} formulated the word ordering problem as a generalised asymmetrical travelling salesman problem (GA-TSP). \Cref{fig:ordergraph} shows an example of the connected graph for ordering five words. We extend beyond the approach of \textcite{Horvat2014} by reformulating the problem as a linear mixed integer programming problem (MIP). This allows us to take advantage of existing efficient solvers for this problem. 
 Beyond the GA-TSP approach, a direct MIP formulation allows for increased descriptive flexibility and opens the way for further enhancement. Some of the constraints of a GA-TSP can be removed, or simplified in the direct MIP formulation for word ordering.  For example, word ordering does have distinct and known start and end nodes (as shall be detailed in the next section). To formulate it as a GA-TSP it must be a tour without beginning or end. \textcite{Horvat2014} solve this by simply connecting the start to the end with a zero cost link. This is not needed if formulating this as a MIP problem, the start and end nodes can be treated as special cases. Being able to special case them as nodes known always to occur allows some simplification in the subtour elimination step. The formulation to mixed integer programming is otherwise reasonably standard.
 
-\input{word_ordering}
+\input{pubSOWE2sent-word_ordering.tex}
 
 
 \section{Experimental Setup and Evaluations} \label{evalsettings}
@@ -309,7 +223,7 @@ Implementation was in the Julia programming language \parencite{Julia}. The impl
 		every head row/.style={after row=\midrule},
 		create on use/Process/.style={create col/set list={0,0,0,0,Word Selection}},
 		columns={Process, Perfect BOWs, Mean Precision,Mean Jaccard Index}
-		]{data/selection_overall_len_scores.csv}
+		]{data/sowe2sent_selection_overall_len_scores.csv}
 	}
 	\caption{ The performance of the word selection step, on the Books corpus. This table shows a subset of the results reported by \textcite{White2015BOWgen}.}
 	\label{table:wordselection}
@@ -375,9 +289,10 @@ Award, and partially funded by Australian Research Council grants
 DP150102405 and LP110100050. Computational resources were provided by the National eResearch Collaboration Tools and Resources project (Nectar).
 
 %\bibliography{master}
-\printbibliography
+\input{pubSOWE2sent-supplementary.tex}
 
-\end{document}
+%\end{document}
+}
 
 
 
