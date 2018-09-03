@@ -1,0 +1,255 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{times}
+%\usepackage[author={Lyndon}]{pdfcomment}
+
+\usepackage{booktabs}
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=1.14}
+
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+
+\usepackage{cleveref}
+
+
+\title{Learning of Colors from Color Names: \\ Distribution and Point Estimation\\Supplementary Materials}
+\author{}
+\date{}
+
+\begin{document}
+\section{Appendix}
+
+\subsection{On the Conditional Independence of Color Channels given a Color Name}\label{sec:corrind}
+
+As discussed in the main text, we conducted a superficial investigation into the truth of our assumption that given a color name, the distributions of the hue, value and saturation are statistically independent.
+
+We note that this investigation is, by no means, conclusive though it is suggestive.
+The investigation focusses around the use of the Spearman's rank correlation.
+This correlation measures the monotonicity of the relationship between the random variables.
+A key limitation is that the relationship may exist but be non-monotonic.
+This is almost certainly true for any relationship involving channels, such as hue, which wrap around.
+In the case of such relationships Spearman's correlation will underestimate the true strength of the relationship.
+Thus, this test is of limited use in proving conditional independence.
+However, it is a quick test to perform and does suggest that the conditional independence assumption may not be so incorrect as one might assume.
+
+
+In Monroe Color Dataset the training data  given by $V \subset \mathbb{R}^{3}\times T$, where $\mathbb{R}^{3}$ is the value in the color-space under consideration, and $T$ is the natural language space.
+The subset of the training data for the description $t \in T$ is given by
+$V_{|t}=\{(\tilde{v}_i,\,t_i) \in V \: \mid \: t_{i}=t\}$.
+Further let $T_V = \{t_i \: \mid \: (\tilde{v},t_i)\in V$ be the set of color names used in the training set.
+Let $V_{\alpha|t}$ be the $\alpha$ channel component of $V_{|t}$, i.e. $V_{\alpha|t} = \left\lbrace v_\alpha \mid ((v_1,v_2,v_3), t) \in V_{|t} \right\rbrace$.
+
+The set of absolute Spearman's rank correlations between channels $a$ and $b$ for each color name is given by
+$S_{ab}=\left\lbrace \left|\rho(V_{a|t},V_{b|t})\,\right|\,t\in T_{V}\right\rbrace$.
+\newpage
+
+We consider the third quartile of that correlation as the indicative statistic in \Cref{tbl:colorcor}.
+That is to say for 75\% of all color names, for the given color-space, the correlation is less than this value.
+
+
+
+Of the 16 color-spaces considered, it can be seen that the HSV exhibits the strongest signs of conditional independence -- under this (mildly flawed) metric.
+More properly put, it exhibits the weakest signs of non-independence.
+This includes being significantly less correlated than other spaces featuring circular channels such as HSL and HSI.
+
+Our overall work makes the conditional independence assumption, much like n-gram language models make the Markov assumption.
+The success of the main work indicates that the assumption does not cause substantial issues.
+
+
+\pgfkeys{/pgf/number format/.cd, fixed relative, precision=4}
+\pgfplotstableset{corstyle/.append style={%
+		col sep=tab,
+		header=has colnames,
+		columns/Color Space/.style={reset styles, string type, column name=Color-Space},
+		ignore chars={"},
+		every head row/.style={before row=\toprule,	after row=\midrule}
+	}%
+}
+
+\begin{table}
+	\centering
+%	\resizebox{\columnwidth}{!}{
+		\pgfplotstabletypeset[corstyle]{results/colorcor.tsv}
+%	}
+	\caption{\label{tbl:colorcor} The third quartile for the pairwise Spearman's correlation of the color channels given the color name.}
+	
+\end{table}
+
+\subsection{KDE based smoothing of Training Data}\label{sec:smoothed-results}
+
+It can be seen that smoothing has very little effect on the performance of any of the neural network based distribution estimation models.
+All three term based models (SOWE, CNN, RNN) all perform very similarly whether or not the training data is smoothed.
+This is seen consistently in all the distribution estimation tasks.
+Contrast \Cref{tbl:distfull-smoothed,tbl:distord-smoothed,tbl:distextrapo-smoothed}
+to the tables for the unsmoothed results
+\Cref{tbl:distfull,tbl:distord,tbl:distextrapo}.
+
+If however, smoothing is not applied to the operational upper bound, it works far worse.
+In  \Cref{tbl:distfull-smoothed,tbl:distord-smoothed,tbl:distextrapo-smoothed} the Direct result refers to using the training histograms almost directly, without any smoothing or term-based input processing.
+This is the same as the operational upper bound, minus the KDE.
+It works very poorly (by comparison).
+This is because the bins values are largely independent: a very high probability in one bin does not affect the probability of the adjacent bin -- which by chance of sampling may be lower than would be given by the true distribution.
+
+This is particularly notable in the case of the direct, full training set result on the unseen combinations task reported  in \Cref{tbl:distextrapo-smoothed}. As these were some of the rarest terms in the training set, several did not coincide with any bins for observations in testing set.
+This is because without smoothing it results in estimating the probability based on bins unfilled by any observation.
+We do cap that empty bin probability at $\epsilon_{64} \approxeq 2\times 10^{-16}$ to prevent undefined perplexity.
+We found capping the lower probability for bins like this to be far more effective than add-on smoothing.
+
+Conversely, on this dataset the neural network models do quite well, with or without smoothing.
+As the network can effectively learn the smoothness, not just from the observations of one color but from all of the observations.
+It learns that increasing the value of one bin should increase the adjacent ones.
+As such smoothing does not need to be applied to the training data.
+
+\pgfkeys{
+	/pgf/number format/.cd, fixed, precision=3, fixed zerofill=true
+}
+
+\pgfplotstableset{
+	col sep=comma,
+	header=has colnames,
+	column type={c},
+	ignore chars={"},
+	string replace={Direct}{\emph{Direct}},
+	clear infinite,
+	empty cells with={--},
+	every head row/.style={before row=\toprule,	after row=\midrule},
+	columns/method/.style={reset styles, string type, column name=Method},
+	%
+	boldcell/.style = {
+		postproc cell content/.append style={
+			@cell content/.add={\mathversion{tabularbold}}{}
+		}
+	},
+	%
+	greycell/.style = {
+		postproc cell content/.append style={
+			@cell content/.add={\color{gray}}{}
+		}		
+	}
+}
+\pgfplotstableset{distresults/.append style={%
+		columns={method, perpstd},
+		columns/perp/.style={column name=$PP$},
+		create on use/perpstd/.style={
+			create col/expr={\thisrow{perp}/(256*256*256)},
+		},
+		columns/perpstd/.style={column name=$\frac{PP}{256^3}$},
+		%
+		every row 0 column 1/.style={greycell}
+	},%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	extrapodistresults/.append style={
+		every row 0 column 1/.style={greycell},
+		every row 0 column 2/.style={greycell},
+		%
+		columns={method, nxperpstd, xperpstd},
+		columns/nxperpstd/.style={column name={\shortstack{\small Full\\Training Set\\$\frac{PP}{256^3}$}}},
+		columns/xperpstd/.style={column name={\shortstack{\small Restricted\\Training Set\\$\frac{PP}{256^3}$}}},
+		%		
+		create on use/xperpstd/.style={
+			create col/expr={\thisrow{extrapolatingperp}/(256*256*256)},
+		},
+		create on use/nxperpstd/.style={
+			create col/expr={\thisrow{nonextrapolatingperp}/(256*256*256)},
+		},
+	}
+}
+
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[distresults,
+	every row 1 column 1/.style={greycell},
+	]{results/smoothed/res_dist_full.csv}
+	%	}
+	\caption{\label{tbl:distfull-smoothed}  The results for the \textbf{full distribution estimation task} using smoothed training data. Lower perplexity (PP) is better. This corresponds to the main results in \Cref{tbl:distfull}.}
+\end{table}
+
+
+
+
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[distresults,
+	every row 1 column 1/.style={greycell},
+	]{results/smoothed/res_dist_ord.csv}
+	%	}
+	\caption{\label{tbl:distord-smoothed}  The results for the \textbf{order distribution estimation task} using smoothed training data. Lower perplexity (PP) is better. This is a subset of the full test set containing only tests where the order of the words matters. This corresponds to the main results in \Cref{tbl:distord}.}
+\end{table}
+
+
+\begin{table}
+	%	\resizebox{\columnwidth}{!}{
+	\pgfplotstabletypeset[extrapodistresults,
+	every row 1 column 1/.style={greycell},
+	every row 1 column 2/.style={greycell},
+	]{results/smoothed/res_dist_extrapo.csv}
+	%	}
+	\caption{\label{tbl:distextrapo-smoothed}  The results for the \textbf{unseen combinations distribution estimation task} using smoothed training data. Lower perplexity (PP) is better. This uses the extrapolation subset of the full test set. In the extrapolating results certain rare word combinations were removed from the training and development sets. In the non-extrapolating results the full training and development stet was used. This corresponds to the main results in \Cref{tbl:distextrapo}.}
+\end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%\pgfplotstableset{pointresults/.append style={%
+%		columns={method,mse},
+%		columns/mse/.style={column name={$MSE$}},
+%		%
+%		every row 0 column 1/.style={greycell},
+%		every row 4 column 1/.style={greycell},
+%	},%
+%	extrapopointresults/.append style={
+%		columns={method, nonextrapolatingmse, extrapolatingmse},
+%		columns/nonextrapolatingmse/.style={column name=\shortstack{\small Full\\Training Set\\$MSE$}},
+%		columns/extrapolatingmse/.style={column name=\shortstack{\small Restricted\\Training Set\\$MSE$}},
+%		%		
+%		every row 0 column 1/.style={greycell},
+%		every row 4 column 1/.style={greycell},
+%		every row 0 column 2/.style={greycell},
+%		every row 4 column 2/.style={greycell},
+%	},
+%}
+%
+%
+%\begin{table}
+%	%	\resizebox{\columnwidth}{!}{
+%	\pgfplotstabletypeset[pointresults,
+%	every row 2 column 1/.style={boldcell},
+%	every row 1 column 1/.style={boldcell}
+%	]{results/smoothed/res_point_comb_full.csv}
+%	%	}
+%	\caption{\label{tbl:pointfull-smoothed}  The results for the \textbf{full point estimation task} using smoothed training data. Lower mean squared error (MSE) is better. This corresponds to the main results \Cref{tbl:pointfull}.}
+%\end{table}
+%
+%
+%
+%\begin{table}
+%	%	\resizebox{\columnwidth}{!}{
+%	\pgfplotstabletypeset[pointresults,
+%	every row 1 column 1/.style={boldcell},
+%	every row 2 column 1/.style={boldcell},
+%	%3
+%	%4
+%	%
+%	every row 5 column 1/.style={boldcell},
+%	every row 6 column 1/.style={boldcell}
+%	]{results/smoothed/res_point_comb_ord.csv}
+%	%	}
+%	\caption{\label{tbl:pointord-smoothed}  The results for the \textbf{order point estimation task} using smoothed training data. Lower mean squared error (MSE) is better. This is a subset of the full test set containing only tests where the order of the words matters. This corresponds to the main results \Cref{tbl:pointord}.}
+%\end{table}
+%
+%
+%\begin{table}
+%	%	\resizebox{\columnwidth}{!}{
+%	\pgfplotstabletypeset[extrapopointresults,
+%	every row 1 column 1/.style={boldcell},
+%	every row 2 column 2/.style={boldcell},
+%	]{results/smoothed/res_point_comb_extrapo.csv}
+%	%	}
+%	\caption{\label{tbl:pointextrapo-smoothed}  The results for the \textbf{unseen combinations point estimation task} using smoothed training data. Lower mean squared error (MSE) is better. This uses the extrapolation subset of the full test set. In the extrapolating results certain rare word combinations were removed from the training and development sets. In the non-extrapolating results the full training and development stet was used. This corresponds to the main results \Cref{tbl:pointextrapo}.}
+%\end{table}
+
+
+\end{document}
