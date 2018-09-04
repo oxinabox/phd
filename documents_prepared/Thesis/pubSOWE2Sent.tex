@@ -55,10 +55,9 @@
 	
 	
 \chapter{Modelling Sentence Generation from Sum of Word Embedding Vectors as a Mixed Integer Programming Problem}
+\preamble{This paper was presented at the High Dimensional Data Mining Workshop at the IEEE International Conference on Data Mining, in 2016.}
 
 \begin{abstract}
-
-	
 Converting a sentence to a meaningful vector representation has uses in many NLP tasks, however very few methods allow that representation to be restored to a human readable sentence. Being able to generate sentences from the vector representations demonstrates the level of information maintained by the embedding representation -- in this case a simple sum of word embeddings. We introduce such a method for moving from this vector representation back to the original sentences. This is done using a two stage process; first a greedy algorithm is utilised to convert the vector to a bag of words, and second a simple probabilistic language model is used to order the words to get back the sentence. To the best of our knowledge this is the first work to demonstrate quantitatively the ability to reproduce text from a large corpus based directly on its sentence embeddings.
 \end{abstract}
 
@@ -84,7 +83,7 @@ Our method performs the sentence generation in two steps, as shown in \Cref{bloc
 	\label{block_diagram}
 \end{figure}
 
-The rest of the paper is organized into the following sections. \Cref{relwork} discusses the prior work on sentence  generation. \Cref{framework} explains the problem in detail and how our method is used to solve it. \Cref{evalsettings} describes the settings used for evaluation. \Cref{results} presents the results of this evaluation. The paper concludes with \Cref{conclusion} and a discussion of future work on this problem.
+The rest of the paper is organized into the following sections. \Cref{relwork} discusses the prior work on sentence  generation. \Cref{framework} explains the problem in detail and how our method is used to solve it. \Cref{evalsettings} describes the settings used for evaluation. \Cref{resultsSS} presents the results of this evaluation. The paper concludes with \Cref{conclusionSS} and a discussion of future work on this problem.
 
 
 \section{Related Works}\label{relwork}
@@ -196,7 +195,7 @@ Implementation was in the Julia programming language \parencite{Julia}. The impl
 
 
 
-\section{Results and Discussion} \label{results}
+\section{Results and Discussion} \label{resultsSS}
 
 \begin{table}[t]
 	\centering
@@ -211,7 +210,7 @@ Implementation was in the Julia programming language \parencite{Julia}. The impl
 		columns={Process, Perfect Sentences, BLEU Score, Portion Feasible}
 		]{data/ordering_scores.csv}}
 	\caption{The overall performance of the \twosteptitle{} sentence generation process when evaluated on the Books corpus. }
-	\label{table:overall}
+	\label{table:overallSS}
 \end{table}
 \begin{table}	
 	\centering
@@ -249,11 +248,11 @@ Implementation was in the Julia programming language \parencite{Julia}. The impl
 	\end{axis}
 	\end{tikzpicture}
 	\caption{The portion of sentences reconstructed perfectly by the \twosteptitle{} process. Shown also is the results on ordering only (\oracletitle{}), which orders the reference BOWS; and the portion of BOWs perfect from the word selection step only (\selectiontitle{}) i.e. the input to the ordering step.}
-	\label{figure:exactlenscore}
+	\label{figure:exactlenscoreSS}
 \end{figure}
 
 
-The overall results for our method (\twosteptitle{}) sentence generation are shown in \Cref{table:overall}. Also shown are the results for just the ordering step, when the reference bag of words provided as the input (\oracletitle{}). The Perfect Sentences column shows the portion of the output sentences which exactly reproduce the input. The more forgiving BLEU Score \cite{Papineni2002} is shown to measure how close the generated sentence is to the original. The portion of cases for which there does exist a solution within the constraints of the MIP ordering problem is showin in Portion Feasible. In the other cases, where the MIP problem is unsolvable, for calculating the BLEU score, we order the BOW based on the order resulting from the word selection step, or in the reference case randomly.
+The overall results for our method (\twosteptitle{}) sentence generation are shown in \Cref{table:overallSS}. Also shown are the results for just the ordering step, when the reference bag of words provided as the input (\oracletitle{}). The Perfect Sentences column shows the portion of the output sentences which exactly reproduce the input. The more forgiving BLEU Score \cite{Papineni2002} is shown to measure how close the generated sentence is to the original. The portion of cases for which there does exist a solution within the constraints of the MIP ordering problem is showin in Portion Feasible. In the other cases, where the MIP problem is unsolvable, for calculating the BLEU score, we order the BOW based on the order resulting from the word selection step, or in the reference case randomly.
 
 \Cref{table:wordselection} shows the results reported by \cite{White2015BOWgen} for the Word Selection step only (\selectiontitle{}). The Perfect BOWs column reports the portion of the generated BOWs which perfectly match the reference BOWs. We also show the Mean Precision, averaged across all cases, this being the number of correct words generated, out of the total number of words generated. Similarly, the Mean Jaccard Index is shown, which is a measure of the similarities of the BOWs, being the size of the intersection of the generated BOW with the reference BOW, divided by the size of their union. We present these results to show how each step's performance impacts the overall system.
 
@@ -265,7 +264,7 @@ It can be noted that \oracletitle{} and \twosteptitle{} were significantly more 
 
 
 
-The overall resynthesis (\twosteptitle{}) degrades as the sentence length increases as shown in \Cref{figure:exactlenscore}. It can be seen from the figure that sentence length is a critical factor in the performance. The performance drop is largely from the complexity in the ordering step when faced with long sentences. This is evident in \Cref{figure:exactlenscore}, as performance degrades at almost the same rate even when using the perfect BOW (compare \oracletitle{} vs \twosteptitle{}); rather than being degraded by the failures in the word selection step (\selectiontitle{}). We can conclude that sentences with word selection failures (\selectiontitle{}) are also generally sentences which would have word ordering failures even with perfect BOW (\oracletitle{}). Thus improving word selection, without also improving ordering, would not have improved the overall results significantly.
+The overall resynthesis (\twosteptitle{}) degrades as the sentence length increases as shown in \Cref{figure:exactlenscoreSS}. It can be seen from the figure that sentence length is a critical factor in the performance. The performance drop is largely from the complexity in the ordering step when faced with long sentences. This is evident in \Cref{figure:exactlenscore}, as performance degrades at almost the same rate even when using the perfect BOW (compare \oracletitle{} vs \twosteptitle{}); rather than being degraded by the failures in the word selection step (\selectiontitle{}). We can conclude that sentences with word selection failures (\selectiontitle{}) are also generally sentences which would have word ordering failures even with perfect BOW (\oracletitle{}). Thus improving word selection, without also improving ordering, would not have improved the overall results significantly.
 
 From observing examples of the output of method we note that normally mistakes made in the word selection step result in an unorderable sentence. Failures in selection are likely to result in a BOW that cannot be grammatically combined e.g. missing conjunctions. This results in no feasible solutions to the word ordering problem.
 
@@ -273,7 +272,7 @@ From observing examples of the output of method we note that normally mistakes m
 Our method considers the word selection and word ordering as separate steps. This means that unorderable words can be selected if there is an error in the first step. This is not a problem for the existing methods of \textcite{iyyer2014generating} and of \textcite{Bowman2015SmoothGeneration}. \textcite{iyyer2014generating} guarantees grammatical correctness, as the syntax tree must be provided as an input for resynthesis -- thus key ordering information is indirectly provided and it is generated into. \textcite{Bowman2015SmoothGeneration} on the other hand integrates the language model with the sentence embedding so that every point in the vector space includes information about word order. In general, it seems clear that incorporating knowledge about order, or at least co-occurrence probabilities, should be certain to improve the selection step. Even so the current simple approach has a strong capacity to get back the input, without such enhancement.
 
 
-\section{Conclusion} \label{conclusion}
+\section{Conclusion} \label{conclusionSS}
 A method was presented for regenerating sentences, from the sum of a sentence's word embeddings. It uses sums of existing word embeddings, which are machine learnt to represent the sentences, and then generates natural language output, using only the embeddings and a simple trigram language model. Unlike existing methods, the generation method itself is deterministic rather than being based on machine-learnt encoder/decoder models. The method involved two steps, word selection and word ordering.
 
 The first part is  the word selection problem, of going from the sum of embeddings to a bag of words. To solve this we utilised the method presented in \textcite{White2015BOWgen}. Their greedy algorithm was found to perform well at regenerating a BOW. The second part was word ordering. This was done through a MIP bases reformulation of the work of the graph-based work of \textcite{Horvat2014}. It was demonstrated that a probabilistic language model can be used to order the bag of words output to regenerate the original sentences. While it is certainly impossible to do this perfectly in every case, for many sentences the most likely ordering is correct.

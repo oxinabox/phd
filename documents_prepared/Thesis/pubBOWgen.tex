@@ -29,6 +29,7 @@
 
 	
 \chapter{Generating Bags of Words from the Sums of their Word Embeddings}
+\preamble{This paper was presented at the 17th Conference on Intelligent Text Processing and Computational Linguistics, in 2016. Where it received the award for best student publication.}
 %
 \begin{abstract}
 Many methods have been proposed to generate sentence vector representations, such as recursive neural networks, latent distributed memory models, and the simple sum of word embeddings (SOWE). However,  very few methods demonstrate the ability to reverse the process -- recovering sentences from sentence embeddings. Amongst the many sentence embeddings, SOWE has been shown to maintain semantic meaning, so in this paper we introduce a method for moving from the SOWE representations back to the bag of words (BOW) for the original sentences. This is a part way step towards recovering the whole sentence and has useful theoretical and practical applications of its own. This is done using a greedy algorithm to convert the vector to a bag of words. To our knowledge this is the first such work. It demonstrates qualitatively the ability to recreate the words from a large corpus based on its sentence embeddings.
@@ -36,7 +37,7 @@ Many methods have been proposed to generate sentence vector representations, suc
 As well as practical applications for allowing classical information retrieval methods to be combined with more recent methods using the sums of word embeddings, the success of this method has theoretical implications on the degree of information maintained by the sum of embeddings representation. This lends some credence to the consideration of the SOWE as a dimensionality reduced, and meaning enhanced, data manifold for the bag of words.  
 \end{abstract}
 
-\section{Introduction} \label{intro}
+\section{Introduction} %\label{intro}
 
 The task being tackled here is the \emph{resynthesis} of bags of words (BOW) from sentence embedding representations. In particular the generation of BOW from vectors based on the sum of the sentence's constituent words' embeddings (SOWE). To the knowledge of the authors, this task has not been attempted before.
 
@@ -49,19 +50,19 @@ Several approaches have been developed for representing images and sentences in 
 A similar use is the replacement of vector based extractive summarisation \parencite{KaagebExtractiveSummaristation,yogatamaextractive}, with keyword based abstractive summarisation, which is the generation of a keyword summary from a document. The promising use of SOWE generation for all these applications is to have a separate model trained to take the source information (e.g. a picture for image description, or a cluster of sentences for abstract summarisation) as its input and train it to output a vector which is close to a target SOWE vector. This output can then be used to generate the sentence.
 
 
-The method proposed in this paper has an input of a sum of word embeddings (SOWE) as the sentence embedding, and outputs the bag of word (BOW) which it corresponds to. The input is a vector for example $\s=[-0.79, 1.27,0.28,...,-1.29]$, which approximates a SOWE vector, and outputs a BOW for example \texttt{\{\mbox{,: 1}, \mbox{best:1}, \mbox{it:2}, \mbox{of:2}, \mbox{the:2}, \mbox{times:2}, \mbox{was:2}, \mbox{worst:1}\}} -- the BOW for the opening line of Dickens' \emph{Tale of Two Cities}. Our method for BOW generation is shown in \Cref{block_diagram}, note that it takes as input only a word embedding vocabulary ($\V$) and the vector ($\s$) to generate the BOW ($\c$). 
+The method proposed in this paper has an input of a sum of word embeddings (SOWE) as the sentence embedding, and outputs the bag of word (BOW) which it corresponds to. The input is a vector for example $\s=[-0.79, 1.27,0.28,...,-1.29]$, which approximates a SOWE vector, and outputs a BOW for example \texttt{\{\mbox{,: 1}, \mbox{best:1}, \mbox{it:2}, \mbox{of:2}, \mbox{the:2}, \mbox{times:2}, \mbox{was:2}, \mbox{worst:1}\}} -- the BOW for the opening line of Dickens' \emph{Tale of Two Cities}. Our method for BOW generation is shown in \Cref{block_diagramBG}, note that it takes as input only a word embedding vocabulary ($\V$) and the vector ($\s$) to generate the BOW ($\c$). 
 
 \begin{figure}
 	\centering 
 	\input{figs/selection_block_diagram_cicling.tex}
 	\caption{The process for the regenerating BOW from SOWE sentence embeddings.}
-	\label{block_diagram}
+	\label{block_diagramBG}
 \end{figure}
 
-The rest of the paper is organized into the following sections. \Cref{relwork} introduces the area, discussing in general sentence models, and prior work on generation. \Cref{framework} explains the problem in detail and our algorithm for solving it. \Cref{evalsettings} described the settings used for evaluation. \Cref{results} discusses the results of this evaluation. The paper presents its conclusions in \Cref{conclusion}, including a discussion of future work.
+The rest of the paper is organized into the following sections. \Cref{relworkBG} introduces the area, discussing in general sentence models, and prior work on generation. \Cref{frameworkBG} explains the problem in detail and our algorithm for solving it. \Cref{evalsettingsBG} described the settings used for evaluation. \Cref{resultsBG} discusses the results of this evaluation. The paper presents its conclusions in \Cref{conclusionBOWgen}, including a discussion of future work.
 
 
-\section{Background}\label{relwork}
+\section{Background}\label{relworkBG}
 
 The current state of the art for full sentence generation from sentence embeddings are the works of \cite{iyyer2014generating} and \cite{Bowman2015SmoothGeneration}. Both these advance beyond the earlier work of \cite{Dinu2014CompositionalGeneration} which is only theorised to extend beyond short phrases. Iyyer et al. and Bowman et al. produce full sentences. These sentences are shown by examples to be loosely similar in meaning and structure to the original sentences. Neither works has produced quantitative evaluations, making it hard to determine between them. However, when applied to the various quantitative examples shown in both works neither is able to consistently reproduce exact matches. This motivates investigation on a simpler unordered task, converting a sum of word embeddings to bag of words, as investigated in this paper.
 
@@ -76,7 +77,7 @@ Sentence embeddings represent sentences, which are often derived from word embed
 
 \textcite{RitterPosition} presented a similar task on spacial-positional meaning, which used carefully constructed artificial data, for which the meanings of the words interacted non-simply -- thus theoretically favouring the more complex sentence embeddings. In their evaluation the task was classification with a Na{\"i}ve Bayes classifier into one of five categories of different spatial relationships. The best of the SOWE models they evaluated, outperformed the next best model by over 5\%. These results suggest this simple method is still worth consideration for many sentence embedding representation based tasks. SOWE is therefore the basis of the work presented in this paper.
 
-\section{The Vector Selection Problem}\label{framework}
+\section{The Vector Selection Problem}\label{frameworkBG}
 
 At the core of this problem is what we call the Vector Selection Problem, to select word embedding vectors which sum to be closest to the target SOWE (the input). The word embeddings come from a known vector vocabulary, and are to be selected with potential repetition.
 Selecting the vectors equates to selecting the words, because there is a one to one correspondence between the word embedding vectors and their words. This relies on no two words having exactly the same embeddings -- which is true for all current word embedding techniques.
@@ -140,7 +141,7 @@ The reasoning behind performing the n-substitution is to correct for greedy mist
 The n-substitution phase has time complexity of $O(\binom{C}{n}V^n)$, for $C=\sum \c$ i.e. current cardinality of $bag_c$. With large vocabularies it is only practical to consider 1-substitution. With the Brown Corpus, where $|\V|\approxeq 40,000$, it was found that 1-substitution provides a significant improvement over greedy addition alone. On a smaller trial corpora, where $|\V|\approxeq 1,000$, 2-substitution was used and found to give further improvement. In general it is possible to initially use 1-substitution, and if the overall algorithm converges to a poor solution (given the distance to the target is always known), then the selection algorithm can be retried from the converged solution, using 2-substitution and so forth. As $n$ increases the greed overall decreases; at the limit the selection is not greedy at all, but is rather an exhaustive search.
 
 
-\section{Experimental Setup and Evaluations} \label{evalsettings}
+\section{Experimental Setup and Evaluations} \label{evalsettingsBG}
 
 
 \subsection{Word Embeddings}
@@ -163,7 +164,7 @@ The commonly used cosine similarity, or the linked angular distance, have an iss
 The Julia programming language \parencite{Julia}, was used to create the implementation of the method, and the evaluation scripts for the results presented in the next section. This implementation, evaluation scripts, and the raw results are available online.\footnote{\url{http://www.cicling.org/2016/data/97}}. Evaluation was carried out in parallel on a 12 core virtual machine, with 45Gb of RAM. Sufficient RAM is required to load the entire vector vocabulary in memory.
 
 
-\section{Results and Discussion} \label{results}
+\section{Results and Discussion} \label{resultsBG}
 
 \input{pubBOWgen-example_bows.tex}
 
@@ -217,7 +218,7 @@ As can be seen in \Cref{figure:exactlenscore} sentence length is a very signific
 While the results shown in \Cref{table:overall} suggest that on the Books corpus the algorithm performs better, this is due to its much shorter average sentence length. When taken as a function of the sentence length, as shown in \Cref{figure:exactlenscore},  performance on the Books Corpus is worse than on the Brown Corpus. It can be concluded from this observation that increasing the size of the vocabulary does decrease success in BOW regeneration. Books Corpus vocabulary being over four times larger, while the other factors remained the same, resulted in lower performance. However, when taking all three factors into account, we note that increasing the \emph{vocabulary size} has significantly less impact than increasing the \emph{sentence length} or the \emph{embedding dimensionality} on the performance.
 
 
-\section{Conclusion} \label{conclusion}
+\section{Conclusion} \label{conclusionBOWgen}
 A method was presented for how to regenerate a bag of words, from the sum of a sentence's word embeddings. This problem is NP-Hard. A greedy algorithm was found to perform well at the task, particularly for shorter sentences when high dimensional embeddings are used. 
 
 Resynthesis degraded as sentence length increased, but remained strong with higher dimensional models up to reasonable length. It also decreased as the vocabulary size increased, but significantly less so. The BOW generation method is functional with usefully large sentences and vocabulary.

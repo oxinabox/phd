@@ -21,7 +21,7 @@
 \usepackage{bookmark}
 
 \usepackage{etoolbox}
-
+\usepackage{afterpage}
 
 \usepackage{booktabs}
 \usepackage{tabularx}
@@ -69,8 +69,16 @@ dashed=false,
 \addbibresource{master}
 \newcommand{\citep}[1]{\parencite{#1}}
 \newcommand{\citet}[1]{\textcite{#1}}
-
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\makeatletter
+\def\afternextchapter{}
+\apptocmd{\@chapter}{%
+	{%
+		\afternextchapter{}%
+		\gdef\afternextchapter{} % clear it
+	 }%
+	 }{}{}
+\makeatother
 %%%%%%%%%%%%%%%%%%%%
 % Capture name of the part
 
@@ -91,9 +99,8 @@ dashed=false,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Page boarders
-\newcommand{\backgroundcolor}{white}
-\newcommand{\bordercolor}{\backgroundcolor}
-\usepackage{tikzpagenodes}
+\def\backgroundcolor{white}
+\def\bordercolor{\backgroundcolor}
 \newcommand{\drawpageborders}{\tikz[remember picture,overlay]{
 	\draw [color=\bordercolor, line width=2mm] (current page.south east) rectangle (current page.north east);
 	\draw [color=\bordercolor, line width=2mm] (current page.south west) rectangle (current page.north west);
@@ -119,53 +126,25 @@ dashed=false,
 
 
 
-\DeclareDocumentCommand{\includepublication}{O{-} m}{
-	\def\pubfile{#2}
-	\def\pages{#1}
+\DeclareDocumentCommand{\inputpublication}{m}{
+	\cleardoublepage
+	\pagestyle{fancy}
 	
-	\label{\pubfile}
-
-	\definecolor{randomcolor}{RGB}
-	{
-		\pdfuniformdeviate 255,
-		\pdfuniformdeviate 255,
-		\pdfuniformdeviate 255
-	}%
-	%\pagecolor{randomcolor!10!white}
-	\renewcommand{\bordercolor}{randomcolor}
-	\includepdf[%
-		pages={#1},% can't use \pages inside []
-		%frame=true, %
-		scale=0.9, %
-		pagecommand={\pagestyle{fancy}}, %
-		]{publications/\pubfile.pdf}
-	%\nopagecolor
-	\renewcommand{\bordercolor}{\backgroundcolor}
-}
-
-
-\DeclareDocumentCommand{\setchapter}{s m}{
-	\renewcommand{\chaptertitle}{#2}
-	\IfBooleanTF{#1}{
-		\addcontentsline{toc}{chapter}{#2}
-	}%
-	{
-		\refstepcounter{chapter}
-		\addcontentsline{toc}{chapter}{\protect\numberline{\thechapter}#2}
+	\definecolor{randomcolor}{RGB}{\pdfuniformdeviate 255,\pdfuniformdeviate 255,\pdfuniformdeviate 255}%	
+	\xdef\bordercolor{randomcolor}
+	
+	\gdef\afternextchapter{%
+		\label{#1}
+		{#1}
+		\thispagestyle{fancy}
 	}
-
+	\input{pub#1.tex}
+	\xdef\bordercolor{\backgroundcolor}
 }
+
+
 
 %%%%%
-
-\NewEnviron{preamble}{%
-	\cleardoublepage
-	\null
-	\vspace{1cm}
-	{\centering \Huge \chaptertitle\\}
-	\vspace{0.5cm}
-	\noindent\BODY
-}
 
 \makeatletter
 \NewEnviron{abstract}{%
@@ -179,6 +158,7 @@ dashed=false,
 }
 \makeatother
 
+\newcommand{\preamble}[1]{{\sffamily \footnotesize #1\\ \vspace{0.5cm}}}
 
 \DeclareDocumentCommand{\dictum}{o m}{
 	\hfill\begin{minipage}{0.5\textwidth}
