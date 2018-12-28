@@ -726,17 +726,17 @@ However, pragmatically learning to compose the sequence of terms into a meaningf
 This \empmodel{} bypasses the compositional language understanding part of the process.
 It is as if the input module (as discussed in \Cref{sec:inputmod}) would perfectly resolve the sequence of terms into a single item.
 %
-As such represent an approximate upper bound on performance as they can exploit the observations without issue of determining how to compose the tokens.
-This is a useful baseline, as our neural models (SOWE, CNN, and RNN)
+These models can exploit the training observations without issue of determining how to compose the tokens.
+This is a useful baseline approach, as our neural models (SOWE, CNN, and RNN)
 each differ in how they compose the tokens, and it in on that contrast this study focuses.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% TODO REVISE NEXT PARAGRAPH
-There is no attempt to determine how each term affects the result.
-We say approximate upper-bound, as it is not strictly impossible that the term-based methods may happen to model the test data better than can be directly determined by training data as processed per exact color name.
+In theory the term-based neural models can out-perfrom the \empmodel{}, if they learn a very good compositional understanding of the language.
 This would require learning how the terms in the color name combine in a way that exceeds the information directly present in the training data per class.
 It is this capacity of learning how the terms combine that allow for the models to predict the outputs for combinations of terms that never occur in the training data (\Cref{sec:extrapodata}).
-Doing this in a way that generalizes to get better results than the direct exploitation of the training data, would require very well calibrated control of (over/under)fitting.
+Learning a compositional model that exploits its term based knowledge in such a way  that generalizes to get better results than the direct exploitation of the training data (as in \empmodel{}), is very difficult and would require very well calibrated control of (over/under)fitting.
+This particularly true in the case where there is large amounts of training data for the whole phrase.
+Conversely, when there is no training data for the whole phrase (as considered in \Cref{sec:extrapodata}) non-compositional models can not function at all.
+
 
 
 \subsubsection{Non-compositional Baseline for Distribution Estimation: KDE}\label{sec:direct-histogram} \label{sec:kernel-density-based-smoothing}
@@ -747,7 +747,7 @@ It causes adjacent bins to have most similar probabilities, thus matching to the
 This is applied on-top of the histogram used for the training data.
 We use the Fast Fourier Transform (FFT) based KDE method of the \textcite{silverman1982algorithm}.
 We use a Gaussian kernel, and select the bandwidth per color description based on leave-one-out cross validation on the training data.
-A known issue with the FFT-based KDE method is that it has a wrap-around effect near the boundaries, where the mass that would be assigned outside the boundaries is instead assigned to the bin on the other side.
+A known issue with the FFT-based KDE method is that it has a wrap-around effect near the boundaries, where the probability mass that would be assigned outside the boundaries is instead assigned to the bin on the other side.
 For the value and saturation channels we follow the standard solution of initially defining additional bins outside the true boundaries, then discarding those bins and rescaling the probability to one.
 For the hue channel this wrap-around effect is exactly as desired.
 
@@ -766,9 +766,9 @@ and directly uses the standard non-parametric probability estimation method to f
 Matching its performance indicates that a model is effectively succeeding well at both the natural language understanding component and the distribution estimation component.
 
 
-\subsubsection{\empmodel{} for Point Estimation: Mean-point}
+\subsubsection{Non-Compositional Baseline for Point Estimation: Mean-point}
 In a similar approach, we also propose a method that directly produces a point estimate from a color name.
-We define this by taking the mean of all the training observations for a given exact color name.
+We define this by taking the mean (centroid) of all the training observations for a given exact color name.
 The mean is taken in the angularly correct way (as discussed in \Cref{sec:angularly-correct}).
 Taking the mean of all the observations gives the theoretically optimal solution to minimize the squared error on the training data set.
 As with our direct distribution estimation method, this bypasses the term based language understanding, and directly exploits the training data.
@@ -795,7 +795,7 @@ For example, based on the learned understanding of \texttt{salmon} and of \textt
 The ability to make predictions, such as these, illustrates term-based natural language understanding.
 This cannot be done with the \empmodel{} models, which by-passes the term processing step.
 %
-To evaluate this generalisation capacity, we define new sub-datasets for both testing and training.
+To evaluate this generalization capacity, we define new sub-datasets for both testing and training.
 We select the rarest 100 color descriptions from the full dataset,
 with the restriction that every token in a selected description must still have at least 8 uses in other descriptions in the training set.
 The selected examples include multi-token descriptions such as: \texttt{bright yellow green} and also single tokens that occur more commonly as modifiers than as stand-alone descriptions such as \texttt{pale}.
@@ -826,13 +826,14 @@ We only construct an order testing set, and not a corresponding training set, as
 \section{Experimental Setup}
 
 \subsection{Implementation}
-The implementation of all the models was in the julia programming language \parencite{Julia}.
+The implementation of all the models was in the Julia programming language \parencite{Julia}.
 The full implementation can be downloaded from the GitHub repository.\footnote{Implementation source is at \url{https://github.com/oxinabox/ColoringNames.jl}}
-The machine learning components make heavy use of the MLDataUtils.jl\footnote{MLDataUtils.jl is available from \url{https://github.com/JuliaML/MLDataUtils.jl}} and TensorFlow.jl,\footnote{TensorFlow.jl is available from \url{https://github.com/malmaud/TensorFlow.jl}} packages,
+The machine learning components makes heavy use of the MLDataUtils.jl\footnote{MLDataUtils.jl is available from \url{https://github.com/JuliaML/MLDataUtils.jl}} and TensorFlow.jl \parencite{TensorFlowJulia}
+ packages,
 the latter of which was enhanced significantly to allow for this work to be carried out.
 The discretization and the KDE for the Operational Upper Bound is done using KernalDensityEstimation.jl.%
 \footnote{KernalDensityEstimation.jl  is available from \url{https://github.com/JuliaStats/KernelDensity.jl}}
-% TODO: If DataDeps paper available before this one, cite it here.
+The training data is managed with DataDeps.jl \parencite{2018arXiv180801091W}.
 
 \subsection{Common Network Features}
 Drop-out\parencite{srivastava2014dropout}  is used on all ReLU layers and on the GRU in the RNN, with threshold of 0.5 during training.
@@ -887,7 +888,13 @@ We have presented three input modules (SOWE, CNN, RNN),
 and two output modules (distribution estimate, and point estimate)
 that are suitable for using machine learning to make estimates about color based on the terms making up its name.
 We contrasted these to an \empmodel{} model for each task which bypassed the term-wise natural language understanding component of the problem.
-We found the results for SOWE, and CNN were very strong, approaching this upper bound.
+We found the results for SOWE, and CNN were strong, approaching this strong baseline.
+
+It is a note-worthy feature on the current state of short phrase modeling,
+and the difficulty of compositional natural language understanding
+that the term-based models are not able to out-perform the \empmodel{} where training data for the whole phrases was available.
+The term-based models are effectively given additional information, in the form of the tokenization, but are unable to fully leverage it the general case, to outperform ignoring the common sub-phase information (the terms).
+
 
 
 A key take away from our results is that using a SOWE should be preferred over an RNN for short phrase natural language understanding tasks when order is not a very significant factor.
@@ -902,7 +909,7 @@ It would be interesting to further contrast a bidirectional RNN.
 In a broader context, we envisage the distribution learned for a color name can be used as a prior probability and when combining with additional context information, this can be used for better prediction in areas such as document classification and sentiment detection.
 
 A further interesting avenue for investigation would condition the model not only on the words used but also on the speaker.
-The original source of the data \textcite{Munroe2010XKCDdataset}, includes some demographic information which is not exploited by any known methods.
+The original source of the data \textcite{Munroe2010XKCDdataset}, includes some demographic information which is not explored as a model input in any  published model (to the best of out knowledge).
 It is expected that color-term usage may vary with subcultures.
 
 
