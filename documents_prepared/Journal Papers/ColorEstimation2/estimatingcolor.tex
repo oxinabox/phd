@@ -76,6 +76,8 @@
 
 \newcommand{\natlang}[1]{\texttt{#1}}
 \newcommand{\datapairs}{$\langle\text{color-name},\,(h,s,v)\rangle$}
+
+\newcommand{\empmodel}{Non-compositional baseline}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %opening
 \runningtitle{Learning of Colors from Color Names: Distribution and Point Estimation}
@@ -296,7 +298,7 @@ we do not have color models conditional upon language.
 		\refnodeBR{sec:point-estimation}{hsvreg}
 	
 	
-		\node(dist)[right=of softmax]{Probability\Distribution\\Estimate};
+		\node(dist)[right=of softmax]{Probability\\Distribution\\Estimate};
 		\node(point)[right=of hsvreg]{Point\\Estimate};
 		
 		\draw[-{Latex[length=2mm]}] (data) to (prep);
@@ -711,15 +713,25 @@ This gives the mean angle.
 
 
 
-\subsection{Operational Upper-bounds}
-To establish a rough upper-limit on the modeling results we evaluate a direct method which bypasses the language understanding component of the task.
-These direct methods do not process each term in the name; they do not work with the language at all.
+\subsection{Non-compositional Baselines}
+We consider a non-compositional model to establish a baseline on the color modeling part of this task; with the exclusion of the language understanding part.
+
+The noncompositional methods do not process each term in the name; they do not work with the language at all.
 They simply map from the exact input text (no tokenization) to the pre-calculated distribution or mean of the training data for the exact color name.
-This operational upper bound bypasses the compositional language understanding part of the process.
+%
+Strictly speaking, this \empmodel{} has less information than the neural network models
+as it does not have tokenized color name given to it only the whole name.
+However, pragmatically learning to compose the sequence of terms into a meaningful whole is by far the harder part of this task.
+%
+This \empmodel{} bypasses the compositional language understanding part of the process.
 It is as if the input module (as discussed in \Cref{sec:inputmod}) would perfectly resolve the sequence of terms into a single item.
+%
+As such represent an approximate upper bound on performance as they can exploit the observations without issue of determining how to compose the tokens.
+This is a useful baseline, as our neural models (SOWE, CNN, and RNN)
+each differ in how they compose the tokens, and it in on that contrast this study focuses.
 
-
-They represent an approximate upper bound, as they fully exploit all information in the training data for each input.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% TODO REVISE NEXT PARAGRAPH
 There is no attempt to determine how each term affects the result.
 We say approximate upper-bound, as it is not strictly impossible that the term-based methods may happen to model the test data better than can be directly determined by training data as processed per exact color name.
 This would require learning how the terms in the color name combine in a way that exceeds the information directly present in the training data per class.
@@ -727,8 +739,8 @@ It is this capacity of learning how the terms combine that allow for the models 
 Doing this in a way that generalizes to get better results than the direct exploitation of the training data, would require very well calibrated control of (over/under)fitting.
 
 
-\subsubsection{Operational Upper-bound for Distribution Estimation: KDE}\label{sec:direct-histogram} \label{sec:kernel-density-based-smoothing}
-To determine an operational upper-bound for the distribution estimation tasks,
+\subsubsection{Non-compositional Baseline for Distribution Estimation: KDE}\label{sec:direct-histogram} \label{sec:kernel-density-based-smoothing}
+To determine an \empmodel{} for the distribution estimation tasks,
 we use kernel-density estimation (KDE) in a formulation for non-parametric estimation \parencite{silverman1986density} .
 The KDE effectively produces a smoothed histogram from the training data as processed in \Cref{sec:discretization}.
 It causes adjacent bins to have most similar probabilities, thus matching to the mathematical notion of a continuous random variable.
@@ -749,12 +761,12 @@ In brief, we found that smoothing the training data does not significantly affec
 As discussed in \Cref{sec:quantitative-results}, this is because the neural networks are able to learn the smoothness relationship of adjacent bins.
 
 
-Our KDE-based operational upper bound for distribution estimation bypasses the natural language understanding part of the task,
+Our KDE-based \empmodel{} for distribution estimation bypasses the natural language understanding part of the task,
 and directly uses the standard non-parametric probability estimation method to focus solely on modeling the distributions.
 Matching its performance indicates that a model is effectively succeeding well at both the natural language understanding component and the distribution estimation component.
 
 
-\subsubsection{Operational Upper-bound for Point Estimation: Mean-point}
+\subsubsection{\empmodel{} for Point Estimation: Mean-point}
 In a similar approach, we also propose a method that directly produces a point estimate from a color name.
 We define this by taking the mean of all the training observations for a given exact color name.
 The mean is taken in the angularly correct way (as discussed in \Cref{sec:angularly-correct}).
@@ -781,7 +793,7 @@ They also define a standard test, development and train split.
 A primary interest in using the term based models is to be able to make predictions for never before seen descriptions of colors.
 For example, based on the learned understanding of \texttt{salmon} and of \texttt{bright}, from examples like \texttt{bright green} and \texttt{bright red}, we wish for the system to make predictions about \texttt{bright salmon}, even though that description never occurs in the training data.
 The ability to make predictions, such as these, illustrates term-based natural language understanding.
-This cannot be done with the operational upper bound models, which by-passes the term processing step.
+This cannot be done with the \empmodel{} models, which by-passes the term processing step.
 %
 To evaluate this generalisation capacity, we define new sub-datasets for both testing and training.
 We select the rarest 100 color descriptions from the full dataset,
@@ -874,7 +886,7 @@ In general the overall quality of each model seems to be in line with that found
 We have presented three input modules (SOWE, CNN, RNN),
 and two output modules (distribution estimate, and point estimate)
 that are suitable for using machine learning to make estimates about color based on the terms making up its name.
-We contrasted these to an operational upper bound model for each task which bypassed the term-wise natural language understanding component of the problem.
+We contrasted these to an \empmodel{} model for each task which bypassed the term-wise natural language understanding component of the problem.
 We found the results for SOWE, and CNN were very strong, approaching this upper bound.
 
 
