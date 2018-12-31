@@ -1,9 +1,13 @@
 \documentclass[]{clv3}
 \usepackage{microtype}
 %\usepackage[author={Lyndon}]{pdfcomment}
+\usepackage{todonotes}
+
 
 \usepackage{booktabs}
 \usepackage{pgfplotstable}
+\usepackage{pgfplots}
+
 \pgfplotsset{compat=1.14}
 
 \DeclareMathVersion{tabularbold}
@@ -15,22 +19,24 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning, fit,  shapes.geometric, arrows.meta}
 \tikzset{
-	node distance=1cm and 1.5cm,
-	every text node part/.style= {
-		align=center
+	defaultfig/.style={
+		node distance=1cm and 1.5cm,
+		every text node part/.style= {
+			align=center
+		},
+		word/.style= {
+			blue,
+			font=\itshape,
+		},
+		layer/.style= {
+			rectangle, 
+			black,
+			draw
+		},
+		every node/.style ={anchor=base},
+		every matrix/.style={ampersand replacement=\&, rounded corners=5pt, draw, column sep=15, row sep=20},
+		refnode/.style={font={\footnotesize}, inner sep=0,outer sep=0, red, xshift=0.6cm},
 	},
-	word/.style= {
-		blue,
-		font=\itshape,
-	},
-	layer/.style= {
-		rectangle, 
-		black,
-		draw
-	},
-	every node/.style ={anchor=base},
-	every matrix/.style={ampersand replacement=\&, rounded corners=5pt, draw, column sep=15, row sep=20},
-	refnode/.style={font={\footnotesize}, inner sep=0,outer sep=0, red, xshift=0.6cm},
 }
 
 \newcommand{\refnode}[3][]{
@@ -77,7 +83,7 @@
 \newcommand{\natlang}[1]{\texttt{#1}}
 \newcommand{\datapairs}{$\langle\text{color-name},\,(h,s,v)\rangle$}
 
-\newcommand{\empmodel}{Non-compositional baseline}
+\newcommand{\empmodel}{Non-compositional baseline} % Note this is not used everywhere
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %opening
 \runningtitle{Learning of Colors from Color Names: Distribution and Point Estimation}
@@ -117,7 +123,7 @@ Consider that the word \texttt{tan} may mean one of many colors for different pe
 and even \texttt{forest green} may mean the rich shades of a rain-forest, or the near grey of Australian bush land.
 Thus the \emph{color intended} cannot be uniquely inferred from a color name. Without further context, it does nevertheless remain possible to estimate likelihoods of which colors are intended based on the population's use of the words.
 
-Color understanding, that is, generating color from text, is an important subtask in natural language understanding, indispensable for {\it executable semantic parsing}. 
+Color understanding, that is, generating color from text, is an important subtask in natural language understanding.
 For example, in a natural language enabled human-machine interface, when asked to select the \texttt{dark bluish green} object, it would be much useful if we could rank each object based on how likely its color matches against a learned distribution of the color name \texttt{dark bluish green}. 
 This way if the most-likely object is eliminated (via another factor), the second most likely one can be considered.
 A threshold can be set to terminate the search.
@@ -127,7 +133,9 @@ This kind of likelihood based approach is not possible when we have only exact s
 Color understanding is a challenging domain, due to high levels of ambiguity, the multiple roles taken by the same words, the many modifiers, and the many shades of meaning.
 In many ways it is a grounded microcosm of natural language understanding.
 Due to its difficulty, texts containing color descriptions such as \texttt{the flower has petals that are bright pinkish purple with white stigma} are used to demonstrate the  capability of the-state-of-the-art image generation systems \parencite{reed2016generative, 2015arXiv151102793M}.
-The core focus of the work we present here is to address these linguistic phenomena around the short-phrase descriptions of a color, which can be represented in a color-space such as HSV \parencite{smith1978color}.
+The core focus of the work we present is to map from the short-phrase descriptions of a color, to representation in a color-space such as HSV \parencite{smith1978color}.
+The HSV color space is grounded meaning space for the short phrase.
+Due to this grounding, and the aforementioned linguistic phenomena, this is a particularly interesting short phrase understanding task.
 Issues of illumination and perceived color based on context are considered out of the scope.
 
 \subsection{Distribution vs. Point Estimation}
@@ -147,7 +155,11 @@ Another problem is that point estimates do not capture the sensitivity.
 In an asymmetrical distribution, having a point slightly off-centre in one direction may result in a very different probability,
 this more generally holds for a narrow variance distribution.
 Conversely for a very wide variance distribution (for example one approaching the uniform distribution) the point estimate value may matter very little with all points providing similar probabilities.
-Color distributions are almost always multimodal or asymmetrical, and exhibit widely differing variances for different names (this can be seen in the histograms of the training data shown in \Cref{sec:qualitative-results}).
+Color distributions are almost always multimodal or asymmetrical, and exhibit widely differing variances for different names.
+This can be seen in the histograms of the training data shown in \Cref{sec:qualitative-results}.
+Note that while only a small (but particularly interesting) set of colors demonstrate multimodality in the hue channel, as noted by \textcite{mcmahan2015bayesian}, when considering all channels the other problematic features  abound. Asymmetry in-particular is ubiquitous in the value and saturation channels.
+
+
 While by definition the mean color point minimizes the squared error, it may not actually be a  meaningful point estimate.
 Given these issues, producing a point estimate has only limited value and estimating a distribution is more general task.
 However we do consider the point estimation task, as it allows contrast in assessing the input module (SOWE/CNN/RNN) of our proposed methods across the two different output modules (distribution/point estimation).
@@ -191,7 +203,7 @@ Informally, this means the histograms should look smooth, and not spiky.
 We investigated using a Kernel Density Estimation (KDE) based method for smoothing the training data, and further we conclude that the neural networks learn this smoothness.
 %In this research we use the same dataset used for \textcolor{red}{color name generation}  \parencite{Munroe2010XKCDdataset}
 %which contains 2,176,417 \datapairs{} pairs.
-To qualify our estimate of the distribution, we discretize the HSV color-space to produce a histogram.
+To express the estimated distribution, we discretize the HSV color-space to produce a histogram.
 This allows us to take advantage of the well-known softmax based methods for the estimation of a probability mass distribution using a neural network.
 
 
@@ -267,7 +279,7 @@ we do not have color models conditional upon language.
 
 \section{Method}
 \begin{figure}
-	\resizebox{\textwidth}{!}{\begin{tikzpicture}
+	\resizebox{\textwidth}{!}{\begin{tikzpicture}[defaultfig]
 		\node (data) [cylinder, shape border rotate=90, draw, minimum height=5 em] {Data};
 		
 		\node (prep) [matrix, right = of data] {
@@ -319,7 +331,8 @@ This shows how color names are transformed into distribution or point estimates 
 \subsection{Input Data Preparation}\label{sec:input-data-preparation}
 We desire a color prediction model which takes as input a sequence of words that make up the color's name rather than simply mapping from the whole phrase (whole phrase mapping does not scale to new user input, given the combinatorial nature of language).
 Towards this end, color names are first tokenized into individual words.
-For the input into our neural network based models, these words are represented with pretrained word embeddings.
+For the input into our neural network based models, these words are represented with pre
+ed word embeddings.
 
 \subsubsection{Tokenization}
 During tokenization a color name is split into terms with consistent spelling.
@@ -407,7 +420,7 @@ In all models the input and output modules are trained concurrently as a single 
 
 \subsubsection{Recurrent Neural Network(RNN)}\label{sec:rnnmod}
 \begin{figure}
-	\begin{tikzpicture}
+	\begin{tikzpicture}[defaultfig]
 	\node (hiddenoutput)[layer] at (0,0) {ReLU};
 	\node (output)[dotted, layer, above=1 of hiddenoutput] {Output Module};
 	\draw[->] (hiddenoutput) to (output);
@@ -448,9 +461,9 @@ represented using a zero-vector.
 The output of the last time-step is fed to a Rectified Linear Unit (ReLU).
 
 We make use of a GRU \parencite{cho2014properties},
-which we found to marginally out-perform the basic RNN in preliminary testing.
+which we found to marginally out-perform a vanilla RNN (that is to say one without any gating) in preliminary testing.
 The small improvement is unsurprising, as the color names have at most 5 terms,
-so longer short term memory is not required.
+so longer short term memory (from GRU or LSTM) is not as useful required.
 
 
 \subsubsection{Sum of Word Embeddings (SOWE)}\label{sec:sowemod}
@@ -461,7 +474,7 @@ However, it has no representation of the order.
 The structure we used is shown in \Cref{fig:sowemod}.
 
 \begin{figure}
-	\begin{tikzpicture}
+	\begin{tikzpicture}[defaultfig]
 	
 	\node (GRU1)[]{};
 	
@@ -501,7 +514,7 @@ so this allows it to learn full length relations.
 %\pdfcomment{I can't find who first did this. Rui spoke of it.}
 
 \begin{figure}
-	\begin{tikzpicture}
+	\begin{tikzpicture}[defaultfig]
 	
 	\node (GRU1)[]{};
 	
@@ -560,7 +573,7 @@ The loss function is given by the sum of the cross-entropy for each of the three
 
 \begin{figure}
 	\newcommand{\picwidth}{60pt}
-	\begin{tikzpicture}
+	\begin{tikzpicture}[defaultfig]
 	
 	\node (input)[layer, dotted]{Input Module};
 	
@@ -605,7 +618,7 @@ This loss function is continuous and correctly handles the wrap-around nature of
 
 \begin{figure}
 	\newcommand{\picwidth}{60pt}
-	\begin{tikzpicture}
+	\begin{tikzpicture}[defaultfig]
 	
 	\node (hiddenout)[layer, dotted]{Input Module};
 	%\node (hiddenout)[above= 1 of input]{Affine with output width 4};
@@ -718,10 +731,11 @@ We consider a non-compositional model to establish a baseline on the color model
 
 The noncompositional methods do not process each term in the name; they do not work with the language at all.
 They simply map from the exact input text (no tokenization) to the pre-calculated distribution or mean of the training data for the exact color name.
+As there is plenty of training data for most color names (see \Cref{sec:corpusstats}) this is a very effective approach.
 %
 Strictly speaking, this \empmodel{} has less information than the neural network models
 as it does not have tokenized color name given to it only the whole name.
-However, pragmatically learning to compose the sequence of terms into a meaningful whole is by far the harder part of this task.
+However, pragmatically learning to compose the sequence of terms into a meaningful whole is by far  the harder part of this task.
 %
 This \empmodel{} bypasses the compositional language understanding part of the process.
 It is as if the input module (as discussed in \Cref{sec:inputmod}) would perfectly resolve the sequence of terms into a single item.
@@ -780,7 +794,12 @@ It is however a consistent way to do so, and so we use it for our evaluations.
 
 \subsection{Evaluation Strategies}
 
-\subsubsection{Full Task}
+\begin{figure}
+	TODO insert corpus stats here
+	\caption{CORPUS STATS \label{fig:corpusstats} }
+\end{figure}
+
+\subsubsection{Full Task} \label{sec:corpusstats}
 We make use of the  Munroe dataset as prepared by \textcite{mcmahan2015bayesian} from the results of the XKCD color survey.
 The XKCD color survey \parencite{Munroe2010XKCDdataset} collected over 3.4 million observations from over 222,500 respondents.
 McMahan and Stone take a subset from Munroe's full survey, by restricting it to the responses from native English speakers, 
@@ -788,6 +807,8 @@ and removing very rare color names with less than 100 uses.
 This gives a total of 2,176,417 observations and 829 color names. 
 They also define a standard test, development and train split.
 
+
+\Cref{fig:corpusstats}  \todo{Say something about corpus stats after preprocessing. Probably for all subsets}
 
 \subsubsection{Unseen combination Task} \label{sec:extrapodata}
 A primary interest in using the term based models is to be able to make predictions for never before seen descriptions of colors.
@@ -802,7 +823,8 @@ The selected examples include multi-token descriptions such as: \texttt{bright y
 
 The unseen combination testing set has only observations from the full test set that do use those rare descriptions.
 We define a corresponding restricted training set made up of the data from the full training set, excluding those  corresponding to the rare descriptions.
-Similar restriction is done to create a restricted development set, so that no direct knowledge of the combined terms can leak during early-stopping.
+A restricted development set is created similarly to the training set, containing data from the full (original) validation set, with the exclusion of rare descriptions used in the test set.
+This was done so that no direct knowledge of the combined terms can leak during early-stopping.
 
 
 By training on the restricted training set and testing on the unseen combinations, we can assess the capacity of the models to make predictions for color descriptions not seen during training.
@@ -906,9 +928,9 @@ This means the CNN can readily take advantage of both fully ordered information,
 The RNN however must fully process the ordered nature of its inputs, as its output comes only from the final node.
 It would be interesting to further contrast a bidirectional RNN.
 
-In a broader context, we envisage the distribution learned for a color name can be used as a prior probability and when combining with additional context information, this can be used for better prediction in areas such as document classification and sentiment detection.
-
-A further interesting avenue for investigation would condition the model not only on the words used but also on the speaker.
+In a broader context, we envisage the distribution learned for a color name can be used as a prior probability and when combining with additional context information a likelihood can be estimated for particular uses.
+This additional information could take the from of other words, such as estimating the distribution for a \natlang{brown dog}, as compared to a `\natlang{brown tree}, or from other sources.
+A particularly interesting related avenue for investigation would condition the model not only on the words used but also on the speaker.
 The original source of the data \textcite{Munroe2010XKCDdataset}, includes some demographic information which is not explored as a model input in any  published model (to the best of out knowledge).
 It is expected that color-term usage may vary with subcultures.
 
