@@ -233,8 +233,9 @@ in particular making uses of the large Munroe dataset \parencite{Munroe2010XKCDd
 This allows a data driven approach towards the modeling.
 
 
-\textcite{mcmahan2015bayesian} and \textcite{meomcmahanstone:color} present color naming methods.
+\textcite{mcmahan2015bayesian} and \textcite{meomcmahanstone:color} present a Bayesian method for  colors and color names.
 Their work primarily focuses on mapping from colors to to their exact names, the reverse of our task.
+While their method is reversible: to go from exact color names to probabilities, they do not present any evaluations of this.
 These works are based on defining fuzzy rectangular distributions in the color-space to cover the distribution estimated from the data, which are used in a Bayesian system to non-compositionally determine the color name.
 
 
@@ -265,9 +266,12 @@ From this, a Gaussian distributed score function is calculated, over a high dime
 While this method does work with a probability distribution, as a step in its goal,
 this distribution is always both symmetric and unimodal -- albeit in a high-dimensional color-space.
 
-\textcite{acl2018WinnLighter} demonstrates a neural network for producing point estimates of how colors change based on the use of comparative terms such as \natlang{lighter}.
-The network's input is  word embedding for a comparative adjective, and a point in RGB color-space; the model outputs a point in predicted RGB space that is the modified version of the input color point according to the given adjective.
-For example mapping from green to a darker green is: $((164,227,77), \text{darker}) \mapsto (141, 190, 61)$.
+\textcite{acl2018WinnLighter} demonstrates a neural network for producing directional vectors in color space how comparatives such as \natlang{lighter} and \natlang{darker} change a color.
+This effectively defines for creating a ray (half-line) of estimates in color space possible colors, for a comparative term (e.g. \natlang{lighter}) starting at a source color.
+There network's input is  word embedding for a comparative adjective, and a point in RGB color-space; the model outputs a directional vector in predicted RGB space along which occurs the possible modified version of the input color point according to the given adjective.
+The magnitude of this directional vector is trained such that adding it to the source color point, will give a good point estimate of the modified color.
+For example mapping from \natlang{green} to a \natlang{darker green} is: $((164,227,77), \text{darker}) \mapsto (141, 190, 61)$ when taking a point estimate.
+When using it for a ray estimate it is the half line from the first, through the second point, where every point further along the ray is \natlang{darker} than the earlier point.
 The color adjectives may have up to two words, to allow for expressions such as \natlang{more neon}.
 This is allowed by taking as the fixed sized input two embeddings -- when only one input is required, the other is replaced by zero vector.
 Their training and evaluation is based on data sourced from the  Munroe dataset.
@@ -331,8 +335,7 @@ This shows how color names are transformed into distribution or point estimates 
 \subsection{Input Data Preparation}\label{sec:input-data-preparation}
 We desire a color prediction model which takes as input a sequence of words that make up the color's name rather than simply mapping from the whole phrase (whole phrase mapping does not scale to new user input, given the combinatorial nature of language).
 Towards this end, color names are first tokenized into individual words.
-For the input into our neural network based models, these words are represented with pre
-ed word embeddings.
+For the input into our neural network based models, these words are represented with pretrained  word embeddings.
 
 \subsubsection{Tokenization}
 During tokenization a color name is split into terms with consistent spelling.
@@ -894,7 +897,7 @@ The discretization and the KDE for the Operational Upper Bound is done using Ker
 The training data is managed with DataDeps.jl \parencite{2018arXiv180801091W}.
 
 \subsection{Common Network Features}
-Drop-out\parencite{srivastava2014dropout}  is used on all ReLU layers and on the GRU in the RNN, with threshold of 0.5 during training.
+Drop-out \parencite{srivastava2014dropout}  is used on all ReLU layers and on the GRU in the RNN, with threshold of 0.5 during training.
 The network is optimized using Adam \parencite{kingma2014adam}, and a learning rate of 0.001.
 Early stopping is checked every 10 epochs using the development dataset.
 Distribution estimation methods are trained using the full batch (where each observation is a distribution) for every epoch.
