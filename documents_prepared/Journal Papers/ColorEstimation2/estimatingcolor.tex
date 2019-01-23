@@ -188,6 +188,7 @@ We propose a neural network based architecture that can be broken down into an
 The \textbf{output module} uses a softmax output layer for probability distribution estimation,
 or a novel HSV output layer for point estimation. 
 To carry out the representational learning of color-names, three different color-name embedding learning models are investigated for use in the \textbf{input module}: Sum Of Word Embeddings (SOWE), Convolutional Neural Network (CNN) and Recurrent Neural Network (RNN).
+All three input modules use pretrained FastText embeddings \parencite{bojanowski2016enriching} to represent the individual tokens making up the color names, but combine them using difference mechanisms.
 The capacity of these input models is of primary interest to this work.
 
 To evaluate and compare the three learning models, we designed a series of experiments to assess their capability in capturing compositionality of language used in color names.
@@ -359,6 +360,9 @@ The portmanteau \natlang{blurple} is not in common use in any training set used 
 As such we handle it by treating it as the single token \natlang{blue-purple} for purposes of finding an embedding.
 There are many similar hyphenated tokens in the pretrained embeddings vocabulary, however (with that exception) we do not use them as it reduces the sequential modeling task to the point of being uninteresting.
 
+
+
+
 \subsubsection{Embeddings}\label{sec:embeddings} 
 All our neural network based solutions incorporate an embedding layer.
 This embedding layer maps from tokenized words to vectors.
@@ -412,7 +416,11 @@ We perform uniform weight attribution of points to bins as described by \textcit
 In-short, this method of tabulation is to define the bins by their midpoints, and to allocate probability mass to each bin based on how close an observe point is to the adjacent midpoints.
 A point precisely on a midpoint would have all its probability mass allocated to that bin;
 whereas a point halfway between midpoints would have 50\% of its mass allocated to each.
-This is the form of tabulation commonly used during the first step of performing kernel density estimation, prior to the application of the kernel.
+For example were we to have bins with midpoints at 1 and 3:
+then observation at 2, then 0.5 of probability mass for this observation would be allocated to the bin with midpoint 1, and 0.5 would be allocated to the bin with midpoint 2.
+Where as if there observation was at 2.5 then 25\% of its mass would be allocated to the bin at 1, and 25\% of its mass to the bin at 2.
+Our bins are at much finer resolution than this example, dividing the space between 0 and 1 into 256 bins.
+This form of tabulation commonly used during the first step of performing kernel density estimation, prior to the application of the kernel.
 
 
 \subsection{Color Name Representation Learning (Input Modules)}\label{sec:inputmod}
@@ -893,7 +901,7 @@ The full implementation can be downloaded from the GitHub repository.\footnote{I
 The machine learning components makes heavy use of the MLDataUtils.jl\footnote{MLDataUtils.jl is available from \url{https://github.com/JuliaML/MLDataUtils.jl}} and TensorFlow.jl \parencite{TensorFlowJulia}
  packages,
 the latter of which was enhanced significantly to allow for this work to be carried out.
-The discretization and the KDE for the Operational Upper Bound is done using KernalDensityEstimation.jl.%
+The discretization and the KDE for the \empmodel{} is done using KernalDensityEstimation.jl.%
 \footnote{KernalDensityEstimation.jl  is available from \url{https://github.com/JuliaStats/KernelDensity.jl}}
 The training data is managed with DataDeps.jl \parencite{2018arXiv180801091W}.
 
