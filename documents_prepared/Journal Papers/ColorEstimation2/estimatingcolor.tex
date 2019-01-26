@@ -110,7 +110,7 @@
 %
 \begin{abstract}
 Color names are often made up of multiple words.
-As a task in natural language understanding we investigate in depth the capacity of neural networks based on sums of word embeddings (SOWE), recurrence (RNN) and convolution (CNN), to estimate colors from sequences of terms.
+As a task in natural language understanding we investigate in depth the capacity of neural networks based on sums of word embeddings (SOWE), recurrence (LSTM and GRU based RNNs) and convolution (CNN), to estimate colors from sequences of terms.
 We consider both point and distribution estimates of color.
 We argue that the latter has a particular value as there is no clear agreement between people as to what a particular color describes -- different people have a different idea of what it means to be ``very dark orange''.
 Surprisingly, the sum of word embeddings generally performs the best on almost all evaluations.
@@ -162,7 +162,7 @@ Note that while only a small (but particularly interesting) set of colors demons
 
 While by definition the mean color point minimizes the squared error, it may not actually be a  meaningful point estimate.
 Given these issues, producing a point estimate has only limited value and estimating a distribution is more general task.
-However we do consider the point estimation task, as it allows contrast in assessing the input module (SOWE/CNN/RNN) of our proposed methods across the two different output modules (distribution/point estimation).
+However we do consider the point estimation task, as it allows contrast in assessing the input module (SOWE/CNN/GRU/LSTM) of our proposed methods across the two different output modules (distribution/point estimation).
 
 The generation of color from text has not received much attention in prior work.
 To the best of our knowledge, the only similar work is \textcite{DBLP:journals/corr/KawakamiDRS16};
@@ -187,8 +187,8 @@ We propose a neural network based architecture that can be broken down into an
  and a connected \textbf{output module}, which produces either a probability distribution or a  point estimate.
 The \textbf{output module} uses a softmax output layer for probability distribution estimation,
 or a novel HSV output layer for point estimation. 
-To carry out the representational learning of color-names, three different color-name embedding learning models are investigated for use in the \textbf{input module}: Sum Of Word Embeddings (SOWE), Convolutional Neural Network (CNN) and Recurrent Neural Network (RNN).
-All three input modules use pretrained FastText embeddings \parencite{bojanowski2016enriching} to represent the individual tokens making up the color names, but combine them using difference mechanisms.
+To carry out the representational learning of color-names, four different color-name embedding learning models are investigated for use in the \textbf{input module}: Sum Of Word Embeddings (SOWE), Convolutional Neural Network (CNN) and two types of Recurrent Neural Network (LSTM and GRU RNN).
+All four input modules use pretrained FastText embeddings \parencite{bojanowski2016enriching} to represent the individual tokens making up the color names, but combine them using difference mechanisms.
 The capacity of these input models is of primary interest to this work.
 
 To evaluate and compare the three learning models, we designed a series of experiments to assess their capability in capturing compositionality of language used in color names.
@@ -210,7 +210,7 @@ This allows us to take advantage of the well-known softmax based methods for the
 
 
 We conclude that the SOWE model is generally the best model for all tasks both for distribution and point estimation.
-It is followed closely by the CNN; with the RNN performing significantly worse (see \Cref{sec:results}).
+It is followed closely by the CNN; with the RNNs both performing significantly worse (see \Cref{sec:results}).
 We believe that due to the nature of color understanding as a microcosm of natural language understanding, the results of our investigations have some implications for the capacity of the models for their general use in short phrase understanding.
 
 To the best of knowledge, this is the first of such investigation in term-wise mapping color names to values that can generate a visual representation, which bring the future of natural language controlled computer graphics generation and executable semantic parsing one step closer to reality.  
@@ -299,13 +299,15 @@ we do not have color models conditional upon language.
 		
 		\node (input) [matrix, right = of prep] {
 			\node{Input Modules}; \\
-			\node(rnn)[draw]{RNN}; \\
+			\node(rnn1)[draw]{GRU RNN}; \\
+			\node(rnn2)[draw]{LSTM RNN}; \\
 			\node(sowe)[draw]{SOWE};\\
 			\node(cnn)[draw]{CNN}; \\
 		};
 		\refnodeBR{sec:sowemod}{sowe};
 		\refnodeBR{sec:cnnmod}{cnn};
-		\refnodeAR[xshift=0.3cm]{sec:rnnmod}{rnn};
+		\refnodeAR[]{sec:rnnmod}{rnn1};
+		\draw[red] (rnn1ref.south) to (rnn2.50);
 		
 		\node (output) [matrix, right = 1.4 of input, yshift=1em] {
 			\node{Output Modules}; \\
@@ -430,18 +432,18 @@ It produces a fixed sized dense representation of the color name,
 which is the input to the output module \Cref{sec:outputmod}).
 In all models the input and output modules are trained concurrently as a single system.
 
-\subsubsection{Recurrent Neural Network(RNN)}\label{sec:rnnmod}
+\subsubsection{Recurrent Neural Networks (GRU and LSTM  RNNs)}\label{sec:rnnmod}
 \begin{figure}
 	\begin{tikzpicture}[defaultfig]
 	\node (hiddenoutput)[layer] at (0,0) {ReLU};
 	\node (output)[dotted, layer, above=1 of hiddenoutput] {Output Module};
 	\draw[->] (hiddenoutput) to (output);
 	
-	\node (GRU1)[layer, below = of hiddenoutput]{GRU};
+	\node (GRU1)[layer, below = of hiddenoutput]{GRU/\\LSTM};
 	
 	\foreach[count=\i from 1] \j in {2,...,5}
 	{
-		\node (GRU\j)[layer, left = of GRU\i]{GRU};
+		\node (GRU\j)[layer, left = of GRU\i]{GRU/\\LSTM};
 		\draw[->] (GRU\j) to (GRU\i);
 	}
 	
@@ -458,24 +460,30 @@ In all models the input and output modules are trained concurrently as a single 
 	\draw[->] (GRU1) to (hiddenoutput);
 	\end{tikzpicture}
 	
-	\caption{The RNN Input module for the example input \natlang{light greenish blue}. Each dashed box represents 1 time-step. \label{fig:rnnmod}}
+	\caption{The LSTM/GRU Input module
+		for the example input \natlang{light greenish blue}. Each dashed box represents 1 time-step. \label{fig:rnnmod}.
+	}
 \end{figure}
 
 
-A Recurrent Neural Network is a common choice for this kind of task,
+A Recurrent Neural Network (RNN) is a common choice for this kind of task,
 due to the variable length of the input.
-The general structure of this network, shown in \Cref{fig:rnnmod} is similar to \textcite{2016arXiv160603821M}, or indeed to most other word sequence learning models.
+We consider two "flavours" of RNN: Gated Recurrent Unit (GRU)  \parencite{cho2014properties}, and  Long Short Term Memory (LSTM) \parencite{hochreiter1997long,gers1999learning} networks.
+They differ only in the recurrent unit internal structure.
+The general structure of both input modules is  shown in \Cref{fig:rnnmod} is similar to \textcite{2016arXiv160603821M}, or indeed to most other word sequence learning models.
 Each word is first transformed to an embedding representation.
 This representation is trained with the rest of the network allowing per word information to be efficiently learned.
-The embedding is used as the input for a Gated Recurrent Unit (GRU).
-The stream was terminated with an End of Stream (\natlang{<EOS>}) pseudo-token,
+The embedding is used as the input for the recurrent unit, either a GRU or an LSTM depending on the model considered.
+The stream is terminated with an End of Stream (\natlang{<EOS>}) pseudo-token,
 represented using a zero-vector.
-The output of the last time-step is fed to a Rectified Linear Unit (ReLU).
+The output of the last time-step is fed to a Rectified Linear Unit (ReLU), and then to the output model.
 
-We make use of a GRU \parencite{cho2014properties},
+
+\todo{ What do with following sentence?
+We make use of a GRU
 which we found to marginally out-perform a vanilla RNN (that is to say one without any gating) in preliminary testing.
 The small improvement is unsurprising, as the color names have at most 5 terms,
-so longer short term memory (from GRU or LSTM) is not as useful required.
+so longer short term memory (from GRU or LSTM) is not as useful required.}
 
 
 \subsubsection{Sum of Word Embeddings (SOWE)}\label{sec:sowemod}
@@ -753,7 +761,7 @@ This \empmodel{} bypasses the compositional language understanding part of the p
 It is as if the input module (as discussed in \Cref{sec:inputmod}) would perfectly resolve the sequence of terms into a single item.
 %
 These models can exploit the training observations without issue of determining how to compose the tokens.
-This is a useful baseline approach, as our neural models (SOWE, CNN, and RNN)
+This is a useful baseline approach, as our neural models (SOWE, CNN, GRU and LSTM)
 each differ in how they compose the tokens, and it in on that contrast this study focuses.
 
 In theory the term-based neural models can out-perfrom the \empmodel{}, if they learn a very good compositional understanding of the language.
@@ -906,7 +914,7 @@ The discretization and the KDE for the \empmodel{} is done using KernalDensityEs
 The training data is managed with DataDeps.jl \parencite{2018arXiv180801091W}.
 
 \subsection{Common Network Features}
-Drop-out \parencite{srivastava2014dropout}  is used on all ReLU layers and on the GRU in the RNN, with threshold of 0.5 during training.
+Drop-out \parencite{srivastava2014dropout}  is used on all ReLU layers and on the recurrent units in the RNNs, with threshold of 0.5 during training.
 The network is optimized using Adam \parencite{kingma2014adam}, and a learning rate of 0.001.
 Early stopping is checked every 10 epochs using the development dataset.
 Distribution estimation methods are trained using the full batch (where each observation is a distribution) for every epoch.
@@ -942,19 +950,19 @@ In general the overall quality of each model seems to be in line with that found
 
 
 \begin{figure}
-	\distfigs{{SOWE/SOWE, CNN/CNN, RNN/RNN}}{\oovcolors}	
+	\distfigs{{SOWE/SOWE, CNN/CNN, GRU/GRU, LSTM/LSTM}}{\oovcolors}	
 	\caption{Some example distribution estimations for colors names which are completely outside the training data. The terms: \natlang{Brown}, \natlang{gray}, \natlang{Gray}, \natlang{Green}, and \natlang{Purple}, do not occur in any of the color data; however \natlang{brown}, \natlang{grey} \natlang{green}, and \natlang{purple} do occur.} \label{fig:oovdist}
 \end{figure}
 
 \begin{figure}
-	\pointfigs{{SOWE/SOWE, CNN/CNN, RNN/RNN}}{oovcolors}{5}
+	\pointfigs{{SOWE/SOWE, CNN/CNN, GRU/GRU, LSTM/LSTM}}{oovcolors}{5}
 	\caption{Some example point estimates for colors names which are completely outside the training data. The terms: \natlang{Brown}, \natlang{gray}, \natlang{Gray}, \natlang{Green}, and \natlang{Purple}, do not occur in any of the color data; however \natlang{brown}, \natlang{grey} \natlang{green}, and \natlang{purple} do occur.} \label{fig:oovpoint}
 \end{figure}
 
 
 
 \section{Conclusion}
-We have presented three input modules (SOWE, CNN, RNN),
+We have presented four input modules (SOWE, CNN, GRU and LSTM),
 and two output modules (distribution estimate, and point estimate)
 that are suitable for using machine learning to make estimates about color based on the terms making up its name.
 We contrasted these to an \empmodel{} model for each task which bypassed the term-wise natural language understanding component of the problem.
@@ -968,12 +976,12 @@ The term-based models are effectively given additional information, in the form 
 
 
 A key take away from our results is that using a SOWE should be preferred over an RNN for short phrase natural language understanding tasks when order is not a very significant factor.
-The RNN is the standard type of model for problems with sequential input, such as color names made up of multiple words as we considered here.
-However, we find its performance to be significantly exceeded by the SOWE and CNN.
+RNNs are the standard type of model for problems with sequential input, such as color names made up of multiple words as we considered here.
+However, we find both LSTM and GRU performance to be significantly exceeded by the SOWE and CNN.
 The SOWE is an unordered model roughly corresponding to a bag of words.
 The CNN similarly roughly correspondents to a bag of ngrams, in our case a bag of all 1,2,3,4 and 5-grams.
 This means the CNN can readily take advantage of both fully ordered information, using the filters of length 5, down to unordered information using  filters of length 1.
-The RNN however must fully process the ordered nature of its inputs, as its output comes only from the final node.
+The RNNs however must fully process the ordered nature of its inputs, as its output comes only from the final node.
 It would be interesting to further contrast a bidirectional RNN.
 
 In a broader context, we envisage the distribution learned for a color name can be used as a prior probability and when combining with additional context information a likelihood can be estimated for particular uses.
