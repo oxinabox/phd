@@ -432,6 +432,16 @@ It produces a fixed sized dense representation of the color name,
 which is the input to the output module \Cref{sec:outputmod}).
 In all models the input and output modules are trained concurrently as a single system.
 
+\todo{For reference the parameter counts, on top of embedding layer
+	LSTM has 5x300x301 (4 internal + final ReLU)
+	GRU has 4x300x301 (3 internal + final ReLU)
+	CNN has 2x300x301 (Convolution including ReLU final ReLU)
+	SOWE has 300x301 (final ReLU only)
+
+Maybe this summary should be included somewhere.
+}
+
+
 \subsubsection{Recurrent Neural Networks (GRU and LSTM  RNNs)}\label{sec:rnnmod}
 \begin{figure}
 	\begin{tikzpicture}[defaultfig]
@@ -976,13 +986,16 @@ The term-based models are effectively given additional information, in the form 
 
 
 A key take away from our results is that using a SOWE should be preferred over an RNN for short phrase natural language understanding tasks when order is not a very significant factor.
-RNNs are the standard type of model for problems with sequential input, such as color names made up of multiple words as we considered here.
+It is also important to evalute if order is indeed a significant factor, since on the surface one would expect it to be for color names.
+One way to evaluate this is to include SOWE as a baseline model in other tasks.
+While RNNs are the standard type of model for problems with sequential input, such as color names made up of multiple words as we considered here.
 However, we find both LSTM and GRU performance to be significantly exceeded by the SOWE and CNN.
 The SOWE is an unordered model roughly corresponding to a bag of words.
 The CNN similarly roughly correspondents to a bag of ngrams, in our case a bag of all 1,2,3,4 and 5-grams.
 This means the CNN can readily take advantage of both fully ordered information, using the filters of length 5, down to unordered information using  filters of length 1.
 The RNNs however must fully process the ordered nature of its inputs, as its output comes only from the final node.
-It would be interesting to further contrast a bidirectional RNN.
+Between the two RNN models it seems the GRU performs marginally better.
+It would be interesting to further contrast to bidirectional RNNs.
 
 In a broader context, we envisage the distribution learned for a color name can be used as a prior probability and when combining with additional context information a likelihood can be estimated for particular uses.
 This additional information could take the from of other words, such as estimating the distribution for a \natlang{brown dog}, as compared to a `\natlang{brown tree}, or from other sources.

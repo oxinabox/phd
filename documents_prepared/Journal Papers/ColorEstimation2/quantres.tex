@@ -112,12 +112,11 @@ From the consideration of all the results shown in \Cref{tbl:pointfull,tbl:distf
 the CNN and SOWE models perform almost as well as the \empmodel{}.
 With the SOWE having a marginal lead for distribution estimation,
 and the CNN and SOWE being nearly exactly equal for most point estimation tasks.
-We believe the reason for this is that the SOWE is an easier to learn model from a gradient descent perspective:
-it is a shallow model with only one true hidden layer.
-The RNN did not perform as well at these tasks.
+We believe the reason for this is that the SOWE is an easier to learn model from a gradient descent perspective: it is a shallow model with only one true hidden layer.
+In general the results for the LSTM and GRU were very similar, and both much worse than the non-recurrent models.
 While it is only marginally behind the SOWE and CNN on the full point estimation task (\Cref{tbl:pointfull}), on all other tasks for both point estimation and distribution estimation it is significantly worse.
 This may indicate that it is hard to capture the significant relationships between terms in the sequence.
-However, as shown \Cref{sec:quantitative-results} it did learn generally acceptable colors, but it is not as close a match to the population's expectation.
+However, as discussed \Cref{sec:quantitative-results} it did learn generally acceptable colors to the human eye, but the quantitative results presented in this section show that it is not as close a match to the population's expectation.
 
 
 %%%%%%%%%% Full
@@ -148,7 +147,7 @@ The performance of SOWE on the order tasks (\Cref{tbl:distord,tbl:pointord}) is 
 For the distribution estimation it outperforms the CNN, and for point estimation it ties with the CNN.
 The CNN and RNN, can take into account word order, but the SOWE model cannot.
 The good results for SOWE suggest that the word-order is not very significant for color names.
-While word order matters, different colors with the same terms in different order are similar enough that it still performs very well.
+While word order matters, different colors with the same terms in different order are similar enough for most colors that it still performs very well.
 In theory the models that are capable of using word order have the capacity to ignore it, and thus could achieve a similar result.
 An RNN can learn to perform a sum of its inputs (the word embeddings),
 and the CNN can learn to weight all non-unigram filters to zero.
@@ -240,7 +239,10 @@ In the point estimation results discussed so far have been from models trained s
 However, it is also possible to derive the mean from the distribution estimation models.
 Those results are also presented in \Cref{tbl:pointfull,tbl:pointord,tbl:pointextrapo}.
 In general these results perform marginally worse (using the MSE metric) than their corresponding modules using the point estimation output module.
+The only exception to this is the LSTM for both the unseen combination tasks and the order task, for which it was notably better to use the mean from the distribution rather than one directly trained.
 We note that for the \empmodel{}, the distributions mean is almost identical to the true mean of points, as expected.
+
+
 
 Beyond the output module there are a few key differences between the point estimation modules and the distribution estimate modules.
 When training distribution estimation models, all examples of a particular color name is grouped into a single high information training observation using the histogram as the output.
@@ -255,17 +257,15 @@ We suspect that such a method may have trouble learning the smoothness of the ou
 
 \subsection{Training set results}
 
-To investigate our supposition that the SOWE, is a much easier function to fit via gradient descent, as compared to RNN, or CNN, we consider the error rate on the fuill training set during the training of the models.
+To investigate our supposition that the SOWE, is a much easier function to fit via gradient descent, as compared to the CNN or the RNNs, we consider the error rate on the full training set during the training of the models.
 These plots are shown in \Cref{fig:disttrainloss,fig:pointtrainloss}.
-These plots seem to support the supposition, as the SOWE training error decreases notably faster (it is a steaper curve) in both cases.
+These plots seem to support the supposition, as the SOWE training error decreases notably faster (it is a steeper curve) in both cases.
 This corresponds to a easier error surface in network parameter (weights and biases) space, with less points of low gradient, or near local minima.
 If we compare the final loss of each method on the training set, before it was stopped due to early stopping against the test set results in  \Cref{tbl:distfull,tbl:pointfull}
 we find they are similar,  particularly for distribution estimation ( \Cref{tbl:distfull,fig:disttrainloss}).
-While for for point estimation (\Cref{fig:pointtrainloss,tbl:pointfull}), on the testset CNN and SOWE perform similarly, but RNN performs much worse, while in training the performance of CNN is roughly midway between SOWE and RNN.
-In all cases, the absolute error in training has become small relative the to the natural variation in the training set (as perfect fit is not possible as the training data varies).
-\todo{add the noncompositional model to the training plots?}
-With further model tweaking, to increase the representative capacity while regularizing against overfitting more performance may be achieved on some or all models.
-\todo{Say more here?}
+While for for point estimation (\Cref{fig:pointtrainloss,tbl:pointfull}), on the testset CNN and SOWE perform similarly, while RNNs perform much worse, while in training the performance of CNN is roughly midway between SOWE and the RNNs.
+In all cases, the absolute error in training has become small relative the to the natural variation in the training set by the time early stopping terminates training (Noting that as perfect fit is not possible as the training data varies).
+%With further model tweaking, to increase the representative capacity of all models while regularizing against overfitting more performance may be achieved on some or all models.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
