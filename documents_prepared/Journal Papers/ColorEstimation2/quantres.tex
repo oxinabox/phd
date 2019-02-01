@@ -243,17 +243,25 @@ The only exception to this is the LSTM for both the unseen combination tasks and
 We note that for the \empmodel{}, the distributions mean is almost identical to the true mean of points, as expected.
 
 
+\subsubsection{On the differences between the distribution estimation and point estimation training procedure}
 
 Beyond the output module there are a few key differences between the point estimation modules and the distribution estimate modules.
 When training distribution estimation models, all examples of a particular color name is grouped into a single high information training observation using the histogram as the output.
 Whereas when training for point estimation, each example is processed individually (using minibatches).
-This means that the distribution estimating models fit to all color names with equal priority. % \pdfcomment{Can a good analogy to microaveraging and macroaveraging be made?}.
+This means that the distribution estimating models fit to all color names with equal priority.
 Whereas for point estimates, more frequently used color names have more examples, and so more frequent color names are fit with priority over rarer ones.
 Another consequence of using training per example using random minibatches, rather than aggregating and training with full batch, is increased resilience to to local minima \parencite{lecun2012efficient}.
 One of the upsides of the aggregated training used in distribution estimation is that it trains much faster as only a small number of high-information training examples are processed, rather than a much larger number of individual observations.
-It may be interesting in future work to consider training the distribution estimates per example using one-hot output representations; thus making the process similar to that used in the point estimate training.
-We suspect that such a method may have trouble learning the smoothness of the output space (as discussed in \Cref{sec:learnedsmoothness}).
 
+
+It may be interesting in future work to consider training the distribution estimates per example using one-hot output representations; thus making the process similar to that used in the point estimate training.
+It is  possible that such a method may have trouble learning the smoothness of the output space (as discussed in \Cref{sec:learnedsmoothness}),
+as it would not see demonstration of the partial activation of adjacent bins in the training examples.
+However, this is not certain,  much like the point estimation trained on one-hot learns a representation that minimised mean squared error outputting  a point  between  all the training examples, it is reasonable to  expect that the distribution estimates will output a smooth histogram  as  this is near to a minimum for the cross-entropy.
+With the current model the presence of partial actication of adjacent bins in all examples  may be causing the smoothness to  be learned primarily in the output layer, and with little respect for the inputs.
+Such would explain the difficulty shown in \Cref{fig:distout1} with capturing subtler features of the output distribution, such as the depth of the valley between the two peaks in the hue of greenish.
+It may be the using one-hot examples for training, would help force the knowledge of the nature of continuous distributions deeper into the network allowing the input color name to have a more pronounce effect.
+This requires throughout investigation. 
 
 \subsection{Training set results}
 
