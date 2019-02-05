@@ -83,7 +83,7 @@
 \newcommand{\natlang}[1]{\texttt{#1}}
 \newcommand{\datapairs}{$\langle\text{color-name},\,(h,s,v)\rangle$}
 
-\newcommand{\empmodel}{Non-compositional baseline} % Note this is not used everywhere
+\newcommand{\empmodel}{non-compositional baseline} % Note this is not used everywhere
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %opening
 \runningtitle{Learning of Colors from Color Names: Distribution and Point Estimation}
@@ -94,15 +94,15 @@
 \begin{document}
 \title{Learning of Colors from Color Names: \\ Distribution and Point Estimation}
 \author{Lyndon White\thanks{E-mail: {lyndon.white@invenialabs.co.uk}}}
-\affil{Invenia Labs, Cambridge, United Kingdom}
-
+\affil{Invenia Labs, Cambridge, UK}
 \author{Roberto Togneri\thanks{Email: {roberto.togneri@uwa.edu.au}}}
 \affil{The University of Western Australia}
 \author{Wei Liu\thanks{Email: {wei.liu@uwa.edu.au}}}
 \affil{The University of Western Australia}
 \author{Mohammed Bennamoun\thanks{Email: {mohammed.bennamoun@uwa.edu.au}}}
-\affil{The University of Western Australia\thanks{The University of Western Australia, %
-		35 Stirling Highway, Crawley, Western Australia.}}
+\affil{The University of Western Australia
+	%\thanks{The University of Western Australia, 35 Stirling Highway, Crawley, Western Australia.}
+}
 
 
 
@@ -134,9 +134,9 @@ Color understanding is a challenging domain, due to high levels of ambiguity, th
 In many ways it is a grounded microcosm of natural language understanding.
 Due to its difficulty, texts containing color descriptions such as \texttt{the flower has petals that are bright pinkish purple with white stigma} are used to demonstrate the  capability of the-state-of-the-art image generation systems \parencite{reed2016generative, 2015arXiv151102793M}.
 The core focus of the work we present is to map from the short-phrase descriptions of a color, to representation in a color-space such as HSV \parencite{smith1978color}.
-The HSV color space is grounded meaning space for the short phrase.
+The HSV color space is a grounded meaning space for the short phrase.
 Due to this grounding, and the aforementioned linguistic phenomena, this is a particularly interesting short phrase understanding task.
-Issues of illumination and perceived color based on context are considered out of the scope.
+Issues of illumination and perceived color based on context are considered out of the scope of this  article.
 
 \subsection{Distribution vs. Point Estimation}
 As illustrated, proper understanding of color names requires considering \emph{the color intended} as a random variable.
@@ -161,7 +161,7 @@ Note that while only a small (but particularly interesting) set of colors demons
 
 
 While by definition the mean color point minimizes the squared error, it may not actually be a  meaningful point estimate.
-Given these issues, producing a point estimate has only limited value and estimating a distribution is more general task.
+Given these issues, producing a point estimate has only limited value: estimating a distribution is a  more general task.
 However we do consider the point estimation task, as it allows contrast in assessing the input module (SOWE/CNN/GRU/LSTM) of our proposed methods across the two different output modules (distribution/point estimation).
 
 The generation of color from text has not received much attention in prior work.
@@ -226,16 +226,17 @@ and the simpler, non-compositional, 11 basic colors of \textcite{berlin1969basic
 Works including \textcite{Berk:1982:HFS:358589.358606,conway1992experimental,ele1994computational, mojsilovic2005computational, menegaz2007discrete,van2009learning}  propose methods for the automatic mapping of colors to and from these small manually defined sets of colors.
 We note that \textcite{menegaz2007discrete,van2009learning} both propose systems that discretize the color-space, though to a much coarser level than we consider in this work.
 
+The large Munroe dataset \parencite{Munroe2010XKCDdataset},
+has allowed a data driven approach to natural language color problems.
+In-contrast to earlier manually defined color dictionaries,
+it has a large number of colors,  a non-trivial vocabulary,
+and is sourced from a survey of hundreds of thousands of respondents.
+Full details on this dataset can be found in \Cref{sec:full-task}.
+The availability of a large color corpus has allowed machine learning based methods to be used in recent works including 
+\textcite{mcmahan2015bayesian,meomcmahanstone:color,2016arXiv160603821M,acl2018WinnLighter} and this article.
 
-More recent works, including the work presented in this article, function with a much larger number of colors, larger vocabularies, and larger pools of respondents, 
-in particular making uses of the large Munroe dataset \parencite{Munroe2010XKCDdataset}, as we do here.
-%During the similar time-period another online color naming survey was conducted.
-%\textcite{mylonas2010online,mylonas2012colour} collected a total of 50,000 observations from 2500 respondents in 7 languages.
-%In this work we use the larger, more publicly available, Munroe dataset.
-This allows a data driven approach towards the modeling.
 
-
-\textcite{mcmahan2015bayesian} and \textcite{meomcmahanstone:color} present a Bayesian method for  colors and color names.
+\textcite{mcmahan2015bayesian} and \textcite{meomcmahanstone:color} present a Bayesian method for colors estimation and color naming.
 Their work primarily focuses on mapping from colors to to their exact names, the reverse of our task.
 While their method is reversible: to go from exact color names to probabilities, they do not present any evaluations of this.
 These works are based on defining fuzzy rectangular distributions in the color-space to cover the distribution estimated from the data, which are used in a Bayesian system to non-compositionally determine the color name.
@@ -244,7 +245,7 @@ These works are based on defining fuzzy rectangular distributions in the color-s
 \textcite{2016arXiv160603821M} map a point in the color-space, to a sequence of probability estimates over color words.
 They extend beyond all prior color naming systems to produce a compositional color namer based on the Munroe dataset.
 Their method uses a recurrent neural network (RNN), which takes as input a color-space point, and the previous output word, and gives a probability of the next word to output -- this is a conditional language model.
-We tackle the inverse problem to the creation of a conditional language model.
+We tackle the inverse problem, natural language understanding rather than generation.
 Our distribution estimation models map from a sequence of terms, to a distribution in color-space.
 Similarly, our point estimation models map from a sequence of terms to a single point in color-space.
 
@@ -268,9 +269,10 @@ From this, a Gaussian distributed score function is calculated, over a high dime
 While this method does work with a probability distribution, as a step in its goal,
 this distribution is always both symmetric and unimodal -- albeit in a high-dimensional color-space.
 
-\textcite{acl2018WinnLighter} demonstrates a neural network for producing directional vectors in color space how comparatives such as \natlang{lighter} and \natlang{darker} change a color.
-This effectively defines for creating a ray (half-line) of estimates in color space possible colors, for a comparative term (e.g. \natlang{lighter}) starting at a source color.
-There network's input is  word embedding for a comparative adjective, and a point in RGB color-space; the model outputs a directional vector in predicted RGB space along which occurs the possible modified version of the input color point according to the given adjective.
+\textcite{acl2018WinnLighter} demonstrates a neural network for producing directional vectors in color space indicating how comparatives such as \natlang{lighter} and \natlang{darker} change a color.
+This effectively defines a ray (half-line) in color space along which possible colors described lie.
+Their networks takes as it's inputs a word embedding for a comparative adjective, and a point in RGB color-space.
+It outputs a directional vector in RGB space along which occurs the possible modified version of the input color point according to the given adjective.
 The magnitude of this directional vector is trained such that adding it to the source color point, will give a good point estimate of the modified color.
 For example mapping from \natlang{green} to a \natlang{darker green} is: $((164,227,77), \text{darker}) \mapsto (141, 190, 61)$ when taking a point estimate.
 When using it for a ray estimate it is the half line from the first, through the second point, where every point further along the ray is \natlang{darker} than the earlier point.
@@ -279,8 +281,6 @@ This is allowed by taking as the fixed sized input two embeddings -- when only o
 Their training and evaluation is based on data sourced from the  Munroe dataset.
 
 
-The work presented here closes the gap, that while we have language models conditional upon color,
-we do not have color models conditional upon language.
 
 
 \section{Method}
@@ -431,15 +431,15 @@ This module handles the input of the color name, which is provided as a sequence
 It produces a fixed sized dense representation of the color name,
 which is the input to the output module \Cref{sec:outputmod}).
 In all models the input and output modules are trained concurrently as a single system.
-
-\todo{For reference the parameter counts, on top of embedding layer
-	LSTM has 5x300x301 (4 internal + final ReLU)
-	GRU has 4x300x301 (3 internal + final ReLU)
-	CNN has 2x300x301 (Convolution including ReLU final ReLU)
-	SOWE has 300x301 (final ReLU only)
-
-Maybe this summary should be included somewhere.
-}
+%
+%{For reference the parameter counts, on top of embedding layer
+%	LSTM has 5x300x301 (4 internal + final ReLU)
+%	GRU has 4x300x301 (3 internal + final ReLU)
+%	CNN has 2x300x301 (Convolution including ReLU final ReLU)
+%	SOWE has 300x301 (final ReLU only)
+%
+%Maybe this summary should be included somewhere.
+%}
 
 
 \subsubsection{Recurrent Neural Networks (GRU and LSTM  RNNs)}\label{sec:rnnmod}
@@ -478,9 +478,10 @@ Maybe this summary should be included somewhere.
 
 A Recurrent Neural Network (RNN) is a common choice for this kind of task,
 due to the variable length of the input.
-We consider two "flavours" of RNN: Gated Recurrent Unit (GRU)  \parencite{cho2014properties}, and  Long Short Term Memory (LSTM) \parencite{hochreiter1997long,gers1999learning} networks.
-They differ only in the recurrent unit internal structure.
-The general structure of both input modules is  shown in \Cref{fig:rnnmod} is similar to \textcite{2016arXiv160603821M}, or indeed to most other word sequence learning models.
+We consider two "flavours" of RNN:  Gated Recurrent Unit (GRU) networks \parencite{cho2014properties}, and  Long Short Term Memory (LSTM) networks \parencite{hochreiter1997long,gers1999learning}.
+They differ only in their recurrent unit's internal structure.
+The general structure of both input modules is  shown in \Cref{fig:rnnmod}.
+It is similar to \textcite{2016arXiv160603821M}, or indeed to most other word sequence learning models.
 Each word is first transformed to an embedding representation.
 This representation is trained with the rest of the network allowing per word information to be efficiently learned.
 The embedding is used as the input for the recurrent unit, either a GRU or an LSTM depending on the model considered.
@@ -488,13 +489,9 @@ The stream is terminated with an End of Stream (\natlang{<EOS>}) pseudo-token,
 represented using a zero-vector.
 The output of the last time-step is fed to a Rectified Linear Unit (ReLU), and then to the output model.
 
-
-\todo{ What do with following sentence?
-We make use of a GRU
-which we found to marginally out-perform a vanilla RNN (that is to say one without any gating) in preliminary testing.
-The small improvement is unsurprising, as the color names have at most 5 terms,
-so longer short term memory (from GRU or LSTM) is not as useful required.}
-
+During preliminary investigations we also considered a vanilla RNN (that is to say one without any gating). Early results on the development set suggested that it performed only marginally worse than the GRU or LSTM networks.
+That it does not perform much worse than the models with features to improve memory is unsurprising, as the color names have at most 5 terms.
+We constrained our full investigation to the more popular GRU and LSTM networks.
 
 \subsubsection{Sum of Word Embeddings (SOWE)}\label{sec:sowemod}
 Using a simple sum of word embeddings as a layer in a neural network is less typical than an RNN structure,
@@ -579,7 +576,7 @@ so this allows it to learn full length relations.
 	
 	\end{tikzpicture}
 	
-	\caption{The CNN input module for the example input \natlang{light greenish blue}}
+	\caption{The CNN input module for the example input \natlang{light greenish blue}.}
 	\label{fig:cnnmod}
 \end{figure}
 
@@ -759,32 +756,32 @@ This gives the mean angle.
 \subsection{Non-compositional Baselines}
 We consider a non-compositional model to establish a baseline on the color modeling part of this task; with the exclusion of the language understanding part.
 
-The noncompositional methods do not process each term in the name; they do not work with the language at all.
+The non-compositional methods do not process each term in the name; they do not work with the language at all.
 They simply map from the exact input text (no tokenization) to the pre-calculated distribution or mean of the training data for the exact color name.
-As there is plenty of training data for most color names (see \Cref{sec:corpusstats}) this is a very effective approach.
+As there is plenty of training data for most color names (see \Cref{sec:fulltaskcorpusstats}) this is a very effective approach.
 %
 Strictly speaking, this \empmodel{} has less information than the neural network models
-as it does not have tokenized color name given to it only the whole name.
-However, pragmatically learning to compose the sequence of terms into a meaningful whole is by far  the harder part of this task.
+as it does not have a tokenized color name given to it: only the whole name.
+However, pragmatically learning to compose the sequence of terms into a meaningful whole is by far the harder part of this task.
 %
 This \empmodel{} bypasses the compositional language understanding part of the process.
 It is as if the input module (as discussed in \Cref{sec:inputmod}) would perfectly resolve the sequence of terms into a single item.
 %
-These models can exploit the training observations without issue of determining how to compose the tokens.
+These models can exploit the training observations without the issue of determining how to compose the tokens.
 This is a useful baseline approach, as our neural models (SOWE, CNN, GRU and LSTM)
-each differ in how they compose the tokens, and it in on that contrast this study focuses.
+each differs in how they compose the tokens, and it is on that contrast this study focuses.
 
-In theory the term-based neural models can out-perfrom the \empmodel{}, if they learn a very good compositional understanding of the language.
+In theory the term-based neural models can out-perform the \empmodel{}, if they learn a very good compositional understanding of the language.
 This would require learning how the terms in the color name combine in a way that exceeds the information directly present in the training data per class.
 It is this capacity of learning how the terms combine that allow for the models to predict the outputs for combinations of terms that never occur in the training data (\Cref{sec:extrapodata}).
 Learning a compositional model that exploits its term based knowledge in such a way  that generalizes to get better results than the direct exploitation of the training data (as in \empmodel{}), is very difficult and would require very well calibrated control of (over/under)fitting.
-This particularly true in the case where there is large amounts of training data for the whole phrase.
+This is particularly true in the case where there is large amounts of training data for the whole phrase.
 Conversely, when there is no training data for the whole phrase (as considered in \Cref{sec:extrapodata}) non-compositional models can not function at all.
 
 
 
 \subsubsection{Non-compositional Baseline for Distribution Estimation: KDE}\label{sec:direct-histogram} \label{sec:kernel-density-based-smoothing}
-To determine an \empmodel{} for the distribution estimation tasks,
+To define a \empmodel{} for the distribution estimation tasks,
 we use kernel-density estimation (KDE) in a formulation for non-parametric estimation \parencite{silverman1986density} .
 The KDE effectively produces a smoothed histogram from the training data as processed in \Cref{sec:discretization}.
 It causes adjacent bins to have most similar probabilities, thus matching to the mathematical notion of a continuous random variable.
@@ -825,7 +822,7 @@ It is however a consistent way to do so, and so we use it for our evaluations.
 \subsection{Evaluation Strategies and Data}
 
 
-\subsubsection{Full Task}
+\subsubsection{Full Task}\label{sec:full-task}
 We make use of the  Munroe dataset as prepared by \textcite{mcmahan2015bayesian} from the results of the XKCD color survey.
 The XKCD color survey \parencite{Munroe2010XKCDdataset} collected over 3.4 million observations from over 222,500 respondents.
 McMahan and Stone take a subset from Munroe's full survey, by restricting it to the responses from native English speakers, 
@@ -864,7 +861,7 @@ They also define a standard test, development and train split.
 A primary interest in using the term based models is to be able to make predictions for never before seen descriptions of colors.
 For example, based on the learned understanding of \texttt{salmon} and of \texttt{bright}, from examples like \texttt{bright green} and \texttt{bright red}, we wish for the system to make predictions about \texttt{bright salmon}, even though that description never occurs in the training data.
 The ability to make predictions, such as these, illustrates term-based natural language understanding.
-This cannot be done with the \empmodel{} models, which by-passes the term processing step.
+This cannot be done with the \empmodel{} models, which bypass the term processing step.
 %
 To evaluate this generalization capacity, we define new sub-datasets for both testing and training.
 We select the rarest 100 color descriptions from the full dataset,
@@ -884,8 +881,8 @@ We contrast this to the same models when trained on the full training set to see
 \paragraph{Unseen Combinations Corpus Statistics}
 \begin{itemize}
 	\item In the unseem combinations testset, there are (by design) 100 unique color names, that is 12.06\% of the full set of color names. Thus the number of unique color names in the restricted training set smaller by 100 (i.e 12.06\%) smaller than that occurring in the full training set.
-	\item Removed from the training set was 20,460 observations. Thus the restricted training set have 13.43\% fewer observations than the full training set.
-	\item there are 14 terms used across the 100 color names in the unseen combinations test set.
+	\item 20,460 observations were removed from the training set . Thus the restricted training set has 13.43\% fewer observations than the full training set.
+	\item There are 14 terms used across the 100 color names in the unseen combinations test set.
 	They are \natlang{blue}, \natlang{bright}, \natlang{brown}, \natlang{dark}, \natlang{deep}, \natlang{dull}, \natlang{green}, \natlang{grey}, \natlang{ish}, \natlang{light}, \natlang{lime}, \natlang{olive}, \natlang{orange}, \natlang{pale}, \natlang{pink}, \natlang{purple}, \natlang{red}, \natlang{rose}, \natlang{teal}, \natlang{very}, \natlang{violet}, \natlang{y}, \natlang{yellow}, and \natlang{-}.
 \end{itemize}
 
@@ -903,9 +900,9 @@ We only construct an order testing set, and not a corresponding training set, as
 
 \paragraph{Order Task Corpus Statistics}
 \begin{itemize}
-	\item there are 76 unique color names with 2 possible orders for the terms. This makes up 9.17\% of the unique color names.
+	\item There are 76 unique color names with 2 possible orders for their terms. This makes up 9.17\% of the unique color names.
 	\item In the full training set (which is used for training for this evaluation) there are 63,048 observations of these color names, making up 4.14\% of all training observations.
-	\item There are 16 unique terms used in these ambiguous ordered color names. Namely:
+	\item There are 16 terms used in these ambiguous ordered color names. Namely:
 	\natlang{apple}, \natlang{blue}, \natlang{bright}, \natlang{brown}, \natlang{green}, \natlang{grey}, \natlang{ish}, \natlang{light}, \natlang{orange}, \natlang{pink}, \natlang{purple}, \natlang{red}, \natlang{violet}, \natlang{y}, \natlang{yellow} and \natlang{-}.
 \end{itemize}
 
@@ -975,18 +972,19 @@ In general the overall quality of each model seems to be in line with that found
 We have presented four input modules (SOWE, CNN, GRU and LSTM),
 and two output modules (distribution estimate, and point estimate)
 that are suitable for using machine learning to make estimates about color based on the terms making up its name.
-We contrasted these to an \empmodel{} model for each task which bypassed the term-wise natural language understanding component of the problem.
+We contrasted these to a \empmodel{} model for each task which bypassed the term-wise natural language understanding component of the problem.
 We found the results for SOWE, and CNN were strong, approaching this strong baseline.
 
 It is a note-worthy feature on the current state of short phrase modeling,
 and the difficulty of compositional natural language understanding
 that the term-based models are not able to out-perform the \empmodel{} where training data for the whole phrases was available.
-The term-based models are effectively given additional information, in the form of the tokenization, but are unable to fully leverage it the general case, to outperform ignoring the common sub-phase information (the terms).
+The term-based models are effectively given additional information, in the form of the tokenisation, but are unable to fully leverage it in the general case.
+They are unable to outperform simply ignoring the common sub-phase information when training instances for the whole phrase are available.
 
 
 
 A key take away from our results is that using a SOWE should be preferred over an RNN for short phrase natural language understanding tasks when order is not a very significant factor.
-It is also important to evalute if order is indeed a significant factor, since on the surface one would expect it to be for color names.
+It is also important to evaluate if order is indeed a significant factor, since on the surface one would expect it to be for color names.
 One way to evaluate this is to include SOWE as a baseline model in other tasks.
 While RNNs are the standard type of model for problems with sequential input, such as color names made up of multiple words as we considered here.
 However, we find both LSTM and GRU performance to be significantly exceeded by the SOWE and CNN.
@@ -1000,7 +998,7 @@ It would be interesting to further contrast to bidirectional RNNs.
 In a broader context, we envisage the distribution learned for a color name can be used as a prior probability and when combining with additional context information a likelihood can be estimated for particular uses.
 This additional information could take the from of other words, such as estimating the distribution for a \natlang{brown dog}, as compared to a `\natlang{brown tree}, or from other sources.
 A particularly interesting related avenue for investigation would condition the model not only on the words used but also on the speaker.
-The original source of the data \textcite{Munroe2010XKCDdataset}, includes some demographic information which is not explored as a model input in any  published model (to the best of out knowledge).
+The original source of the data, \textcite{Munroe2010XKCDdataset}, includes some demographic information which is not explored as a model input in any  published model (to the best of our knowledge).
 It is expected that color-term usage may vary with subcultures.
 
 
