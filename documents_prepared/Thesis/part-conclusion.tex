@@ -79,96 +79,141 @@ Such a more complex model is harder to train, and those practical difficulties c
 
 \subsection{Language Models and Orderless Representations}
 
+
+\begin{figure}
+	\resizebox{\textwidth}{!}{
+		\begin{tikzpicture}[
+		neo/.append style={purple},
+		labe/.append style={
+			auto,
+			blue,
+			align = center,
+			backgroundcolor,
+			fill opacity=0.6,
+			text opacity=1,
+			font={\footnotesize\itshape}	
+		},
+		layer/.append style={
+			draw,
+			align = center,
+			minimum height=7mm,
+		}
+		]
+		\numdef{\N}{8}
+		\numdef{\labelwidth}{5.5cm}
+		
+		\node(lbl)[text width= \labelwidth] {\textbf{SOWE Enhanced\\RNN Encoder-Decoder}\\%
+			Variable $n$ inputs: $\nv x_t$\\%
+			Variable $m$ outputs $\nn \hat{y}_t$\\%
+			Prompts: $\nv r_t$ (often $y_{t-1}$)
+		};
+		
+		\coordinate[yshift = -5.5cm, xshift=-1.5cm] (L0) at (lbl.west);
+		\numdef{\NN}{4}
+		\foreach \I[count=\j from 0] in {1,...,\NN}{
+			\ifnumequal{\I}{\NN - 1}{%
+				\node(L\I)[dashed, layer, right = of L\j] {\ldots};
+				\node(E\I)[layer, dashed, below = 2  of L\I]{Emb.};
+				\node(w\I)[below = of E\I]{\ldots};
+				\draw[->,dotted] (w\I) -- (E\I);
+				\draw[->,dotted] (E\I) -- (L\I);
+			}%
+			{
+				\node(L\I)[layer, right = of L\j] {$\mathrm{RU_E}$};
+				\node(E\I)[layer, below = 2 of L\I]{Emb.};
+				\node(w\I)[below = of E\I]{\ifnumequal{\I}{\NN}{$\nv x_n$}{$\nv x_\I$}};
+				\draw[->] (w\I) -- (E\I);
+				\draw[->] (E\I) -- (L\I);
+			}
+		}
+		\foreach \I[count=\j from 1] in {2,...,\NN} {
+			\draw[->] (L\j) edge node[labe] {state} (L\I);
+		}
+		
+		
+		
+		\node (shared) [neo,  layer, above right = of L\NN]{Concat};
+		\draw[->] (L\NN) -- (shared.south west);
+		
+		\node (sowe) [neo, layer, below right = of shared]{$\sum$};
+		\draw[->, neo] (sowe) -- (shared.south east);
+		\foreach \I in {1,...,\NN}{
+			\ifnumequal{\I}{\NN - 1}{%
+				\draw[neo, ->, dotted] (E\I.north) to[out=90,in=-90] (sowe.south);
+			}%
+			{
+				\draw[neo, ->] (E\I.north) to[out=90,in=-90] (sowe.south);
+			}
+		}
+		
+		\coordinate[above = 6 of L\NN] (Lp\NN);
+		\numdef{\NP}{\N - 1}
+		\foreach \j in {\NN,...,\NP}{
+			\numdef{\I}{\j+1}
+			\numdef{\y}{\I - \NN}
+			\ifnumequal{\I}{\N-1}{%
+				\node(Lp\I)[dotted, layer, right = of Lp\j] {\ldots};
+				\node(w\I)[below = of Lp\I]{\ldots};
+				\node(y\I)[above = of Lp\I]{\ldots};
+				\draw[->,dotted] (w\I) -- (Lp\I);
+				\draw[->,dotted] (Lp\I) -- (y\I);
+				\path[->,dotted] (shared.north) edge node[labe]{$\vv z$} (w\I.south west);
+			}%
+			{
+				\node(Lp\I)[layer, right = of Lp\j] {$\mathrm{RU_D}$};
+				\ifnumequal{\I}{\N}{
+					\node(w\I)[below = of Lp\I]{$[\vv z; \nv r_m]$};
+					\node(y\I)[above = of Lp\I]{$\nn \hat{y}_m$};
+				}
+				{
+					\node(w\I)[below = of Lp\I]{$[\vv z; \nv r_\y]$};
+					\node(y\I)[above = of Lp\I]{$\nn \hat{y}_\y$};
+				}
+				
+				\draw[->] (w\I) -- (Lp\I);
+				\draw[->] (Lp\I) -- (y\I);
+				\path[->] (shared.north) edge node[labe]{$\vv z$} (w\I.south west);
+			}
+		}
+		
+		
+		
+		
+		\numdef{\NNp1}{\NN + 1}
+		\foreach \I in {\NNp1,...,\NP} {
+			\numdef{\j}{\I+1}
+			\draw[->] (Lp\I) edge node[labe] {state} (Lp\j);
+		}
+		\end{tikzpicture}
+	}
+	\caption{An encoder-decoder model with a SOWE encoder bypass layer added (shown in red). \label{fig:enhancedencoderdecoder}}
+\end{figure}
+
+
 There is a complementary aspect to LCOWE and language models.
 While LCOWE have no capacity to handle word order, but they have an excellent ability to capture word content;
 whereas pure language models have no ability to capture word content, but have an excellent ability to capture word order.
 Language modelling based models incorporating a representation stage, such as encoder-decoders \citep{cho-EtAl:2014:EMNLP2014}, do not capture word content as well as LCOWE \citep{ac2018probingsentencevectors}.
 They do, however, have state of the art order representation.
+
 An interesting combination of the two,
-would be an encoder-decoder model,
-where the intermediate state between the encoder and the decoder,
+would be an encoder model,
+where the coding layer,
 is augmented by concatenating the final RNN output, with a sum of word embeddings, for all the input words to the encoder.
-This corresponds to a bypass of the RNN units.
+An example of this for a encoder-decoder is shown in \Cref{fig:enhancedencoderdecoder}.
+This would effectively allow a bypass of the encoder RNN.
 A similar bypass of intermediate layers has been used in feed-forward networks including the notable neural probabilistic language model \citep{NPLM}.
+The significant advantage of bypassing the RNN encoder is that it allows the model to weight the value of the orderful representation of the RNN output, against the unordered representation of the SOWE and learn use which ever is better for the task.
+Further, having explicit access to the surface level features in the SOWE,
+should help encourage the orderful encoder to learn more important deeper features.
 
-
-
-%
-%Future work in this area would be to enhance an encoder-decode model by concatenating to the shared state a SOWE.
-%\todo{REDO this figure with the Embedding layers shown and the SOWE shared representation laye radded}
-%
-%
-%
-%\begin{figure}
-%\begin{tikzpicture}
-%	\numdef{\N}{8}
-%	\numdef{\labelwidth}{5.5cm}
-%
-%	\node(lbl)[text width= \labelwidth] {\textbf{SOWE Enhanced\\RNN Encoder-Decoder}\\%
-%		Variable $n$ inputs: $\nv x_t$\\%
-%		Variable $m$ outputs $\nn \hat{y}_t$\\%
-%		Prompts: $\nv r_t$ (often $y_{t-1}$)
-%	};
-%	
-%	\coordinate[yshift = -3.5cm] (L0) at (lbl.west);
-%	\numdef{\NN}{4}
-%	\foreach \I[count=\j from 0] in {1,...,\NN}{
-%		\ifnumequal{\I}{\NN - 1}{%
-%			\node(L\I)[dashed, layer, right = of L\j] {\ldots};
-%			\node(w\I)[below = of L\I]{\ldots};
-%		}%
-%		{
-%			\node(L\I)[layer, right = of L\j] {$\mathrm{RU_E}$};
-%			\node(w\I)[below = of L\I]{\ifnumequal{\I}{\NN}{$\nv x_n$}{$\nv x_\I$}};
-%			\draw[->] (w\I) -- (L\I);
-%		}
-%	}
-%	\foreach \I[count=\j from 1] in {2,...,\NN} {
-%		\draw[->] (L\j) edge node[labe] {state} (L\I);
-%	}
-%	
-%	
-%	
-%	
-%	\coordinate[above = 3 of L\NN] (Lp\NN);
-%	\numdef{\NP}{\N - 1}
-%	\foreach \j in {\NN,...,\NP}{
-%		\numdef{\I}{\j+1}
-%		\numdef{\y}{\I - \NN}
-%		\ifnumequal{\I}{\N-1}{%
-%			\node(Lp\I)[dotted, layer, right = of Lp\j] {\ldots};
-%			\node(w\I)[below = of Lp\I]{\ldots};
-%			\node(y\I)[above = of Lp\I]{\ldots};
-%			\draw[->,dotted] (w\I) -- (Lp\I);
-%			\draw[->,dotted] (Lp\I) -- (y\I);
-%			\path[->,dotted] (L\NN.north) edge node[labe]{$\vv z$} (w\I.south west);
-%		}%
-%		{
-%			\node(Lp\I)[layer, right = of Lp\j] {$\mathrm{RU_D}$};
-%			\ifnumequal{\I}{\N}{
-%				\node(w\I)[below = of Lp\I]{$[\vv z; \nv r_m]$};
-%				\node(y\I)[above = of Lp\I]{$\nn \hat{y}_m$};
-%			}
-%			{
-%				\node(w\I)[below = of Lp\I]{$[\vv z; \nv r_\y]$};
-%				\node(y\I)[above = of Lp\I]{$\nn \hat{y}_\y$};
-%			}
-%			
-%			\draw[->] (w\I) -- (Lp\I);
-%			\draw[->] (Lp\I) -- (y\I);
-%			\path[->] (L\NN.north) edge node[labe]{$\vv z$} (w\I.south west);
-%		}
-%	}
-%	
-%	
-%	\numdef{\NNp1}{\NN + 1}
-%	\foreach \I in {\NNp1,...,\NP} {
-%		\numdef{\j}{\I+1}
-%		\draw[->] (Lp\I) edge node[labe] {state} (Lp\j);
-%	}
-%\end{tikzpicture}
-%
-%\end{figure}
+A coding layer featuring components from a encoder capturing order-features, and a SOWE capturing surface features can be expected to perform better at both representations than either alone.
+This expectation is due to the the weighting  above  the shared layer will train to weight each feature for what it is better at, and thus during gradient decent the weights for the encoder would be decreased for surface information that is better obtained from the SOWE.
+It would thus allow each part of the network to \emph{focus} on what it is best at, thus  creating better representations./
+This thesis has shown that SOWE can excel at surface level tasks (and that more tasks that expected are surface level).
+On deeper tasks where structure becomes more important ordered representations out perform it \parencite{ac2018probingsentencevectors}.
+By combining the two we expect to get the best of both worlds,
+and produce truly excellent models for natural language understanding.
 
 
 
