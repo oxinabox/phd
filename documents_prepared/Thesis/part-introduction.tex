@@ -134,6 +134,91 @@ This is not to say that SOWE can only be used in a shallow network -- it is simp
 Just like for RNNs and RvNNs, a deep network can be placed on top of the SOWE.
 
 
+
+\section{Background and Extended Nomenclature}
+For ease of reference we include here a brief background,
+structured around definitions of key terms of the art.
+\Cref{LitRev} contains significantly more details on each of these, and more.
+Each chapter in \Cref{Publications} also reintroduces its own key background.
+
+\subsection{Embedding}
+An embedding is, for purposes of this work,
+a representation of something in a dense vector space.
+In particular we focus on word embeddings.
+% TODO WRITE MORE HERE
+
+A concern of our work is once one has  a collection embeddings for the components of composite item,
+such as a sentence made of words,
+a pattern of co-occurring words,
+or a single particular meaning of a word usage that has components of standard word senses.
+Depending on the use case,
+options for this combination step include
+RNNs, RvNNs and LCOWE.
+
+\subsection{Linear Combination of Embeddings (LCOWE)}
+A linear combination of embeddings (\textbf{LCOWE}) is some method 
+to take a collection of embeddings $\mathcal{W}= [ \tilde{w}_1,\ldots,\tilde{w}_n ]$
+and some set of weights $\mathcal{A}= [ a_1, \ldots, a_n ]$,
+and determine the combined representation as:
+\begin{equation}
+sum_{i=1}^{1=n} a_i \tilde{w_i}
+\end{equation}
+Such a collection of embeddings can be created from  any bag of words.
+
+Two special cases of this are sum of word embeddings (\textbf{SOWE}), and mean of word embeddings (\textbf{MOWE}).
+Both are given by weighting all words equally
+\textbf{SOWE} is given by giving all words unit weight: $a_i = 1$.
+Thus \textbf{SOWE} is given by:
+\begin{equation}
+sum_{i=1}^{1=n} \tilde{w_i}
+\end{equation}
+\textbf{MOWE} is normalizing this by the number of embeddings in the collection.
+The weights are given by $a_i = \frac{1}{n}$.
+Thus \textbf{MOWE} is given by:
+\begin{equation}
+sum_{i=1}^{1=n}  \frac{1}{n} \tilde{w_i}
+\end{equation}
+These  are simple, but surprisingly effective ways to represent the collection of words.
+
+\subsection {Recurrent Neural Network (RNN)}
+A Recurrent Neural Network (\textbf{RNN}) is a technique 
+to process sequential data, such as text, using neural networks.
+An \textbf{encoder RNN} takes in a sequence of inputs and produces a single representation of all of them
+-- the encoding.
+These are useful for natural language understanding tasks, including the color problem in \Cref{ColorEst}.
+The complement of this is the \textbf{decoder RNN} which takes a single input and unrolls it into a sequence.
+This is useful for natural language generation tasks.
+By connecting the encoding from the \textbf{encoder RNN} to the input of the \textbf{decoder RNN},
+one can define an encoder-decoder RNN \citep{cho2014properties}.
+Which is  useful for sequence to sequence tasks, such as translation and abstractive summarisation.
+
+The core functioning of a RNN is the recurrent unit.
+This  same unit, with the same network parameters ()weights and biases),
+is repeated at each time-step of sequence in the network.
+At each time step, as inputs it takes an external input (e.g. the word embedding of the next word in the sequence), and a state;
+and as outputs it produces an external output, and the updated state.
+In an \textbf{encoder RNN} all but the last output is ignored and not connected to the rest of the network.
+In a \textbf{decoder RNN} all but the first input is an artificially generated prompt, for example the concatenation of the last output with the original timestep input.
+These recurrent units are chained together connected by state output to state input,
+and can thus process sequential information, taking into account order of the sequence.
+The recurrent unit comes in many forms including the 
+Long Short Term Memory (\textbf{LSTM}) unit \citep{hochreiter1997long,gers1999learning}
+and the Gated Recurrent Unit (\textbf{GRU})  \citep{chung2014empirical,cho2014properties}.
+
+
+\subsection {Recursive Neural Network (RvNN)}
+The Recursive Neural Network (\textbf{RvNN}) is the extension of the ideas of the RNN,
+to apply to trees rather than sequences.
+It is exemplified by the work of \citet{socher2014recursive}.
+Rather than a recurrent unit placed at each point in the sequence,
+a RvNN has a recursive unit place at each vertex of the tree.
+For a encoding tree, each recursive unit task as its input the representations of each of the branches below,
+and as output produces a combined representation.
+For a decoding tree, it task as input a combined representation, and outputs a representation for each branch above.
+This can be generalised to a graph.
+
+% TODO MORE HERE
+
 \section{Thesis Outline and Contributions}
 This research tackles a number of natural language understanding problems, and in the solutions draws conclusions on the capacity of linear combinations of embeddings.
 The dissertation is organised into two parts.
@@ -650,87 +735,6 @@ Yet, we find in each case that it is a surprisingly practical representation
 that should not be discarded out-of-hand.
 It effectively meets many of our goals for a good representation space.
 
-\section{Background and Extended Nomenclature}
-For ease of reference we include here a brief background,
-structured around definitions of key terms of the art.
-\Cref{LitRev} contains significantly more details on each of these, and more.
-Each chapter in \Cref{Publications} also reintroduces its own key background.
-
-\subsection{Embedding}
-An embedding is, for purposes of this work,
-a representation of something in a dense vector space.
-In particular we focus on word embeddings.
-% TODO WRITE MORE HERE
-
-A concern of our work is once one has  a collection embeddings for the components of composite item,
-such as a sentence made of words,
-a pattern of co-occurring words,
-or a single particular meaning of a word usage that has components of standard word senses.
-Depending on the use case,
-options for this combination step include
-RNNs, RvNNs and LCOWE.
-
-\subsection{Linear Combination of Embeddings (LCOWE)}
-A linear combination of embeddings (\textbf{LCOWE}) is some method 
-to take a collection of embeddings $\mathcal{W}= [ \tilde{w}_1,\ldots,\tilde{w}_n ]$
-and some set of weights $\mathcal{A}= [ a_1, \ldots, a_n ]$,
-and determine the combined representation as:
-\begin{equation}
-	sum_{i=1}^{1=n} a_i \tilde{w_i}
-\end{equation}
-Such a collection of embeddings can be created from  any bag of words.
-
-Two special cases of this are sum of word embeddings (\textbf{SOWE}), and mean of word embeddings (\textbf{MOWE}).
-Both are given by weighting all words equally
-\textbf{SOWE} is given by giving all words unit weight: $a_i = 1$.
-Thus \textbf{SOWE} is given by:
-\begin{equation}
-sum_{i=1}^{1=n} \tilde{w_i}
-\end{equation}
-\textbf{MOWE} is normalizing this by the number of embeddings in the collection.
-The weights are given by $a_i = \frac{1}{n}$.
-Thus \textbf{MOWE} is given by:
-\begin{equation}
-sum_{i=1}^{1=n}  \frac{1}{n} \tilde{w_i}
-\end{equation}
-These  are simple, but surprisingly effective ways to represent the collection of words.
-
-\subsection {Recurrent Neural Network (RNN)}
-A Recurrent Neural Network (\textbf{RNN}) is a technique 
-to process sequential data, such as text, using neural networks.
-An \textbf{encoder RNN} takes in a sequence of inputs and produces a single representation of all of them
- -- the encoding.
-These are useful for natural language understanding tasks, including the color problem in \Cref{ColorEst}.
-The complement of this is the \textbf{decoder RNN} which takes a single input and unrolls it into a sequence.
-This is useful for natural language generation tasks.
-By connecting the encoding from the \textbf{encoder RNN} to the input of the \textbf{decoder RNN},
-one can define an encoder-decoder RNN \citep{cho2014properties}.
-Which is  useful for sequence to sequence tasks, such as translation and abstractive summarisation.
-
-The core functioning of a RNN is the recurrent unit.
-This  same unit, with the same network parameters ()weights and biases),
-is repeated at each time-step of sequence in the network.
-At each time step, as inputs it takes an external input (e.g. the word embedding of the next word in the sequence), and a state;
-and as outputs it produces an external output, and the updated state.
-In an \textbf{encoder RNN} all but the last output is ignored and not connected to the rest of the network.
-In a \textbf{decoder RNN} all but the first input is an artificially generated prompt, for example the concatenation of the last output with the original timestep input.
-These recurrent units are chained together connected by state output to state input,
-and can thus process sequential information, taking into account order of the sequence.
-The recurrent unit comes in many forms including the 
-Long Short Term Memory (\textbf{LSTM}) unit \citep{hochreiter1997long,gers1999learning}
-and the Gated Recurrent Unit (\textbf{GRU})  \citep{chung2014empirical,cho2014properties}.
-
-	
-\subsection {Recursive Neural Network (RvNN)}
-The Recursive Neural Network (\textbf{RvNN}) is the extension of the ideas of the RNN,
-to apply to trees rather than sequences.
-It is exemplified by the work of \citet{socher2014recursive}.
-Rather than a recurrent unit placed at each point in the sequence,
-a RvNN has a recursive unit place at each vertex of the tree.
-For a encoding tree, each recursive unit task as its input the representations of each of the branches below,
-and as output produces a combined representation.
-For a decoding tree, it task as input a combined representation, and outputs a representation for each branch above.
-This can be generalised to a graph.
 
 
 \end{document}
