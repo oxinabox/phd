@@ -4,6 +4,36 @@
 
 \begin{document}
 
+
+\section*{Acronyms}
+\begin{description}
+	\item[Adagram] A type of word sense embeddings
+	\item[BOW] Bag of Word
+	\item[CBOW] Continous Bag of Words: A (misleadingly named) type of word embeddings
+	\item[CNN] Convolutional Neural Network
+	\item[FastText] A type of word embedding
+	\item[GRU] Gated Recurrent Unit: a form of RNN
+	\item[GloVe] A type of word embedding
+	\item[LCOWE] Linear Combination of Word Embeddings. A class of methods for combining word embeddings, covering  both SOWE, MOWE and others.
+	\item[LSTM] Long Short Term Memory: a form of RNN
+	\item[MFS] Most Frequent (word) Sense
+	\item[MIP] Mixed Integer Programming
+	\item[ML] Machine Learning
+	\item[MOWE] Mean of Word Embeddings
+	\item[NLP] Natural Language Processing
+	\item[n-gram] collections of $n$-sequential words
+	\item[RNN] Recurrent (sequential) Neural Network
+	\item[RvNN] Recursive (tree structured) Neural Network
+	\item[PCA] Principle Component Analysis: as used in this work, a form of dimensionality reduction.
+	\item[POV] Point of View, the perspective a novel  is told from.
+	\item[SkipGram] A type of word embedding
+	\item[SOWE] Sum of Word Embeddings
+	\item[SVM] Support Vector Machine
+	\item[URAE] Unfolding Recursive  Auto-encoder
+    \item[WSD] Word Sense Disambiguation
+\end{description}
+
+\clearpage
 	
 \chapter{Introduction}
 
@@ -134,9 +164,9 @@ Just like for RNNs and RvNNs, a deep network can be placed on top of the SOWE.
 
 \section{Background and Extended Nomenclature}
 For ease of reference we include here a brief background,
-structured around definitions of key terms of the art.
-\Cref{LitRev} contains significantly more details on each of these, and more.
-Each chapter in \Cref{Publications} also reintroduces its own key background.
+structured around definitions of key terms and techniques used in the area.
+\Cref{LitRev} contains significantly more details on each of these.
+Each chapter in \Cref{Publications} also reintroduces its own key background information.
 
 \subsection{Embedding}
 An \textbf{embedding} is, for purposes of this work,
@@ -146,27 +176,27 @@ These dense embeddings are very useful for applying machine learning methods to 
 There are two reasons for this:
 Firstly, for various algorithmic and implementation reasons, the majority of machine learning methods
 function far better on dense continuous spaces than on sparse discrete spaces.
-Secondly, the embeddings are often pretrained on another task, for which there exists plentyful training data.
+Secondly, the embeddings are often pretrained on another task, for which there exists plentiful training data.
 Thus using them as inputs allows for some transfer learning to assist in the final task \citep{NPLM,collobert2008unified}.
 
 A particularly common task to use for pretraining word embeddings,
 is language modelling, which requires predicting probabilities of co-occuring words.
-Traditional language modelling, involves using preceding words to predict the next work, as was implemented in \citet{NPLM}.
+Traditional language modelling, involves using preceding words to predict the next word, as was implemented in \citet{NPLM}.
 Advancements on this, to create better embeddings,
-is the continuous bag of words (\textbf{CBOW}) which uses the context words from both side of a word to predict it;
-and its complement the \textbf{SkipGram}, which uses a single word to predict all words occurring it its context \citep{mikolov2013efficient,mikolov2013linguisticsubstructures}.
+is the continuous bag of words (\textbf{CBOW}) which uses the context words from both sides of a word to predict it;
+and its complement the \textbf{SkipGram}, which uses a single word to predict all words occurring in its context \citep{mikolov2013efficient,mikolov2013linguisticsubstructures}.
 Direct advancements and variants upon this include GloVE \citep{pennington2014glove} and FastText \citep{bojanowski2016enriching}.
 Further extensions on this idea include: \textbf{Adagram}\citep{AdaGrams} for word senses,
 and Skip-Thought \citep{DBLP:journals/corr/KirosZSZTUF15} for sentences.
 
 
-A concern of our work is once one has  a collection embeddings for the components of composite item,
-such as a sentence made of words,
-a pattern of co-occurring words,
-or a single particular meaning of a word usage that has components of standard word senses.
-Depending on the use case,
-options for this combination step include
-RNNs, RvNNs and LCOWE.
+The key concern of our work, is given a collection of embeddings for components of a larger structure,
+how can an embedding for the whole be created.
+An example of such composite larger structures include:
+sentences made of words,
+patterns of co-occurring words around a named entity,
+meaning of a word usage considered as having components from standard word senses.
+Depending on the use case, options for this combination step include RNNs, RvNNs and LCOWE.
 
 \subsection{Linear Combination of Embeddings (LCOWE)}
 A linear combination of embeddings (\textbf{LCOWE}) is some method 
@@ -174,22 +204,22 @@ to take a collection of embeddings $\mathcal{W}= [ \tilde{w}_1,\ldots,\tilde{w}_
 and some set of weights $\mathcal{A}= [ a_1, \ldots, a_n ]$,
 and determine the combined representation as:
 \begin{equation}
-sum_{i=1}^{1=n} a_i \tilde{w_i}
+\sum_{i=1}^{1=n} a_i \tilde{w_i}
 \end{equation}
 Such a collection of embeddings can be created from  any bag of words.
 
-Two special cases of this are sum of word embeddings (\textbf{SOWE}), and mean of word embeddings (\textbf{MOWE}).
-Both are given by weighting all words equally
-\textbf{SOWE} is given by giving all words unit weight: $a_i = 1$.
+Two special cases of this are the sum of word embeddings (\textbf{SOWE}), and the mean of word embeddings (\textbf{MOWE}).
+Both are given by weighting all words equally.
+\textbf{SOWE} is defined by giving all words unit weight: $a_i = 1$.
 Thus \textbf{SOWE} is given by:
 \begin{equation}
-sum_{i=1}^{1=n} \tilde{w_i}
+\sum_{i=1}^{1=n} \tilde{w_i}
 \end{equation}
-\textbf{MOWE} is normalizing this by the number of embeddings in the collection.
+\textbf{MOWE} normalizes the weights by the number of words in the collection.
 The weights are given by $a_i = \frac{1}{n}$.
 Thus \textbf{MOWE} is given by:
 \begin{equation}
-sum_{i=1}^{1=n}  \frac{1}{n} \tilde{w_i}
+\sum_{i=1}^{1=n}  \frac{1}{n} \tilde{w_i}
 \end{equation}
 These  are simple, but surprisingly effective ways to represent the collection of words.
 
@@ -203,16 +233,16 @@ The complement of this is the \textbf{decoder RNN} which takes a single input an
 This is useful for natural language generation tasks.
 By connecting the encoding from the \textbf{encoder RNN} to the input of the \textbf{decoder RNN},
 one can define an encoder-decoder RNN \citep{cho2014properties}.
-Which is  useful for sequence to sequence tasks, such as translation and abstractive summarisation.
+This is  useful for sequence to sequence tasks, such as translation and abstractive summarisation.
 
 The core functioning of a RNN is the recurrent unit.
-This  same unit, with the same network parameters ()weights and biases),
-is repeated at each time-step of sequence in the network.
-At each time step, as inputs it takes an external input (e.g. the word embedding of the next word in the sequence), and a state;
-and as outputs it produces an external output, and the updated state.
+This  same unit, with the same network parameters (weights and biases),
+is repeated at each time-step of the sequence in the network.
+At each time step, for the inputs it takes an external input (e.g. the word embedding of the next word in the sequence), and a state;
+and for the outputs it produces an external output, and the updated state.
 In an \textbf{encoder RNN} all but the last output is ignored and not connected to the rest of the network.
 In a \textbf{decoder RNN} all but the first input is an artificially generated prompt, for example the concatenation of the last output with the original timestep input.
-These recurrent units are chained together connected by state output to state input,
+These recurrent units are chained together connected by each state output to the next state input,
 and can thus process sequential information, taking into account order of the sequence.
 The recurrent unit comes in many forms including the 
 Long Short Term Memory (\textbf{LSTM}) unit \citep{hochreiter1997long,gers1999learning}
@@ -224,9 +254,9 @@ The Recursive Neural Network (\textbf{RvNN}) is the extension of the ideas of th
 to apply to trees rather than sequences.
 It is exemplified by the work of \citet{socher2014recursive}.
 Rather than a recurrent unit placed at each point in the sequence,
-a RvNN has a recursive unit place at each vertex of the tree.
-For a encoding tree, each recursive unit task as its input the representations of each of the branches below,
-and as output produces a combined representation.
+a RvNN has a recursive unit placed at each vertex of the tree.
+For a encoding tree, each recursive unit for its input has the representations of each of the branches below,
+and for its output output produces a combined representation.
 For a decoding tree, it task as input a combined representation, and outputs a representation for each branch above.
 This can be generalised to a graph.
 
